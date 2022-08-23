@@ -1,0 +1,2248 @@
+			MACxx Macro Assembler
+			   Version 7.7
+			 Created Nov 1976
+			 Revisions through Nov 1989			
+
+MACxx is a one pass assembler written in C that has been ported to
+various operating systems. It consists of a core group of pseudo-ops
+common among all versions of the assembler (MAC65, MACAS, MACPP, MAC68K,
+etc) and a common statement syntax. The output of these assemblers
+(except MACPP) is expected to be further processed by LLF, a linkage
+editor, into a load image. 
+
+
+
+	Copyright Atari Games, Corp. 1977 through 1989. Unauthorized
+	reproduction, adaptation, distribution, performance or display
+	of this document, the associated computer program or the 
+	audiovisual work is strictly prohibited.
+
+			Chapter 1 - Statement syntax
+
+1.0 Statement syntax
+
+A source program is composed of a sequence of source lines; each 
+source line contains a single assembly language statement followed by a 
+terminator (line feed or form feed). Input lines are limited to 255
+characters.
+
+A statement can contain up to four fields which are identified by order
+of appearance and by specified terminating characters. The general 
+format of a MACxx assembly statement is:
+
+	label:	opcode	operand(s)	;comments
+
+The label and comment fields are optional and delimited by one or two
+colon characters (:) and the semicolon (;) respectively. White space
+may be required to delimit the opcode from the operand and multiple
+operands may need either a comma (,) or white space to delimit them from
+one another but otherwise, white space is optional. 
+
+1.1) Label field
+
+A label is a user defined symbol that is unique to the first n characters
+(the default is 6, but can be changed to any number up to 32) and is 
+assigned to the value of the current location counter and entered into 
+the user symbol table (as opposed to the 'permanent' symbol table). The 
+value may be either absolute (fixed at a specific location in memory at 
+assembly time) or relocatable (fixed at a specific location at link or 
+load time). This depends on whether the current section is absolute or 
+relocatable. A label is a symbolic method of referring to a specific place
+in memory. If present, a label must be first in the statement and 
+terminated with a colon. For example:
+
+	FRED:	LDA FOOBAR
+
+defines FRED to point to the location in memory of the LDA instruction.
+More than one label can appear on a single statement, however, each 
+will be given the same value. For example:
+
+	ONE: TWO: THREE: LDA FOOBAR
+
+defines ONE, TWO and THREE to point to the location in memory of the LDA 
+instruction. A symbol used as a label may not be redefined and any 
+attempt to do so will result in an error message. If two colon 
+characters are used to delimit the label, then the label is defined 
+as a global. Global labels are inserted into the object file so that
+LLF and, subsequently, other modules will be able to reference them
+by name.
+
+For example:
+
+	FRED::	LDA FOOBAR	;fred is defined and also made global
+
+Internal symbols may belong to the current program section or to other
+program sections. Expressions containing symbols belonging to different
+program sections may not be completely resolved by the assembler.
+Depending on the type of operation that is required in the expression,
+it may not be possible for the assembler to resolve an expression
+regardless of which section a symbol belongs. In these cases, the
+expression will be passed to LLF to be resolved after all the sections
+have been relocated and labels defined to their ultimate values.
+
+1.2) Opcode field
+
+The opcode field contains an opcode, macro name or assembler directive
+(pseudo-op). Is is legally terminated by white space or any 
+non-alphanumeric character. For example:
+
+	LDA #FRED	;the white space delimits the opcode
+	LDA#FRED	;the # delimits the opcode
+
+
+1.3) Operand field
+
+The operand field contains zero, one or more items that may be separated
+by commas or white space depending on the requirements of the opcode,
+macro or pseudo-op. The operand field is terminated by the semicolon of
+an optional comment or an end-of-line. For example: 
+
+	CLC		;no operands are required
+	LDA FRED	;FRED is the operand
+	LDA FRED,X	;FRED and X are operands to the LDA opcode
+
+1.4) Comment field
+
+The comment field is optional and may contain any printing ASCII 
+character as well as tab and space. All other non-printing ASCII 
+characters except new-line will be converted to white space. The 
+comment begins with a semicolon (;) which may appear anywhere on the
+line and continues to end-of-line. The contents of comments are
+ignored by the assembler.
+
+1.5) Formatting
+
+Spaces, tabs and form feeds may be used at will to control the text 
+formatting in the source file. A form feed character is interpreted as 
+a new line. Except in certain contexts (such as ASCII constants and
+parameter delimiting) white space is ignored by the assembler.
+
+1.6.0) Symbols
+
+Assembler symbols, labels and macro names can be comprised of any of the
+letters A through Z (upper and/or lower case), digits 0 through 9,
+period (.), dollar sign ($) and underscore (_). The first character of a
+symbol or label must not be a digit. The case of the letters in a symbol
+is not significant unless the .ENABL LOWER option has been selected. For
+example: 
+
+	Valid symbols		Invalid symbols
+	-------------		---------------
+	    ABC			    0123
+	    abc			    2abc
+	 $._AB_C.$$		   9$AB_.
+
+The symbol length is, by default, significant to the first 6 characters
+only. The length can, however, be changed via a command line option or
+an assembler directive. In either case the significant length cannot be
+reduced to less than 6 nor made greater then 32. Symbols output in the
+object file will be uppercased (unless the .ENABL LOWER option has been
+selected) and truncated to the significant length. Symbols are delimited
+by any character that is not included in the list of valid symbol
+characters. Be advised that not all load file formats accept symbol names
+as long as 32 characters. Extended TEKhex, for example, will only pass 
+the first 16 characters of a symbol name. This will only be a 
+significant factor if one intends on passing global symbols with long 
+names to a symbolic debugger via a restricting load file format.
+
+1.6.0.1) Permanent symbols
+
+Permanent symbols are those pre-defined in the assembler and consist
+entirely of opcodes and pseudo-ops. The assembler allocates memory from
+the operating system and "seeds" this area with the permanent symbols
+stored internal to the assembler. Macro names that are defined by the
+user are placed into the permanent symbol table perhaps replacing an
+existing entry. 
+
+1.6.0.2) User defined symbols
+
+User symbols both ordinary and local are stored in a user symbol table.
+This symbol table is the only one searched during expression evaluation.
+The permanent symbol table is the only one searched for opcodes.
+Consequently, macro and opcode names may be the same as symbol and label
+names and each represents different values. 
+
+User defined symbols are either internal or external (global). All user 
+defined symbols are internal unless explicitly declared otherwise.
+
+MAC68K and MACAS have predefined user symbols representing the standard 
+register names found in those processors. See the appendix for specifics.
+
+1.6.0.3) Local symbols
+
+There's a special type of symbol known as a local symbol. This symbol 
+is a string of decimal digits terminated with a dollar sign. Its 
+presence is known only within what is known as a local symbol block.
+The local symbol block is delimited, unless otherwise indicated, with
+changes in program sections or by the definition of a new label.
+Local symbols can be used anywhere ordinary symbols can be used and are
+defined the same as ordinary symbols. They cannot, however, be declared
+global. Local symbols must consist only of the digits 0-9 and a 
+trailing dollar sign, but otherwise they are treated as ordinary strings 
+and are limited in length to the maximum input size of 255 characters.
+Some examples:
+
+	lsb_1:			;Any label starts a new local symbol block
+	10$:			;defines local symbol 10$
+	20$ = fred		;direct assignments work too,...
+	LABEL = fred		;  ...however, they do NOT open a new lsb
+	30$:			;another label
+	lsb_2:			;Opens a new local symbol block
+	10$:			;these local symbols are not the same as
+	20$:			;  the other ones because they are in a
+	30$:			;    different local symbol block.
+	.PSECT 			;this opens a new local symbol block too
+
+There may be instances where one needs to reference local symbols 
+across ordinary labels or through program section changes. This can be 
+accomplished with a pseudo-op:
+
+	.ENABL LSB		;opens a local symbol block and turns OFF
+				; the normal lsb delimiter sensing.
+	10$:			;defines a local symbol
+	LABEL:			;in this case, does NOT open a new lsb
+	.WORD 10$		;refers to the 10$ above LABEL
+	.DSABL LSB		;closes the local block and turns back ON
+				;  then normal lsb delimiter sensing.
+
+1.6.0.4) Location counter symbol
+
+There's another special pre-defined symbol, period (.), that refers to
+the current location counter. The value of this symbol is always defined
+and may be relocatable or absolute depending on the attribute of the
+current section. The period may not be used as a label. It may only be
+used in expressions and as the target of a direct assignment statement. 
+For example:
+
+	saved_place = .		;saves current location
+	. = some_new_place	;set the current location to new place
+	offset = <.+3>/4	;compute displacement
+
+Care must be used when making direct assignments to the location counter 
+or there will certainly be unexpected results. For example, there are 
+times when one wants to position the location counter to a fixed 
+location from the beginning of a RELOCATABLE program section. This 
+CANNOT be done by simply assigning the location counter to the offset.
+Suppose one wants to set the location counter to an offset of 1000 from 
+the start of section DATA. First a symbol would have to be defined at
+the beginning of the DATA section:
+
+		.PSECT DATA	;declare section DATA
+	START_OF_DATA:		;define first location of section DATA
+
+Then the location counter can be set:
+
+	. = START_OF_DATA+1000	;move PC to DATA+1000.
+
+The more direct approach of .=1000 is only allowed when the current
+location is an absolute (non-relocatable) section. Direct assignments
+that would result in having the current section change are not allowed
+and will result in an error message. For example:
+
+	.PSECT TEXT
+	FRED:
+	.PSECT DATA
+	. = FRED	;will result in an error since FRED
+			;   is not in the DATA psect
+
+1.6.0.5) Symbol blocks
+
+Another form of local symbol block exists which allows for all forms of 
+symbols to appear "local to the block". That is, symbols and labels
+defined within a symbol block can only be referenced by code and data 
+appearing within that block or a fully enclosed block. These blocks can 
+be nested to a depth of 7. Nested levels beyond 7 are folded into 
+level 7 and a warning message stating that the scoping is too deep is 
+displayed. Inner blocks may reference symbols and labels defined in an 
+outer block, but outer blocks may not reference symbols and labels 
+defined in inner blocks. The outer most level is 0 and is the level 
+used by normal symbols and labels. There are a maximum of 8192 blocks 
+available in a single assembly module.
+
+WHEN USING SYMBOL BLOCKS, FORWARD REFERENCES TO SYMBOLS OR LABELS ARE
+NOT ALLOWED. All symbols and labels referenced in the current block must
+be predefined or predeclared. There is a .LOCAL directive to declare a
+symbol and/or label in a block if it is referenced before it is defined. 
+
+1.6.1.0) Radix
+
+The programmer can specify the radix with which a number is to be
+interpreted on each number appearing in the source or globally for all
+numbers appearing in the source. The radix values can be one of 2,8,10
+or 16. Using the .RADIX pseudo-op specifies which radix to use for all
+numbers appearing between that directive and the next .RADIX or end of
+file. The unary operators ^B, ^O, ^D (or trailing period), ^X or ^H
+can be used on individual numbers to indicate the radices 2, 8, 10, 16
+or 16 respectively. In addition, hexadecimal numbers may be expressed by
+prefixing a "0x" or "0X" to them. 
+
+1.6.1.1) Numbers
+
+Number constants are strings consisting of the digits 0-9 and the
+letters A-F. The first character of the number must be a digit 0-9
+regardless of the current radix. Any character not of that character set
+delimits the number. If the number contains digits that are greater than
+the current radix allows, the assembler will attempt to evaluate the
+number at the appropriate higher radix and displays an error message. A
+temporary decimal radix can be set by appending a period to the number
+or any other temporary radix can be set via a one of the unary operators
+(^B, ^D, ^O, ^X or ^H for binary, decimal, octal, hex or hex respectively).
+For example: 
+
+	0110		;valid binary, octal, decimal or hex number
+	1234		;valid octal, decimal or hexadecimal number
+	7890		;valid decimal or hexadecimal number
+	0FFF		;valid hex number
+	A000		;not a valid number (valid symbol, though)
+	1000.		;decimal 1000
+	0x1234		;hexadecimal number
+
+1.7) Expressions
+
+An expression is a collection of one or more terms separated by
+arithmetic operators. There are both unary operators (apply only to a
+single term) and binary operators (apply to two terms). Unlike most
+other languages, all operators have equal precedence and are evaluated
+from left to right. The order of evaluation can be changed by the use of
+the parenthesis. (In MAC65, the parenthesis must be substituted with the
+expression brackets "<" and ">"). All terms in an expression and the
+result of the expression itself are 32 bits (signed). The relational
+operators (not available in MAC65) return either a 0 for false or 1 for
+true. 
+
+	Binary operators:	Examples
+	----------------	---------
+	+	add		A+B	(can also be +A which means 0+A)
+	-	subtract	A-B	(can also be -A which means 0-A)
+	*	multiply	A*B	(returns a 32 bit product)
+	/	divide		A/B	(returns a 32 bit quotient)
+	&	logical and	A&B
+	|	logical or	A|B
+
+The following are available ONLY in MAC65:
+
+	!	logical or	A!B	(same as |)
+	?	exclusive or	A?B
+	{	shift left	A{B	A is shifted B bits left
+	}	shift right	A}B	A is shifted B bits right
+
+The following are NOT available in MAC65:
+
+	^	exclusive or	A^B
+	<<	shift left	A<<B
+	>>	shift right	A>>B
+	==	equality	A==B	returns 1 if A equals B
+	!=	not equal	A!=B	returns 1 if A not equal B
+	>	greater than	A>B	returns 1 if A greater than B
+	<	less than	A<B	returns 1 if A less than B
+	>=	greater, equal	A<=B	1 if A greater than or equal to B
+	<=	less, equal	A>=B	1 if A less than or equal to B
+
+Unary operators are escaped with a circumflex (^) which means the character 
+following the circumflex is the operator.
+
+	Unary operators		Examples
+	---------------		--------
+	^B change radix to 2	^B 111000
+	^C 1's compliment	^C A	;takes 1's compliment of A
+	^D change radix to 10	^D 100	;constant 100 decimal
+	^H change radix to 16	^H 100	;constant 100 hexadecimal
+	^X change radix to 16	^X 1FF	;constant 1FF hexadecimal
+	^O change radix to 8	^O 100	;constant 100 octal
+	^V take low byte	^V A	;bits 0-7 of A
+	^^ take high byte	^^ A	;bits 8-15 of A
+	^~ swap bytes		^~ A	;swap bits 0-7 with bits 8-15
+					;and bits 16-23 with bits 24-31
+
+Any term of an expression may be enclosed in a pair of expression
+brackets ('<' and '>' in MAC65 or '(' and ')' in all other assemblers)
+and itself be a collection of one or more terms. For example: 
+
+	A+<<B*C/D+6>*100>/4?^V<FRED*10>+^H<0FFF+ABC+1234> ;MAC65
+	A+((B*C/D+6)*100)/4^^V(FRED*10)+^H(0FFF+ABC+1234) ;others
+
+would evaluate in the following order (left to right, all operators having
+equal precedence):
+
+	B*C/D+6*100+A/4 exclusive OR'd with the low byte of FRED*10
+	and the whole result added to ABC+(hex)2233
+
+1.8) Direct assignment
+
+A direct assignment statement associates a symbol with a value (or an
+expression). When a direct assignment statement is used for the first 
+time that symbol is entered into the user defined symbol table and the 
+specified value is attached to it. If the expression does not resolve 
+to an absolute value, then the expression is attached to the symbol. A 
+symbol may be re-defined by assigning a new value to it. The latest 
+assigned value replaces any previous value assigned to the symbol.
+The general format is:
+
+	symbol = expression	;comments
+
+Symbols take on the relocatable or absolute attributes of their defining
+expression. If the expression does not resolve to a single term then the
+resultant expression is attached to the symbol and the value of the
+symbol becomes a multiple term expression which will be substituted in
+whatever other expressions the symbol is used and, in fact, may be
+passed on to LLF if it cannot be resolved during object file creation. A
+double equal sign will declare the symbol global as well as defining it,
+however, for purposes of linking, only the last assignment made to a
+symbol is passed to LLF (i.e. the value at the end of pass one of the
+assembler is what gets passed to LLF). One may prefix a colon to the
+equals or double equals to indicate that the symbol is to be defined
+only once (i.e. generate an error if the symbol is redefined elsewhere).
+For example: 
+
+	A = 1		;A has absolute value of 1
+	B: 		;defines B as a relocatable
+	C = B		;C is equivalent to B
+	D = E+F+G	;If E, F or G is undefined or relocatable then
+			;  D becomes defined as E+F+G (expression)
+	H == 12		;H is global 12
+	. = .+100	;move the location counter up 100 bytes
+	J := 10		;make J an absolute 10 and not eligible for 
+			;  redefinition
+
+	DO NOT MAKE CIRCULAR ASSIGNMENTS SUCH AS
+
+		A = B
+		B = C
+		C = A
+
+1.9) Register symbols and expressions
+
+Some assemblers (such as MACAS and MAC68K) may have opcodes that allow
+or require registers as operands. They may, in fact, sense the type of
+operand and output object data differently based on whether there is a
+register referenced in the operand. Any valid expression term with a
+leading percent sign (%) declares that term as a register (for example
+%5 means register 5). Symbols can be defined as being register
+designators by assigning them to an expression with one or more of the
+terms being a register term. The symbol will inherit the register
+attribute from the expression. For example: 
+
+	R0 = %0		;general register 0
+	R10 = %10.	;general register 10
+	TEMP = R0	;symbol TEMP becomes equivalent to R0
+	GR11 == %11.	;global general register 11
+
+Register symbols can be global and can even be defined in other modules.
+Global register symbols used but not defined in a given module must be
+declared with the .GLOBR pseudo-op. The register attribute of a symbol
+is only significant during the operand processing of an opcode. The
+register attribute of a symbol is not significant in any other assembler
+expression. The register attribute is ignored in MAC65. Undefined registers
+are not allowed in MAC68K. See the appendix for a list of pre-defined
+register symbols for the assembler you are using. 
+
+		Chapter 2 - Assembler Directives
+
+2.0) Assembler Directives, aka pseudo-ops, are statements that the 
+assembler intreprets as commands to itself. Directives control various 
+aspects of the assembler behavior and output.
+
+2.1) .ALIGN	Alignment directive
+
+	.ALIGN expression
+
+where expression must resolve to an absolute between the values 0 and 31
+inclusive. The value of expression becomes an exponent of 2 and the location
+counter is adjusted to the next multiple of the result. The alignment
+attributes of the current program section must enforce an alignment at least
+as great as the one requested or a warning message will be displayed.
+If the alignment attributes of the current section do not enforce an
+alignment as great as the one requested, then do not expect the resultant
+location after linking (LLF) to be correct. Some examples:
+
+	.ALIGN 3	;aligns to next multiple of 8 bytes
+	.ALIGN 0	;aligns to next byte (a nop effectively)
+	.ALIGN 1	;aligns to 2 byte boundary
+	.ALIGN fred	;aligns to whatever FRED resolves to
+
+2.2)	.ASCII		Ascii string directives
+	.ASCIN
+	.ASCIZ
+
+Deposits a string of ASCII characters beginning at the current location.
+The parameter string consists of a string of ASCII characters delimited
+by a pair of ASCII characters. The first character in the string is assumed
+the delimiter for the string. The delimiters are not considered part of the
+string so are not inserted into the output file. Any printing character can
+be a delimiter. Expressions can be inserted in the middle of the string by
+delimiting the string and enclosing the expression in matching expression
+brackets (<>'s in MAC65, ()'s in the other assemblers). Ths general 
+format is:
+
+	.ASCII string	;Straight ASCII string
+	.ASCIN string	;The last byte of the string has bit 7 set
+	.ASCIZ string	;An extra byte of 0 is inserted at the end
+			; of the string
+
+Some examples:
+
+	.ASCII /123/	;puts (hex) 31 32 33 beginning at the current location
+	.ASCIN /123/	;puts (hex) 31 32 B3
+	.ASCIZ /123/	;puts (hex) 31 32 33 00
+	.ASCII \123\<some_expression>/456/	;puts 31 32 33 xx 34 35 36
+			;second set of delimiters doesn't have to match the
+			; first set of delimiters.
+
+2.3) .ASECT	Absolute program section directive
+
+	.ASECT
+
+This directive sets the current program section to the default absolute
+section and sets the location counter to the value that was last used in
+that section. It is equivalent to:
+
+	.PSECT .ABS.
+
+See the .PSECT directive for more details.
+
+2.4) 	.BLKx	Space allocation directives
+
+	.BLKB	expression	;allocates bytes (expression*1)
+	.BLKW	expression	;allocates words (expression*2)
+	.BLKL	expression	;allocates longs (expression*4)
+	.BLKQ	expression	;allocates quads (expression*8)
+	DS.B	expression	;(identical to .BLKB)
+	DS.W	expression	;(identical to .BLKW)
+	DS.L	expression	;(identical to .BLKL)
+
+Effectively allocates space in the current program section. It moves the
+location counter by the specified number of elements. The expression
+must be absolute but does not have to be positive (a negative value will
+move the location counter backwards). The .BLKW, .BLKL and .BLKQ
+directives will also verify that the current location is aligned
+correctly as indicated by the current section alignment attributes.
+Examples: 
+
+	.BLKB	100		;reserve 100 bytes
+	.BLKL	200		;reserve 200 longwords (800 bytes)
+
+2.5) .BSECT	Base section directive
+
+An obsolete directive. See .PSECT for details.
+
+2.6)	.BYTE	Constant storage directives
+	.WORD
+	.LONG
+	DC.B	(same as .BYTE)
+	DC.W	(same as .WORD)
+	DC.L	(same as .LONG)
+
+Syntax:
+
+	directive	expression [[,]...]
+
+All of the above directives have the same syntax. There can be 0 or more
+expressions separated by any construct that is not a valid expression
+term such as a comma or two terms not joined with an expression
+operator. Each expression is inserted in the object code at the next
+higher location. The location counter is verified to have the correct
+alignment according to those specified in the current program section.
+The .BYTE directive places 1 or more bytes in the object file. The .WORD
+directive places one or more 16 bit words in the object file. The .LONG
+directive places one or more 32 bit longwords in the object file.
+Some examples: 
+
+	.BYTE		;no expression means insert a 0
+	.BYTE 1,2,3	;puts a (hex) 01 02 03 in the output file
+	.WORD one two three	;puts 3 words (6 bytes) in the object file
+	.LONG fred + sam foobar	;This puts 2 longs into the output file 
+				;because fred + sam is a legal expression
+				;with or without the whitespace. As a result
+				;the first longword output would be the 
+				;expression fred+sam and the second longword
+				;would be the expression foobar.
+	.BYTE fred '+ sam foobar ;puts 4 expressions into the output file.
+				;the '+ is not a valid operator to join two
+				;terms, so it is assumed to be a term of its
+				;own. As a result, four expressions are output:
+				;fred, '+ (hex 2B), sam and foobar.
+
+2.10)	.CSECT
+
+	An obsolete directive. See .PSECT for details.
+
+2.11)	.DEFINE
+
+The .DEFINE directive allows for the assignment of an arbirtary string
+to a single assembler symbol. Everywhere in the source between the
+.DEFINE and an .UNDEFINE where the symbol appears, the string will be 
+substituted. It works similar to a #define in the C language. The
+general form is:
+
+	.DEFINE symbol an_arbitrary_string [;comments]
+
+where symbol is the name of the symbol which is to be substituted and
+"an_arbitrary_string" is any string of printable characters up to but 
+not including the semicolon delimiting any comments. White space 
+between the symbol name and the string as well as white space between 
+the last character of the string and the comment is not included in the 
+string. Only one level of substitution is performed, that is to say no
+tokens on a .DEFINE or .UNDEFINE directive will be substituted with 
+previously .DEFINE'd symbols. Once a symbol is substituted, the text 
+that has been substituted is not checked for further substitutions.
+Token substitution can take place embedded in strings if the token in
+question is surrounded with apostrophes (the same rules as an argument
+in a macro). Inside macro calls .DEFINEd tokens are replaced after all
+macro arguments are inserted. 
+
+Having one or more .DEFINE'd symbols will have an adverse effect on the
+assembler's performance. It is better used in small sections of source
+code (such as during macro definitions), since a symbol can be
+.UNDEFINE'd which will restore the assembler's performance. Examples:
+
+    .define fred any string of chars up to a semicolon
+    .define foo  a+b		;defines foo
+
+will force all subsequent occurrences of "fred" in the source file to be
+replaced with the text "any string of chars up to a semicolon" and foo
+to be replaced with the string "a+b". 
+
+Note that the text appearing in the list file will be that with all
+tokens substituted. If the resulting assembly of the line produces
+errors, then the original source line will be output to stderr
+(SYS$ERROR) along with the error message but without the line with the
+circumflex (^). 
+
+2.12)	.DEFSTACK
+
+Defines an array that may be used at assembly time as a stack or as
+temporary storage. This is most useful in complex macros that need to
+be able to save and have access to large amounts of data. The syntax is:
+
+	.DEFSTACK stack_name [,size [,type]]
+
+where
+
+	stack_name is an arbitrary name of the stack which does not have 
+		to be unique from a symbol, macro or opcode name. The
+		stack_name is used as an argument to subsequent .PUSH,
+		.POP, .SETPOINTER, .GETPOINTER, .GETVALUE and/or
+		.SETVALUE directives.
+
+	size is an expression that resolves to the desired size of the
+		array in elements. If this argument is left blank or
+		resolves to 0, the stack is purged and the memory
+		returned to the system.
+
+	type is a keyword of BYTE, WORD, LONG or RELATIVE which
+		represents 8 bit, 16 bit, 32 bit and 64 bit element
+		sizes respectively. The default is LONG.
+
+Note that the amount of memory used is the product of the stack size and
+the element type size. Care should be taken as not to create an array so
+large that there is no memory left for the assembler proper. On MS-DOS
+systems, no single array can be larger than 65,536 bytes (32,768 words;
+16,384 longs; 8,192 relative values). 
+
+There is a stack pointer associated with each array. The pointer will be
+pre-decremented when an item is .PUSH'ed and post-incremented when an item
+is .POP'ped. The pointer always moves by one regardless of the size of 
+the element.
+
+The .GETVALUE and .SETVALUE directives allow for random access to the
+stack. Items are accessed from 0 to size_of_stack-1 in increments of
+one regardless of the size of the element.
+
+The .GETPOINTER and .PUTPOINTER directives will respectively get or set
+the stack pointer on a named stack.
+
+Examples:
+
+	FRED = 100
+	.DEFSTACK  temp,FRED+2		;make a temp array of longs
+	.DEFSTACK  words,16,WORD	;array of words
+	.DEFSTACK  temp			;purge temp array
+
+NOTE: These stack options are not available in recent macxx versions.
+
+2.15) .DSABL and .ENABL directives
+
+Many of the states and operational characteristics that MACxx provides can be
+enabled or disabled by way of one of these directives. The syntax is
+
+	directive arg1[,...,argn]
+
+where directive is one of .ENABL (to enable the function) or .DSABL to
+disable the function and arg1 through argn represents one of the following
+keywords:
+
+	ABS - Has no effect. Exists simply for compatibility with older
+		versions of the assembler.
+	LC  - Has no effect. Exists simply for compatibility with older
+		versions of the assembler.
+	LSB - Enables or disables a Local Symbol Block. Normally a local
+		symbol block starts/ends with the presence of a label or
+		encountering a .PSECT directive. A local symbol block
+		opened with a .ENABL LSB, remains in effect until a
+		.DSABL LSB directive is encountered regardless of how
+		many labels and .PSECT directives lie in between.
+	USD - Causes all divisions in both local and global expressions
+		to be computed using unsigned arithmetic (UnSigned Divide).
+		The default is .DSABL USD (use signed divides).
+	GBL - Causes all undefined symbols to automatically be declared
+		global. Use with care. The default is .DSABL GBL.
+	WORD or .WORD - enables or disables the feature where undefined
+		opcodes are assumed to be arguments to a .WORD directive.
+		The default is .DSABL WORD (undefined opcodes/directives
+		are reported as an error).
+	M68 - If enabled, causes words and longs to be output big endian
+		style (as the Motorola processors require) and if disabled
+		causes words and longs to be output in little endian style
+		(such as the 6502 and 80x86 require). The default is
+		processor specific. MAC65 and MACAS default to .DSABL M68.
+		MAC68K defaults to .ENABL M68.
+	LOWER_CASE - If enabled, makes all symbols and labels case
+		sensitive. Global symbols and labels are passed to LLF
+		without having their case changed. Additionally, no
+		changes are made to PSECT names.
+	DOLLAR_HEX - If enabled, allows hexidecimal constants to be 
+		expressed Motorola style, that is with a leading dollar
+		sign. I.e. 0x1234 <==> $1234.
+The following keywords are specific to MAC65 and the 6502 processor.
+	MOS - If enabled, turns on the MOS TECHNOLOGY 6502 opcode and
+		address mode syntax. If disabled, turns on the old Atari
+		opcode and address mode syntax. See appendix A for details
+		of both. The default is .DSABL MOS.
+	AMA - If enabled, instructs MAC65 to attempt to determine from the
+		value of an operand whether the address mode should be
+		zero page or absolute mode. If disabled, the shortest
+		(fewest number of bytes) form of the instruction will be
+		selected. See appendix A for more details. The default
+		is .DSABL AMA.
+
+Some examples:
+
+	.ENABL MOS,AMA,USD
+	.DSABL WORD,GBL
+	.ENABL LSB
+	
+2.16)	.END
+
+Declares the logical end of assembly and an optional transfer address.
+
+	.END [transfer_address]
+
+The transfer address, if present, must be an expression that resolves to
+a single term that must be defined. If no transfer address is defined,
+no transfer address will be delivered to LLF. Except for the
+transfer address argument, the directive is ignored by MACxx and
+assembly continues until end of file. The directive is not required. 
+
+2.17)	.ENDC
+
+Declares the end of a conditional block. There must be exactly one 
+matching .IF directive preceding this directive. An error will be
+displayed if a .ENDC directive is encountered outside a conditional 
+block or if a conditional block is opened and not closed with a .ENDC 
+before an end of file is detected. No arguments are required or allowed 
+on this directive.
+
+2.18)	.ENDM and .ENDR
+
+Declare the end of a macro block. The two directives are identical but
+the .ENDM is typically used to close a .MACRO block and the .ENDR is
+used to close a repeat block (one of .REPT, .IRP or .IRPC). Either
+directive accepts a single argument which, if present, is compared
+against the name of the macro for which it belongs. If the names don't
+match, an error message will be displayed. Repeat blocks are not named
+so no argument should be used on a .ENDx that closes a repeat block.
+
+2.19)	.ENDP
+
+Declares the end of a procedure block as declared with a .PROC
+directive. The symbol block level is decremented. An error will be
+displayed if this directive is used in symbol block level 0 (the top
+level). It neither requires nor accepts any arguments. An example: 
+
+FUNC_1:	.PROC
+	bla_bla
+	.ENDP
+
+2.20)	.ERROR
+
+	.ERROR [[expression] [;comments]]
+
+This directive generates an error and computes and displays the value 
+of the optional expression. It is useful if included in macros or 
+conditionals to force an error if desired conditions are not met.
+Being that it generates an error, the whole statement will be displayed
+in the list file and on standard error, so the comments can best be
+used to describe the reason for the error.
+
+2.200) .ESCAPE
+
+This directive allows the changing of various escape characters. 
+Currently the only characters that can be changed are the macro escape 
+characters. The form is:
+
+	.ESCAPE arg=expression[,...]
+
+where arg is one of the strings itemized below and expression is an 
+absolute expression that resolves to a printing but non-alphanumeric 
+character. 
+
+	Arg		Default	  Function
+	--------	-------   ---------
+	MACRO_OPEN	'<	  start of macro argument
+	MACRO_CLOSE	'>	  end of macro argument
+	MACRO_ESCAPE	'^	  alternate macro argument delimiter
+	MACRO_GENSYM	'?	  indicates argument is autogenerated
+	MACRO_GENVAL	'\	  convert macro argument to ASCII
+
+2.21)	.EVEN
+
+This directive forces the current location counter to the next higher
+even value. Note that the PSECT attributes of the current program
+section must enforce a section alignment of at least 1 (word alignment)
+in order for this directive to really do what is desired. If the psect
+attributes do not enforce at least a word alignment, then the section
+may not be located on an even address by LLF (which will make the
+effect of the .EVEN to become a .ODD). A warning will be displayed by
+the assembler if this condition is present. This directive neither 
+requires nor accepts any arguments. See .ODD and .ALIGN for additional 
+alignment options.
+
+2.22)	.GETPOINTER
+
+This directive assigns to a symbol the current value of the stack 
+pointer of the named stack. The symbol must be eligible for 
+redefinition. The syntax is:
+
+	.GETPOINTER stack_name,symbol
+
+where stack_name is the name of the stack as specified in a .DEFSTACK 
+directive and symbol is the name of a symbol whose value will become 
+the current value of the stack pointer. An example:
+
+	.DEFSTACK FRED,10	;make a stack
+	.PUSH FRED,TEMP		;save value of temp
+	.GETPOINTER FRED,T	;T gets value of stack pointer
+	
+NOTE: These stack options are not available in recent macxx versions.
+
+2.23)	.GLOBB
+	.GLOBL
+	.GLOBR
+	.GLOBS
+
+	.GLOBx symbol_1[,symbol_2,...]
+
+These directives declare one or more symbols or labels as being global
+in scope. That is the listed symbols or labels are made known to the
+LLF. The symbols or labels may or may not be defined. If they are not
+defined anywhere in the source code, then they will be assumed to be
+defined in another module or explicitly by LLF. The .GLOBL directive is
+the general case for declaring ordinary symbols or labels as global in
+scope. The .GLOBR directive declares the symbols as being both global in
+scope and of type register (same as .GLOBL in MAC65). The .GLOBB
+directive declares the symbols or labels as being resident in base page
+(zero page), and at present is only significant to MAC65. The .GLOBS
+directive identifies labels and symbols as accessible via "short" (i.e.
+16 bit offset) address modes in MAC68K (the directive is identical to a
+.GLOBB). Any number of symbols may be listed separated with white space
+or commas. 
+
+2.25)	.IF		Conditional directives
+	.IFF
+	.IFT
+	.IFTF
+
+This is the general case conditional directive. It opens a conditional
+block which encompasses all the source code between the .IF and a
+matching .ENDC directive. The sense of the conditional can be changed
+with the .IFF (If False), .IFT (If True) and .IFTF (If True or False).
+While the condition is true, the source code is assembled. While the
+condition is false, the source code is examined only for conditional
+directives and otherwise is ignored. The condition is closed when the
+matching .ENDC is encountered. Conditional blocks can be nested to 32
+levels within a single macro level. That is, each level of macro call
+(including the 0th level) has 32 levels of conditional nesting. 
+The syntax is:
+
+	.IF condition,expression	[;comments]
+
+where expression must resolve to an absolute value and condition must 
+be one of the following strings:
+
+	Condition	Conditional considered true if
+	 String		  expression resolves to:
+	----------	------------------------------
+	EQ		zero
+	NE		not zero
+	G		greater than zero
+	GT		greater than zero
+	GE		greater than or equal to zero
+	L		less than zero
+	LT		less than zero
+	LE		less than or equal to zero
+	NZ		not zero
+	Z		zero
+	T		true (expression resolves to non-zero)
+	F		false (expression resolves to zero)
+	EQUAL		zero
+	NOT_EQUAL	not zero
+	GREATER_THAN	greater than zero
+	GREATER_OR_EQUAL  greater than or equal to zero
+	LESS_THAN	less than zero
+	LESS_OR_EQUAL	less than or equal to zero
+	NOT_ZERO	not zero
+	ZERO		zero
+	TRUE		true (expression resolves to non-zero)
+	FALSE		false (expression resolves to zero)
+
+There are some special case .IF's that use something other than an 
+expression to determine the test. These cases are:
+
+	.IF condition,symbol
+
+	Condition	Conditional considered true if
+	 String		  symbol is:
+	----------	------------------------------
+	  DF		defined
+	  NDF		not defined
+	  DEFINED	defined
+	  NOT_DEFINED	not defined
+
+In the DF and NDF cases, the symbol may be more than one separated with 
+either a ampersand (&) for AND or a vertical bar (|) for OR (an
+exclamation point (!) in MAC65). For example: .IF DF, LABEL1 & LABEL2
+indicates the condition is true only if both label1 and label2 are
+defined. 
+
+	.IF condition,string
+
+	Condition	Conditional considered true if
+	 String		  string is:
+	----------	------------------------------
+	  B		blank
+	  NB		not blank
+	  BLANK		blank
+	  NOT_BLANK	not blank
+
+	Note that if the string is enclosed in macro argument delimiters
+	(normally <>'s) then only the contents between the delimiters is
+	tested for blank or not blank. Otherwise, if ANY text appears on
+	the line after the comma separating the condition, the "string"
+	is considered not blank. This directive only is allowed (or
+	useful) inside a macro. 
+
+	.IF condition,string1,string2
+
+	Condition
+	 String		Conditional considered true if:
+	----------	------------------------------
+	  DIF		string1 is different than string2
+	  IDN		string1 is identical to string2
+	  DIFFERENT	strings are different
+	  IDENTICAL	strings are identical
+	  SAME		strings are identical
+
+	Note that string1 and string2 are compared with a simple string
+	compare. They must match exactly to be considered identical. If
+	either or both of the strings are enclosed in macro argument
+	delimiters (normally <>'s), then only the contents between the
+	delimters is compared. 
+
+Some examples:
+
+	.IF eq,FRED		;true if FRED is 0
+	.IF GT,LAB1-LAB2*100	;true if result is greater than 0
+	.if ne,LABL-9		;true if LABL is not 9
+	.if NE,FLAGS&100	;true if bit 8 set in FLAGS
+	.if idn,<arg1>,<arg2>	;true if macro arg1 is same as arg2
+	.if ndf,label		;true if LABEL is not defined
+	.if defined, label1 & label2 ;true if both labels are defined
+	.if b,<param3>		;true if macro param 3 blank
+	.IF EQ,FLAG		;open a conditional
+	...some source		;stuff to do if flag is 0
+	.IFF			;kinda like an ELSE
+	...some source		;stuff to do if flag is not 0
+	.IFTF
+	...more source		;stuff to do regardless of flag value
+	.IFT
+	...still more		;stuff to do if flag is 0
+	.ENDC			;done with conditional
+
+2.26)	.IIF
+
+This is a special one line conditional (Immediate IF). It has the same
+syntax and rules as the .IF directive except the single statement to be 
+executed follows the conditional argument(s) separated with a comma.
+See .IF for details about the conditionals.
+
+Example:
+
+	.IIF NDF,LABEL,LABEL = 100	;define if not already defined
+	.IIF EQ,LAB1-10,.error LAB1 	;LAB1 is too big
+	.IIF b,<arg5>,.error		;No ARG5 argument supplied
+
+2.27)	.INCLUDE
+
+This directive allows for additional source files to be included for 
+assembly. The syntax is:
+
+	.INCLUDE filename	[;comments]
+
+Note that the semicolon delimits comments so, on VMS systems anyway, 
+you cannot specify version numbers on filenames. The filename string
+is has the default filetype (.MAC) appended to it if required and is
+passed otherwise unmodified to the operating system. The filename
+syntax is that of the underlying operating system.
+
+2.28)	.IRP
+
+The .IRP and .IRPC directives define an indefinite repeat block which is
+simply a macro definition with a single dummy argument (see details
+about macros in chapter 3) followed with an immediate call. The macro is
+expanded once for each argument supplied on the directive. The syntax of
+an indefinite repeat block is: 
+
+	.IRP dummy_arg,<arg1[[,]arg2[...[,]argn]]>
+	macro_body
+	.ENDR
+
+where macro_body is one or more lines of assembly code to be repeated
+for each argument in the argument list and dummy_arg is the macro
+argument string to be replaced. On each iteration of the indefinite
+repeat block, the dummy_arg assumes the value of each successive
+argument in the argument list. Indefinite repeat blocks may be used
+anywhere a macro may be used and is, in fact, a macro definition itself
+with an automatic call at the end of the definition. Arguments in the
+argument list are delimited with white space or commas. Arguments
+containing white space, semicolons and/or commas may be enclosed in
+macro argument delimiters (normally <>'s). There may be no more
+than 125 arguments. Examples: 
+
+	.IRP xx,<one,two,three>
+	.word xx,xx+1
+	fred xx
+	.endr
+
+would expand to the following:
+
+	.word one,one+1
+	fred one
+	.word two,two+1
+	fred two
+	.word three,three+1
+	fred three
+
+Another example might be in a general CALL macro where an arbitrary
+number of arguments needs to pushed on a stack, a function called, then
+the arguments purged from the stack. It could be coded something like
+this:
+
+	.MACRO CALL FUNCTION ARG_LIST
+	...1 = 0			;argument counter
+	.IRP ARG,<ARG_LIST>		;for each argument in the list
+	PUSH ARG			;push it on the stack
+	...1 = ...1 + 1			;count it
+	.ENDR
+	JSR FUNCTION			;goto function
+	ADD #...1,SP			;adjust the stack
+	.ENDM CALL
+
+Then the CALL macro would be envoked like:
+
+	CALL DO_IT <FRED,FOOBAR,FUBAR>
+
+A .MEXIT or .REXIT directive causes the macro expansion to skip to the
+end of the repeat block. If additional arguments remain in the list, the
+repeat block is called with the next argument in line. See also .IRPC,
+.MEXIT, .REXIT and .MACRO and chapter 3.
+ 
+2.29)	.IRPC
+
+Identical to the .IRP except the dummy argument is successively 
+replaced with each character in the argument list. The argument list in 
+this instance is treated as a single string delimited with the <>'s.
+Example:
+
+	.IRPC xx,<any_string_of_chars>
+	.byte ''xx
+	.endr
+
+would expand to a .BYTE directive for each character in the string
+"any_string_of_chars". See also .IRP, .MEXIT, .REXIT and .MACRO and
+chapter 3.
+
+2.30)	.LENGTH
+
+The .LENGTH directive sets the significant length of symbols and/or
+opcode/pseudo-op/macro names. It is recommended that the length be
+selected on the command line rather than with this pseudo-op since
+changing the significant number of characters during the assembly
+may make previously defined symbols and/or macros inaccessible.
+
+The syntax is:
+
+	.LENGTH arg=n[,...]
+
+where n is a value between 6 and 32 inclusive and arg is one of
+the words SYMBOL or OPCODE. SYMBOL represents the lengths of user
+defined symbols and labels and OPCODE represents the 
+opcodes, pseudo-ops and macro names.
+
+2.31)	.LIMIT
+
+Inserts the image's low memory address and high memory address after
+being relocated (i.e. the values are computed by LLF). These values
+are 16 bit quantities for MAC65 and 32 bit quantities for MAC68K and
+MACAS. This directive is not available in MACPP.
+
+The syntax is:
+
+	.LIMIT
+
+It reserves 4 bytes in MAC65 and 8 bytes in MAC68K and MACAS.
+
+NOTE: This option is not available in recent macxx versions.
+
+2.32)	.LIST
+	.NLIST
+
+Listing control options can be specified via the directives .LIST
+(enable) and .NLIST (disable). The syntax is:
+
+	.LIST arg
+	.NLIST arg
+
+where arg represents 0, one or more arguments separated by commas. When
+used without arguments, the listing directives alter the listing level
+count. The listing level count causes the listing to be suppressed when
+less than 0, all items to be listed when greater than 0 and individual
+listing item controls operate when the level count equals 0. The listing
+level count is initialized to 0 at the start of the assembly,
+incremented for each .LIST (without an argument) and decremented for
+each .NLIST (without an argument). The allowable arguments, their
+function and the default values are as follows: 
+
+Argument	Default		Function
+--------	-------		--------
+BIN		list		list/nlist generated binary code
+BEX		list		list/nlist generated binary code
+					that overflows a single line
+CND		no list		list/nlist the text in unsatisfied
+					conditional blocks.
+COD		no list		list/nlist the generated binary code
+					"as stored" in the object file
+					rather than "as used". See more
+					details in the examples.
+COM		list		list/nlist comments
+LD		no list		list/nlist listing directives that have
+					no arguments.
+LOC		list		list/nlist the current location counter (pc).
+MC		list		list/nlist macro calls.
+MD		list		list/nlist macro definitions
+ME		no list		list/nlist macro expansions
+MEB		no list		list/nlist only lines in macro expansions that
+					generate binary.
+MES		no list		list/nlist source on line of macro expansion
+					that generates binary.
+SEQ		list		list/nlist the statement sequence number
+SRC		list		list/nlist the source code.
+SYM		list		list/nlist the symbol table at the end of
+					the assembly listing
+
+There is a special case in the use of MEB and MES which will cause the
+binary generated by a macro to appear on the same line as the macro
+call. This option is selected with the combination of .LIST MEB and
+.NLIST MES.
+
+Examples:
+
+	.LIST			;increments the list level
+	.LIST MEB		;list lines in macro expansion that
+				;   generate code.
+	.NLIST MES		;but don't list the source of the macro
+				;   expansions.
+	.LIST COD		;causes the binary to be displayed "as
+				;   stored" rather than "as used". This
+				;   option is significant only on little
+				;   endian machines (6502, ASAP). i.e.:
+	.WORD 0x1234		;binary displayed as 1234 if .NLIST COD
+				;  "       "      "  3412 if .LIST COD on
+				;		little endian machine
+	.LIST ME,CND,SRC,SYM	;multiple arguments can be specified
+
+2.33)	.LONG	Constant storage directives
+	.BYTE
+	.WORD
+	DC.B	(same as .BYTE)
+	DC.W	(same as .WORD)
+	DC.L	(same as .LONG)
+
+Syntax:
+
+	directive	expression [[,]...]
+
+See .BYTE (2.0.6) for details.
+
+2.35)	.MACRO
+
+This is the first statement in a macro definition. Putting a label on a
+.MACRO directive may prove misleading, however, the value assigned to
+the label will be whatever the current location counter is set to (as
+with any other label) without regard to anything in the macro
+definition. Macro definitions do not move the location counter nor do
+they affect the local symbol blocks. The syntax is of the form: 
+
+	.MACRO macro_name [,] dummy_argument_list	[;comments]
+
+where: 
+
+"macro_name" is the name of the macro which is any legal symbol and is
+what is used to subsequently call the macro. The macro name is inserted
+in the opcode symbol table which is separate and distinct from the user
+symbol table and means the macro name can be the same as a symbol or
+label without conflict. 
+
+"dummy_argument_list" is zero, one or more legal symbols which may
+appear anywhere in body of the macro definition. These symbols are only
+significant during the macro definition (i.e. they are simply place
+markers) and as such will not conflict with like named symbols anywhere
+else in the assembly text. The macro_name and dummy_arguments must be
+separated from one another by commas or white space. No syntax checking
+is done on the body of the macro until the macro is called. Tokens
+appearing in the macro body are separated and inspected to see if they
+match one of the dummy arguments and, if so, replaced with a marker
+indicating an argument number. When the macro is called, the argument(s)
+on the macro call are inserted into the macro body at the appropriate
+places according to the identifying markers. 
+
+See chapter 3 for more details and examples about the use of macros.
+
+2.36)	.MCALL
+
+Calls a macro from the macro library. The syntax is:
+
+	.MCALL macro_name[,...]
+
+where macro_name is the name of the macro which is to be extracted from
+the macro library. At least one .MACLIB directive must have been used
+previously to indicate the path to the library.
+
+NOTE: .MCALL and .MACLIB are not available in recent versions of macxx.
+
+2.38)	.MEXIT 
+
+The .MEXIT directive is an implementation of an alternate exit from a
+macro or repeat block. Upon encountering a .MEXIT directive during a
+macro expansion (not during a macro definition), the macro is
+immediately terminated as though it were an .ENDM. This is particularly
+useful in complex conditional structures in that it is a functional
+equivalent to a "goto end_of_macro". The general syntax is: 
+
+	.MEXIT [expression]
+
+The expression is optional but, if present, must resolve to an absolute
+value and it indicates how many macro levels to exit. The effect of the 
+.MEXIT is different between ordinary macros and repeat blocks. If the 
+expression argument is blank then the behavior is according to the 
+following truth table:
+
+	Macro
+	type		Action
+	----		-------
+	ordinary	macro is exited
+	repeat block	block is exited and the repeat count is 
+			decremented or the next argument selected;
+			block will be re-executed if the repeat
+			count remains greater than 0 or argument
+			list has not been exhausted.
+
+If the expression is present and it resolves to a value less than 0 then
+the .MEXIT is ignored. If the expression resolves to a value greater than 0,
+then that value is used as a count of the number of macro levels to exit.
+A repeat block is considered 1 macro level regardless of its count or
+argument list size. Therefore, a ".MEXIT 1" in a repeat block will exit
+the block and terminate it as though the count reached 0 or the argument
+list had become exhausted. 
+
+If the expression resolves to a value of 0 then the exit behaves according
+to the following truth table:
+
+	Macro
+	type		Action
+	----		-------
+	ordinary	.MEXIT is ignored
+	repeat block	block is exited and the repeat count is 
+			reduced or the next argument selected;
+			block will be re-executed if the repeat
+			count remains greater than 0 or argument
+			list has not been exhausted.
+
+The current condition levels (as created by .IF/.ENDC directives)
+are saved and reset to 0 when each macro is called. They are restored
+when the macro exits. The condition levels will be restored correctly
+regardless of how many macro levels are exited.
+
+Some examples:
+
+	.MACRO TST ARG_LIST
+	.IF FALSE, expression
+	...
+	.ERROR 	;Report some kind of problem
+	.MEXIT	;and skip the rest of the macro
+	...
+	.ENDC
+	...
+	.ENDM
+
+	.IRP XX,<ARG_LIST>
+	.IF BLANK, <XX>
+	.MEXIT	;don't do anything if argument is blank,
+		;but continue with next argument in list
+	.ENDC
+	...
+	.IF TRUE, expression
+	.ERROR	 ;found some kind of problem
+	.MEXIT 1 ;so don't continue the repeat block
+	.ENDC
+	...
+	.ENDR
+
+	.MACRO RECURS ARG_LIST
+	.IF TRUE, expression
+	RECURS NEW_ARG_LIST
+	.IFF
+	.IF FALSE, expression
+	.ERROR	;Maybe something terrible, or the macro did all it
+		;was supposed to do, so...
+	.MEXIT 100000	;Bump all the way out to the top level
+	.ENDC
+	...
+	.ENDC
+	.ENDM
+
+2.39)	.MDELETE
+
+Deletes macros from memory and frees all the memory associated with the
+macro. The syntax is:
+
+	.MDELETE macro_name[,...]
+
+where macro_name is one or more macro names separated by commas.
+
+2.40)	.NARG
+
+Gets the number of arguments passed to a macro. The syntax is
+
+	.NARG symbol
+
+where symbol is the name of a symbol that is assigned a value equal to 
+the number of arguments in the macro call. If this directive is used 
+outside a macro, the symbol will be assigned a value of 0.
+
+The number of arguments in a  .REPT block is always 0. The number of
+arguments in a .IRP or .IRPC can be 0 or 1 but never more than 1. The
+symbol needn't have been used before, but it must be eligible for
+redefinition.
+
+2.41)	.NCHR
+
+Gets the number of characters in a character string and assigns the 
+length to a symbol. The syntax is:
+
+	.NCHR symbol [,] string
+
+where symbol is assigned a value equal to the number of characters in
+string. The string must be enclosed between macro argument delimiters
+(normally <>'s) if the string contains semicolons, leading commas or
+white space. The symbol needn't have been used before, but it must be
+eligible for redefinition. 
+
+Some examples:
+
+	.MACRO ascic string
+	.nchr length,<string>
+	.byte length
+	.ascii \string\
+	.endm
+
+	ascic <Hello World>
+
+2.42)	.NLIST
+
+Decrements the listing level or disables certain list options. See 
+.LIST for details.
+
+2.43)	.NOCROSS
+
+Disables cross referencing for the specified symbols. Could be used, for
+example, to turn off cross referencing for symbols that are used
+extensively throughout the assembly code such as might happen for
+symbols used as temporary variables in macros.
+
+The general format is:
+
+	.NOCROSS symbol[,...]
+
+where symbol is one or more symbols that are not to included in the 
+cross reference listing. Example:
+
+	.NOCROSS FRED,FOOBAR,...1,...2
+
+NOTE: CROSS and NOCROSS options are not available in recent macxx versions.
+
+2.44)	.ODD
+
+This directive forces the current location counter to the next higher
+odd value. Note that the PSECT attributes of the current program
+section must enforce a section alignment of at least 1 (word alignment)
+in order for this directive to really do what is desired. If the psect
+attributes do not enforce at least a word alignment, then the section
+may not be located on an even address by LLF (which will make the
+effect of the .ODD to become a .EVEN). A warning will be displayed by
+the assembler if this condition is present. This directive neither 
+requires nor accepts any arguments. See .EVEN and .ALIGN for additional 
+alignment options.
+
+2.45)	.PAGE
+
+Inserts a form feed in the listing file. The .PAGE directive itself is 
+not printed. A .PAGE in a macro definition is ignored until the macro 
+is called. The directive requires nor accepts any arguments.
+
+2.46)	.POP
+
+Restores the values of symbol(s) from the specified stack. The format is:
+
+	.POP stack_name [,] symbol [,...]
+
+where stack_name is the name of a stack declared in a .DEFSTACK
+directive and symbol is the symbol whose value is to be restored from
+the top of this stack. The symbol must eligible for redefinition. 
+If the stack is a byte stack then only the least significant 8 bits of
+the symbol's value will be changed. If the stack is a word stack then
+only the least significant 16 bits of the symbol's value will be 
+changed. The stack pointer will be post-incremented by one for each
+symbol popped. 
+
+Examples:
+
+	.DEFSTACK TEMP,100		;make temp array of longs
+	.PUSH TEMP,FRED,100,FOOBAR	;save 100, FRED and FOOBAR 
+	.POP TEMP,FIBER,FOOBAR,TMP	;restore 
+	.DEFSTACK BYT,10,BYTE		;make a byte stack
+FRED = 0x12345600
+	.PUSH BYT,0xFF			;put something on the stack
+	.POP BYT,FRED			;FRED will contain 0x123456FF
+
+NOTE: These stack options are not available in recent macxx versions.
+
+2.47)	.PRINT
+
+Puts a message in the listing file and on standard error (normally the
+console). The syntax is:
+
+	.PRINT [expression] [;message]
+
+The optional expression must resolve to an absolute value. The message 
+is actually the comment to the directive so it must be preceded with a 
+semicolon. Examples:
+
+	.PRINT  foobar/2	;foobar is too big
+	.PRINT ;some kind of informational message
+	
+NOTE: .PRINT is not available in recent versions of macxx.
+
+2.48)	.PSECT
+
+This directive defines the name and attributes of a program section
+and sets the current location to that section.
+
+The general form is:
+
+	.PSECT name[,argument...]
+
+where name is the name of the section and argument is a list of 0 or 
+more attributes to be assigned to the section. The attributes, their 
+meaning and default values are as follows:
+
+	Argument	Meaning
+	--------	-------
+	ABS		Absolute
+	REL		Relocatable
+	CON		Concatenate
+	OVR		Overlay
+	BASE		Base (Zero) page (MAC65 only)
+	OUT		Output text to object file
+	NOOUT		Don't output text to object file
+	RO		Read only section
+	RW		Read write section
+	DATA=n		Data alignment within section
+	SEGMENT=n	Segment alignment
+	MAX_LENGTH=n	Maximum length allowed for section
+
+Absolute and relocatable are terms that describe how the section is 
+placed in the target memory by LLF. If the section is absolute, then 
+the text and labels are fixed at a specific memory location by the 
+assembler and as such will be placed in the target memory at that same 
+location. LLF will not "move" or "relocate" the section somewhere else.
+If the section is relocatable, however, then the text and labels are 
+not fixed at a specific memory location at assembly time and enough 
+information is passed through to LLF so it can re-position the section 
+to an appropriate place in the target memory and adjust the values of
+the labels accordingly. A section can be either absolute or relocatable 
+but not both. The default for all assemblers is REL.
+
+Concatenate and overlay are terms that describe how sections having the
+same name are handled by LLF. If a section is declared as CON, LLF will
+collect all sections having that section's name together appending one
+to the other forming one large section the size of which will be the sum
+of the sizes of each of the members. If a section is declared as OVR,
+LLF will collect all sections having that section's name and overlay one
+on top of another creating one section whose size is the size of the
+largest of the member. A section can be either CON or OVR but not both.
+The default for all assemblers is CON. 
+
+A section can be declared as being a BASE page in MAC65. This tells the
+assembler that even though the section might be relocatable, all
+automatic address mode references to labels defined in this section be
+done with zero page addressing mode. The default is not BASE.
+
+A section may declared as a "memory place holder". That is text may be 
+put in the section and labels may be defined in the section, but the 
+assembler shouldn't output the text to the object file. This kind of 
+section might be for some device registers or scratch ram located in 
+the target system memory space. The OUT and NOOUT arguments select 
+whether or not the text is placed in the object file. The default for
+all assemblers is OUT. Label definitions are not affected by this 
+argument. 
+
+A section may be declared as read-only and read-write on some target 
+systems. The RO and RW arguments identify the section as read-only or
+read-write respectively. A section can be only RO or RW but not both.
+The default for all assemblers is RW. This information is not used by 
+the assembler, it is merely passed through to LLF which may choose to 
+ignore it too or pass it through to an image loader.
+
+The text that is placed in a section may have certain alignment 
+constraints. For example, the 680x0 must have words and longwords 
+aligned on even byte boundaries and ASAP must have everything except 
+bytes aligned on longword boundaries. The assembler can notify the 
+programmer if these alignment rules are not followed as well as fixing 
+the alignments when so instructed. In order to do this, the alignment 
+rules must be established ahead of time. This is done with the DATA and
+SEGMENT arguments. Each takes an expression which must resolve to a 
+value between 0 and 31 corresponding to a power of two that represents 
+the alignment. The SEGMENT value is used by LLF to position the entire 
+section on an appropriate boundary and DATA is used by the assembler to 
+position text within the section appropriately. The alignment value for 
+SEGMENT must be greater than or equal to the alignment value for DATA.
+(If not, then LLF could align the section to a boundary which may 
+violate the required DATA alignment). The defaults are as follows:
+MAC65: DATA=0,SEGMENT=0; MAC68K: DATA=1,SEGMENT=1; MACAS: DATA=2,
+SEGMENT=2.
+
+The maximum length to which a section may grow may also be specified.
+The assembler will check that the section does not exceed this limit as
+well as passing the maximum length along to LLF which will use it to
+verify that the length is not exceeded after all like named sections are
+merged together. The argument MAX_LENGTH=n sets this value where n is an
+expression resolving to an absolute value indicating the maximum length
+in bytes of the named section. The default for all assemblers is no
+maximum. Base pages in MAC65 inherit a maximum length of 255. 
+
+The first time a .PSECT directive is encountered with a unique name, it
+creates the named section and sets all the attributes for that section.
+Subsequent occurrences of a .PSECT directive for a given section name
+cannot change any of the attributes. As a result, sections should be
+defined early in the assembly and referenced thereafter with a ".PSECT
+section_name" without any arguments. 
+
+There are two pre-defined sections: .REL. and .ABS. for the "unnamed"
+relocatable section and the absolute section respectively. The location
+counter is initialized to the start of the .REL. section. One can use
+a .PSECT directive with no name or arguments to set the location 
+counter to the unnamed program section or use a .PSECT .REL..
+
+Each section has it own private location counter which is initialized to
+the beginning of the section (offset 0). The location counter is
+incremented as text is placed in the section or otherwise moved with
+pseudo-ops. When a .PSECT directive is encountered, the current location
+counter is saved with the previous section statistics and the location
+counter last used in the new section becomes the current location
+counter. 
+
+LLF will complain if like named psects in different modules don't have
+EXACTLY the same attributes.
+
+Examples:
+
+	.PSECT A,ABS,MAX=16	;section A is absolute
+	.PSECT R,REL,OVR	;section R is relocatable and overlayed
+	.PSECT IMPURE		;defaults to REL,CON,RW
+	.PSECT PURE,RO		;make read-only section
+	.PSECT PAGE,DATA=3,SEG=9 ;align section to 512 byte, data to 8 byte
+	.word test,...		;put in some text
+	.PSECT IMPURE		;change sections
+	.word text,...		;put text in different section
+	.PSECT PAGE		;change back to old section
+
+2.49)	.PUSH
+
+Pushes values of expression(s) to the specified stack. The format is:
+
+	.PUSH stack_name [,] expression [,...]
+
+where stack_name is the name of a stack as declared in a previous
+.DEFSTACK directive and expression resolves to a value that is pushed to
+the top of the stack. If the stack is other than a RELATIVE stack, the
+expression must resolve to an absolute value. 
+
+The stack pointer will be pre-decremented by one for each expression
+pushed.
+
+Examples:
+
+	.DEFSTACK TEMP,100		;make temp array of longs
+	.PUSH TEMP,FRED,100,FOOBAR	;save 100, FRED and FOOBAR 
+	
+NOTE: These stack options are not available in recent macxx versions.
+
+2.50)	.PUTPOINTER
+
+Sets the stack pointer of the named stack to a given value. The syntax 
+is:
+
+	.PUTPOINTER stack_name,expression
+
+where stack_name is the name of the stack as defined in a .DEFSTACK 
+directive and expression resolves to an absolute value between 0 and 
+the size of the stack in elements. The internal stack pointer takes on 
+the new value if the expression data is valid. Example:
+
+	.PUTPOINTER my_stack ,100	;reset stack pointer
+
+NOTE: These stack options are not available in recent macxx versions.
+
+2.51)	.RADIX
+
+Numbers expressed in the assembly source are assumed to be hexadecimal. 
+The global radix can, however, be changed. This is done by:
+
+	.RADIX expression
+
+where expression resolves to an absolute value of one of 2, 8, 10 or 16
+for binary, octal, decimal or hexadecimal respectively. The radix is
+temporarily changed to decimal before the expression is evaluated. If
+the expression resolves to an unacceptable value, the global radix is
+not changed. For example: 
+
+	.RADIX 10 	;changes radix to decimal regardless of what
+		  	;it was before
+	.RADIX 16	;change radix to hex
+OLD_RADIX = 10		;saves current value of global radix
+	.RADIX NEW_VALUE ;set it to a new value
+	.RADIX OLD_RADIX ;restore the old value
+
+2.53)	.REPT
+
+The .REPT directive defines an indefinite repeat block, which is simply
+a macro definition with no arguments followed with an immediate and
+automatic macro call (see details about macros in chapter 3). The macro
+is expanded if the count is greater than 0 and the count is decremented
+with each iteration. The syntax of an indefinite repeat block is: 
+
+	.REPT count
+	macro_body
+	.ENDR
+
+where count is an expression that resolves to an absolute value
+representing the number of times the macro_body is to be expanded and
+macro_body is zero or more lines of assembly code constructed with the
+same rules as for a macro definition. Indefinite repeat blocks may be
+used anywhere a macro may be used. The count is tested at the top of 
+each loop and, if greater than 0, the macro_body is executed and the
+count is decremented. A .MEXIT or .REXIT executed in the macro_body
+will force the repeat block to skip to the end. A .MEXIT 1 (or more)
+will force the repeat block to exit completely. Examples: 
+
+tmp = 0
+	.REPT 16.
+	.byte tmp+0,tmp+1,tmp+2,tmp+3
+tmp = tmp + 4
+	.endr
+
+would output 64 bytes (16*4) whose values would range from 0 to 63.
+
+2.540)	.RESTORE
+
+Restores the location counter and local symbol block from a previous 
+.SAVE directive. The general form is:
+
+	.RESTORE
+
+See .SAVE for additional details.
+
+2.54)	.REXIT
+
+The .REXIT directive is an implementation of an alternate exit from a
+repeat block (.IRP, .IRPC or .REPT). Upon encountering a .REXIT
+directive during a repeat block expansion (not during a definition), the
+repeat block is immediately terminated as though it were an .ENDR. This
+is particularly useful in complex conditional structures in that it is a
+functional equivalent to a "goto end_of_repeat_block". This directive is
+ignored outside a macro or repeat block. The general form is: 
+
+	.REXIT
+
+2.55)	.SAVE
+
+The .SAVE directive saves the current program section context and local 
+symbol block details on an internal stack. The internal stack is 32
+elements deep. This directive can be used whenever one wants to change
+program sections but needs to be able to restore the section without 
+knowing the name of the current section. This is the most useful in
+macros. For example:
+
+	.MACRO SAY MSG	;general message macro
+	.SAVE		;save the current location counter/section
+	.PSECT ASCII	;switch to section ASCII
+...1 = .		;get location of text message
+	.ASCIZ \MSG\	;insert message in the ASCII section
+	.RESTORE	;back to main section (whatever that is)
+	.PRINT #...1	;display message
+	.ENDM
+
+	SAY <This is a test of the .SAVE directive> ;say message
+
+The local symbol block is saved as well. Even though a new local symbol
+block would be opened if there's an intervening label or the program
+section is changed, when the .RESTORE is encountered, the original local
+symbol block is also restored. For example: 
+
+	10$:			;mark the start
+		.SAVE		;save the current loc and lsb
+		.PSECT T	;change sections
+	10$:			;this is a different lsb, since the
+				;   section changed
+		.RESTORE	;restore section
+		.WORD 10$	;references the FIRST 10$ since the
+				;   lsb is restored as well as the
+				;      location counter
+
+Beware of .SAVE'ing the current section and not doing a .PSECT to a
+DIFFERENT section before adding code or data then doing a .RESTORE
+since that has the effect of moving the location counter backwards.
+For example:
+
+		.PSECT CODE	;say we're in the code section
+	FRED:	.SAVE		;save location of FRED
+		.PSECT CODE	;this is a no-op since we're already
+				;  in section CODE
+		.WORD 1,2,3	;inserting TEXT
+		.RESTORE	;resets location counter back to FRED
+		.WORD 4,5,6	;will overwrite the 1,2,3 above
+
+2.56)	.SBTTL
+	.SUBTITLE
+
+Establishes a string to use as a subtitle which is placed on the second
+line of each page in the listing. The first line of each page in the
+listing file contains the title line. The text is for information only
+and is not used by the assembler. This directive is ignored if no
+listing file is being created. The format is: 
+
+	.SBTTL text_of_subtitle_message	[;comments]
+
+2.57)	.TEST
+
+The .TEST directive allows you to pass an expression to LLF to evaluate and
+report an error if the condition is true. If the expression can be evaluated by
+the assembler (i.e. no complex terms) and it evaluates true (true = not zero),
+then the assembler will report the error. This function is much more useful in
+MACAS, MACPP and MAC68K since those assemblers have relational operators (eq,lt,
+gt, etc), however, it is built in to the core assembler so you have it if you
+can use it. The syntax is:
+
+    .TEST expression	;message to be reported if expression is true
+    			^ note the semicolon is required
+
+where "expression" is the expression to evaluate or pass to LLF and the 
+comments are the text of the error message to be displayed if the 
+expression resolves to TRUE (non-zero). Example:
+
+	.GLOBL  TEMP	;declare an external variable
+	.TEST !(TEMP>0 && TEMP<0x10) ;PROG: TEMP should be 0-0x0F
+
+In this example since TEMP is a global symbol, the expression will be
+evaluated by LLF. The comment field is the text of the message 
+displayed if the expression evaluates true, so the comment should have 
+meaningful information in it such as the program name and/or variable(s)
+involved, etc.
+
+2.58)	.TITLE
+
+Establishes a string to use as the program title which is placed on the 
+first line of each page in the listing. The text is for information 
+only and is not used by the assembler. This directive is ignored if no
+listing file is being created. The format is: 
+
+	.TITLE text_of_title_message	[;comments]
+
+2.585)	.UNDEFINE
+
+The .UNDEFINE directive removes the assignment of a previously 
+.DEFINE'd symbol or, optionally, all previously .DEFINE'd symbols. The 
+general form is:
+
+	.UNDEFINE [symbol]
+
+where symbol represents the symbol to undefine. No error is displayed if
+the symbol has not previously been .DEFINED. If no symbol name is
+supplied, then all symbols previously .DEFINE'd will be de-assigned.
+Example:
+
+	.DEFINE FRED A+B	;assign string to FRED
+	.WORD FRED		;use FRED
+	.UNDEFINE FRED		;deassign FRED
+	.UNDEFINE 		;deassign all symbols
+
+2.59)	.VCTRS
+
+This is a short cut directive to allow one to insert 16 bit words at a 
+specified non-relocatable location in the target memory. This 
+directive is not recommended for any assembler except MAC65 where it
+may be used in simple applications. It exists mainly to insert the 
+program vector table for the 6502 at 0xFFFx without the overhead of 
+establishing a program section and having LLF position it accordingly.
+The general form is:
+
+	.VCTRS address [,] data [, ...]
+
+where address is an expression resolving to an absolute value 
+representing where the first byte of data should be placed and data is 
+0 or more expressions (which may be relocatable) which will placed in 
+the target memory as 16 bit words. The data expressions are interpreted 
+exactly the same as they would be on a .WORD directive. The directive 
+functions as though the following separate statements were executed:
+
+	.SAVE		;save current location counter
+	.PSECT .ABS.	;switch to the absolute section
+	.=address	;set the location counter to the desired value
+	.WORD data,...	;insert the data
+	.RESTORE	;restore the previous location counter
+
+with the exception that the size of the .ABS. section is not changed to
+reflect the event.
+
+An example:
+
+	.VCTRS 0xFFF8,FIRQ,NMI,RESET,IRQ
+
+2.60)	.WARN
+
+This directive generates a warning and computes and displays the value 
+of the optional expression. It is useful if included in macros or 
+conditionals to force a warning if desired conditions are not met.
+Being that it generates a warning, the whole statement will be displayed
+in the list file and on standard error, so the comments can best be
+used to describe the reason for the error. The form is:
+
+	.WARN [[expression] [;comments]]
+
+2.61)	.WORD Constant storage directives
+	DC.W	(same as .WORD)
+
+Places one or more 16 bit words in the object file.
+
+Syntax:
+
+	directive	expression [[,]...]
+
+See .BYTE (2.0.6) for additional details.
+
+			Chapter 3 - Macros
+
+3.0) Macros
+
+Macros are a mechanism whereby a user can have several lines of
+assembly code envoked with a single statement. This is done by defining 
+a macro as a series of one or more assembler statements and giving
+the macro a name. The name of the macro is inserted in the opcode
+symbol table so when that name is used as an opcode, the assembler
+will insert the line(s) of code making up the definition into the 
+source sequence. It is similar in concept to an "in-line subroutine". 
+As in a subroutine, the macro system also allows for the passing of
+arguments. When a macro is defined, a list of arguments is identified
+by name each of which will be replaced by a corresponding argument 
+occupying the same relative position on the macro call as on the macro 
+definition. Typically the arguments are treated as strings and inserted 
+into the expanded macro code at the appropriate place(s), however, the 
+argument may also be passed as a value or as an automatically generated 
+symbol. In addition, the arguments may be declared to inherit default 
+values should they be omitted on the macro call and/or the arguments 
+may be set by keyword value rather than by placement.
+
+3.1) Macro definitions
+
+General macros are defined with the .MACRO directive and the special 
+case repeat block macros are defined with the .IRP, .IRPC and .REPT 
+directives. The form of a .MACRO definition is:
+
+	.MACRO name [,] dummy_argument_list [;comment]
+	macro_body
+	.ENDM
+
+where:
+
+	name is the name of the macro. It is inserted in the opcode
+		symbol table so will be called up when the name is
+		used in the opcode field of an assembler statement.
+	dummy_argument_list is a list of zero or more legal assembler
+		symbols separated with white space or commas which
+		may appear anywhere in the macro_body.
+	macro_body is any number of assembler statements.
+
+Macro names replace whatever is in the opcode symbol table, so one can
+use macros to redefine opcodes. Deleting a macro that replaced an opcode
+causes the old opcode to be restored.
+
+The symbols appearing in the dummy argument list only mark places in the
+macro_body where the corresponding argument on the macro call should be
+placed. They do not have any relation to other symbols or labels or
+dummy arguments in other macros (unless it's a nested macro definition)
+so do not have to be unique in that respect. You may decide to choose a 
+name for a dummy argument that has something to do with its function 
+which would make it a bit easier to use the "pass argument by keyword"
+feature (described later).
+
+The macro body is checked only for .MACRO, .IRP, .IRPC, .REPT, .ENDR
+and .ENDM directives in the opcode field and the presence of dummy
+arguments anywhere in the macro body. No syntax checking is done at 
+all on any data in the macro until the macro is called. As a result,
+DO NOT use the symbols .MACRO, .ENDM, .ENDR, .REPT, .IRP and .IRPC as
+dummy argument names. 
+
+Macro definitions may be nested. That is to say a macro may be created 
+to create other macros which may create other macros etc. to any depth.
+The inner macros, however, won't be defined until the outer macros are
+called.
+
+3.2) Macro definition argument syntax
+
+Dummy arguments appearing on the .MACRO directive are separated from 
+one another and the macro name by commas or white space.
+
+Dummy arguments appearing in the macro body are delimited by any
+character not legal for a symbol or label. If the dummy argument appears
+embedded within or connected to an otherwise legal symbol or label, it
+will not be recognized as a dummy argument. If one desires to cause the
+argument to be prefixed, appended or inserted in the middle of an
+otherwise legal symbol name, the dummy argument may be separated from
+the non-argument text (of any kind) with an apostrophe. The apostrophe(s)
+will be stripped and the argument substitution will occur with no other
+surrounding characters changed. If an apostrophe is required to remain
+in the substituted text, you will need to have two of them. For example: 
+
+	.MACRO TST ARG1
+	ARG1			;no apostrophes required
+	PRE+ARG1+POST		;here either
+	PRE'ARG1'POST		;if called with TST T, expands to PRETPOST
+	'ARG1'POST		;leading apostrophe is optional
+	PRE'ARG1'		;trailing apostrophe is optional
+	''ARG1'AFTER		;if called with TST T, expands to 'TAFTER
+	'FOOBAR'		;apostrophes are only removed when
+				;   surrounding dummy arguments.
+				;   So a TST T expands to 'FOOBAR'.
+	.ENDM
+
+There is an optional feature with dummy arguments that instructs the
+assembler to assign a default string to that argument if the macro is
+called with the given argument blank. This is done by putting the
+default string following an equal sign appended to the dummy argument on
+the .MACRO statement. If the default string contains commas or spaces,
+it can be enclosed in macro argument delimiters (normally <>'s). For
+example: 
+
+	.MACRO FRED ARG1,ARG2,ARG3=0x1000,ARG4=<1,2,3>
+	ARG1 ARG2,ARG3 <ARG4>
+	.ENDM
+
+defines the macro FRED with 4 arguments. The dummy arguments ARG1, ARG2,
+ARG3 and ARG4 will be replaced with corresponding arguments when FRED is
+called. If ARG3 is left blank on the call, the string 0x1000 will be
+used. If ARG4 is left blank on the call, the string "1,2,3" will be
+used. Using the above defined macro: 
+
+	Call			Expands to
+	---------------------	------------------------
+	FRED ONE TWO THREE	ONE TWO,THREE <1,2,3>
+	FRED ONE TWO,,FOO	ONE TWO,0x1000 <FOO>
+	FRED ONE TWO		ONE TWO,0x1000 <1,2,3>
+	FRED ONE		ONE ,0x1000 <1,2,3>
+	FRED			,0x1000 <1,2,3>
+
+There is one special type of dummy argument that is identified with a
+leading question mark. This indicates that, when the macro is called and
+the argument is left blank, the dummy argument should be replaced with
+an automatically generated local symbol. These automatically generated
+local symbols are numbered starting with 65000$. Note that the symbol
+does not automatically become a label. You need to use the argument as a
+label somewhere in the macro body in order for the local symbol to
+become a local label. No default value may be assigned to an argument of
+this type. For example: 
+
+	.MACRO MAKSYM SOMETHING,?OPT_LABEL
+	...
+OPT_LABEL: 
+	SOMETHING
+	...
+	.ENDM
+
+	Call			Expands to
+	--------------		-----------
+	MAKSYM FRED		65000$:	FRED
+	MAKSYM FOOBAR		65001$:	FOOBAR
+	MAKSYM NOP,MY_LABEL	MY_LABEL: NOP
+
+There are a maximum of 124 arguments allowed in a macro definition.
+
+The only pseudo-ops recognized in the macro body are other macro
+definition directives (.MACRO, .IRP, .IRPC and .REPT) and the macro
+termination directives .ENDM and .ENDR. Macro definitions may be nested,
+therefore there must be a matching terminator (.ENDR or .ENDM) for each
+macro definition directive. The outer most termination completes the
+definition. Macros are always stored in memory as are symbols and the
+intermediate object file (if /WORK_FILE is not selected on the command
+line) so they will be limited in size and quantity to the amount of memory
+available to the assembler. If a macro is defined that has the same name
+as a previously defined macro, the old one is deleted from memory and
+replaced with the new one.
+
+3.3) Macro calls
+
+A macro must be defined prior to its first reference. Macro calls are of
+the general form:
+
+	[label:]  name [real_arguments]	[;comments]
+
+where:
+	"label" represents an optional label.
+	"name" represents the name of the macro as specified as the
+		first argument on the .MACRO directive
+	"real_arguments" are those symbols, expressions, and values
+		which replace the dummy arguments as described in the
+		.MACRO directive separated by commas or white space.
+
+Arguments to a macro call are treated as character strings whose usage
+is determined by the statements appearing in the macro definition with
+one exception as described below. If white space or commas appear in a
+macro argument, the argument must be enclosed between a pair of macro
+argument delimiters (normally <>'s). For example given the macro FRED:
+
+	.MACRO FRED ARG1,ARG2,ARG3=0x1000
+	ARG1 ARG2,ARG3
+	.ENDM
+
+the call of:
+
+	FRED <.WORD ONE,TWO>,THREE,FOUR
+
+expands to
+
+	.WORD ONE,TWO THREE,FOUR 
+
+The up-arrow construct may be used to change the argument delimiters
+locally if desired. For example the following is equivalent to the
+example above:
+
+	FRED ^\.WORD ONE,TWO\,THREE,FOUR
+
+3.4) Macro call arguments
+
+Arguments on a macro call are separated from other arguments by commas
+or white space. Arguments which contain commas or white space must be
+enclosed in paired macro delimiters (normally <>'s). An up-arrow
+construct may be used to change the delimiter characters on an
+individual argument. This would be useful if the argument contains
+argument delimiter characters itself. For example, given the macro
+definition: 
+
+	.MACRO FOO ARG1 ARG2
+	ARG1 ARG2
+	.ENDM
+
+One could call it with:
+
+	FOO <ADD #24,> ANSWER	;or
+	FOO ^/ADD #24,/ ANSWER	;the equivalent call
+
+which would expand to:
+
+	ADD #24, ANSWER
+
+The macro argument delimiters are removed from the argument as the
+dummy argument substitution is made. As noted above, the <>'s and the
+^//'s do not appear in the final expansion. This should be particularly
+significant during macro nesting. For example, one could recursively
+call the macro FOO as defined above with:
+
+	FOO <FOO <ADD #24,>> ANSWER
+expands to:
+	FOO <ADD #24,> ANSWER
+and that expands to:
+	ADD #24, ANSWER
+
+Note that with each expansion, one level of <>'s have been removed 
+from  the argument.
+
+Arguments are normally delivered to macros by placement. That is, the
+first argument after the name on a macro call replaces the first dummy
+argument in the macro body. The second replaces the second dummy
+argument, etc. Arguments may also be delivered to a macro in a macro
+call by way of keywords. That is, an argument may be identified by its
+dummy argument name instead of by placement. This is done by prefixing
+the real argument value with the dummy argument name followed by an
+equal sign. All the arguments that are identified by keywords are
+assigned first. Then, if there are any additional arguments, they are
+assigned positionally to any dummy arguments that haven't yet been
+assigned. For example, given the macro definition: 
+
+	.MACRO FOOBAR A,B,C,X,Y,Z
+	.WORD A,B,C,X,Y,Z
+	.ENDM
+
+The macro call:
+
+	FOOBAR 1,2,3,4,X=5,A=6
+
+expands to
+	      _________________ Dummy argument A gets value "6"
+	      |     ___________ Dummy argument X gets value "5"
+	      |	    |
+	      v     v
+	.WORD 6,1,2,5,3,4
+		^ ^   ^ ^
+		L_L___L_L______ Other arguments get what's left in order
+
+Normally, arguments on a macro call are treated as simple strings and
+substituted for dummy arguments unchanged into the macro body. There is
+one special type of macro call argument which can be used which is a
+pass by value. In this case the argument must be an expression that
+resolves to an absolute value and the expression is must be prefixed
+with a backslash character (\). With this construct, the expression is 
+evaluated and the value is converted to ASCII in the current default radix.
+This ASCII string is what gets substituted for the dummy argument. You 
+may also specify the radix for the conversion by using a double backslash
+followed by one of O, D, H or X for octal, decimal, hexadecimal or 
+hexadecimal respectively. The general syntax is:
+
+	macro_call [...args...] \absolute_expression [...args...]
+
+Some examples:
+
+	.RADIX 10		;decimal radix
+	FRED=400
+	.MACRO GENVAL VAL
+	.word vtst'val,val
+	.endm
+
+	Called 			Expands to
+	---------		----------
+	GENVAL \FRED*4		.WORD VTST1600,1600
+	GENVAL \FRED/2		.WORD VTST200,200
+	GENVAL \\XFRED/2	.WORD VTST0C8,0C8
+
+
+
+			Chapter 4
+
+			Operating Instructions
+
+4.0) This assembler has been ported to and the appropriate version will
+run on VAX/VMS(tm), MS-DOS(tm), SCO Xenix/386(tm), SCO Unix(tm) and
+GEM-DOS (Atari/ST). The command line syntax is the same for all 
+versions with the exception that the option delimiter on Xenix/Unix
+is a dash character (-) instead of the slash character (/). In addition,
+the Xenix/Unix option(s) must be preceeded with white space since the 
+dash is a legitimate filename character. The general form is:
+
+	MACxx file(s)... [options...]
+
+where MACxx is the name of the program (MAC65, MAC68K, MACAS or MACPP),
+file(s) represents one or more files separated with whitespace or 
+commas and options represents one of the options itemized below. The 
+options and filenames can appear on the command line in any order.
+Whitespace must separate an option from a filename following it but is 
+otherwise optional except on Xenix/Unix systems where white space must
+separate filenames and options from one another. Commas are treated
+as whitespace.
+
+The valid options are:
+
+	Option		Default	Meaning
+	--------------	-------	--------------------
+	/NOOUTPUT	  No	Don't create an output file
+	/OUTPUT		  Yes	Create output object file whose name
+				  matches the name of the first input
+				  file with filetype of .OB or .OL.
+	/OUTPUT=name		Creates output object file with 
+				  specified name. Default filetype of
+				  .OB or .OL.
+	/NOLIST		  Yes	Don't create a listing file
+	/LIST		  No	Create output listing file whose name
+				  matches the name of the first input
+				  file with a filetype of .LIS.
+	/LIST=name		Create output listing file with 
+				  specified name. Default filetype of
+				  .LIS.
+	/CROSS		  No	Do a symbol cross reference report in the
+				  listing file.
+	/NOCROSS	  Yes	Don't do a cross reference report.
+	/BINARY		  Yes	Create output object file in binary format.
+				   Selects default object filetype of .OB.
+	/NOBINARY	  No	Create output object file in ASCII format.
+				   Selects default object filetype of .OL.
+	/NOTEMPFILE	  Yes	Use memory to hold intermediate object file.
+	/TEMPFILE	  No	Use temporary file to hold intermediate
+				   object file (only necessary on very small
+				   systems or with very large source files).
+	/TEMPFILE=name		Assigns path/filename for temporary file
+				   (I.e. ramdisk on MS-DOS system).
+	/NOMISER	  No	Don't compress intermediate object file.
+				   (This may speed up the assembler on
+				    some systems).
+	/MISER		  Yes	Assembler is miserly about using memory.
+	/NOCMOS		  Yes	MAC65 only; selects the instruction set for
+				   the ordinary 6502 processor.
+	/CMOS		  No	MAC65 only; selects the instruction set for
+			 	   the CMOS version of the 6502.
+	/NODEBUG	  Yes	Doesn't put source code debug 
+				   information in the object file.
+	/DEBUG		  No	Places source code debug information in 
+				   the object file.
+	/SYMBOL_LEN=n	  n=6	Sets the significant length of the 
+				   symbols and labels to n. n may be a
+				   value between 6 and 32.
+	/OPCODE_LEN=n	  n=6	Sets the significant length of the opcodes,
+				   pseudo-ops and macro names. n may be a
+				   value between 6 and 32.
+
+NOTE: On Xenix/Unix systems, the slash (/) is replaced with a dash (-).
+
+The case of any option is not significant and they may be abbreviated to
+the least number of characters that prevents ambiguity. 
+
+Examples:
+
+	MAC65 FOOBAR/LIS	!outputs are FOOBAR.OB and FOOBAR.LIS 
+	MAC65 FUBAR/NOBIN	!output is FUBAR.OL
+	MAC65 FUBAR		!output is FUBAR.OB
+	mac65 foobar -lis	!on Unix...
+	mac65 -lis foobar	!...options can be anywhere
+	MACAS HEADER,FOO,BAR/LIS=TEST/OUT=FOO/DEBUG/SYM=16  !...
+				!   ...files HEADER, FOO and BAR are
+				!   ...assembled in order; the outputs
+				!   ...are FOO.OB and TEST.LIS
+				!   ...FOO.OB has debug records in it
+				!   ...symbol/labels are significant to 16
+				!   ...characters.
