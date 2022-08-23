@@ -69,12 +69,15 @@
     </p>
     <p>
     Recently I got involved in rebuilding some of old Atari coin-op game code (some of which recently
-    released on github) and wanted to use this tool to make ROM/EPROM images to use with MAME. This prompted me to port the documentation to HTML in preparation
-    of posting this tool to github too.
-    Although I wrote the original documentation (macxx.doc), I am neither a technical writer nor am I any good at HTML5. As might be evidenced
+    was released on github) and wanted to use this tool to make ROM/EPROM images and to test them with MAME. This prompted me to port the documentation,
+    what little there is, of the three main applications used to build game images to HTML. Those tools are the assembler (macxx), linker (llf)
+    and rom image maker (mixit).
+    Although I wrote the original documentation (macxx.doc) for this assembler, I am neither a technical writer nor am I any good at HTML5. As might be evidenced
     with the original documentation, I quickly lose interest in writing technical documents and don't check things too closely. So good luck
     making sense of anything written here. Feel free to hack this document into something more readable. If you do, please send me a copy.
   </p>
+    <p>If one cares, I wrote a little history about how this assembler and the other two tools came to be. It can be found
+    <a href="#history">HERE</a>.
   </em>
   </div>
   <p>
@@ -352,7 +355,7 @@
                 ;   is not in the DATA psect
   </pre>
   </p>  
-  <!-- Does not work
+  <!-- Does not work so just don't tell anybody about it
   <h4>Symbol blocks</h4>
   <p>
   Another form of local symbol block exists which allows for all forms of 
@@ -1495,21 +1498,22 @@
   more attributes to be assigned to the section. The attributes, their 
   meaning and default values are as follows:
   </p>
-    Argument	Meaning
-    --------	-------
-    ABS		Absolute
-    REL		Relocatable
-    CON		Concatenate
-    OVR		Overlay
-    BASE		Base (Zero) page (MAC65 only)
-    OUT		Output text to object file
-    NOOUT		Don't output text to object file
-    RO		Read only section
-    RW		Read write section
-    DATA=n		Data alignment within section
-    SEGMENT=n	Segment alignment
-    MAX_LENGTH=n	Maximum length allowed for section
-  
+  <table style="width: 100%">
+    <tr><th>Argument</th><th>Meaning</th></tr>
+    <tr><td>ABS</td><td>Section is absolute; I.e. positioned is fixed at address 0</td></tr>
+    <tr><td>REL</td><td>Section is relative; I.e. final position is set by LLF</td></tr>
+    <tr><td>CON</td><td>Section is to be concatenated by LLF with like named sections</td></tr>
+    <tr><td>OVR</td><td>Section is to be overlayed by LLF with like named sections</td></tr>
+    <tr><td>BASE</td><td>Section is relative but in zero page (MAC65 only; opcodes use zero page addressing for operands in here)</td></tr>
+    <tr><td>OUT</td><td>Section data is output to object file</td></tr>
+    <tr><td>NOOUT</td><td>Section data is NOT output in object file</td></tr>
+    <tr><td>RO</td><td>Section is read-only</td></tr>
+    <tr><td>RW</td><td>Section is read-write</td></tr>
+    <tr><td>DATA=n</td><td><b>n</b> specifies the data alignment within section</td></tr>
+    <tr><td>SEGMENT=n</td><td><b>n</b> specifies the alignment LLF should use to place the section</td></tr>
+    <tr><td>NAX_LENGTH=n</td><td><b>n</b> specifies the maximum size the section may be</td></tr>
+  </table>  
+    <p>
   Absolute and relocatable are terms that describe how the section is 
   placed in the target memory by LLF. If the section is absolute, then 
   the text and labels are fixed at a specific memory location by the 
@@ -1521,7 +1525,8 @@
   to an appropriate place in the target memory and adjust the values of
   the labels accordingly. A section can be either absolute or relocatable 
   but not both. The default for all assemblers is REL.
-  
+  </p>
+    <p>
   Concatenate and overlay are terms that describe how sections having the
   same name are handled by LLF. If a section is declared as CON, LLF will
   collect all sections having that section's name together appending one
@@ -1529,14 +1534,16 @@
   of the sizes of each of the members. If a section is declared as OVR,
   LLF will collect all sections having that section's name and overlay one
   on top of another creating one section whose size is the size of the
-  largest of the member. A section can be either CON or OVR but not both.
+  largest of them. A section can be either CON or OVR but not both.
   The default for all assemblers is CON. 
-  
+  </p>
+    <p>
   A section can be declared as being a BASE page in MAC65. This tells the
   assembler that even though the section might be relocatable, all
   automatic address mode references to labels defined in this section be
   done with zero page addressing mode. The default is not BASE.
-  
+  </p>
+    <p>
   A section may declared as a "memory place holder". That is text may be 
   put in the section and labels may be defined in the section, but the 
   assembler shouldn't output the text to the object file. This kind of 
@@ -1545,14 +1552,16 @@
   whether or not the text is placed in the object file. The default for
   all assemblers is OUT. Label definitions are not affected by this 
   argument. 
-  
+  </p>
+    <p>
   A section may be declared as read-only and read-write on some target 
   systems. The RO and RW arguments identify the section as read-only or
   read-write respectively. A section can be only RO or RW but not both.
   The default for all assemblers is RW. This information is not used by 
   the assembler, it is merely passed through to LLF which may choose to 
-  ignore it too or pass it through to an image loader.
-  
+  ignore it too or pass it through to an image loader if required.
+  </p>
+    <p>
   The text that is placed in a section may have certain alignment 
   constraints. For example, the 680x0 must have words and longwords 
   aligned on even byte boundaries and ASAP must have everything except 
@@ -1568,9 +1577,13 @@
   SEGMENT must be greater than or equal to the alignment value for DATA.
   (If not, then LLF could align the section to a boundary which may 
   violate the required DATA alignment). The defaults are as follows:
-  MAC65: DATA=0,SEGMENT=0; MAC68K: DATA=1,SEGMENT=1; MACAS: DATA=2,
-  SEGMENT=2.
-  
+    </p>
+    <pre>
+    MAC65: DATA=0,SEGMENT=0
+    MAC68K: DATA=1,SEGMENT=1
+    MACAS: DATA=2,SEGMENT=2
+    </pre>
+  <p>
   The maximum length to which a section may grow may also be specified.
   The assembler will check that the section does not exceed this limit as
   well as passing the maximum length along to LLF which will use it to
@@ -1579,319 +1592,296 @@
   expression resolving to an absolute value indicating the maximum length
   in bytes of the named section. The default for all assemblers is no
   maximum. Base pages in MAC65 inherit a maximum length of 255. 
-  
+  </p>
+    <p>
   The first time a .PSECT directive is encountered with a unique name, it
   creates the named section and sets all the attributes for that section.
   Subsequent occurrences of a .PSECT directive for a given section name
   cannot change any of the attributes. As a result, sections should be
   defined early in the assembly and referenced thereafter with a ".PSECT
   section_name" without any arguments. 
-  
+  </p>
+    <p>
   There are two pre-defined sections: .REL. and .ABS. for the "unnamed"
   relocatable section and the absolute section respectively. The location
   counter is initialized to the start of the .REL. section. One can use
   a .PSECT directive with no name or arguments to set the location 
   counter to the unnamed program section or use a .PSECT .REL..
-  
+  </p>
+    <p>
   Each section has it own private location counter which is initialized to
   the beginning of the section (offset 0). The location counter is
   incremented as text is placed in the section or otherwise moved with
-  pseudo-ops. When a .PSECT directive is encountered, the current location
+  pseudo-ops or ".=nn". When a .PSECT directive is encountered, the current location
   counter is saved with the previous section statistics and the location
   counter last used in the new section becomes the current location
   counter. 
-  
+  </p>
+    <p>
   LLF will complain if like named psects in different modules don't have
-  EXACTLY the same attributes.
-  
-  Examples:
-  
-    .PSECT A,ABS,MAX=16	;section A is absolute
-    .PSECT R,REL,OVR	;section R is relocatable and overlayed
-    .PSECT IMPURE		;defaults to REL,CON,RW
-    .PSECT PURE,RO		;make read-only section
-    .PSECT PAGE,DATA=3,SEG=9 ;align section to 512 byte, data to 8 byte
-    .word test,...		;put in some text
-    .PSECT IMPURE		;change sections
-    .word text,...		;put text in different section
-    .PSECT PAGE		;change back to old section
-  
-  2.49)	.PUSH
-  
-  Pushes values of expression(s) to the specified stack. The format is:
-  
-    .PUSH stack_name [,] expression [,...]
-  
-  where stack_name is the name of a stack as declared in a previous
-  .DEFSTACK directive and expression resolves to a value that is pushed to
-  the top of the stack. If the stack is other than a RELATIVE stack, the
-  expression must resolve to an absolute value. 
-  
-  The stack pointer will be pre-decremented by one for each expression
-  pushed.
-  
-  Examples:
-  
-    .DEFSTACK TEMP,100		;make temp array of longs
-    .PUSH TEMP,FRED,100,FOOBAR	;save 100, FRED and FOOBAR 
-    
-  NOTE: These stack options are not available in recent macxx versions.
-  
-  2.50)	.PUTPOINTER
-  
-  Sets the stack pointer of the named stack to a given value. The syntax 
-  is:
-  
-    .PUTPOINTER stack_name,expression
-  
-  where stack_name is the name of the stack as defined in a .DEFSTACK 
-  directive and expression resolves to an absolute value between 0 and 
-  the size of the stack in elements. The internal stack pointer takes on 
-  the new value if the expression data is valid. Example:
-  
-    .PUTPOINTER my_stack ,100	;reset stack pointer
-  
-  NOTE: These stack options are not available in recent macxx versions.
-  
-  2.51)	.RADIX
-  
-  Numbers expressed in the assembly source are assumed to be hexadecimal. 
-  The global radix can, however, be changed. This is done by:
-  
-    .RADIX expression
-  
-  where expression resolves to an absolute value of one of 2, 8, 10 or 16
+  EXACTLY the same attributes. Examples:
+    </p>
+  <pre>
+      .PSECT A,ABS,MAX=16	;section A is absolute
+      .PSECT R,REL,OVR    ;section R is relocatable and overlayed
+      .PSECT IMPURE       ;defaults to REL,CON,RW
+      .PSECT PURE,RO      ;make read-only section
+      .PSECT PAGE,DATA=3,SEG=9 ;align section to 512 byte, data to 8 byte
+      .word test,...      ;put in some text
+      .PSECT IMPURE       ;change sections
+      .word text,...      ;put text in different section
+      .PSECT PAGE         ;change back to old section
+  </pre>
+  <h3 id="dir_radix">.RADIX</h3>
+  <pre>  
+      .RADIX expression
+  </pre>
+  <p>
+  Numbers expressed in the assembly source are assumed to be hexadecimal by default.
+  The global radix can, however, be changed using the .RADIX psuedo-op.
+  The <u>expression</u> operand resolves to an absolute value of one of 2, 8, 10 or 16
   for binary, octal, decimal or hexadecimal respectively. The radix is
   temporarily changed to decimal before the expression is evaluated. If
   the expression resolves to an unacceptable value, the global radix is
   not changed. For example: 
-  
-    .RADIX 10 	;changes radix to decimal regardless of what
-          ;it was before
-    .RADIX 16	;change radix to hex
-  OLD_RADIX = 10		;saves current value of global radix
-    .RADIX NEW_VALUE ;set it to a new value
-    .RADIX OLD_RADIX ;restore the old value
-  
-  2.53)	.REPT
-  
-  The .REPT directive defines an indefinite repeat block, which is simply
-  a macro definition with no arguments followed with an immediate and
-  automatic macro call (see details about macros in chapter 3). The macro
-  is expanded if the count is greater than 0 and the count is decremented
-  with each iteration. The syntax of an indefinite repeat block is: 
-  
+  </p>
+    <pre>
+      .RADIX 10        ;changes radix to decimal regardless of what
+                       ;       it was before
+      .RADIX 16        ;change radix to hex
+    OLD_RADIX = 10		 ;saves current value of global radix
+      .RADIX NEW_VALUE ;set it to a new value
+      .RADIX OLD_RADIX ;restore the old value
+    </pre>
+  <h3 id="dir_rept">.REPT</h3>
+  <pre>  
     .REPT count
     macro_body
     .ENDR
-  
-  where count is an expression that resolves to an absolute value
+  </pre>
+  <p>
+  The .REPT directive defines an indefinite repeat block, which is simply
+  a macro definition with no arguments followed with an immediate and
+  automatic macro call (see details about macros <a href="#dir_macros">HERE</a>). The macro
+  is expanded if the count is greater than 0 and the count is decremented
+  with each iteration. The <u>count</u> operand is an expression that resolves to an absolute value
   representing the number of times the macro_body is to be expanded and
   macro_body is zero or more lines of assembly code constructed with the
   same rules as for a macro definition. Indefinite repeat blocks may be
   used anywhere a macro may be used. The count is tested at the top of 
-  each loop and, if greater than 0, the macro_body is executed and the
+  each loop and, if greater than 0, the macro_body is assembled and the
   count is decremented. A .MEXIT or .REXIT executed in the macro_body
   will force the repeat block to skip to the end. A .MEXIT 1 (or more)
   will force the repeat block to exit completely. Examples: 
-  
-  tmp = 0
-    .REPT 16.
-    .byte tmp+0,tmp+1,tmp+2,tmp+3
-  tmp = tmp + 4
-    .endr
-  
+  <p>
+    <pre>
+    tmp = 0
+      .REPT 16.
+      .byte tmp+0,tmp+1,tmp+2,tmp+3
+    tmp = tmp + 4
+      .endr
+    </pre>
+  <p>
   would output 64 bytes (16*4) whose values would range from 0 to 63.
-  
-  2.540)	.RESTORE
-  
-  Restores the location counter and local symbol block from a previous 
-  .SAVE directive. The general form is:
-  
+    </p>
+  <h3 id="dir_restore">.RESTORE</h3>
+  <pre>  
     .RESTORE
-  
-  See .SAVE for additional details.
-  
-  2.54)	.REXIT
-  
+  </pre>
+    <p>
+  Restores the location counter and local symbol block from a previous 
+  .SAVE directive. See <a href="#dir_save">.SAVE</a> for additional details.
+  <h3 id="dir_rexit">.REXIT</h3>
+  <pre>  
+  .REXIT
+  </pre>
+    <p>
   The .REXIT directive is an implementation of an alternate exit from a
   repeat block (.IRP, .IRPC or .REPT). Upon encountering a .REXIT
   directive during a repeat block expansion (not during a definition), the
   repeat block is immediately terminated as though it were an .ENDR. This
   is particularly useful in complex conditional structures in that it is a
   functional equivalent to a "goto end_of_repeat_block". This directive is
-  ignored outside a macro or repeat block. The general form is: 
-  
-    .REXIT
-  
-  2.55)	.SAVE
-  
+  ignored outside a macro or repeat block.
+  </p>
+  <h3 id="dir_save">.SAVE</h3>
+  <pre>    
+  .SAVE
+  </pre>
+    <p>
   The .SAVE directive saves the current program section context and local 
   symbol block details on an internal stack. The internal stack is 32
   elements deep. This directive can be used whenever one wants to change
   program sections but needs to be able to restore the section without 
   knowing the name of the current section. This is the most useful in
   macros. For example:
-  
-    .MACRO SAY MSG	;general message macro
-    .SAVE		;save the current location counter/section
-    .PSECT ASCII	;switch to section ASCII
-  ...1 = .		;get location of text message
-    .ASCIZ \MSG\	;insert message in the ASCII section
-    .RESTORE	;back to main section (whatever that is)
-    .PRINT #...1	;display message
-    .ENDM
-  
-    SAY <This is a test of the .SAVE directive> ;say message
-  
-  The local symbol block is saved as well. Even though a new local symbol
-  block would be opened if there's an intervening label or the program
+  </p>
+    <pre>
+      .MACRO SAY MSG       ;general message macro
+      .SAVE                ;save the current location counter/section
+      .PSECT ASCII         ;switch to section ASCII
+    ...1 = .               ;get location of text message
+      .ASCIZ \MSG\         ;insert message in the ASCII section
+      .RESTORE             ;back to main section (whatever that is)
+      .PRINT #...1         ;display message
+      .ENDM
+      
+      SAY &lt;This is a test of the .SAVE directive&gt; ;say message
+    </pre>
+    <p>
+  The local symbol block (LSB) is saved as well. Even though a new LSB
+  would be opened if there's an intervening label or the program
   section is changed, when the .RESTORE is encountered, the original local
   symbol block is also restored. For example: 
-  
-    10$:			;mark the start
-      .SAVE		;save the current loc and lsb
-      .PSECT T	;change sections
-    10$:			;this is a different lsb, since the
-          ;   section changed
-      .RESTORE	;restore section
-      .WORD 10$	;references the FIRST 10$ since the
-          ;   lsb is restored as well as the
-          ;      location counter
-  
+  </p>
+    <pre>
+      10$:          ;mark the start
+        .SAVE       ;save the current loc and lsb
+        .PSECT T    ;change sections
+      10$:          ;this is a different lsb, since the
+                    ;   section changed
+        .RESTORE    ;restore section
+        .WORD 10$   ;references the FIRST 10$ since the
+                    ;   lsb is restored as well as the
+                    ;      location counter
+    </pre>
+  <p>  
   Beware of .SAVE'ing the current section and not doing a .PSECT to a
   DIFFERENT section before adding code or data then doing a .RESTORE
   since that has the effect of moving the location counter backwards.
   For example:
-  
-      .PSECT CODE	;say we're in the code section
-    FRED:	.SAVE		;save location of FRED
-      .PSECT CODE	;this is a no-op since we're already
-          ;  in section CODE
-      .WORD 1,2,3	;inserting TEXT
-      .RESTORE	;resets location counter back to FRED
-      .WORD 4,5,6	;will overwrite the 1,2,3 above
-  
-  2.56)	.SBTTL
-    .SUBTITLE
-  
+  </p>
+    <pre>
+        .PSECT CODE       ;say we're in the code section
+      FRED:	.SAVE         ;save location of FRED
+        .PSECT CODE       ;this is a no-op since we're already
+                          ;  in section CODE
+        .WORD 1,2,3       ;inserting TEXT
+        .RESTORE          ;resets location counter back to FRED
+        .WORD 4,5,6       ;will overwrite the 1,2,3 above
+    </pre>
+  <h3 id="dir_sbttl">.SBTTL</h3>
+    <pre>
+    .SBTTL text_of_subtitle_message	[;comments]
+    </pre>
+  <p>  
   Establishes a string to use as a subtitle which is placed on the second
   line of each page in the listing. The first line of each page in the
-  listing file contains the title line. The text is for information only
+  listing file contains the title line. The string is for information only
   and is not used by the assembler. This directive is ignored if no
-  listing file is being created. The format is: 
+  listing file is being created.
+  </p>  
+  <h3 id="dir_test">.TEST</h3>
+  <pre>
+      .TEST expression  ;message to be reported if expression is true
+                        ^ <u>Note</u>: the semicolon is required
   
-    .SBTTL text_of_subtitle_message	[;comments]
-  
-  2.57)	.TEST
-  
-  The .TEST directive allows you to pass an expression to LLF to evaluate and
+  </pre>
+    <p>
+  The .TEST directive allows one to pass an expression to LLF to evaluate and
   report an error if the condition is true. If the expression can be evaluated by
   the assembler (i.e. no complex terms) and it evaluates true (true = not zero),
   then the assembler will report the error. This function is much more useful in
   MACAS, MACPP and MAC68K since those assemblers have relational operators (eq,lt,
-  gt, etc), however, it is built in to the core assembler so you have it if you
-  can use it. The syntax is:
-  
-      .TEST expression	;message to be reported if expression is true
-            ^ note the semicolon is required
-  
-  where "expression" is the expression to evaluate or pass to LLF and the 
+  gt, etc), however, it is built in to the core assembler so one can have it if one
+  can use it. The <u>expression</u> is what is to be evaluated or pass to LLF and the 
   comments are the text of the error message to be displayed if the 
   expression resolves to TRUE (non-zero). Example:
-  
-    .GLOBL  TEMP	;declare an external variable
-    .TEST !(TEMP>0 && TEMP<0x10) ;PROG: TEMP should be 0-0x0F
-  
+  </p>
+    <pre>
+      .GLOBL  TEMP                 ;declare an external variable
+      .TEST !(TEMP>0 && TEMP&lt;0x10) ;PROG: TEMP should be 0-0x0F
+    </pre>
+  <p>  
   In this example since TEMP is a global symbol, the expression will be
   evaluated by LLF. The comment field is the text of the message 
   displayed if the expression evaluates true, so the comment should have 
   meaningful information in it such as the program name and/or variable(s)
   involved, etc.
-  
-  2.58)	.TITLE
-  
+  </p>
+  <h3 id="dir_title">.TITLE</h3>
+  <pre>  
+    .TITLE text_of_title_message	[;comments]
+  </pre>
+    <p>
   Establishes a string to use as the program title which is placed on the 
   first line of each page in the listing. The text is for information 
   only and is not used by the assembler. This directive is ignored if no
-  listing file is being created. The format is: 
-  
-    .TITLE text_of_title_message	[;comments]
-  
-  2.585)	.UNDEFINE
-  
+  listing file is being created.
+  <h3 id="dir_undefine">.UNDEFINE</h3>
+    <pre>
+    .UNDEFINE [symbol[,symbol[,...]]]
+    </pre>
+  <p>
   The .UNDEFINE directive removes the assignment of a previously 
-  .DEFINE'd symbol or, optionally, all previously .DEFINE'd symbols. The 
-  general form is:
-  
-    .UNDEFINE [symbol]
-  
-  where symbol represents the symbol to undefine. No error is displayed if
-  the symbol has not previously been .DEFINED. If no symbol name is
+  .DEFINE'd symbol or, optionally, all previously .DEFINE'd symbols.
+  The <u>symbol</u> operand represents the symbol to undefine. No error is displayed if
+  the symbol has not previously been .DEFINED. If no <u>symbol</u> name is
   supplied, then all symbols previously .DEFINE'd will be de-assigned.
   Example:
-  
-    .DEFINE FRED A+B	;assign string to FRED
-    .WORD FRED		;use FRED
-    .UNDEFINE FRED		;deassign FRED
-    .UNDEFINE 		;deassign all symbols
-  
-  2.59)	.VCTRS
-  
+  </p>
+    <pre>
+      .DEFINE FRED A+B   ;assign string to FRED
+      .WORD FRED         ;use FRED
+      .UNDEFINE FRED     ;deassign FRED
+      .UNDEFINE          ;deassign all symbols
+    </pre>
+  <h3 id="dir_vctrs">.VCTRS</h3>
+  <pre>  
+    .VCTRS address [,] data [, ...]
+  </pre>
+    <p>
   This is a short cut directive to allow one to insert 16 bit words at a 
   specified non-relocatable location in the target memory. This 
   directive is not recommended for any assembler except MAC65 where it
   may be used in simple applications. It exists mainly to insert the 
   program vector table for the 6502 at 0xFFFx without the overhead of 
   establishing a program section and having LLF position it accordingly.
-  The general form is:
-  
-    .VCTRS address [,] data [, ...]
-  
-  where address is an expression resolving to an absolute value 
+  The <u>address</u>is an expression resolving to an absolute value 
   representing where the first byte of data should be placed and data is 
-  0 or more expressions (which may be relocatable) which will placed in 
+  0 or more expressions (which may be global and/or relocatable) which will placed in 
   the target memory as 16 bit words. The data expressions are interpreted 
   exactly the same as they would be on a .WORD directive. The directive 
   functions as though the following separate statements were executed:
-  
-    .SAVE		;save current location counter
-    .PSECT .ABS.	;switch to the absolute section
-    .=address	;set the location counter to the desired value
-    .WORD data,...	;insert the data
-    .RESTORE	;restore the previous location counter
-  
+  </p>
+    <pre>
+      .SAVE            ;save current location counter
+      .PSECT .ABS.     ;switch to the absolute section
+      .=address        ;set the location counter to the desired value
+      .WORD data,...   ;insert the data
+      .RESTORE         ;restore the previous location counter
+    </pre>
+  <p>
   with the exception that the size of the .ABS. section is not changed to
-  reflect the event.
-  
-  An example:
-  
-    .VCTRS 0xFFF8,FIRQ,NMI,RESET,IRQ
-  
-  2.60)	.WARN
-  
+  reflect the event. An example:
+  </p>
+    <pre>
+      .VCTRS 0xFFF8,FIRQ,NMI,RESET,IRQ
+    </pre>
+  <h3 id="dir_warn">.WARN</h3>
+  <pre>
+    .WARN [[expression] [;comments]]
+  </pre>
   This directive generates a warning and computes and displays the value 
   of the optional expression. It is useful if included in macros or 
   conditionals to force a warning if desired conditions are not met.
   Being that it generates a warning, the whole statement will be displayed
   in the list file and on standard error, so the comments can best be
-  used to describe the reason for the error. The form is:
-  
-    .WARN [[expression] [;comments]]
-  
-  2.61)	.WORD Constant storage directives
-    DC.W	(same as .WORD)
-  
+  used to describe the reason for the error.
+  </p>
+  <h3 id="dir_word">.WORD and DC.W</h3>
+    <pre>
+      .WORD [expression[,...]]  [;comments]
+      DC.W	(same as .WORD)
+    </pre>
+  <p>  
   Places one or more 16 bit words in the object file.
-  
-  Syntax:
-  
-    directive	expression [[,]...]
-  
-  See .WORD (2.0.6) for additional details.
-
+  </p>
+    <p>
+  See <a href="#dir_byte">.BYTE</a> for additional details.
+  </p>
   <h2 id="gen_macros">Macros</h2>
-  
+  <p>
   Macros are a mechanism whereby a user can have several lines of
   assembly code envoked with a single statement. This is done by defining 
   a macro as a series of one or more assembler statements and giving
@@ -1909,31 +1899,29 @@
   symbol. In addition, the arguments may be declared to inherit default 
   values should they be omitted on the macro call and/or the arguments 
   may be set by keyword value rather than by placement.
-  
-  3.1) Macro definitions
-  
-  General macros are defined with the .MACRO directive and the special 
-  case repeat block macros are defined with the .IRP, .IRPC and .REPT 
-  directives. The form of a .MACRO definition is:
-  
+  </p>
+  <h3>Macro definitions</h3>
+  <pre>  
     .MACRO name [,] dummy_argument_list [;comment]
     macro_body
     .ENDM
-  
-  where:
-  
-    name is the name of the macro. It is inserted in the opcode
-      symbol table so will be called up when the name is
-      used in the opcode field of an assembler statement.
-    dummy_argument_list is a list of zero or more legal assembler
-      symbols separated with white space or commas which
-      may appear anywhere in the macro_body.
-    macro_body is any number of assembler statements.
-  
+  </pre>
+    <p>
+  General macros are defined with the .MACRO directive and the special 
+  case repeat block macros are defined with the .IRP, .IRPC and .REPT 
+  directives. The <u>name</u> is the name of the macro. It is inserted
+  in the opcode symbol table so will be called up when the name is
+  used in the opcode field of an assembler statement. The <u>dummy_argument_list</u>
+  is a list of zero or more legal assembler text symbols separated with white space
+  or commas which may appear anywhere in the macro_body. The <u>macro_body</u>
+  is any number of assembler statements.
+  </p>
+    <p>
   Macro names replace whatever is in the opcode symbol table, so one can
   use macros to redefine opcodes. Deleting a macro that replaced an opcode
   causes the old opcode to be restored.
-  
+  </p>
+    <p>
   The symbols appearing in the dummy argument list only mark places in the
   macro_body where the corresponding argument on the macro call should be
   placed. They do not have any relation to other symbols or labels or
@@ -1941,25 +1929,27 @@
   so do not have to be unique in that respect. You may decide to choose a 
   name for a dummy argument that has something to do with its function 
   which would make it a bit easier to use the "pass argument by keyword"
-  feature (described later).
-  
+  feature (described <a href="#gen_macro_keyword">HERE</a>).
+  </p>
+    <p>
   The macro body is checked only for .MACRO, .IRP, .IRPC, .REPT, .ENDR
   and .ENDM directives in the opcode field and the presence of dummy
   arguments anywhere in the macro body. No syntax checking is done at 
   all on any data in the macro until the macro is called. As a result,
   DO NOT use the symbols .MACRO, .ENDM, .ENDR, .REPT, .IRP and .IRPC as
   dummy argument names. 
-  
+  </p>  
+    <p>
   Macro definitions may be nested. That is to say a macro may be created 
   to create other macros which may create other macros etc. to any depth.
   The inner macros, however, won't be defined until the outer macros are
   called.
-  
-  3.2) Macro definition argument syntax
-  
+  </p>
+  <h3 id="gen_macro_syntax">Macro definition argument syntax</h3>
+  <p>
   Dummy arguments appearing on the .MACRO directive are separated from 
   one another and the macro name by commas or white space.
-  
+  </p>
   Dummy arguments appearing in the macro body are delimited by any
   character not legal for a symbol or label. If the dummy argument appears
   embedded within or connected to an otherwise legal symbol or label, it
@@ -1970,46 +1960,51 @@
   will be stripped and the argument substitution will occur with no other
   surrounding characters changed. If an apostrophe is required to remain
   in the substituted text, you will need to have two of them. For example: 
-  
-    .MACRO TST ARG1
-    ARG1			;no apostrophes required
-    PRE+ARG1+POST		;here either
-    PRE'ARG1'POST		;if called with TST T, expands to PRETPOST
-    'ARG1'POST		;leading apostrophe is optional
-    PRE'ARG1'		;trailing apostrophe is optional
-    ''ARG1'AFTER		;if called with TST T, expands to 'TAFTER
-    'FOOBAR'		;apostrophes are only removed when
-          ;   surrounding dummy arguments.
-          ;   So a TST T expands to 'FOOBAR'.
-    .ENDM
-  
+  </p>
+    <pre>
+      .MACRO TST ARG1
+      ARG1            ;no apostrophes required
+      PRE+ARG1+POST   ;here either
+      PRE'ARG1'POST   ;if called with TST T, expands to PRETPOST
+      'ARG1'POST      ;leading apostrophe is optional
+      PRE'ARG1'       ;trailing apostrophe is optional
+      ''ARG1'AFTER    ;if called with TST T, expands to 'TAFTER
+      'FOOBAR'        ;apostrophes are only removed when
+                      ;   surrounding dummy arguments.
+                      ;   So a TST T expands to 'FOOBAR'.
+      .ENDM
+    </pre>
+  <p>
   There is an optional feature with dummy arguments that instructs the
   assembler to assign a default string to that argument if the macro is
   called with the given argument blank. This is done by putting the
   default string following an equal sign appended to the dummy argument on
   the .MACRO statement. If the default string contains commas or spaces,
-  it can be enclosed in macro argument delimiters (normally <>'s). For
+  it can be enclosed in macro argument delimiters (normally &lt;&gt;'s). For
   example: 
-  
-    .MACRO FRED ARG1,ARG2,ARG3=0x1000,ARG4=<1,2,3>
-    ARG1 ARG2,ARG3 <ARG4>
-    .ENDM
-  
+  </p>  
+    <pre>
+      .MACRO FRED ARG1,ARG2,ARG3=0x1000,ARG4=&lt;1,2,3&gt;
+      ARG1 ARG2,ARG3 &lt;ARG4;&gt;
+      .ENDM
+    </pre>
+  <p>  
   defines the macro FRED with 4 arguments. The dummy arguments ARG1, ARG2,
   ARG3 and ARG4 will be replaced with corresponding arguments when FRED is
   called. If ARG3 is left blank on the call, the string 0x1000 will be
   used. If ARG4 is left blank on the call, the string "1,2,3" will be
   used. Using the above defined macro: 
-  
-    Call			Expands to
-    ---------------------	------------------------
-    FRED ONE TWO THREE	ONE TWO,THREE <1,2,3>
-    FRED ONE TWO,,FOO	ONE TWO,0x1000 <FOO>
-    FRED ONE TWO		ONE TWO,0x1000 <1,2,3>
-    FRED ONE		ONE ,0x1000 <1,2,3>
-    FRED			,0x1000 <1,2,3>
-  
-  There is one special type of dummy argument that is identified with a
+  </p>  
+  <table style="width: 25%">
+    <tr><th>Macro Call</th><th>Expands to</th></tr>
+    <tr><td>FRED ONE TWO THREE</td><td>ONE TWO,THREE &lt;1,2,3&gt;</td></tr>
+    <tr><td>FRED ONE TWO,,FOO</td><td>ONE TWO,0x1000 &lt;FOO&gt;</td></tr>
+    <tr><td>FRED ONE TWO</td><td>ONE TWO,0x1000 &lt;1,2,3&gt;</td></tr>
+    <tr><td>FRED ONE</td><td>ONE ,0x1000 &lt;1,2,3&gt;</td></tr>
+    <tr><td>FRED</td><td>,0x1000 &lt;1,2,3&gt;</td></tr>
+  </table>  
+    <p id="gen_macro_question">
+  There is a special type of dummy argument that is identified with a
   leading question mark. This indicates that, when the macro is called and
   the argument is left blank, the dummy argument should be replaced with
   an automatically generated local symbol. These automatically generated
@@ -2018,22 +2013,25 @@
   label somewhere in the macro body in order for the local symbol to
   become a local label. No default value may be assigned to an argument of
   this type. For example: 
-  
-    .MACRO MAKSYM SOMETHING,?OPT_LABEL
-    ...
-  OPT_LABEL: 
-    SOMETHING
-    ...
-    .ENDM
-  
-    Call			Expands to
-    --------------		-----------
-    MAKSYM FRED		65000$:	FRED
-    MAKSYM FOOBAR		65001$:	FOOBAR
-    MAKSYM NOP,MY_LABEL	MY_LABEL: NOP
-  
+  </p>
+    <pre>
+      .MACRO MAKSYM SOMETHING,?OPT_LABEL
+      ...
+    OPT_LABEL: 
+      SOMETHING
+      ...
+      .ENDM
+    </pre>
+  <table style="width: 25%">
+    <tr><th>Macro Call</th><th>Expands to</th></tr>
+    <tr><td>MAKSYM FRED</td><td>65000$:	FRED</td></tr>
+    <tr><td>MAKSYM FOOBAR</td><td>65001$:	FOOBAR</td></tr>
+    <tr><td>MAKSYM NOP,MY_LABEL</td><td>MY_LABEL: NOP</td></tr>
+  </table>
+  <p>
   There are a maximum of 124 arguments allowed in a macro definition.
-  
+  </p>
+    <p>
   The only pseudo-ops recognized in the macro body are other macro
   definition directives (.MACRO, .IRP, .IRPC and .REPT) and the macro
   termination directives .ENDM and .ENDR. Macro definitions may be nested,
@@ -2045,84 +2043,104 @@
   available to the assembler. If a macro is defined that has the same name
   as a previously defined macro, the old one is deleted from memory and
   replaced with the new one.
-  
-  3.3) Macro calls
-  
-  A macro must be defined prior to its first reference. Macro calls are of
-  the general form:
-  
-    [label:]  name [real_arguments]	[;comments]
-  
-  where:
-    "label" represents an optional label.
-    "name" represents the name of the macro as specified as the
-      first argument on the .MACRO directive
-    "real_arguments" are those symbols, expressions, and values
-      which replace the dummy arguments as described in the
-      .MACRO directive separated by commas or white space.
-  
+  </p>
+  <h3 id="gen_macro_calls">Macro calls</h3>
+    <pre>
+      [label:]  .MACRO name [real_arguments]	[;comments]
+    </pre>
+  <p>
+  A macro must be defined prior to its first reference. The <u>label</u>
+    represents an optional label. The <u>name</u> represents the name
+    of the macro and is the first argument on the .MACRO directive,
+    <u>real_arguments</u> are 0 or more symbols, expressions, and/or values
+     separated by commas or white space which replace the dummy arguments as found in the
+      .MACRO definition. The <u>comments</u> are normal optional comments.
+      </p>
+  <p>
   Arguments to a macro call are treated as character strings whose usage
   is determined by the statements appearing in the macro definition with
   one exception as described below. If white space or commas appear in a
   macro argument, the argument must be enclosed between a pair of macro
-  argument delimiters (normally <>'s). For example given the macro FRED:
-  
-    .MACRO FRED ARG1,ARG2,ARG3=0x1000
-    ARG1 ARG2,ARG3
-    .ENDM
-  
+  argument delimiters (normally &lt;&gt;'s). For example given the macro FRED:
+  </p>
+    <pre>
+      .MACRO FRED ARG1,ARG2,ARG3=0x1000
+      ARG1 ARG2,ARG3
+      .ENDM
+    </pre>
+  <p>  
   the call of:
-  
-    FRED <.WORD ONE,TWO>,THREE,FOUR
-  
+  </p>
+    <pre>
+      FRED &lt;.WORD ONE,TWO&gt;,THREE,FOUR
+    </pre>
+  <p>  
   expands to
-  
-    .WORD ONE,TWO THREE,FOUR 
-  
+  </p>
+    <pre>
+      .WORD ONE,TWO THREE,FOUR 
+    </pre>
+  <p>  
   The up-arrow construct may be used to change the argument delimiters
   locally if desired. For example the following is equivalent to the
   example above:
-  
-    FRED ^\.WORD ONE,TWO\,THREE,FOUR
-  
-  3.4) Macro call arguments
-  
-  Arguments on a macro call are separated from other arguments by commas
-  or white space. Arguments which contain commas or white space must be
-  enclosed in paired macro delimiters (normally <>'s). An up-arrow
-  construct may be used to change the delimiter characters on an
-  individual argument. This would be useful if the argument contains
-  argument delimiter characters itself. For example, given the macro
-  definition: 
-  
+  </p>
+    <pre>
+      FRED ^\.WORD ONE,TWO\,THREE,FOUR
+    </pre>
+    
+  <h3 id="gen_macro_call_arguments">Macro call arguments</h3>
+  <pre>  
     .MACRO FOO ARG1 ARG2
     ARG1 ARG2
     .ENDM
-  
-  One could call it with:
-  
-    FOO <ADD #24,> ANSWER	;or
-    FOO ^/ADD #24,/ ANSWER	;the equivalent call
-  
-  which would expand to:
-  
-    ADD #24, ANSWER
-  
+  </pre>
+    <p>
+  Arguments on a macro call are separated from other arguments by commas
+  or white space. Arguments which contain commas or white space must be
+  enclosed in paired macro delimiters (normally &lt;&gt;'s). An up-arrow
+  construct may be used to change the delimiter characters on an
+  individual argument. This would be useful if the argument contains
+  argument delimiter characters itself. For example, given the macro
+  definition. For example one could call it with:
+    </p>
+    <pre>
+      FOO &lt;ADD #24,&gt; ANSWER	;or
+      FOO ^/ADD #24,/ ANSWER	;the equivalent call
+    </pre>
+  <p>  
+  both of which would expand to:
+  </p>
+    <pre>
+      ADD #24, ANSWER
+    </pre>
+  <p>  
   The macro argument delimiters are removed from the argument as the
-  dummy argument substitution is made. As noted above, the <>'s and the
-  ^//'s do not appear in the final expansion. This should be particularly
+  dummy argument substitution is made. As noted above, the &lt;&gt;'s and the
+  ^/'s do not appear in the final expansion. This should be particularly
   significant during macro nesting. For example, one could recursively
   call the macro FOO as defined above with:
-  
-    FOO <FOO <ADD #24,>> ANSWER
+  </p>
+    <pre>
+      FOO &lt;FOO &lt;ADD #24,&gt;&gt; ANSWER
+    </pre>
+    <p>
   expands to:
-    FOO <ADD #24,> ANSWER
+    </p>
+    <pre>
+      FOO &lt;ADD #24,&gt; ANSWER
+    </pre>
+    <p>
   and that expands to:
-    ADD #24, ANSWER
-  
-  Note that with each expansion, one level of <>'s have been removed 
+    </p>
+    <pre>
+      ADD #24, ANSWER
+    </pre>
+  <p>  
+  Note that with each expansion, one level of &lt;&gt;'s have been removed 
   from  the argument.
-  
+  </p>  
+    <p id="gen_macro_keyword">
   Arguments are normally delivered to macros by placement. That is, the
   first argument after the name on a macro call replaces the first dummy
   argument in the macro body. The second replaces the second dummy
@@ -2134,145 +2152,143 @@
   assigned first. Then, if there are any additional arguments, they are
   assigned positionally to any dummy arguments that haven't yet been
   assigned. For example, given the macro definition: 
-  
-    .MACRO FOOBAR A,B,C,X,Y,Z
-    .WORD A,B,C,X,Y,Z
-    .ENDM
-  
+  </p>
+    <pre>
+      .MACRO FOOBAR A,B,C,X,Y,Z
+      .WORD A,B,C,X,Y,Z
+      .ENDM
+    </pre>
+  <p>  
   The macro call:
-  
-    FOOBAR 1,2,3,4,X=5,A=6
-  
+  </p>
+    <pre>
+      FOOBAR 1,2,3,4,X=5,A=6
+    </pre>
+  <p>  
   expands to
-          _________________ Dummy argument A gets value "6"
-          |     ___________ Dummy argument X gets value "5"
-          |	    |
-          v     v
-    .WORD 6,1,2,5,3,4
-      ^ ^   ^ ^
-      L_L___L_L______ Other arguments get what's left in order
-  
+  </p>
+  <pre>
+            _________________ Dummy argument A gets value "6"
+            |     ___________ Dummy argument X gets value "5"
+            |     |
+            v     v
+      .WORD 6,1,2,5,3,4
+              ^ ^   ^ ^
+              L_L___L_L______ Other arguments get what's left in order
+  </pre>
+    <h4 id="gen_macro_generated_argument">Macro generated argument</h4>
+    <pre>
+      macro_call [...args...] \absolute_expression [...args...]
+    </pre>
+  <p>
   Normally, arguments on a macro call are treated as simple strings and
   substituted for dummy arguments unchanged into the macro body. There is
-  one special type of macro call argument which can be used which is a
+  another special type of macro call argument which can be used which is a
   pass by value. In this case the argument must be an expression that
-  resolves to an absolute value and the expression is must be prefixed
+  resolves to an absolute value and the expression must be prefixed
   with a backslash character (\). With this construct, the expression is 
   evaluated and the value is converted to ASCII in the current default radix.
   This ASCII string is what gets substituted for the dummy argument. You 
   may also specify the radix for the conversion by using a double backslash
   followed by one of O, D, H or X for octal, decimal, hexadecimal or 
-  hexadecimal respectively. The general syntax is:
-  
-    macro_call [...args...] \absolute_expression [...args...]
-  
-  Some examples:
-  
-    .RADIX 10		;decimal radix
-    FRED=400
-    .MACRO GENVAL VAL
-    .word vtst'val,val
-    .endm
-  
-    Called 			Expands to
-    ---------		----------
-    GENVAL \FRED*4		.WORD VTST1600,1600
-    GENVAL \FRED/2		.WORD VTST200,200
-    GENVAL \\XFRED/2	.WORD VTST0C8,0C8
-  
-  
-  
-        Chapter 4
-  
-        Operating Instructions
-  
-  4.0) This assembler has been ported to and the appropriate version will
-  run on VAX/VMS(tm), MS-DOS(tm), SCO Xenix/386(tm), SCO Unix(tm) and
-  GEM-DOS (Atari/ST). The command line syntax is the same for all 
-  versions with the exception that the option delimiter on Xenix/Unix
+  hexadecimal respectively. Some examples: 
+  </p>
+    <pre>
+      .RADIX 10		;decimal radix
+      FRED=400
+      .MACRO GENVAL val
+      .word vtst'val,val
+      .endm
+    </pre>
+  <table style="width: 25%">
+    <tr><th>Called</th><th>Expands to</th></tr>
+    <tr><td>GENVAL \FRED*4</td><td>.word vtst1600,1600</td></tr>
+    <tr><td>GENVAL \FRED/2</td><td>.word vtst200,200</td></tr>
+    <tr><td>GENVAL \\XFRED/2</td><td>.word vtst0C8,0C8</td></tr>
+  </table>  
+  <h2 id="gen_operating">Operating Instructions</h2>
+  <p>
+  This assembler has been ported to and the appropriate version will
+  run on VAX/VMS(tm), MS-DOS(tm), SCO Xenix/386(tm), SCO Unix(tm),
+  GEM-DOS (Atari/ST) and Linux. The command line syntax is the same for all 
+  versions with the exception that the option delimiter on Xenix/Unix/Linux
   is a dash character (-) instead of the slash character (/). In addition,
-  the Xenix/Unix option(s) must be preceeded with white space since the 
-  dash is a legitimate filename character. The general form is:
-  
-    MACxx file(s)... [options...]
-  
-  where MACxx is the name of the program (MAC65, MAC68K, MACAS or MACPP),
-  file(s) represents one or more files separated with whitespace or 
+  the Xenix/Unix/Linux option(s) must be preceeded with white space since the 
+  dash is a legitimate filename character. And the image name, although not
+    required to be, is typically lowercase on Xenix/Unix/Linux systems.
+    The general form is:
+  </p>
+    <pre>
+      MACxx file(s)... [options...]
+      MACxx [options...] file(s)...
+      MACxx [options...] file(s)... [options...]
+    </pre>
+  <p>  
+  where <u>MACxx</u> is the name of the program (MACPP, MAC65, MAC68K, MAC682K, MAC11, MACAS or MACTJ),
+  <u>file(s)</u> represents one or more files separated with whitespace or 
   commas and options represents one of the options itemized below. The 
   options and filenames can appear on the command line in any order.
   Whitespace must separate an option from a filename following it but is 
   otherwise optional except on Xenix/Unix systems where white space must
   separate filenames and options from one another. Commas are treated
-  as whitespace.
-  
-  The valid options are:
-  
-    Option		Default	Meaning
-    --------------	-------	--------------------
-    /NOOUTPUT	  No	Don't create an output file
-    /OUTPUT		  Yes	Create output object file whose name
-            matches the name of the first input
-            file with filetype of .OB or .OL.
-    /OUTPUT=name		Creates output object file with 
-            specified name. Default filetype of
-            .OB or .OL.
-    /NOLIST		  Yes	Don't create a listing file
-    /LIST		  No	Create output listing file whose name
-            matches the name of the first input
-            file with a filetype of .LIS.
-    /LIST=name		Create output listing file with 
-            specified name. Default filetype of
-            .LIS.
-    /CROSS		  No	Do a symbol cross reference report in the
-            listing file.
-    /NOCROSS	  Yes	Don't do a cross reference report.
-    /BINARY		  Yes	Create output object file in binary format.
-             Selects default object filetype of .OB.
-    /NOBINARY	  No	Create output object file in ASCII format.
-             Selects default object filetype of .OL.
-    /NOTEMPFILE	  Yes	Use memory to hold intermediate object file.
-    /TEMPFILE	  No	Use temporary file to hold intermediate
-             object file (only necessary on very small
-             systems or with very large source files).
-    /TEMPFILE=name		Assigns path/filename for temporary file
-             (I.e. ramdisk on MS-DOS system).
-    /NOMISER	  No	Don't compress intermediate object file.
-             (This may speed up the assembler on
-              some systems).
-    /MISER		  Yes	Assembler is miserly about using memory.
-    /NOCMOS		  Yes	MAC65 only; selects the instruction set for
-             the ordinary 6502 processor.
-    /CMOS		  No	MAC65 only; selects the instruction set for
-             the CMOS version of the 6502.
-    /NODEBUG	  Yes	Doesn't put source code debug 
-             information in the object file.
-    /DEBUG		  No	Places source code debug information in 
-             the object file.
-    /SYMBOL_LEN=n	  n=6	Sets the significant length of the 
-             symbols and labels to n. n may be a
-             value between 6 and 32.
-    /OPCODE_LEN=n	  n=6	Sets the significant length of the opcodes,
-             pseudo-ops and macro names. n may be a
-             value between 6 and 32.
-  
-  NOTE: On Xenix/Unix systems, the slash (/) is replaced with a dash (-).
-  
+  as whitespace. The valid options are:
+  <p>
+  <table style="width: 40%">
+    <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td>NOOUTPUT</td><td>No</td><td>Don't create an output file</td></tr>
+    <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
+    <tr><td>OUTPUT=name</td><td>No</td><td>Create an output object file with <u>name</u>[.ol] or <u>name</u>[.ob]</td></tr>
+    <tr><td>NOLIST</td><td>Yes</td><td>Don't create a listing output file</td></tr>
+    <tr><td>LIST</td><td>No</td><td>Create a listing output file</td></tr>
+    <tr><td>LIST=name</td><td>No</td><td>Create a listing output file with <u>name</u>[.lis]</td></tr>
+    <tr><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
+    <tr><td>NOBINARY</td><td>Yes</td><td>Create output object file in ASCII format (selects filetype of .ol)</td></tr>
+    <tr><td>NOTEMPFILE</td><td>Yes</td><td>Use memory to hold intermediate object file</td></tr>
+    <tr><td>TEMPFILE</td><td>No</td><td>Use temporary file to hold intermediate object file</td></tr>
+    <tr><td>TEMPFILE=name</td><td>No</td><td>Use temporary file <u>name</u>to hold intermediate object file</td></tr>
+    <tr><td>NOMISER</td><td>No</td><td>Don't compress intermediate object file. (Might make it faster on some systems)</td></tr>
+    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory</td></tr>
+    <tr><td>NOCMOS</td><td>Yes</td><td>MAC65 only; selects the instruction set for the original 6502 processor</td></tr>
+    <tr><td>CMOS</td><td>No</td><td>MAC65 only; selects the instruction set for the 65C02 CMOS processor</td></tr>
+    <tr><td>NODEBUG</td><td>Yes</td><td>Doesn't put source code debug information in the object file.</td></tr>
+    <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
+    <tr><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
+    <tr><td>OPCODE_LEN=n</td><td>varies</td><td>Sets the significant length of the opcodes and macros to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
+  </table>  
+    <p>
+  NOTE: On Xenix/Unix/Linux systems, the option delimiter is a dash (-).
+  </p>
+    <p>
   The case of any option is not significant and they may be abbreviated to
   the least number of characters that prevents ambiguity. 
-  
+  </p>
+    <p>
+  NOTE: If the filename is omitted from the OUT or LIS options, then a default filename is created
+    from the basename of the first input file with either a .OB or .OL appeneded on the object file
+    and a .LIS appended on a listing file respectively. For examnple:
+    </p>
+    <pre>
+    mac65 -lis -out foo,fred
+    </pre>
+    <p>
+    Will produce a foo.ol and foo.lis file.
+    </p>
+    <p>
   Examples:
-  
-    MAC65 FOOBAR/LIS	!outputs are FOOBAR.OB and FOOBAR.LIS 
-    MAC65 FUBAR/NOBIN	!output is FUBAR.OL
-    MAC65 FUBAR		!output is FUBAR.OB
-    mac65 foobar -lis	!on Unix...
-    mac65 -lis foobar	!...options can be anywhere
-    MACAS HEADER,FOO,BAR/LIS=TEST/OUT=FOO/DEBUG/SYM=16  !...
-          !   ...files HEADER, FOO and BAR are
-          !   ...assembled in order; the outputs
-          !   ...are FOO.OB and TEST.LIS
-          !   ...FOO.OB has debug records in it
-          !   ...symbol/labels are significant to 16
-          !   ...characters.
+    </p>
+  <pre>  
+      MAC65 FOOBAR/LIS     !outputs are FOOBAR.OL and FOOBAR.LIS 
+      MAC65 FUBAR/NOBIN    !output is FUBAR.OL
+      MAC65 FUBAR/BIN      !output is FUBAR.OB
+      mac65 foobar -lis    !on Unix/Linux...
+      mac65 -lis foobar    !...options can be anywhere
+      MACAS HEADER,FOO,BAR/LIS=TEST/OUT=FOO/DEBUG/SYM=16
+                           !   ...files HEADER, FOO and BAR are
+                           !   ...assembled in order; the outputs
+                           !   ...are FOO.OL and TEST.LIS
+                           !   ...FOO.OL has debug records in it
+                           !   ...symbol/labels are significant to 16
+                           !   ...characters.
+  </pre>
   </body>
 </html>
