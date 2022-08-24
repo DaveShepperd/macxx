@@ -78,6 +78,7 @@
   </p>
     <p>If one cares, I wrote a little history about how this assembler and the other two tools came to be. It can be found
     <a href="#history">HERE</a>.
+    </p>
   </em>
   </div>
   <p>
@@ -2233,31 +2234,37 @@
   separate filenames and options from one another. Commas are treated
   as whitespace. The valid options are:
   <p>
-  <table style="width: 40%">
+  <table style="width: 50%">
     <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
-    <tr><td>NOOUTPUT</td><td>No</td><td>Don't create an output file</td></tr>
+    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory</td></tr>
+    <tr><td>RELATIVE</td><td>Yes</td><td>Output object file is relative.</td></tr>
+    <tr><td>BOFF</td><td>Yes</td><td>MACAS only; Include a branch offset test in the output.</td></tr>
     <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
     <tr><td>OUTPUT=name</td><td>No</td><td>Create an output object file with <u>name</u>[.ol] or <u>name</u>[.ob]</td></tr>
-    <tr><td>NOLIST</td><td>Yes</td><td>Don't create a listing output file</td></tr>
     <tr><td>LIST</td><td>No</td><td>Create a listing output file</td></tr>
     <tr><td>LIST=name</td><td>No</td><td>Create a listing output file with <u>name</u>[.lis]</td></tr>
     <tr><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
-    <tr><td>NOBINARY</td><td>Yes</td><td>Create output object file in ASCII format (selects filetype of .ol)</td></tr>
-    <tr><td>NOTEMPFILE</td><td>Yes</td><td>Use memory to hold intermediate object file</td></tr>
     <tr><td>TEMPFILE</td><td>No</td><td>Use temporary file to hold intermediate object file</td></tr>
-    <tr><td>TEMPFILE=name</td><td>No</td><td>Use temporary file <u>name</u>to hold intermediate object file</td></tr>
-    <tr><td>NOMISER</td><td>No</td><td>Don't compress intermediate object file. (Might make it faster on some systems)</td></tr>
-    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory</td></tr>
-    <tr><td>NOCMOS</td><td>Yes</td><td>MAC65 only; selects the instruction set for the original 6502 processor</td></tr>
+    <tr><td>TEMPFILE=name</td><td>No</td><td>Use temporary file <u>name</u> to hold intermediate object file</td></tr>
     <tr><td>CMOS</td><td>No</td><td>MAC65 only; selects the instruction set for the 65C02 CMOS processor</td></tr>
-    <tr><td>NODEBUG</td><td>Yes</td><td>Doesn't put source code debug information in the object file.</td></tr>
+    <tr><td>816</td><td>No</td><td>MAC65 only; selects the instruction set for the 65816 processor</td></tr>
+    <tr><td>GREENHILLS</td><td>No</td><td>MAC68K and MAC682K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
     <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
     <tr><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
     <tr><td>OPCODE_LEN=n</td><td>varies</td><td>Sets the significant length of the opcodes and macros to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
+    <tr><td>ABBREV</td><td>No</td><td>Abbreviate the error messages</td></tr>
+    <tr><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
+    <tr><td>ASSEM="string"</td><td>No</td><td><u>string</u> is a line to be assembled before anything else. Any number of these may be used</td></tr>
+    <tr><td>OCTAL</td><td>No</td><td>Display numbers in octal in the listing file.</td></tr>
+    <tr><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
+    <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
   </table>  
     <p>
   NOTE: On Xenix/Unix/Linux systems, the option delimiter is a dash (-).
   </p>
+    <p>
+    All the options that have a default of <u>Yes</u> can have a prefix of <u><b>NO</b></u> to indicate the option is not wanted.
+    </p>
     <p>
   The case of any option is not significant and they may be abbreviated to
   the least number of characters that prevents ambiguity. 
@@ -2289,6 +2296,150 @@
                            !   ...FOO.OL has debug records in it
                            !   ...symbol/labels are significant to 16
                            !   ...characters.
+      mac65 -assem="VAR1=100" -ass="VAR2=200" -inc=hdrs file.mac
+      macpp -out=new.mac -lis old.mac
   </pre>
+<h2>Appendex</h2>
+    <h3 id="mac65_specials">MAC65 special psuedo-ops, operations and address modes</h3>
+    <p>
+    MAC65 has a bit of history at Atari. See more details in the <a href="#history">HISTORY</a>
+    section about this if one cares.
+    The only tool available in 1975 to the microprocessor developers (all two of them) was
+    the RT11 MACRO-11 assembler running on their PDP11/05 computer. They used this tool
+    to assemble for the first 6502 game boards by writing macros for all the 6502 opcodes.
+    They specified the address mode, if required, as the first but separate operand to the macro.
+    For example, to select absolute address mode on a LDA, the operand would be A so the instruction would
+    appear in the source as:
+    </p>
+    <pre>
+    LDA A,somewhere ;comment
+    </pre>
+    <p>
+    Likewise for all the others, Z for base page, ZX for base page indexed by X, etc.
+    Through 1975, 1976 and some of 1977 this was the M.O. of all of us game programmers
+    at Atari (coin-op at least). If one sees this kind of syntax in any of the old Atari 6502 code,
+    at least for coin-op games, that is the reason. Many programmers continued to use
+    that syntax throughout their career at Atari despite my subsequently having made an alternate syntax
+    available. Here are all of the old syntax Mac65 will accept (I think):
+    </p>
+    <pre>
+    opc A,addr     ;absolute (16 bit address)
+    opc AX,addr    ;absolute indexed by X (16 bit address)
+    opc AY,addr    ;absolute indexed by Y (16 bit address)
+    opc I,imm      ;load immediate (8 bit immediate)
+    opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, etc.)
+    opc N,addr     ;absolute indirect (16 bit address)
+    opc NX,addr    ;indirect indexed by X (8 bit address)
+    opc NY,addr    ;index by Y indirect (8 bit address)
+    opc Z,addr     ;base page (8 bit address)
+    opc ZX,addr    ;base page indexed by X (8 bit address)
+    </pre>
+    <p>
+    Here are the alternate methods of describing the address modes in MAC65 that do not require a comma:
+    </p>
+    <pre>
+    opc addr       ;absolute or zero page (assembler will try to figure out whether 8 or 16 bit address)
+    opc addr(X)    ;absolute or zero page indexed by X (assembler will try to figure out whether 8 or 16 bit address)
+    opc addr(Y)    ;absolute indexed by Y (assembler may be able figure out whether 8 or 16 bit address)
+    opc #imm       ;load immediate (8 bit immediate)
+    opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, etc.)
+    opc @addr      ;absolute indirect (16 bit address)
+    opc @addr(X)   ;indirect indexed by X (8 bit address)
+    opc @addr(Y)   ;index by Y indirect (8 bit address)
+    </pre>
+    <p></p>
+    <h3 id="macpp_specials">MACPP special psuedo-ops and operations</h3>
+    <p>
+    The MACPP assembler is unique in that it doesn't actually assemble anything or
+    produce an object file. Instead it just uses all the macro and conditionals
+    available to all the assemblers and is useful to conditionally produce some
+    plain text file suitable to use by some other language processor. For example
+    it was used at Atari to pre-process some configuration files using very complex
+    conditional states and variables and produce both a configuration file that could
+    be later used by either macxx, a C compiler or some other language we happened
+    to be using at the time. I.e. one common configuration for all applications. The
+    PP in MACPP stand for Pre-Processor. Macpp has some unique psuedo-ops and
+    command line options:
+    </p>
+  <table style="width: 50%">
+    <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
+    <tr><td>LINE</td><td>No</td><td>Include input line number in output</td></tr>
+  </table>
+    <p>
+    The -LINE command line option directs Macpp to include source line numbers
+    in the listing file. If no listing is selected, this option does nothing.
+    </p>
+    <p>
+    Macpp allows one to supply multiple output filenames. The output is directed
+    to the appropriate file with a .OUTFILE directive. For example:
+    </p>
+    <pre>
+    macpp -out=file0.mac -out=file1.mac input.mac
+    </pre>
+    <p>
+    The output file number is specified by the order in which they are expressed on the
+    command line. In the above example file 0 is the first one, file 1 is the second, etc.
+    To change output files the directive .OUTFILE is used. For example, the contents of
+    the input.mac file as used above could contain something akin to:
+    </p>
+    <pre>
+    This line and all before it goes into file 0.
+    .outfile 1  ;Switch to the other output file
+    This line goes into file 1.
+    .outfile 0  ;Switch back to file 0.
+    This line goes into file 0 too.
+    ...
+    </pre>
+    <p></p>
+    <h3 id="mac68k_specials">MAC68K special psuedo-ops and operations</h3>
+    <p>
+    </p>
+    <h3 id="macpp_specials">MAC682K special psuedo-ops and operations</h3>
+    <p>
+    </p>
+    <h3 id="macpp_specials">MACAS special psuedo-ops and operations</h3>
+    <p>
+    </p>
+    <h3 id="macpp_specials">MAC11 special psuedo-ops and operations</h3>
+    <p>
+    </p>
+    <h3 id="macpp_specials">MACTJ special psuedo-ops and operations</h3>
+    <p>
+    </p>
+  <p>
+    </p>
+  <div id="history" style="border: 2px solid black;margin:4px;padding: 4px">
+  <em>A little history.
+  <p>
+      I hated it. For two main reasons. The RT11 MACRO assembler
+    printed all the numbers in its listing as octal numbers but I much preferred to use hexadecimal
+    with all my 6502 programming and MACRO only accepted as input octal or decimal
+    numbers in the source so hexadecimal wasn't an option on either input or output. Although
+    I was technically a game programmer, I decided to write a new assembler for the 6502 that
+    would take hexidecimal as well as octal, decimal and whatever else. When I mentioned it
+    to my co-workers, it was suggested to expand this new assembler to include all the other
+    microprocessors we were developing for at the time too: the 6800, the Z80, 8080, 6502,
+    PDP11 and others and it was also suggested that a MACPP would be very helpful. This project became
+    MACXX. I wrote it in PDP11 assembly for the RT11 operating system which is all I had at
+    the time. I probably started it around late 1977 or early 1978.
+    
+    I had been programming the PDP11 all that
+    time as well as the 6502 and much preferred what appeared to me what more closely
+    matched the address modes the PDP11 used. I.e. indexed indicated with ()'s, indirect
+    indicated with @, etc. So as I was writing a 
+    
+     In 1975 when They were just starting to develop
+    game hardware using microprocessors, there was no development tools they were willing
+    to purchase (surprisingly they were operating on quite the shoestring budget for
+    everything at the time). They had a PDP11/05 computer running RT11 with dual
+    8" floppy disks and a paper tape reader/punch and a very cheap keyboard CRT setup
+    that could show 12 lines of 80 columns uppercase only text. The RT11 O/S included
+    a macro assembler that, by default of course, expected to assemble PDP11 source
+    into an RT11 object file to be subsequently linked with the RT11 linker, LINK.
+    </p>
+  </em>
+  </div>
+    
   </body>
 </html>
