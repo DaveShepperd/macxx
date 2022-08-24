@@ -2246,8 +2246,6 @@
     <tr><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
     <tr><td>TEMPFILE</td><td>No</td><td>Use temporary file to hold intermediate object file</td></tr>
     <tr><td>TEMPFILE=name</td><td>No</td><td>Use temporary file <u>name</u> to hold intermediate object file</td></tr>
-    <tr><td>CMOS</td><td>No</td><td>MAC65 only; selects the instruction set for the 65C02 CMOS processor</td></tr>
-    <tr><td>816</td><td>No</td><td>MAC65 only; selects the instruction set for the 65816 processor</td></tr>
     <tr><td>GREENHILLS</td><td>No</td><td>MAC68K and MAC682K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
     <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
     <tr><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
@@ -2255,7 +2253,7 @@
     <tr><td>ABBREV</td><td>No</td><td>Abbreviate the error messages</td></tr>
     <tr><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
     <tr><td>ASSEM="string"</td><td>No</td><td><u>string</u> is a line to be assembled before anything else. Any number of these may be used</td></tr>
-    <tr><td>OCTAL</td><td>No</td><td>Display numbers in octal in the listing file.</td></tr>
+    <tr><td>OCTAL</td><td>varies</td><td>Display numbers in octal in the listing file.</td></tr>
     <tr><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
     <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
   </table>  
@@ -2307,7 +2305,7 @@
     The only tool available in 1975 to the microprocessor developers (all two of them) was
     the RT11 MACRO-11 assembler running on their PDP11/05 computer. They used this tool
     to assemble for the first 6502 game boards by writing macros for all the 6502 opcodes.
-    They specified the address mode, if required, as the first but separate operand to the macro.
+    They specified the address mode, if required, as the first of two operands to the macro.
     For example, to select absolute address mode on a LDA, the operand would be A so the instruction would
     appear in the source as:
     </p>
@@ -2340,13 +2338,25 @@
     <pre>
     opc addr       ;absolute or zero page (assembler will try to figure out whether 8 or 16 bit address)
     opc addr(X)    ;absolute or zero page indexed by X (assembler will try to figure out whether 8 or 16 bit address)
-    opc addr(Y)    ;absolute indexed by Y (assembler may be able figure out whether 8 or 16 bit address)
+    opc addr(Y)    ;absolute indexed by Y (16 bit address)
     opc #imm       ;load immediate (8 bit immediate)
     opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, etc.)
     opc @addr      ;absolute indirect (16 bit address)
     opc @addr(X)   ;indirect indexed by X (8 bit address)
     opc @addr(Y)   ;index by Y indirect (8 bit address)
     </pre>
+    <p>
+    Mac65 has two command line options unique to it:
+    </p>
+  <table style="width: 30%">
+    <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
+    <tr><td>CMOS</td><td>No</td><td>Selects the instruction set for the 65C02 CMOS processor</td></tr>
+    <tr><td>816</td><td>No</td><td>Selects the instruction set for the 65816 processor</td></tr>
+  </table>
+    <p>
+    The <u>CMOS</u> option select the opcodes for the 65C02 processor and the <u>816</u> option selects the opcodes
+    for the 65816 processor.
+    </p>
     <p></p>
     <h3 id="macpp_specials">MACPP special psuedo-ops and operations</h3>
     <p>
