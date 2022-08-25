@@ -122,7 +122,7 @@ void do_opcode(Opcode *opc)
     case OPCL_AU :
         /* ALU ops: 
         *	OP	%i,%j,%k	reg.i <- reg.j OP reg.k
-        *	OP	%i,j,%k		reg.i <- reg.j OP k (constant)
+        *	OP	%i,%j,k		reg.i <- reg.j OP k (constant)
         */
 #if DEBUG & OP_DEBUG
         fprintf(stderr,"got class AU, value: %04X %s",

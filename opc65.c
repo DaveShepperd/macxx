@@ -978,17 +978,27 @@ void do_opcode(Opcode *opc)
         {      /* better be a string */
             bad_token(tkn_ptr,"Illegal address mode specifier");
         }
-        for (i=0;forced_am[i].name;++i) if (strcmp(token_pool,forced_am[i].name) == 0) break;
-        if (forced_am[i].name == 0)
-        {
-            bad_token(tkn_ptr,"Illegal address mode specifier");
-        }
-        forced_am_num  = forced_am[i].am_num;
-        if (forced_am_num != DES_NUM && ((1L << forced_am_num)&opc->op_amode) == 0)
-        {
-            bad_token(tkn_ptr,"Forced address mode not legal for this instruction. Ignored");
-            forced_am_num = UNDEF_NUM;
-        }
+		else
+		{
+			for (i=0;forced_am[i].name;++i)
+			{
+				if (strcmp(token_pool,forced_am[i].name) == 0)
+					break;
+			}
+			if (forced_am[i].name == 0)
+			{
+				bad_token(tkn_ptr,"Illegal address mode specifier");
+			}
+			else
+			{
+				forced_am_num  = forced_am[i].am_num;
+				if (forced_am_num != DES_NUM && ((1L << forced_am_num)&opc->op_amode) == 0)
+				{
+					bad_token(tkn_ptr,"Forced address mode not legal for this instruction. Ignored");
+					forced_am_num = UNDEF_NUM;
+				}
+			}
+		}
     }
     switch (opc->op_class & 3)
     {
