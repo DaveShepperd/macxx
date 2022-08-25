@@ -92,12 +92,12 @@
   </p>
   <pre>
   <b>macpp</b>    - A macro pre-processor; no CPU; it works similar to the C language's CPP.
-  <b>mac65</b>    - For the MOS Technology 6502 and 65C02 CPU
+  <b>mac65</b>    - For the MOS Technology 6502, 65C02 and 65816 CPU's
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
   <b>mac682k</b>  - For the Motorola 68020 CPU
   <b>mac11</b>    - For the PDP11 CPU
   <b>macas</b>    - For the custom Atari Simplified Architecure Processor (ASAP) CPU
-  <b>mactj</b>    - For the Atari custom Tom and Jerry CPU
+  <b>mactj</b>    - For the Atari custom Tom and Jerry DSP's
   </pre>
   <p>
   <b>Macxx</b> consists of a core group of pseudo-ops
@@ -438,38 +438,38 @@
   true. 
   </p>
   <table style="width: 30%">
-    <tr><th>Binary operators</th><th>Examples</th></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</td><td>A+B A added with B (can also be +A which means 0+A)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-</td><td>A-B A subtracted with B (can also be -A which means 0-A)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*</td><td>A*B A multiplied by B (32 bit product)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</td><td>A/B A divided by B (returns a 32 bit quotient)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&</td><td>A&B A logically anded with B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</td><td>A|B A logically or'ed with B</td></tr>
+    <tr><th>Binary operators</th><th>Examples</th><th>Meaning</th></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+</td><td>A+B</td><td>A added with B (can also be +A which means 0+A)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-</td><td>A-B</td><td>A subtracted with B (can also be -A which means 0-A)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*</td><td>A*B</td><td>A multiplied by B (32 bit product)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/</td><td>A/B</td><td>A divided by B (returns a 32 bit quotient)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&</td><td>A&B</td><td>A logically anded with B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</td><td>A|B</td><td>A logically or'ed with B</td></tr>
   </table>
   <p>    
-  The following are <u><b>NOT</b></u> available in MAC65:
+  The following are <u><b>NOT</b></u> available in MAC65 but are available in all the others:
   </p>
   <table style="width: 30%"> 
-    <tr><th>Binary operators</th><th>Examples</th></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^</td><td>A^B A exclusive or'ed with B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;</td><td>A&lt;&lt;B A shifted B bits left</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&gt;</td><td>A&gt;&gt;B A shifted B bits right</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;==</td><td>A==B returns 1 if A equals B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!=</td><td>A!=B	returns 1 if A not equal B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;</td><td>A&gt;B	returns 1 if A greater than B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</td><td>A&lt;B	returns 1 if A less than B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;=</td><td>A&gt;=B 1 if A greater than or equal to B</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;=</td><td>A&lt;=B	1 if A less than or equal to B</td></tr>
+    <tr><th>Binary operators</th><th>Examples</th><th>Meaning</th></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^</td><td>A^B</td><td>A exclusive or'ed with B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&lt;</td><td>A&lt;&lt;B</td><td>A shifted B bits left</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&gt;</td><td>A&gt;&gt;B</td><td>A shifted B bits right</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;==</td><td>A==B</td><td>returns 1 if A equals B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!=</td><td>A!=B</td><td>returns 1 if A not equal B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;</td><td>A&gt;B</td><td>returns 1 if A greater than B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;</td><td>A&lt;B</td><td>returns 1 if A less than B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;=</td><td>A&gt;=B</td><td>returns 1 if A greater than or equal to B</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;=</td><td>A&lt;=B</td><td>returns	1 if A less than or equal to B</td></tr>
   </table>
   <p>
   The following are available <u><b>ONLY</b></u> in MAC65 (this was chosen to keep compatible with the syntax of the very old PDP11 version of MAC65):
   </p>
   <table style="width: 30%">
-    <tr><th>Binary operators</th><th>Examples</th></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!</td><td>A!B	A logically or'ed with B (same as |)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?</td><td>A?B A exclusive or'ed with B (same as ^ in other assemblers)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</td><td>A{B	A is shifted B bits left (same as &lt;&lt; in other assemblers)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td><td>A}B	A is shifted B bits right (same as &gt;&gt; in other assemblers)</td></tr>
+    <tr><th>Binary operators</th><th>Examples</th><th>Meaning</th></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!</td><td>A!B</td><td>A logically or'ed with B (same as |)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?</td><td>A?B</td><td>A exclusive or'ed with B (same as ^ in other assemblers)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{</td><td>A{B</td><td>A is shifted B bits left (same as &lt;&lt; in other assemblers)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</td><td>A}B</td><td>A is shifted B bits right (same as &gt;&gt; in other assemblers)</td></tr>
   </table>
   <p>
   Unary operators are escaped with a circumflex (^) which means the character 
@@ -479,20 +479,20 @@
     byte of B.
   </p>
   <table style="width: 30%">
-    <tr><th>Unary operators</th><th>Examples</th></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^C</td><td>^C A returns 1's compliment of A</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^B</td><td>^B 100 = change radix of term to  2 (binary; number is 0x004)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^D</td><td>^D 100 = change radix of term to 10 (decimal; number is 0x064)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^H</td><td>^H 100 = change radix of term to 16 (hexadecimal; number is 0x100)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^O</td><td>^O 100 = change radix of term to  8 (octal; number is 0x40)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^X</td><td>^X 100 = change radix of term to 16 (hexadecimal; number is 0x100)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^V</td><td>^V A returns low byte: bits 7-0 of A</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^^</td><td>^^ A returns high byte: bits 15-8 of A</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^~</td><td>^~ A returns bits 15:8 swapped with bits 7:0 and bits 23-16 with bits 31-24 of A</td></tr>
+    <tr><th>Unary operators</th><th>Examples</th><th>Meaning</th></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^C</td><td>^C A</td><td>returns 1's compliment of A</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^B</td><td>^B 100</td><td>change radix of term to  2 (binary; number is 0x004)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^D</td><td>^D 100</td><td>change radix of term to 10 (decimal; number is 0x064)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^H</td><td>^H 100</td><td>change radix of term to 16 (hexadecimal; number is 0x100)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^O</td><td>^O 100</td><td>change radix of term to  8 (octal; number is 0x40)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^X</td><td>^X 100</td><td>change radix of term to 16 (hexadecimal; number is 0x100)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^V</td><td>^V A</td><td>returns low byte: bits 7-0 of A</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^^</td><td>^^ A</td><td>returns high byte: bits 15-8 of A</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^~</td><td>^~ A</td><td>returns bits 15:8 swapped with bits 7:0 and bits 23-16 with bits 31-24 of A</td></tr>
   </table>  
     <p>
   Any term of an expression may be enclosed in a pair of expression
-  brackets ('&lt;' and '%gt;' in MAC65 or '(' and ')' in all other assemblers)
+  brackets ('&lt;' and '&gt;' in MAC65 or '(' and ')' in all other assemblers)
   and itself be a collection of one or more terms. For example: 
   </p>
     <pre>
@@ -505,7 +505,7 @@
   </p>
     <pre>
       B*C/D+6*100+A/4 exclusive OR'd with the low byte of FRED*10
-      and the whole result added to ABC+(hex)2233
+      and the whole result added to ABC+0x2233
     </pre>
   
   <h4>Direct assignment</h4>
@@ -629,9 +629,9 @@
   format is:
   </p>
     <pre>
-      .ASCII string	;Straight ASCII string
-      .ASCIN string	;The last byte of the string has bit 7 set
-      .ASCIZ string	;An extra byte of 0 is inserted at the end
+      .ASCII string ;Straight ASCII string
+      .ASCIN string ;The last byte of the string has bit 7 set
+      .ASCIZ string ;An extra byte of 0 is inserted at the end
                     ;    of the string
     </pre>
   <p>
@@ -641,9 +641,10 @@
       .ASCII /123/	;puts (hex) 31 32 33 beginning at the current location
       .ASCIN /123/	;puts (hex) 31 32 B3
       .ASCIZ /123/	;puts (hex) 31 32 33 00
-      .ASCII \123\&lt;some_expression&gt;/456/	;puts 31 32 33 xx 34 35 36
-          ;second set of delimiters doesn't have to match the
-          ; first set of delimiters.
+      .ASCII \123\&lt;expr&gt;/456/  ;MAC65: puts 31 32 33 xx 34 35 36
+                               ;second set of delimiters doesn't have to match the
+                               ;first set of delimiters.
+      .ASCII \123\(expr)/456/  ;Others: puts 31 32 33 xx 34 35 36
     </pre>
   <h3 id="dir_asect">.ASECT</h3>
     <pre>
@@ -2294,7 +2295,7 @@
                            !   ...FOO.OL has debug records in it
                            !   ...symbol/labels are significant to 16
                            !   ...characters.
-      mac65 -assem="VAR1=100" -ass="VAR2=200" -inc=hdrs file.mac
+      mac65 -assem="VAR1=100" -ass="VAR2=200" -inc=hdrs file1.mac file2
       macpp -out=new.mac -lis old.mac
   </pre>
 <h2>Appendex</h2>
@@ -2304,8 +2305,10 @@
     section about this if one cares.
     The only tool available in 1975 to the microprocessor developers (all two of them) was
     the RT11 MACRO-11 assembler running on their PDP11/05 computer. They used this tool
-    to assemble for the first 6502 game boards by writing macros for all the 6502 opcodes.
+    to assemble for the first 6502 and 6800 game boards by writing macros for all the 6502 and 6800 opcodes.
     They specified the address mode, if required, as the first of two operands to the macro.
+    </p>
+    <p id="M65_Addressing">
     For example, to select absolute address mode on a LDA, the operand would be A so the instruction would
     appear in the source as:
     </p>
@@ -2313,7 +2316,9 @@
     LDA A,somewhere ;comment
     </pre>
     <p>
-    Likewise for all the others, Z for base page, ZX for base page indexed by X, etc.
+    Likewise for all the others, Z for base page, ZX for base page indexed by X, etc. I have no
+    idea why they chose that over what was in the MOS Technology 6502 manual which basically has
+    the two operands reversed.
     Through 1975, 1976 and some of 1977 this was the M.O. of all of us game programmers
     at Atari (coin-op at least). If one sees this kind of syntax in any of the old Atari 6502 code,
     at least for coin-op games, that is the reason. Many programmers continued to use
@@ -2327,10 +2332,12 @@
     opc I,imm      ;load immediate (8 bit immediate)
     opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, etc.)
     opc N,addr     ;absolute indirect (16 bit address)
+    opc AN,addr    ;absolute indirect (16 bit address; same as 'N')
     opc NX,addr    ;indirect indexed by X (8 bit address)
     opc NY,addr    ;index by Y indirect (8 bit address)
     opc Z,addr     ;base page (8 bit address)
     opc ZX,addr    ;base page indexed by X (8 bit address)
+    opc rel        ;relative branch (8 bit signed offset)
     </pre>
     <p>
     Here are the alternate methods of describing the address modes in MAC65 that do not require a comma:
@@ -2344,7 +2351,33 @@
     opc @addr      ;absolute indirect (16 bit address)
     opc @addr(X)   ;indirect indexed by X (8 bit address)
     opc @addr(Y)   ;index by Y indirect (8 bit address)
+    opc rel        ;relative branch (8 bit signed offset)
     </pre>
+    <p>
+    When <u>.ENABL MOS</u> runtime option or the <u>65816</u> command line option is selected, the accepted syntax changes to that as described in the
+    MOS Technology 6502 or Western Design Center 65816 manuals respectively which is a hybrid of the two syntaxes shown above (except the address mode
+    follows the operand). Being there are commas in many of them, passing them as arguments to macros can be a bit tricky and troublesome. I believe
+    the MOS/WDC syntax is of the form:
+    </p>
+    <pre>
+    opc addr       ;absolute or zero page (assembler will try to figure out whether 8 or 16 bit address)
+    opc addr,X     ;absolute indexed by X (assembler will try to figure out whether 8 or 16 bit address)
+    opc addr,Y     ;absolute indexed by Y (16 bit address)
+    opc #imm       ;load immediate (8 bit immediate)
+    opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, etc.)
+    opc (addr)     ;absolute indirect (16 bit address)
+    opc (addr,X)   ;indirect indexed by X (8 bit address)
+    opc (addr),Y   ;index by Y indirect (8 bit address)
+    opc [addr,X]   ;65816 only: indirect indexed by X (16 bit address)
+    opc [addr],Y   ;65816 only: index by Y indirect (16 bit address)
+    opc rel        ;relative branch (8 bit signed offset)
+    </pre>
+    <p>
+    <em>
+    NOTE: Atari coin-op never did any development with the 65816 CPU. It was added to mac65 so it could be used should that change.
+    The upshot is it was never tested with mac65 so there might be bugs in there somewhere. And to add to that, I don't remember
+    what I had in mind on how to specify one wanted 24 bit address modes for the 816 CPU. Good luck with it.
+    </em></p>
     <p>
     Mac65 has two command line options unique to it:
     </p>
@@ -2402,19 +2435,55 @@
     ...
     </pre>
     <p></p>
-    <h3 id="mac68k_specials">MAC68K special psuedo-ops and operations</h3>
+    <h3 id="mac68k_specials">MAC68K and MAC682K special psuedo-ops and operations</h3>
+    <p>
+    The mac68k and mac682k assemblers accept one of two syntaxes. The default syntax matches what the
+    GNU 68k assembler uses and, in fact, is what we used at Atari to assemble the output
+    of gcc when doing cross-compiles. The alternate syntax is that of what the Greenhills C
+    compiler output. That syntax is chosen using the GREENHILLS command line option. I leave
+    it as an exercise to the reader to determine what those are.
+    </p>
     <p>
     </p>
-    <h3 id="macpp_specials">MAC682K special psuedo-ops and operations</h3>
+    <h3 id="macas_specials">MACAS special psuedo-ops and operations</h3>
+    <p>
+    The ASAP CPU is a custom designed 32 bit processor designed by Atari coin-op. The acronym stands for Atari
+    Simplified Architecture Processor. It was coincidently similar to the MIPS R3k processor but without
+    hardware integer multiply and divide and no floating point. I believe our cost for it was around $5 (or
+    maybe that was the target; I don't know if we hit it). I do not believe it was ever used in a prodction
+    game. We made 100's of little boards for use within engineering to control some game development systems
+    and we used those right up until coin-op closed up shop (and even for a few months after). Think of it
+    as a kind of Raspberry PI today. I ported Xinu to it and we had all of them hooked up to our Ethernet. The ASAP
+    has 32 general registers with register 0 always reading as 0, a 32 bit status register and a 32 bit program counter.
+    All instructions are 32 bits wide. I think only the memory read/write operations take two clock cycles
+    all the rest are one cycle. And I believe a branch always executes the instruction after the branch whether the
+    branch is taken or not. I believe this means it has a one stage pipeline.
+    </p>
+    <p>
+    The macas assembler has a single command line option unique to it: BOFF. That is turned on by default
+    and it includes instructions in the object file to LLF to test branch offsets for out of range and if
+    found, print the filename and line number of the branch instruction in error. The address modes follow
+    this model syntax:
+    </p>
+    <pre>
+    opc dstReg,src1Reg,src2Reg         ; dstReg &lt;- src1Reg op src2Reg
+    opc dstReg,srcReg,constant         ; dstReg &lt;- srcReg op constant
+    ld.size dstReg,src1Reg[src2Reg]    ; dstReg &lt;- @(src1Reg + (src2Reg&lt;&lt;size))
+    ld.size dstReg,src1Reg[constant]   ; dstReg &lt;- @(src1Reg + (constant&lt;&lt;size))
+    st.size srcReg,dst1Reg[dst2Reg]    ; srcReg -&gt; @(dst1Reg + (dst2Reg&lt;&lt;size))
+    st.size srcReg,dst1Reg[constant]   ; srcReg -&gt; @(dst1Reg + (constant&lt;&lt;size))
+    bcond address                      ; on condition currentPC += (address - currentPC); (-0x800000 &lt;= offset &lt;= 0x800000)
+    bsr dstReg,address                 ; dstReg &lt;- currentPC; currentPC += (address - currentPC)
+    jsr.size dstReg,src1Reg[src2Reg]   ; dstReg &lt;- currentPC; currentPC &lt;- @(src1Reg + (src2Reg&lt;&lt;size))
+    jsr.size dstReg,src1Reg[constant]  ; dstReg &lt;- currentPC; currentPC &lt;- @(src1Reg + (constant&lt;&lt;size))
+    getps dstReg                       ; dstReg &lt;- current status register
+    putps srcReg                       ; srcReg -&gt; current status register
+    </pre>
+    </p>
+    <h3 id="mac11_specials">MAC11 special psuedo-ops and operations</h3>
     <p>
     </p>
-    <h3 id="macpp_specials">MACAS special psuedo-ops and operations</h3>
-    <p>
-    </p>
-    <h3 id="macpp_specials">MAC11 special psuedo-ops and operations</h3>
-    <p>
-    </p>
-    <h3 id="macpp_specials">MACTJ special psuedo-ops and operations</h3>
+    <h3 id="mactj_specials">MACTJ special psuedo-ops and operations</h3>
     <p>
     </p>
   <p>
@@ -2422,7 +2491,9 @@
   <div id="history" style="border: 2px solid black;margin:4px;padding: 4px">
   <em>A little history.
   <p>
-      I hated it. For two main reasons. The RT11 MACRO assembler
+    Still working on it. Come back later.
+<!--
+            I hated it. For two main reasons. The RT11 MACRO assembler
     printed all the numbers in its listing as octal numbers but I much preferred to use hexadecimal
     with all my 6502 programming and MACRO only accepted as input octal or decimal
     numbers in the source so hexadecimal wasn't an option on either input or output. Although
@@ -2447,9 +2518,9 @@
     that could show 12 lines of 80 columns uppercase only text. The RT11 O/S included
     a macro assembler that, by default of course, expected to assemble PDP11 source
     into an RT11 object file to be subsequently linked with the RT11 linker, LINK.
+-->
     </p>
   </em>
   </div>
-    
   </body>
 </html>

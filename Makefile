@@ -1,6 +1,6 @@
-# $Id: makefile,v 1.5 2008/09/19 22:06:47 shepperd Exp $
+# $Id: Makefile,v 1.5 2008/09/19 22:06:47 shepperd Exp $
 
-#    makefile - build rules for making macxx, a cross assembler family for various micro-processors
+#    Makefile - build rules for making macxx, a cross assembler family for various micro-processors
 #    Copyright (C) 2008 David Shepperd
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -79,28 +79,28 @@ all : macas mac65 mac68k mac682k macpp mactj mac11
 
 define link_it
 	$(ECHO) "\tlinking $@..."
-	$L $(DBG) -o $@ $(filter-out makefile,$^)
+	$L $(DBG) -o $@ $(filter-out Makefile,$^)
 endef
 
-macpp : makefile $(ALLOPP0) $(ALLOPP1) $(ALLOPP2) $(ALLOPP3) 
+macpp : Makefile $(ALLOPP0) $(ALLOPP1) $(ALLOPP2) $(ALLOPP3) 
 	$(link_it)
 
-mactj : makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOTJ) 
+mactj : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOTJ) 
 	$(link_it)
 
-mac65 : makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO65) 
+mac65 : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO65) 
 	$(link_it)
 
-mac68k : makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68K) 
+mac68k : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68K) 
 	$(link_it)
 
-mac682k : makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO682K) 
+mac682k : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO682K) 
 	$(link_it)
 
-macas : makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOAS) 
+macas : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOAS) 
 	$(link_it)
 
-mac11 : makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO11)
+mac11 : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO11)
 	$(link_it)
 	
 dmpod : dmpod.o

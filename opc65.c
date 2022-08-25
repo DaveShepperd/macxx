@@ -297,13 +297,15 @@ static int do_operand(Opcode *opc)
                     amflag = OPENAT;
                 }
             }
-            if (amflag == 0) break;    /* give 'em an illegal am */
+            if (amflag == 0)
+				break;    /* give 'em an illegal am */
             get_token();       /* pickup the next token */
         }             /* fall through to rest */
     default: {
             if (options[QUAL_P816] || (edmask & ED_MOS))
             { /* if mostech format */
-                if (exprs(1,&EXP1) < 1) break;
+                if (exprs(1,&EXP1) < 1)
+					break;
                 if (amflag & FIN)
                 {     /* item started with a '(' */
                     int tst;
@@ -414,7 +416,9 @@ static int do_operand(Opcode *opc)
                 if (token_type == TOKEN_strng && *inp_ptr == ',')
                 {
                     char c;
-                    if (amflag != 0)
+					if ( squeak )
+						printf("opc65:do_operand() entry 1: token_type=TOKEN_strng, *inp_ptr == ',', amflag=0x%04lX\n", amflag);
+					if ( amflag != 0 )
                     {
                         bad_token(am_ptr,"Invalid address mode syntax");
                         break;
@@ -429,6 +433,8 @@ static int do_operand(Opcode *opc)
                         else if (c == 'N') amdcdnum = N_NUM;
                         else if (c == 'X') amdcdnum = X_NUM;
                         else if (c == 'Y') amdcdnum = Y_NUM;
+						if ( squeak )
+							printf("opc65:do_operand() entry 2: token_value==1, Found c='%c', amdcdnum=%d\n", c, amdcdnum);
                     }
                     else
                     {
@@ -446,12 +452,15 @@ static int do_operand(Opcode *opc)
                             {
                                 if (c1 == 'X') amdcdnum = AX_NUM;
                                 else if (c1 == 'Y') amdcdnum = AY_NUM;
+								else if (c1 == 'N') amdcdnum = N_NUM;
                             }
                             else if (c == 'N')
                             {
                                 if (c1 == 'X') amdcdnum = NX_NUM;
                                 else if (c1 == 'Y') amdcdnum = NY_NUM;
                             }
+							if ( squeak )
+								printf("opc65:do_operand() entry 2: token_value==2, Found c='%c', c1='%c', amdcdnum=%d\n", c, c1, amdcdnum);
                         }
                     }
                     if (amdcdnum < UNDEF_NUM)
@@ -463,7 +472,13 @@ static int do_operand(Opcode *opc)
                     get_token();     /* pickup the next token */
                     amflag = MNBI;       /* signal nothing else allowed */
                 }
-                if (exprs(1,&EXP1) < 1) break;
+				else
+				{
+					if ( squeak )
+						printf("opc65:do_operand() entry 1: token_type=%d, *inp_ptr == '%s', amflag=0x%04lX\n", token_type, inp_ptr, amflag);
+				}
+                if (exprs(1,&EXP1) < 1)
+					break;
                 if ((amflag & MNBI) == 0)
                 {
                     if (*inp_ptr == open_operand)
@@ -486,6 +501,8 @@ static int do_operand(Opcode *opc)
                         else bad_token(am_ptr,"Illegal index syntax. Expected n(X) or n(Y)");
                         break;
                     }        /* -- if not open '(' */
+					else if ( amflag == OPENAT )
+						return N_NUM;
                 }           /* -- if MNBI */
                 return amdcdnum > UNDEF_NUM ? amdcdnum : UNDEF_NUM; /* give 'em an am */
             }          /* -- if MOS format */
@@ -981,7 +998,11 @@ void do_opcode(Opcode *opc)
         break;
     case OPCL02:
         amdcdnum = do_operand(opc);    /* optional operands */
-        if (!compute_opcode(opc,check_am(opc,amdcdnum,forced_am_num))) bad_amode();
+		if ( squeak )
+			printf("opc65: do_opcode(): do_operand() OPCL02 returned %d, forced_am_num=%d, opc: name='%s', amode=0x%08lX\n",
+				   amdcdnum, forced_am_num, opc->op_name,  opc->op_amode);
+		if ( !compute_opcode(opc, check_am(opc, amdcdnum, forced_am_num)) )
+			bad_amode();
         break;
     case OPCL01: {
             int ct;

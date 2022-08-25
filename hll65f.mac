@@ -1,0 +1,423 @@
+; Macxx has no stack primitives built in. Nor does it do any
+; symbol cross reference so the stack and cross reference
+; directives need to be commented out.
+
+.IIF NDF,CMAC65,CMAC65 = 0	;Set to non-zero in a Makefile
+.IIF NDF,..STK$,..STK$ = 44.
+.IIF NDF,..SRC$,..SRC$ = 44.
+
+.IF EQ,CMAC65
+	.NOCROSS CMAC65
+	.NOCROSS DEFIF,IFXX,THEN,ELSE,BEGIN,LOC,FND,DEFEND,..END
+	.NOCROSS IF,ENDC,.,END,CONTINUE,ENDIF,..SRC$,..NST$
+	.NOCROSS $INDEN,$UNDEN
+	.DEFSTACK PC,..STK$
+	.DEFSTACK REGSAV,4.
+.ENDC
+..NST$	=0
+
+; Make sure all the symbols that will be .push'ed to the stack
+; are pre-defined. You cannot push an undefined symbol then pop
+; it off later. That won't work with macxx. It results in the
+; circular assignment error condition of:
+; A = B
+; B = C
+; C = A
+; and until I fixed it, resulted in a segfault during assembly.
+
+; The only four temporary variables used by the various macros.
+...P0 = 0
+...P1 = 0
+...S0 = 0
+...S1 = 0
+
+; These stack hacks would be a bit simpler if we could allow
+; longer symbol names (and lowercase). But because we are
+; building ancient sources, we need to stick to 6 char
+; uppercase symbols else we get lots of assembly errors.
+
+.IF NE,CMAC65		; RT11 MAC65 runs out of memory if using these push/pop macros
+;	.enabl lower
+	
+; These stack hacks would be a bit simpler if we could allow
+; lowercase and longer symbol names. But since we cannot we
+; have to do it a little bit more complicated.
+
+; Initialise the two "stack" pointers.
+.PC=..STK$	;The .PC stack saves PC related entries
+.RG=..STK$	;The .RG stack saves "register" related entries
+
+; The stacked item is stored in a symbol composed by a prefix
+; and a depth. In these cases, we construct stack symbols
+; ranging from .PC0 to .PC44 and .RG0 to .RG44 where the last
+; digit or two express the stack depth as set by ..STK$ above.
+
+; These four macros are needed mainly because of the 6 char
+; symbol name limit. The combination of the name (.PC or .RG) and
+; depth must not be allowed to be more than 6 chars, so the
+; depth cannot grow more than 999 or the assembler will start
+; ignoring characters (i.e. .PC100 is the same as .PC1000).
+; Not a problem with Tempest since the stack is limited to
+; 44 entries.
+
+	.macro .SPUSH name, depth, sym
+		'name''depth' = sym
+	.endm
+	.macro .SPOP name, depth, sym
+		sym = 'name''depth'
+	.endm
+	
+	.MACRO	.XPUSH name arg
+		.if lt, name-1
+			.error name-1 ; stack underflow
+		.iff
+			name = name-1
+			.SPUSH name, \name, arg
+		.endc
+	.ENDM
+	
+	.MACRO 	.XPOP name arg
+		.if ge, name-..STK$
+			.error name ;stack overflow
+		.iff
+			.SPOP name, \name, arg
+			name = name+1
+		.endc
+	.ENDM
+		
+	.MACRO	.PUSH name a0  a1  a2  a3
+		.irp xx,<a0 a1 a2 a3>
+			.if nb,<xx>
+				...rad = 10
+				.radix 10.
+				.if idn,<name>,<REGSAV>
+					.XPUSH .RG xx
+				.iff
+					.if idn,<name>,<PC>
+						.XPUSH .PC xx
+					.iff
+						.error ;Undefined stack
+					.endc
+				.endc
+				.radix ...rad
+			.endc
+		.endr
+	.ENDM
+	
+	.MACRO	.POP name a0  a1  a2  a3
+		.irp xx,<a0 a1 a2 a3> 
+			.if nb,<xx>
+				...rad = 10
+				.radix 10.
+				.if idn,<name>,<REGSAV>
+					.XPOP .RG xx
+				.iff
+					.if idn,<name>,<PC>
+						.XPOP .PC xx
+					.iff
+						.error ;Undefined stack
+					.endc
+				.endc
+				.radix ...rad
+			.endc
+		.endr
+	.endm
+.endc		;NE CMAC65
+
+; Tempest has a number of builtin bugs where out of range
+; numbers have been stored in .BYTE directives (and some
+; load immediate instructions). Macxx checks for overflow
+; when storing data so it will complain about a, for example,
+; '.byte -200' since a byte can only be -128 <= x <= +127.
+; The work around is to mask the stored byte in the sources
+; indicating that's what the programmer wants. However, when
+; assembling old code and not wanting to do too much editing,
+; some of this can be handled with the aid of new
+; directives: DC.BM (store byte with mask) and DC.WM (store
+; word with mask).
+
+.IF NE,CMAC65
+	.DEFINE .BYTE	DC.BM
+	.DEFINE .WORD	DC.WM
+.ENDC
+
+.MACRO	$INDEN
+	.IF LT,..NST$
+		.ERROR ..NST$ ; STACK UNDERFLOW
+		..NST$ = 0
+	.ENDC
+	.IF EQ,CMAC65
+		.PUSH REGSAV,...S1
+		...S1 = ..NST$+1*3+..SRC$
+		.IIF GT,...S1-<9.*3+..SRC$>,...S1 = 9.*3+..SRC$
+		.LIST SRC(...S1,1)
+		.PRINT ..NST$(37,1,16,1,38'->')
+		.POP REGSAV,...S1
+	.ENDC
+	..NST$ = ..NST$ + 1
+	.ENDM
+
+.MACRO	$UNDEN
+	..NST$ = ..NST$ - 1
+	.IF LT,..NST$
+		.ERROR ..NST$ ; STACK UNDERFLOW
+		..NST$ = 0
+	.ENDC
+	.IF EQ,CMAC65
+		.PUSH REGSAV,...S1
+		...S1 = ..NST$*3+..SRC$
+		.IIF GT,...S1-<9.*3+..SRC$>,...S1 = 9.*3+..SRC$
+		.LIST SRC(...S1)
+		.PRINT ..NST$(37,1,16,1,38'<-')
+		.POP REGSAV,...S1
+	.ENDC
+.ENDM
+
+.MACRO	DEFIF	.1.,.2.
+;	.IF EQ,CMAC65
+;		.NOCROSS .1.
+;	.ENDC
+	.MACRO .1.
+		IFXX	.2.
+	.ENDM
+.ENDM
+
+.MACRO	IFXX	.1.
+	LOC
+	.1.	.
+.ENDM
+
+.MACRO IF COND, .A, .B, .C, .D
+	.IF IDN,<.A>,<.OR.>
+		B'COND .+4
+	.IIF NB,<.B>,IF'.B
+	.IFF
+		IF'COND
+	.ENDC
+.ENDM
+
+.MACRO	THEN
+	FND
+	$UNDEN
+.ENDM
+
+.MACRO	ENDIF
+	THEN
+.ENDM
+
+.MACRO	ENDC
+	THEN
+.ENDM
+
+.MACRO	END ON COND
+	.IF NB,<COND>
+		COND'END
+	.IFF
+		.IF NB,<ON>
+			ON'END
+		.IFF
+			ENDC
+		.ENDC
+	.ENDC
+.ENDM
+
+.MACRO	CONTINUE ON COND
+	.IF NB,<COND>
+		COND'CONT
+	.IFF
+		.IF NB,<ON>
+			ON'CONT
+		.IFF
+		.IF NE,..NST$
+			.PUSH REGSAV,...P1,...S1
+			.POP PC,...S1,...P1
+			.POP REGSAV,...S1,...P1
+		.ENDC
+		$UNDEN
+		.ENDC
+	.ENDC
+.ENDM
+
+.MACRO	ELSE COND
+	.PUSH REGSAV,...P0,...S0,...P1,...S1
+	...P0 = .
+	.POP PC,...S1,...P1
+	.IF B,<COND>
+		...S0 = 1
+		JMP .
+	.IFF
+		...S0 = 0
+		B'COND .
+	.ENDC
+	.PUSH PC,...P0,...S0,...P1,...S1
+	.POP REGSAV,...S1,...P1,...S0,...P0
+	.IF EQ,CMAC65
+		.PRINT ..NST$-1(37,1,16,1,38'<>')
+	.ENDC
+	.PUSH REGSAV,...S1
+	...S1 = ..NST$-1*3+..SRC$
+	.IIF GT,...S1-<9.*3+..SRC$>,...S1 = 9.*3+..SRC$
+	.IF EQ,CMAC65
+		.LIST SRC(...S1,/)
+	.ENDC
+	.POP REGSAV,...S1
+	FND
+	.PUSH REGSAV,...S1
+	...S1 = ..NST$*3+..SRC$
+	.IIF GT,...S1-<9.*3+..SRC$>,...S1 = 9.*3 + ..SRC$
+	.IF EQ, CMAC65
+		.LIST SRC(...S1)
+	.ENDC
+	.POP REGSAV,...S1
+.ENDM
+
+.MACRO	BEGIN
+	LOC
+.ENDM
+
+.MACRO	LOC
+	$INDEN
+	.PUSH REGSAV,...P0,...S0,...P1,...S1
+	...P0 = .
+	...S0 = 0
+	.PUSH PC,...P0,...S0
+	.POP REGSAV,...S1,...P1,...S0,...P0
+.ENDM
+
+.MACRO	FND
+	.PUSH REGSAV,...P0,...S0,...P1,...S1
+	...P0 = .
+	.POP PC,...S1,...P1
+	. = ...P1+1
+	.IF EQ,...S1
+		...S0 = ...P0-...P1-2
+		.IIF GT,...S0-127.,.ERROR ...S0 ; BRANCH OUT OF RANGE
+		.IIF LT,...S0+128.,.ERROR ...S0 ; BRANCH OUT OF RANGE
+		.BYTE ...S0
+	.IFF
+		.WORD ...P0
+	.ENDC
+	. = ...P0
+	.POP REGSAV,...S1,...P1,...S0,...P0
+.ENDM
+
+.MACRO	DEFEND	.1.,.2.,.3.
+;	.IF EQ,CMAC65
+;		.NOCROSS .1.
+;	.ENDC
+	.MACRO  .1.
+		..END	.2.,.3.
+	.ENDM
+.ENDM
+
+.MACRO	..END	.1.,.2.
+	.PUSH REGSAV,...P0,...S0,...P1,...S1
+	.POP PC,...S0,...P0
+	.IF GE,.-...P0-127.
+		.2.	.+5
+		JMP	...P0
+	.IFF
+		.1.	...P0
+	.ENDC
+	.POP REGSAV,...S1,...P1,...S0,...P0
+	$UNDEN
+.ENDM
+
+	DEFIF	IFCC,BCS
+	DEFIF	IFCS,BCC
+	DEFIF	IFEQ,BNE
+	DEFIF	IFNE,BEQ
+	DEFIF	IFMI,BPL
+	DEFIF	IFPL,BMI
+	DEFIF	IFVC,BVS
+	DEFIF	IFVS,BVC
+	DEFEND	CCEND,BCS,BCC
+	DEFEND	CSEND,BCC,BCS
+	DEFEND	EQEND,BNE,BEQ
+	DEFEND	NEEND,BEQ,BNE
+	DEFEND	MIEND,BPL,BMI
+	DEFEND	PLEND,BMI,BPL
+	DEFEND	VCEND,BVS,BVC
+	DEFEND	VSEND,BVC,BVS
+	DEFEND	CCCONT,BCC,BCS
+	DEFEND	CSCONT,BCS,BCC
+	DEFEND	EQCONT,BEQ,BNE
+	DEFEND	NECONT,BNE,BEQ
+	DEFEND	MICONT,BMI,BPL
+	DEFEND	PLCONT,BPL,BMI
+	DEFEND	VCCONT,BVC,BVS
+	DEFEND	VSCONT,BVS,BVC
+
+.MACRO	LDAL	.1.
+	LDA	#^V<.1.>
+.ENDM
+
+.MACRO	LDAH	.1.
+	LDA	#^^<.1.>
+.ENDM
+
+.MACRO	LD	REG,BYTE,LABEL
+	.IF IDN,<BYTE>,<L>
+		LD'REG	#^V<LABEL>
+	.IFF
+		LD'REG	#^^<LABEL>
+	.ENDC
+.ENDM
+
+	.IRP OPC,<ASL,ROL,LSR,ROR,INC,DEC,INX,DEX,INY,DEY>
+	 .MACRO OPC'S COUNT,OPERAND
+	   .IF NB,<COUNT>
+	    .REPT COUNT
+	     OPC OPERAND
+	    .ENDR
+	   .IFF
+	    .ERROR  ;NO COUNT ARGUMENT
+	   .ENDC
+	 .ENDM OPC'S
+	.ENDR
+
+.MACRO	PHXA
+	TXA
+	PHA
+	.ENDM
+
+.MACRO	PHYA
+	TYA
+	PHA
+	.ENDM
+
+.MACRO	PLXA
+	PLA
+	TAX
+	.ENDM
+
+.MACRO	PLYA
+	PLA
+	TAY
+	.ENDM
+
+.MACRO .BR LABEL
+.IIF NE,.-LABEL,.ERROR LABEL ;BRANCH OUT OF RANGE
+.ENDM
+
+.MACRO .ASSUME CND,ARG
+.IF CND,ARG
+.IFF
+.ERROR ;ARG .NOT. CND
+.ENDC
+.ENDM
+
+.MACRO HLL65
+.if eq,CMAC65
+	...1=0
+	.GETPOINTER PC,...1
+	.IIF NE,..STK$-...1,.ERROR ..STK$-...1 ; STACK INBALANCE
+.iff
+	.IIF NE,..STK$-.PC,.ERROR ..STK$-.PC ; STACK INBALANCE
+	.IIF NE,..STK$-.RG,.ERROR ..STK$-.RG ; STACK INBALANCE
+.endc
+	.IIF NE,..NST$,.ERROR ..NST$ ; NEST INBALANCE
+	.ENDM
+	.LIST MEB
+	.NLIST BYT
+	.PAGE

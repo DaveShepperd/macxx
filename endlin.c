@@ -1192,7 +1192,8 @@ int p1o_var( EXP_stk *eps )
     }
     if ( j == 1 && exp_ptr->expr_code == EXPR_VALUE)
     {
-        if ((tv > bits) || (tv < -(bits+1))) trunc_err(bits,tv);
+        if ( (tv&~bits) && (tv&~bits) != -(bits+1) )
+			trunc_err(bits,tv);
         tv &= bits;
         if (out_remaining < bytes) FLUSH_OUTBUF;
         out_remaining -= bytes;
