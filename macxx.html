@@ -2548,8 +2548,8 @@
     <h3 id="mactj_specials">MACTJ special psuedo-ops and operations</h3>
     <p>
     Sorry, I don't know anything about the Tom and Jerry DSP. It was a chipset used in one of the early consumer products
-    and I can't even tell you what product that was. I believe we in coin-op shipped only one game
-    that had this chip in it: Area-51. Maybe one of its sequels also had one but I doubt it. I personally never
+    and I can't even tell you what consumer product that was. I believe we in coin-op shipped only one game
+    that had this chipset in it: Area-51. Maybe one of its sequels also had them but I doubt it. I personally never
     had any dealings with the chipset and I imagine I made mactj assemble code according to syntax
     defined by the chip developer. I don't remember what that was and have no further information about it.
     </p>
@@ -2562,40 +2562,66 @@
   <div id="history" style="border: 2px solid black;margin:4px;padding: 4px">
   <em>A little history.
   <p>
-    Still working on it. Come back later.
-    </p>
-  <p>
     In 1975 when the engineers at Atari were just starting to develop
     game hardware using microprocessors there were no development tools they were willing
     to purchase (surprisingly they were operating on quite the shoestring budget for
-    everything at the time). They had a second or third hand PDP11/05 computer running RT11 with dual
+    everything at the time).
+    They had a second or third hand PDP11/05 computer running RT11 with dual
     8" floppy disks and a paper tape reader/punch and a very cheap keyboard CRT setup
     that could show 12 lines of 80 columns uppercase only text. The RT11 O/S included
     a macro assembler that, by default of course, expected to assemble PDP11 source
     into an RT11 object file to be subsequently linked with the RT11 linker, LINK.
-    What the first programmer did was write macros for each of the 6502 instructions. They
-    specified the address mode as the first argument of the macro and the operand as the
-    second argument. Then used MACRO-11 to assemble it to produce an object file then that
-    was linked with LINK. The ROM image could be clipped out of the result.
-    
-            I hated it. For two main reasons. The RT11 MACRO assembler
-    printed all the numbers in its listing as octal numbers but I much preferred to use hexadecimal
-    with all my 6502 programming and MACRO only accepted as input octal or decimal
-    numbers in the source so hexadecimal wasn't an option on either input or output. Although
-    I was technically a game programmer, I decided to write a new assembler for the 6502 that
-    would take hexidecimal as well as octal, decimal and whatever else. When I mentioned it
-    to my co-workers, it was suggested to expand this new assembler to include all the other
-    microprocessors we were developing for at the time too: the 6800, the Z80, 8080, 6502,
-    PDP11 and others and it was also suggested that a MACPP would be very helpful. This project became
-    MACXX. I wrote it in PDP11 assembly for the RT11 operating system which is all I had at
-    the time. I probably started it around late 1977 or early 1978.
-    
-    I had been programming the PDP11 all that
-    time as well as the 6502 and much preferred what appeared to me what more closely
-    matched the address modes the PDP11 used. I.e. indexed indicated with ()'s, indirect
-    indicated with @, etc. So as I was writing a 
-    
-
+    It might have been, instead of being too cheap to buy them, just simply at the
+    time there were no 6502 development tools available for RT11. I don't know.
+    In any event What the first programmer did was write macros for each
+    of the 6502 instructions (and another set for the 6800 which they were developing with
+    at the same time). The address mode was specified as the first argument of the macro and
+    the operand as the second argument. Then used MACRO-11 to assemble it to produce an object
+    file then that was linked with LINK. The ROM image was clipped out of the result.
+  </p>  
+    <p>
+    I hated it. For two main reasons. The RT11 MACRO-11 assembler
+    printed all the numbers in its listing as octal numbers but I (and everybody else) much
+    preferred to use hexadecimal with all the microprocessor programming. Add to that MACRO-11
+    only accepted as input binary, octal or decimal numbers so hexadecimal wasn't an option for
+    either input or output. The first programmer managed a kinda-sorta workaround for output by
+    writing a custom RT11 line printer driver that would watch the text going through it and convert
+    what it thought were octal numbers into hex. Due to the nature of the beast it made a lot of
+    unavoidable mistakes. There was no hope for the link map produced by LINK since all its
+    link maps showed all numbers with octal. The first programmers didn't much care about that
+    since their game program(s) were a single source module coded with absolute addressing (as were
+    both of my first two games I did at Atari).
+    </p>
+    <p>
+     Although I was technically a game programmer, after I finished my very first game at Atari (in mid
+     1976), I decided to first fix the link map problem so in my "off hours" (really, no such thing back then
+     so it took a while) I wrote a new linker, LINKM. This tool
+     basically just printed the link map in hexadecimal but otherwise did everything the same as LINK.
+     We limped along with these tools for a year or so then since all the games I'd been working on used
+     a 6502, I took upon myself to write a new assembler for it that could take hexidecimal as well
+      as binary, octal and decimal as input and spit out listings with hexadecimal. When I mentioned my plans
+    to my co-workers, it was suggested I should expand this new assembler to include all the other
+    microprocessors we were developing for at the time too: the 6502, 65C02, 6800, 6809, Z80, 8080,
+    and, why not, I threw in the PDP11 too. This project became MACXX. I wrote it in PDP11 assembly for
+    the RT11 operating system which is all I had at the time. I probably started it around late 1977 or
+    early 1978. It must have worked a treat and been just what the doctor ordered. I don't remember.
+    </p>
+    <p>
+    In 1981 we were able to buy our first VAX: A VAX-11/780. We quickly learned one wasn't enough,
+    so we got another one and a new building too. That eventually grew to many more Vaxen. Note that
+    even though we were using the VAX, it would run PDP11 code (at least the 780 and 750 would) so
+    I patched a version of RT11 that would run as a task on the VAX and we continued using the RT11
+    LINKM and MACXX tools on it. Sometime in the early 1980's, DEC offered a version of the C compiler
+    for the VAX and we got it. I took the opportunity to re-write both MACXX and LINKM in C (I called
+    the linker LLF). The C version of MACXX did not include all the same psuedo-ops (nobody was using
+    them) and since we stopped using the 6800 by then and never did any development for the Intel processors,
+    I didn't port over the 6800, 6809, 8080 or Z80. We had by then switched from using the 6800 to the
+    68000 family, so I added modules to assemble for the 68000, 68010 and 68020. And making a version
+    what was simply a pre-processor was suggested and I thought that a great idea so MACPP was born too.
+    Later once coin-op designed its own custom processor, the ASAP, I added a MACAS and consumer had a custom
+    DSP chipset (Tom&Jerry) that we used in at least one of our coin-op games, so I added modules to
+    assemble for them too. That became MACTJ. I couldn't tell you the order any of those appeared. I just
+    don't remember. It never occurred to me to keep release notes on either project.
     </p>
   </em>
   </div>
