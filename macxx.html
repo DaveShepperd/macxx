@@ -2280,6 +2280,20 @@
     Will produce a foo.ol and foo.lis file.
     </p>
     <p>
+    The SYMBOL_LEN and OPCODE_LEN options default to different numbers on different assemblers. Both lengths default to the same number
+    according to this table:
+    </p>
+  <table style="width: 20%">
+    <tr><th>Assembler</th><th>Default</th></tr>
+    <tr><td>MAC65</td><td>6</td></tr>
+    <tr><td>MAC68K</td><td>16</td></tr>
+    <tr><td>MAC682K</td><td>16</td></tr>
+    <tr><td>MAC11</td><td>16</td></tr>
+    <tr><td>MACAS</td><td>16</td></tr>
+    <tr><td>MACTJ</td><td>16</td></tr>
+    <tr><td>MACPP</td><td>32</td></tr>
+  </table>
+    <p>
   Examples:
     </p>
   <pre>  
@@ -2301,19 +2315,29 @@
 <h2>Appendex</h2>
     <h3 id="mac65_specials">MAC65 special psuedo-ops, operations and address modes</h3>
     <p>
+    <em>NOTE: If you find yourself wanting to use this mac65 to build old Atari coin-op games, at least those
+    that included HLL65F.MAC in their sources, you will find it does not assemble without error. Instead you will need
+    to replace it with the hll65f.mac file included in the sources with macxx and set the variable
+    CMAC65=1 somewhere. I.e. add the command line: <b>-assem=CMAC65=1</b> or just edit the file and
+    set it to 1 permanently. And pay attention to filename case. On *nix systems there will be
+    trouble with the automatic add of lowercase .mac to files <b>.INCLUDE</b>d in game sources. Symlinks
+    might be in order.
+    </em></p>
+    <p>
     MAC65 has a bit of history at Atari. See more details in the <a href="#history">HISTORY</a>
     section about this if one cares.
     The only tool available in 1975 to the microprocessor developers (all two of them) was
     the RT11 MACRO-11 assembler running on their PDP11/05 computer. They used this tool
     to assemble for the first 6502 and 6800 game boards by writing macros for all the 6502 and 6800 opcodes.
-    They specified the address mode, if required, as the first of two operands to the macro.
+    They specified the address mode, if required, as the first of two operands to the macro. This is
+    opposite of what was specified in the MOS technology manual.
     </p>
     <p id="M65_Addressing">
     For example, to select absolute address mode on a LDA, the operand would be A so the instruction would
     appear in the source as:
     </p>
     <pre>
-    LDA A,somewhere ;comment
+    LDA A,addr ;comment
     </pre>
     <p>
     Likewise for all the others, Z for base page, ZX for base page indexed by X, etc. I have no
@@ -2340,7 +2364,11 @@
     opc rel        ;relative branch (8 bit signed offset)
     </pre>
     <p>
-    Here are the alternate methods of describing the address modes in MAC65 that do not require a comma:
+    NOTE: As a game programmer I was both using the assembler, coding it and adding
+    features to it as I wanted and needed. I found having commas as part of operands made
+    passing them as arguments to macros being quite problematic or maybe it was just annoying.
+    In either case I much preferred combining address mode into the operand without the need for commas.
+    Here are the address modes mac65 will accept without needing commas:
     </p>
     <pre>
     opc addr       ;absolute or zero page (assembler will try to figure out whether 8 or 16 bit address)
@@ -2390,6 +2418,9 @@
     The <u>CMOS</u> option select the opcodes for the 65C02 processor and the <u>816</u> option selects the opcodes
     for the 65816 processor.
     </p>
+    <p>
+    The SYMBOL_LENGTH and OPCODE_LENGTH command line options both default to 6 in mac65.
+    </p>
     <p></p>
     <h3 id="macpp_specials">MACPP special psuedo-ops and operations</h3>
     <p>
@@ -2423,15 +2454,15 @@
     <p>
     The output file number is specified by the order in which they are expressed on the
     command line. In the above example file 0 is the first one, file 1 is the second, etc.
-    To change output files the directive .OUTFILE is used. For example, the contents of
+    To change output files the directive <u>.OUTFILE expression</u> is used. For example, the contents of
     the input.mac file as used above could contain something akin to:
     </p>
     <pre>
-    This line and all before it goes into file 0.
+    This line and all before it go into file 0.
     .outfile 1  ;Switch to the other output file
     This line goes into file 1.
     .outfile 0  ;Switch back to file 0.
-    This line goes into file 0 too.
+    This line continues the output of file 0.
     ...
     </pre>
     <p></p>
@@ -2441,7 +2472,8 @@
     GNU 68k assembler uses and, in fact, is what we used at Atari to assemble the output
     of gcc when doing cross-compiles. The alternate syntax is that of what the Greenhills C
     compiler output. That syntax is chosen using the GREENHILLS command line option. I leave
-    it as an exercise to the reader to determine what those are.
+    it as an exercise to the reader to determine what those are. The SYMBOL_LEN and OPCODE_LEN
+    command line options default to 16.
     </p>
     <p>
     </p>
@@ -2462,7 +2494,8 @@
     <p>
     The macas assembler has a single command line option unique to it: BOFF. That is turned on by default
     and it includes instructions in the object file to LLF to test branch offsets for out of range and if
-    found, print the filename and line number of the branch instruction in error. The address modes follow
+    found, print the filename and line number of the branch instruction in error. The SYMBOL_LEN and OPCODE_LEN
+    command line options default to 16. The address modes follow
     this model syntax:
     </p>
     <pre>
@@ -2479,12 +2512,50 @@
     getps dstReg                       ; dstReg &lt;- current status register
     putps srcReg                       ; srcReg -&gt; current status register
     </pre>
+    <p>
+    Where <u>.size</u> on the opcode is one of .B, .W or .L and in the shift count is 0, 1 or 2 respectively.
+    </p>
+    <p>
     </p>
     <h3 id="mac11_specials">MAC11 special psuedo-ops and operations</h3>
+    <p>
+    The syntax of this assembler matches that of the default DEC PDP11 MACRO-11 assembler. We shipped some coin-op games
+    using the T-11 processor on our SystemII platform. The games were coded using BLISS-16 cross compiled on VAX/VMS.
+    I'm not sure if we used mac11+llf+mixit at any point in the process. It's possible.
+    </p>
+    <pre>
+    opc             ; implied (NOP, CLC, RTI, etc.)
+    opc expr        ; branch, trap, etc.
+    opc src,dst     ; src and dst described below
+    ; Registers are indicated with a <b>%n</b> where the 0&lt;=<b>n</b>&lt;= 7
+    ; The register symbols R0-R7 and r0-r7 are preassigned to %0-%7 respectively
+    ; SP and sp is preassigned to %6 and PC and pc is preassigned to %7
+    ; Rn       = Register
+    ; (Rn)     = Register has address
+    ; (Rn)+    = Register has address, post fetch auto-increment by 1 or 2
+    ; @(Rn)+   = Register has address of address, post fetch auto-increment
+    ; -(Rn)    = Pre-fetch auto-decrement by 1 or 2, Register has address
+    ; @-(Rn)   = Pre-fetch auto-decrement by 2, register has address of address
+    ; idx(Rn)  = Register + idx is address; idx is signed integer
+    ; @idx(Rn) = Register + idx is address of address; idx is signed integer
+    ; #imm     = Operand follows instruction
+    ; @#imm    = Address follows instruction.
+    ; rel      = Relative; Instruction address+4+rel is address
+    ; @rel     = Indirect relative; Instruction address+4+rel is address of address
+    </pre>
     <p>
     </p>
     <h3 id="mactj_specials">MACTJ special psuedo-ops and operations</h3>
     <p>
+    Sorry, I don't know anything about the Tom and Jerry DSP. It was a chipset used in one of the early consumer products
+    and I can't even tell you what product that was. I believe we in coin-op shipped only one game
+    that had this chip in it: Area-51. Maybe one of its sequels also had one but I doubt it. I personally never
+    had any dealings with the chipset and I imagine I made mactj assemble code according to syntax
+    defined by the chip developer. I don't remember what that was and have no further information about it.
+    </p>
+    <p>
+    The only unique thing about <b>mactj</b>, is it defaults to assembling code for the TOM chip instruction set. One must use
+    the command line option <b>JERRY</b> to include/revert to the JERRY chip instruction set. Otherwise they are the same.
     </p>
   <p>
     </p>
@@ -2492,7 +2563,21 @@
   <em>A little history.
   <p>
     Still working on it. Come back later.
-<!--
+    </p>
+  <p>
+    In 1975 when the engineers at Atari were just starting to develop
+    game hardware using microprocessors there were no development tools they were willing
+    to purchase (surprisingly they were operating on quite the shoestring budget for
+    everything at the time). They had a second or third hand PDP11/05 computer running RT11 with dual
+    8" floppy disks and a paper tape reader/punch and a very cheap keyboard CRT setup
+    that could show 12 lines of 80 columns uppercase only text. The RT11 O/S included
+    a macro assembler that, by default of course, expected to assemble PDP11 source
+    into an RT11 object file to be subsequently linked with the RT11 linker, LINK.
+    What the first programmer did was write macros for each of the 6502 instructions. They
+    specified the address mode as the first argument of the macro and the operand as the
+    second argument. Then used MACRO-11 to assemble it to produce an object file then that
+    was linked with LINK. The ROM image could be clipped out of the result.
+    
             I hated it. For two main reasons. The RT11 MACRO assembler
     printed all the numbers in its listing as octal numbers but I much preferred to use hexadecimal
     with all my 6502 programming and MACRO only accepted as input octal or decimal
@@ -2510,15 +2595,7 @@
     matched the address modes the PDP11 used. I.e. indexed indicated with ()'s, indirect
     indicated with @, etc. So as I was writing a 
     
-     In 1975 when They were just starting to develop
-    game hardware using microprocessors, there was no development tools they were willing
-    to purchase (surprisingly they were operating on quite the shoestring budget for
-    everything at the time). They had a PDP11/05 computer running RT11 with dual
-    8" floppy disks and a paper tape reader/punch and a very cheap keyboard CRT setup
-    that could show 12 lines of 80 columns uppercase only text. The RT11 O/S included
-    a macro assembler that, by default of course, expected to assemble PDP11 source
-    into an RT11 object file to be subsequently linked with the RT11 linker, LINK.
--->
+
     </p>
   </em>
   </div>
