@@ -623,8 +623,8 @@ static int op_dcb_with_mask(int inpMask)
 			}
 			EXP0SP->expr_value = epv&0xFF;
         }
-		else
-		{
+        else if ( !inpMask)
+        {
 			EXP_stk *eps = &EXP0;
 			EXPR_struct *expr_ptr;
 			
@@ -734,8 +734,8 @@ static int op_byte_with_mask(int inpMask)
 			}
 			EXP0SP->expr_value = epv&0xFF;
         }
-		else
-		{
+        else if ( !inpMask )
+        {
 			EXP_stk *eps = &EXP0;
 			EXPR_struct *expr_ptr;
 
@@ -814,15 +814,16 @@ static int op_word_with_mask(int inpMask)
 				{
 					if ( epv > 65535l || epv < -65536l )
 					{
-						sprintf(emsg,"Byte truncation error. Desired: %08lX, stored: %02lX",
-								epv,epv&255);
+						sprintf(emsg,"Word truncation error. Desired: %08lX, stored: %04lX",
+								epv,epv&65535);
 						show_bad_token(otp,emsg,MSG_WARN);
+						EXP0SP->expr_value &= 0xFFFF;
 					}
 				}
 				EXP0SP->expr_value = epv&0xFFFF;
 			}
-			else
-			{
+            else if ( !inpMask )
+            {
 				EXP_stk *eps = &EXP0;
 				EXPR_struct *expr_ptr;
 

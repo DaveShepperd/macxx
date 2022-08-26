@@ -70,9 +70,12 @@
     <p>
     Recently I got involved in rebuilding some of old Atari coin-op game code (some of which recently
     was released on github) and wanted to use this tool to make ROM/EPROM images and to test them with MAME. This prompted me to port the documentation,
-    what little there is, of the three main applications used to build game images to HTML. Those tools are the assembler (macxx), linker (llf)
-    and rom image maker (mixit).
-    Although I wrote the original documentation (macxx.doc) for this assembler, I am neither a technical writer nor am I any good at HTML5. As might be evidenced
+    what little there is, of the three main applications used to build game images to HTML. Those tools are the assembler
+    (<a href="https://github.com/DaveShepperd/macxx.git" target="_blank">MACXX</a>),
+    linker (<a href="https://github.com/DaveShepperd/llf.git" target="_blank">LLF</a>) and rom image maker
+    (<a href="https://github.com/DaveShepperd/mixit.git" target="_blank">MIXIT</a>).
+    Although I wrote the original documentation for this assembler (macxx.doc which was the basis for this document), I am neither a technical
+    writer nor am I any good at HTML5. As might be evidenced
     with the original documentation, I quickly lose interest in writing technical documents and don't check things too closely. So good luck
     making sense of anything written here. Feel free to hack this document into something more readable. If you do, please send me a copy.
   </p>
@@ -103,9 +106,83 @@
   <b>Macxx</b> consists of a core group of pseudo-ops
   common among all versions of the assembler and a common statement syntax. The output of these assemblers
   (except <b>MACPP</b>) is expected to be further processed by <b>LLF</b> into a load image. <b>LLF</b> is
-  yet another tool I wrote that is a link+locate+format editor. <b>LLF</b> may be found <a href="some_place_as_yet_defined" target="_blank">HERE</a>.
+  yet another tool I wrote that is a link+locate+format editor. <b>LLF</b> may be found <a href="https://github.com/DaveShepperd/llf.git" target="_blank">HERE</a>.
   </p>
-  <h2>Statement syntax</h2>
+  <p><em>NOTE: There may be some obscure bug in these sources somewhere where if you build it as a 64 bit application, it
+  makes some obscure mistake. I'm not sure about this, I've only heard about it from someone who complained. I haven't
+  looked into it further. It was just too easy to build with -m32 and forget about it. User beware.
+  </em>
+  </p>
+  <h2>Table of contents</h2>
+  <table style="width: 35%">
+<!--    <tr><th>Valid symbols</th><th>Invalid symbols</th></tr> -->
+    <tr><td><a href="#gen_syntax">Statement syntax</a></td><td></td>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><a href="#dir_byte">DC.x</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_blkx">DS.x</a></td><td>Allocation storage</td>
+    <tr><td><a href="#dir_globl">XDEF, XREF</a></td><td>Assign symbol(s) as being global in scope</td>
+    <tr><td><a href="#dir_byte">.ADDRESS</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_align">.ALIGN</a></td><td>Align location counter</td>
+    <tr><td><a href="#dir_ascix">.ASCII, .ASCIN, .ASCIZ</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_psect">.ASECT, .BSECT, .CSECT</a></td><td>Set program section</td>
+    <tr><td><a href="#dir_blkx">.BLKx</a></td><td>Allocation of storage</td>
+    <tr><td><a href="#dir_byte">.BYTE, .WORD, .LONG</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_cpu">.CPU</a></td><td>65816 specific instruction</td>
+    <tr><td><a href="#dir_define">.DEFINE, .UNDEFINE</a></td><td>Define/Undefine some replacement text</td>
+    <tr><td><a href="#dir_dpage">.DPAGE</a></td><td>65816 specific instruction</td>
+    <tr><td><a href="#dir_enabl">.ENABL, .DSABL</a></td><td>Enable/Disable assembler functions</td>
+    <tr><td><a href="#dir_end">.END</a></td><td>End of assembly</td>
+    <tr><td><a href="#dir_endm">.ENDM</a></td><td>End of macro</td>
+    <tr><td><a href="#dir_endm">.ENDR</a></td><td>End of indefinite repeat blocks</td>
+    <tr><td><a href="#dir_endc">.ENDC</a></td><td>End of conditional assembly block</td>
+    <tr><td><a href="#dir_error">.ERROR</a></td><td>Signal an assembly error</td>
+    <tr><td><a href="#dir_escape">.ESCAPE</a></td><td>Set various escape characters</td>
+    <tr><td><a href="#dir_even">.EVEN</a></td><td>Align location counter</td>
+    <tr><td><a href="#dir_float">.FLOAT</a></td><td>Tom&Jerry specific instruction</td>
+    <tr><td><a href="#dir_globl">.GLOBx</a></td><td>Assign symbol(s) as being global in scope</td>
+    <tr><td><a href="#dir_if">.IF, .IFx, .IIF</a></td><td>Conditional assembly</td>
+    <tr><td><a href="#dir_include">.INCLUDE</a></td><td>Include another file during assembly starting with this line</td>
+    <tr><td><a href="#dir_irp">.IRP, .IRPC</a></td><td>Indefinite repeat blocks</td>
+    <tr><td><a href="#dir_ldlit">.LDLIT</a></td><td>ASAP specific instruction</td>
+    <tr><td><a href="#dir_length">.LENGTH</a></td><td>Set length of symbol, opcode or MAU</td>
+    <tr><td><a href="#dir_list">.LIST, .NLIST</a></td><td>Enable/Disable listing controls</td>
+    <tr><td><a href="#dir_byte">.LONG</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_macro">.MACRO</a></td><td>Macro definition</td>
+    <tr><td><a href="#dir_byte">.MAU, .2MAU, .4MAU</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_mexit">.MEXIT</a></td><td>Macro exit</td>
+    <tr><td><a href="#dir_narg">.NARG</a></td><td>Get number of macro arguments</td>
+    <tr><td><a href="#dir_nchr">.NCHR</a></td><td>Get number of characters in string</td>
+    <tr><td><a href="#dir_list">.NLIST</a></td><td>Disable listing controls</td>
+    <tr><td><a href="#dir_even">.ODD</a></td><td>Align location counter</td>
+    <tr><td><a href="#dir_outfile">.OUTFILE</a></td><td>Change output file (MACPP only)</td>
+    <tr><td><a href="#dir_page">.PAGE</a></td><td>Put form feed in listing</td>
+    <tr><td><a href="#dir_psect">.PSECT</a></td><td>Set program section</td>
+    <tr><td><a href="#dir_radix">.RADIX</a></td><td>Set number interpreter radix</td>
+    <tr><td><a href="#dir_restore">.RESTORE</a></td><td>Restore location counter from a previous .SAVE</td>
+    <tr><td><a href="#dir_rept">.REPT</a></td><td>Repeat block</td>
+    <tr><td><a href="#dir_rexit">.REXIT</a></td><td>Repeat block exit</td>
+    <tr><td><a href="#dir_save">.SAVE</a></td><td>Save the current location counter</td>
+    <tr><td><a href="#dir_sbttl">.SBTTL</a></td><td>Set a subtitle</td>
+    <tr><td><a href="#dir_sbttl">.SUBTITLE</a></td><td>Set a subtitle</td>
+    <tr><td><a href="#dir_stabx">.STABx</a></td><td>Pass stab debug directives through to object file</td>
+    <tr><td><a href="#dir_ascix">.STRING</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_globl">.STATIC</a></td><td>Assign symbol(s) as being static in scope</td>
+    <tr><td><a href="#dir_test">.TEST</a></td><td>Perform a test on an expression</td>
+    <tr><td><a href="#dir_title">.TITLE</a></td><td>Set the title for the pages in the listings</td>
+    <tr><td><a href="#dir_triplet">.TRIPLET</a></td><td>65816 only; Put 24 bit constants in memory</td>
+    <tr><td><a href="#dir_undefine">.UNDEFINE</a></td><td>Undefine some replacement text</td>
+    <tr><td><a href="#dir_vctrs">.VCTRS</a></td><td>Place 15 bit vectors in the object file</td>
+    <tr><td><a href="#dir_warn">.WARN</a></td><td>Signal an assembly warning</td>
+    <tr><td><a href="#dir_byte">.WORD</a></td><td>Put constants in memory</td>
+    <tr><td><a href="#dir_globl">xref, xref.s</a></td><td>Assign symbol(s) as being global in scope</td>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><a href="#gen_macros">Macros</a></td><td>How to use macros</td>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><a href="#gen_operating">Operating MACXX</a></td><td>How to run MACXX</td>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><a href="#history">History</a></td><td>A bit of history</td>
+  </table>
+  <h2 id="gen_syntax">Statement syntax</h2>
   <p>
   A source program is composed of a sequence of source lines; each 
   source line contains a single assembly language statement followed by a 
@@ -611,11 +688,12 @@
       .ALIGN 1    ;aligns to 2 byte boundary
       .ALIGN fred ;aligns to whatever FRED resolves to
     </pre>
-  <h3 id="dir_ascii">.ASCII, .ASCIIZ and .ASCIN</h3>
+  <h3 id="dir_ascix">.ASCII, .ASCIIZ, .ASCIN and .STRING</h3>
     <pre>
       .ASCII [string]
       .ASCIN [string]
       .ASCIZ [string]
+      .STRING [string]  ;Same as .ASCIZ
     </pre>
   <p>  
   Deposits a string of ASCII characters beginning at the current location.
@@ -663,10 +741,14 @@
     </p>
   <h3 id="dir_blkx">.BLKx and DS.x</h3>
   <pre>
-      .BLKB	expression	;allocates bytes (expression*1)
-      .BLKW	expression	;allocates words (expression*2)
-      .BLKL	expression	;allocates longs (expression*4)
-      .BLKQ	expression	;allocates quads (expression*8)
+      .BLKB	expression	;allocates space for bytes (8 bits: expression*1)
+      .BLKW	expression	;allocates space for words (16 bits: expression*2)
+      .BLKL	expression	;allocates space for longs (32 bits: expression*4)
+      .BLKQ	expression	;allocates space for quads (64 bits: expression*8)
+      .BLKM	expression	;allocates space for expression*minimum addressable unit (MAU)
+      .BLK2M expression	;allocates space for expression*2*MAU
+      .BLK4M expression	;allocates space for expression*4*MAU
+      .BLK8M expression	;allocates space for expression*8*MAU
       DS.B	expression	;(identical to .BLKB)
       DS.W	expression	;(identical to .BLKW)
       DS.L	expression	;(identical to .BLKL)
@@ -691,7 +773,7 @@
     <p>
   An obsolete directive. See <a href="#dir_psect">.PSECT</a> for details.
     </p>
-  <h3 id="dir_byte">.BYTE, .WORD, .LONG and DC.x</h3>
+  <h3 id="dir_byte">.BYTE, .WORD, .LONG, .MAU, .2MAU, .4MAU and DC.x</h3>
     <pre>
       .BYTE [expression[, expression [, ...]]]
       .WORD [expression[, expression [, ...]]]
@@ -699,6 +781,9 @@
       DC.B	(same as .BYTE)
       DC.W	(same as .WORD)
       DC.L	(same as .LONG)
+      .MAU  (same as .BYTE if MAU=8)
+      .2MAU (same as .WORD if MAU=8)
+      .4MAU (same as .LONG if MAU=8)
     </pre>
     <p>
   All of the above directives have the same syntax. There can be 0 or more
@@ -914,15 +999,17 @@
   requires nor accepts any arguments. See <a href="#dir_align">.ALIGN</a> and
     <a href="#dir_psect">.PSECT</a> for additional alignment options.
     </p>
-  <h3 id="dir_globl">.GLOBL, .GLOBB, .GLOBS and .GLOBR</h3>
+  <h3 id="dir_globl">.GLOBL, .GLOBB, .GLOBS, .GLOBR, xref, xref.s, .LOCAL and .STATIC</h3>
   <pre>  
       .GLOBx symbol_1[,symbol_2,...]
   </pre>
   <p>  
-  These directives declare one or more symbols or labels as being global
-  in scope. That is the listed symbols or labels are made known to
+  These directives declare one or more symbols or labels as being either global
+  or local in scope. That is the listed symbols or labels are made known to
   LLF. The symbols or labels may or may not be defined when this directive
-    is issued. If they are not defined anywhere in the source code, then they will be assumed to be
+    is issued. The .LOCAL and .STATIC not necessary unless the .ENABL GBL option
+    is in effect. They force the supplied symbols to remain local even if not
+    defined. If they are not defined anywhere in the source code, then they will be assumed to be
   defined in another module or explicitly by LLF. The .GLOBL directive is
   the general case for declaring ordinary symbols or labels as global in
   scope. The .GLOBR directive declares the symbols as being both global in
@@ -1207,14 +1294,16 @@
   changing the significant number of characters during the assembly
   may make previously defined symbols and/or macros inaccessible.
   </p>
-  The <b>keyword</b> may be one of SYMBOL or OPCODE and the <b>n</b>
+  The <b>keyword</b> may be one of SYMBOL, OPCODE or MAU and <b>n</b>
   in the example above is a value between 6 and 32 inclusive.
   SYMBOL represents the lengths of user defined symbols and labels
   and OPCODE represents the lengths of opcodes, pseudo-ops and macro names.
-        For example:
+    The MAU argument sets the Minimum Addressable Unit in bits and can be
+    between 8 and 32. For example:
   </p>
   <pre>
-  .LENGTH SYMBOL=32,OPCODE=32
+  .LENGTH SYMBOL=32,OPCODE=32   ;Symbols and opcodes/macros have 32 character significance
+  .LENGTH MAU=16                ;Set the minimum addressable unit to 16 bits
   </pre>
   <h3 id="dir_list">.LIST and .NLIST</h3>
     <pre>
@@ -1480,6 +1569,26 @@
   requires nor accepts any arguments. See <a href="#dir_even">.EVEN</a>
   and <a href="#dir_align">.ALIGN</a> for additional alignment options.
     </p>
+  <h3 id="dir_outfile">.OUTFILE</h3>
+    <pre>
+    .OUTFILE expression
+    </pre>
+    <p>
+    The expression must resolve to an absolute <b>n</b> where 0&lt;<b>n</b>&lt;max_outputs
+    and max_outputs is the number of <b>OUT</b> command line options supplied. This
+    directive only applies to MACPP. Any number of <b>OUT</b> command line options
+    are accepted. They index according to their placement on the command line: 0 is
+    the first, 1 is the second, etc. For example:
+    </p>
+    <pre>
+    macpp -out=file0 -out=file1 inFile
+    ;And the content of inFile would be:
+    This line and all above it would go into file0
+    .OUTFILE 1  ;Switch to the other output file
+    This line would go into file1
+    .OUTFILE 0  ;Switch back to the first output file
+    This line would continue in file0.
+    </pre>
   <h3 id="dir_page">.PAGE</h3>
   <pre>
   .PAGE
@@ -1487,7 +1596,7 @@
     <p>
   Inserts a form feed in the listing file. The .PAGE directive itself is 
   not printed. A .PAGE in a macro definition is ignored until the macro 
-  is called. The directive requires nor accepts any arguments.
+  is called. The directive accepts no arguments.
     </p>
   <h3 id="dir_psect">.PSECT</h3>
   <pre>  
@@ -2559,8 +2668,10 @@
     </p>
   <p>
     </p>
-  <div id="history" style="border: 2px solid black;margin:4px;padding: 4px">
-  <em>A little history.
+  <h2 id="history">A Little History</h2>
+    <!-- <div style="border: 2px solid black;margin:4px;padding: 4px"> -->
+    <div>
+  <em>
   <p>
     In 1975 when the engineers at Atari were just starting to develop
     game hardware using microprocessors there were no development tools they were willing
