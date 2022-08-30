@@ -334,6 +334,23 @@ extern int gc_argc;      /* arg count */
 extern char **gc_argv;   /* arg value */
 /*
  *************************************************************************/
+static void add_def_obj(void)
+{
+	if (cmd_outputs_index >= cmd_outputs_size)
+	{
+		if (cmd_outputs)
+		{
+			cmd_outputs_size += cmd_outputs_size/2;
+		}
+		else
+		{
+			cmd_outputs_size = 16;
+		}
+		cmd_outputs = (char **)MEM_realloc((char *)cmd_outputs, cmd_outputs_size*sizeof(char *));
+		memset((char *)(cmd_outputs+cmd_outputs_index), 0, (cmd_outputs_size-cmd_outputs_index)*sizeof(char *));
+	}
+	cmd_outputs[cmd_outputs_index++] = obj_desc.value;
+}
 
 int getcommand(void)
 {
@@ -409,22 +426,9 @@ int getcommand(void)
                 }
                 if (obj_desc.present)
                 {
-                    if (cmd_outputs_index >= cmd_outputs_size)
-                    {
-                        if (cmd_outputs)
-                        {
-                            cmd_outputs_size += cmd_outputs_size/2;
-                        }
-                        else
-                        {
-                            cmd_outputs_size = 16;
-                        }
-                        cmd_outputs = (char **)MEM_realloc((char *)cmd_outputs, cmd_outputs_size*sizeof(char *));
-                        memset((char *)(cmd_outputs+cmd_outputs_index), 0, (cmd_outputs_size-cmd_outputs_index)*sizeof(char *));
-                    }
-                    cmd_outputs[cmd_outputs_index++] = obj_desc.value;
-                    obj_desc.value = 0;
-                    obj_desc.present = 0;
+					add_def_obj();
+					obj_desc.value = 0;
+					obj_desc.present = 0;
                 }
                 continue;
             }
@@ -490,7 +494,7 @@ int getcommand(void)
 #if !defined(SUN)
     if (!miser_desc.present) options[QUAL_MISER] = 1;    /* default to miser mode */
 #endif
-#endif
+#endif	/* !defined(MAC_PP) */
     if (syml_desc.present)
     {
         if ((int)syml_desc.value > 6) max_symbol_length = (int)syml_desc.value;
@@ -528,7 +532,10 @@ int getcommand(void)
     if (!rms_errors)
     {
         char *defname, *objdefname;
-        obj_desc.present = 1;     /* default /OBJ */
+		if ( cmd_outputs_index == 0 )
+		{
+			add_def_obj();
+		}
         defname = first_inp->fn_nam->name_only;   /* use the first file's name */
 
 #if OUT_FN_OBJ != 0

@@ -1171,7 +1171,8 @@ int p1o_var( EXP_stk *eps )
     EXPR_struct *exp_ptr;
     int j,tag,pflg,bytes;
     unsigned long bits;
-
+    long uBits;
+    
     if (out_seg != current_section || out_pc != current_offset)
     {
         move_pc();
@@ -1183,6 +1184,7 @@ int p1o_var( EXP_stk *eps )
     tag = eps->tag;
     bytes = ((int)eps->tag_len+macxx_mau-1)/macxx_mau;
     bits = (1<<eps->tag_len)-1;
+    uBits = bits;
     if (bytes < 1 || bytes > 4)
     {
         sprintf(emsg,"Internal error - storing illegal bitfield of size %d",eps->tag_len);
@@ -1192,8 +1194,14 @@ int p1o_var( EXP_stk *eps )
     }
     if ( j == 1 && exp_ptr->expr_code == EXPR_VALUE)
     {
-        if ( (tv&~bits) && (tv&~bits) != -(bits+1) )
-			trunc_err(bits,tv);
+#if 0
+        printf("Checking for truncation. tv=0x%08lX, bits=0x%08lX, bits/2=0x%08lX, -(bits/2+1)=0x%08lX, tv >= %d, tv <= %d\n",
+               tv, uBits, uBits/2, -(uBits/2+1),
+               tv > uBits/2,
+               tv < -(uBits/2+1));
+#endif
+        if ( tv > uBits/2 || tv < -(uBits/2+1) )
+			trunc_err(uBits,tv);
         tv &= bits;
         if (out_remaining < bytes) FLUSH_OUTBUF;
         out_remaining -= bytes;
