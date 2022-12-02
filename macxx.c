@@ -43,7 +43,7 @@ int pass=0;                     /* pass indicator flag */
 static char *months[] =
 { "Jan","Feb","Mar","Apr","May","Jun",
     "Jul","Aug","Sep","Oct","Nov","Dec"};
-char ascii_date[24];
+char ascii_date[128 /*24*/];
 int debug=0;                    /* debug status value */
 int squeak=0;
 
@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
     gc_argv = argv;
     unix_time = time((long *)0);         /* get ticks since 1970 */
     our_time = localtime(&unix_time);    /* get current time of year */
-    sprintf(ascii_date,"\"%s %02d %4d %02d:%02d:%02d\"",
+    snprintf(ascii_date,sizeof(ascii_date),"\"%s %02d %4d %02d:%02d:%02d\"",
             months[our_time->tm_mon],our_time->tm_mday,our_time->tm_year+1900,
             our_time->tm_hour,our_time->tm_min,our_time->tm_sec);
 #if defined(VMS) || defined(MS_DOS)

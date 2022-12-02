@@ -556,7 +556,7 @@ int getcommand(void)
                     def_out_ptr[0] = 0;
                     if (desc_ptr->value == 0 || strlen(desc_ptr->value) < 1)
                     {
-                        char *th, numth[10];
+                        char *th, numth[32];
                         switch (i)
                         {
                         case 5:  th = "sixth"; break;
@@ -565,7 +565,7 @@ int getcommand(void)
                         case 2:  th = "third"; break;
                         case 1:  th = "second"; break;
                         default:
-                            sprintf(numth, "%d'th", i+1);
+                            snprintf(numth, sizeof(numth), "%d'th", i+1);
                             th = numth;
                             break;
                         }
