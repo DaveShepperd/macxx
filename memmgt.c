@@ -143,7 +143,7 @@ void *mem_alloc(int nbytes, char *file, int line) {
 #if defined(LLF) || defined(MACXX)
         display_mem();
 #endif
-        fprintf(stderr,emsg);
+        fprintf(stderr,"%s",emsg);
         abort();
     }
     hdr->size = nbytes;
@@ -218,7 +218,7 @@ void *mem_realloc(void *old, int nbytes, char *file, int line) {
 #if defined(LLF) || defined(MACXX)
             display_mem();
 #endif
-            fprintf(stderr, emsg);
+            fprintf(stderr, "%s", emsg);
             abort();
         }
         hdr = (Hdr *)s;
