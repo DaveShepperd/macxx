@@ -1090,14 +1090,25 @@ static unsigned long op_ifcondit(char *condition)
     case CCN_DIF: {
             char *arg1,*arg2;
             int l1,l2;
-            arg1 = inp_ptr;
-            while ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC|CT_COM)) == 0) ++inp_ptr;
+			/* eat leading whitespace on arg1 */
+			while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC | CT_COM | CT_WS)) )
+				++inp_ptr;
+			arg1 = inp_ptr;
+			/* skip to end of non-whitespace string */
+			while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC | CT_COM | CT_WS)) == 0 )
+				++inp_ptr;
             if (*inp_ptr == ',')
             {
                 l1 = inp_ptr - arg1;
+				/* eat comma */
                 ++inp_ptr;
+				/* eat leading whitespace on arg2 */
+				while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC | CT_WS)) )
+					++inp_ptr;
                 arg2 = inp_ptr;
-                while ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC|CT_COM)) == 0) ++inp_ptr;
+				/* skip to end of non-whitespace string */
+				while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC | CT_COM | CT_WS)) == 0 )
+					++inp_ptr;
                 l2 = inp_ptr-arg2;
                 if (l1 == l2)
                 {
