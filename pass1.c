@@ -1216,8 +1216,8 @@ int f1_defg(int flag)
 				if ( include_level > 0 )
 				{
 					sprintf(emsg,       /* then it's nfg */
-							"Label multiply defined; previously defined at line %d\n\t%s%s",
-							ptr->ss_line,"in .INCLUDEd file ",ptr->ss_fnd->fn_buff);
+							"Label multiply defined; previously defined at %s:%d",
+							ptr->ss_fnd->fn_buff,ptr->ss_line);
 				}
 				else
 				{
@@ -1228,24 +1228,16 @@ int f1_defg(int flag)
 				bad_token(tkn_ptr,emsg);
 				return 0;
 			}
-			if ( ptr->ss_fnd  != current_fnd || ptr->ss_line != current_fnd->fn_line )
-			{
-				sprintf(emsg,
-						"Label defined at line %s:%d in pass 0 and %s:%d in pass 1",
-						ptr->ss_fnd?ptr->ss_fnd->fn_name_only:"", ptr->ss_line,
-						current_fnd ? current_fnd->fn_name_only:"", current_fnd->fn_line);
-				bad_token(tkn_ptr,emsg);
-				return 0;
-			}
 			if (    ptr->flg_exprs
 				 || ptr->ss_value != current_pc
 				 || ptr->ss_seg != current_section
 				)
 			{
 				sprintf(emsg,
-						"Label defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1",
+						"Label defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1 at %s:%d",
 						ptr->ss_seg ? ptr->ss_seg->seg_string:"", ptr->ss_value, ptr->flg_exprs,
-						current_section->seg_string, current_pc);
+						current_section->seg_string, current_pc,
+						ptr->ss_fnd->fn_buff, ptr->ss_line);
 				bad_token(tkn_ptr,emsg);
 				return 0;
 			}

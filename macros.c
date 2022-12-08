@@ -533,7 +533,7 @@ int macro_call(Opcode *opc)
     char **keywrd,**defalt,**argptr,*args;
     unsigned char *gensym;
     Mcall_struct *mac_pool;
-    int argcnt,arglen;       /* assume no args */
+    int argcnt,arglen,argMask;       /* assume no args */
     char **args_area;
 
     if ((ma = opc->op_margs) == 0)
@@ -581,6 +581,7 @@ int macro_call(Opcode *opc)
     condit_polarity = 0;
     args = (char *)(keywrd+ma->mac_numargs); /* point to argument area */
     args_area = argptr = (char **)MEM_alloc(argcnt*(int)sizeof(char *));
+	argMask = (CT_EOL|CT_SMC);
     for (argcnt = 0; argcnt < ma->mac_numargs; ++argcnt)
     {
         int c,beg,end;
@@ -589,11 +590,12 @@ int macro_call(Opcode *opc)
         *argptr = 0;      /* assume no argument */
         while (isspace((int)*inp_ptr)) ++inp_ptr; /* skip over white space */
         c = *inp_ptr;     /* pick up character */
-        if ((cttbl[c]&(CT_EOL|CT_COM|CT_SMC)) != 0)
+        if ((cttbl[c]&argMask) != 0)
         {
             if (c == ',') ++inp_ptr; /* eat the comma */
             goto term_arg;     /* go terminate the argument */
         }
+		argMask = (CT_EOL|CT_COM|CT_SMC);
         *argptr = args;       /* point to argument */
         if (c == macro_arg_genval)
         {  /* special value to ascii? */

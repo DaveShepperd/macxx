@@ -22,7 +22,8 @@
 
 static int no_such_opcode(void)
 {
-	bad_token(tkn_ptr,"Sorry, directive not implimented in this version.");
+	if ( !options[QUAL_IGNORE] )
+		bad_token(tkn_ptr, "Sorry, directive not implimented in this version.");
 	f1_eatit();         /* eat the line */
 	return 0;
 }
@@ -38,7 +39,6 @@ DIRDEF(.MCALL,  op_mcall,   DFLSMC)
 DIRDEF(.MPURG,  op_mpurge,  0)
 DIRDEF(.NOCRO,  op_nocross, 0)
 DIRDEF(.PRINT,  op_print,   0)
-DIRDEF(.RAD50,  op_rad50,   DFLGEV)
 DIRDEF(.SYMBO,  op_symbol,  0)
 DIRDEF(.DEFST,  op_defstack,   0)
 DIRDEF(.GETPO,  op_getpointer,   0)

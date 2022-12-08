@@ -208,7 +208,7 @@ DIRDEF(".UNDEFINE", op_undefine,	0)
 #if defined(MAC_AS)
 DIRDEF(".USING", op_using,	0)
 #endif
-DIRDEF(".VCTRS", op_vctrs,	DFLGEV)
+DIRDEF(".VCTRS", op_vctrs,	DFLGBM /*DFLGEV*/)
 #endif  /* ndef MAC_PP */
 DIRDEF(".WARN",	op_warn,	0)
 #ifndef MAC_PP

@@ -29,5 +29,6 @@ struct str_sub {
 extern struct str_sub *string_macros;
 extern char *presub_str;
 extern int strings_substituted;
+extern void op_purgedefines(struct str_sub *sub);
 
 #endif /* _STRSUB_H_ */

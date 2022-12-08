@@ -2378,10 +2378,8 @@ int op_vctrs(void)
         list_stats.pc = current_offset&0xffff;
         list_stats.pc_flag = 1;
         if (*inp_ptr == ',')
-        {
-            ++inp_ptr;         /* eat the comma */
-            op_word();         /* pretend its a .word */
-        }
+            ++inp_ptr;         /* if stopped on a comma, eat it */
+		op_word();         /* pretend the rest of the line is a .word */
     }
     current_offset = save_aspc;      /* restore the ASECT pc */
     current_section = save_seg;      /* restore the sectoin ptr */
@@ -2398,18 +2396,16 @@ int op_cksum(void)
     save_seg = current_section;
     current_section = get_absseg();  /* point to an abs section */
     save_aspc = current_offset;      /* but save the location counter */
-    tt = get_text();
+    tt = get_token();
     if (tt != EOL)
     {
-        exprs(0,&EXP0);           /* pickup the value */
+        exprs(0,&EXP0);           /* pickup the address */
         current_offset = EXP0SP->expr_value;
         list_stats.pc = current_offset&0xffff;
         list_stats.pc_flag = 1;
         if (*inp_ptr == ',')
-        {
-            ++inp_ptr;         /* eat the comma */
-            op_byte();         /* pretend its a .word */
-        }
+            ++inp_ptr;         /* if stopped on a comma, eat it */
+		op_byte();         /* pretend the rest of the line is a .byte */
     }
     current_offset = save_aspc;      /* restore the ASECT pc */
     current_section = save_seg;      /* restore the sectoin ptr */
@@ -2733,12 +2729,14 @@ int op_test(void)
 }
 #endif
 
-static void op_purgedefines(struct str_sub *sub)
+void op_purgedefines(struct str_sub *sub)
 {
     int siz;
     struct str_sub *sub_save;
-    sub_save = sub;
-    for (siz=0;siz < 64; ++siz,++sub)
+
+	if ( !(sub_save = sub) )
+		return;
+	for ( siz = 0; siz < 64; ++siz, ++sub )
     {
         if (sub->name_len == -1)
         {
@@ -2752,7 +2750,7 @@ static void op_purgedefines(struct str_sub *sub)
     return;
 }
 
-#if SHOW_TEXT
+#if 1 || SHOW_TEXT
 static void showText(const char *title, char *msg)
 {
 	char tBuf[128];
@@ -3035,5 +3033,474 @@ int op_endp(void)
         }
     }
     return 0;
-}   
+}
+   
+#ifndef MAC_PP
+/****************************************************************************/
+/* 01-05-2022 added support for the .RAD50 command - David Shepperd code - edited by TG 
+
+Adds support for RAD50
+( The packing of three RAD50 characters into a 16 Bit WORD )
+
+DEC loved Octal numbers.
+It's called RAD50 because the number Decimal 40 equals the number Octal 50
+
+
+The packing formula.
+
+WORD=((x1*40)+x2)*40+x3
+
+Where
+x1 = the first character
+x2 = the second character
+x3 = the third character
+
+
+Example .Rad50 commands.
+
+.RAD50 /string 1/..../string n/
+.RAD50 /ABC/
+
+.RAD50 /ABC/<VAL1>/DEF/    For MAC65, MAC68, MAC69
+.RAD50 <VAL1><VAL2><VAL3>  For MAC65, MAC68, MAC69
+
+.RAD50 /ABC/(VAL1)/DEF/    For other MACxx's
+.RAD50 (VAL1)(VAL2)(VAL3)  For other MACxx's
+
+
+
+Note:
+Variables must resolve to a valid RAD50 character
+As of now, a variable must resolve immediately to an absolute value.
+You can not use a variable that gets resolved at link time because
+the value is packed into a word.
+
+One line of MACxx assembly code can contain up to 255 characters
+but our storage buffer for the packed data is only 128 bytes so we
+must split the data into two passes.  On the first pass we fill buffer
+then write the packed data to the *.ol file, reset the buffer and process
+the remaining. Actually the code as written, could do much more data but
+MACxx line size is limited to 255 characters.
+
+
+
+                                  RAD50 - 40-character repertoire
+			****************************************************
+			; Translate ASCII character code to RAD50          ;
+			;                                                  ;
+			; RAD50 for PDP-11, VAX                            ;
+			;                                                  ;
+			; Note this is Decimal numbers                     ;
+			;                                                  ;
+			; 0     = space                                    ;
+			; 1-26  = A-Z                                      ;
+			; 27    = $                                        ;
+			; 28    = .                                        ;
+			; 29    = %   - unused code for other DEC machines ;
+			; 30-39 = 0-9                                      ;
+			;                                                  ;
+			****************************************************
+
+
+*/
+
+static void rad50_common(void)
+{
+    int term_c,c=0,y=0,x=0,term_expr=0;
+    int len=0, rad50_count=0;
+    LIST_stat *lstat;
+    if (meb_stats.getting_stuff)
+    {
+        lstat = &meb_stats;
+        if ((meb_stats.pc_flag != 0) && 
+            (meb_stats.expected_pc != current_offset ||
+             (meb_stats.expected_seg != current_section)))
+        {
+            fixup_overflow(lstat);
+        }
+    }
+    else
+    {
+        lstat = &list_stats;
+        list_stats.pc_flag = 0;
+    }
+    if (lstat->pc_flag == 0)
+    {
+        lstat->pc = current_offset;
+        lstat->pc_flag = 1;
+    }
+    term_c = *inp_ptr;
+    if ((cttbl[term_c]&(CT_EOL|CT_SMC)) != 0)
+    {
+        bad_token(inp_ptr,"No arguments on line");
+        return;
+    }
+    move_pc();           /* always set the PC */
+
+
+    term_c = *inp_ptr;    /* get termination delimiter */
+    if ( term_c == expr_open ){
+        term_expr = 1;    /* set if expression */
+        term_c = expr_close;    /* set expression terminating delimiter */
+    }
+    ++inp_ptr;        /* eat the terminating delimiter */
+
+    while (1)    /* Set up Buffer */
+    {       /* for all that will fit in asc
+               asc is a buffer of 128 bytes used for temp storage */
+
+        char *asc_ptr, *asc_end;
+        asc_ptr = asc;
+        /* save four spaces for packing at the end of buffer if
+           not three bytes yet */
+        asc_end = asc+sizeof(asc)-4;
+
+        while (1)
+        {        /* process line of characters */
+
+            if (asc_ptr >= asc_end){
+                break;   /* Reached end of data buffer (out of storage space) */
+            }
+
+            if ( term_expr == 1 ){    /* have an expression ? */
+
+                rad50_count=1;
+
+                char *ip,s1,s2;
+                int nst;
+                nst = 0;         /* assume top level */
+                ip = inp_ptr;   /* point to place after expr_open */
+                while (1)
+                {          /* find matching expr_close*/
+                    int chr;
+                    chr = *ip++;      /* find end pointer */
+                    if ((cttbl[chr]&CT_EOL) != 0)
+                    {
+                        --ip;          /* too far, backup 1 */
+                        bad_token(ip,"Missing expression bracket");
+                        /*Eat rest of line to suppress warning error about
+                          end of line not reached*/
+                        f1_eatit();
+                        return;
+                    }
+                    if (chr == expr_close)
+                    {
+                        --nst;
+                        if (nst < 0) break;
+                    }
+                    else if (chr == expr_open)  /* Nested expression */
+                    {
+                        ++nst;
+                    }
+                }  /* end of while find matching expr_close*/
+
+                s1 = *ip;        /* save the two chars after expr_close */
+                *ip++ = 0x0A;        /* and replace with a \linefeed\0 */
+                s2 = *ip;
+                *ip = 0;
+
+                get_token();     /* setup the variables */
+                /*  Call exprs with Force absolute which will cause error if not absolute */
+                exprs(0,&EXP0);      /* evaluate the exprssion */
+                *ip = s2;        /* restore the source record */
+                *--ip = s1;
+                if ( !no_white_space_allowed )
+                {
+                    while (isspace(*inp_ptr)) { ++inp_ptr; } /* eat ws */
+                }
+
+                c = EXP0SP->expr_value;
+
+                if (c >= 40){
+                    sprintf(emsg,"Unknown RADIX-50 Character - Hex Value = %X", c);
+                    show_bad_token((inp_ptr),emsg,MSG_ERROR);
+                    /*Eat rest of line to suppress warning error about end of line not reached*/
+                    f1_eatit();
+                    return;
+                }
+
+                /* Each y assignment packs the remaining bytes with spaces */
+                if (x == 0) y=c*1600;
+                if (x == 1) y=y+(c*40);
+                if (x == 2) y=y+c;
+
+                x++;
+
+                /* three bytes yet - put in buffer */
+                if (x >= 3){
+
+                    if ((edmask&ED_M68) == 0){
+                        /* For little endian CPU's */
+                        *asc_ptr++ = y&0xff;
+                        *asc_ptr++ = y>>8&0xff;
+                    }
+                    else{
+                        /* For big endian CPU's*/
+                        *asc_ptr++ = y>>8&0xff;
+                        *asc_ptr++ = y&0xff;
+                    }
+                    x=0;
+                    y=0;
+                }
+
+                c = *inp_ptr;   /* pick up ending delimiter */
+
+                term_expr = 0;    /* expression complete */
+
+            }
+            else{   /* not an expression */
+
+                while (1)   /* convert loop */
+                {
+                    c = *inp_ptr;   /* pickup user data */
+                    if ( ((cttbl[c]& (CT_EOL|CT_SMC)) != 0) || (c == term_c) ){
+                        break;    /* reached EOL or ending delimiter */
+                    }
+
+                    rad50_count = 1;
+
+                    if ( c == ' ' ){
+                        c = 0;
+                    }
+                    else if ( c == '$' ){
+                        c = 27;
+                    }
+                    else if ( c == '.' ){
+                        c = 28;
+                    }
+                    else if ( c == '%' )
+                    {
+                        c = 29;
+                    }
+                    else if ( c >= '0' && c <= '9' ){
+                        c = c - '0' + 30;
+                    }
+                    else if ( c >= 'A' && c <= 'Z' ){
+                        c = c - 'A' + 1;
+                    }
+                    /* Set lower case to upper case */
+                    else if ( c >= 'a' && c <= 'z' ){
+                        c = c - 'a' + 1;
+                    }
+                    else{
+                        sprintf(emsg,"Unknown RADIX-50 Character - Hex Value = %X", c);
+                        show_bad_token((inp_ptr),emsg,MSG_ERROR);
+                        /*Eat rest of line to suppress warning error about end of line not reached*/
+                        f1_eatit();
+                        return;
+                    }
+                    /* Each y assignment packs the remaining bytes with spaces */
+                    if (x == 0) y=c*1600;
+                    if (x == 1) y=y+(c*40);
+                    if (x == 2) y=y+c;
+
+                    x++;
+
+                    /* three bytes yet - put in buffer */
+                    if (x >= 3){
+
+                        if ((edmask&ED_M68) == 0){
+                            /* For little endian CPU's */
+                            *asc_ptr++ = y&0xff;
+                            *asc_ptr++ = y>>8&0xff;
+                        }
+                        else{
+                            /* For big endian CPU's*/
+                            *asc_ptr++ = y>>8&0xff;
+                            *asc_ptr++ = y&0xff;
+                        }
+                        x=0;
+                        y=0;
+                    }
+
+                    ++inp_ptr;    /* point to next data byte */
+
+                }   /* end of while convert loop */
+
+            }   /* end of else an expression */
+
+            if ( ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0) && (c != term_c) ){
+                        bad_token(inp_ptr,"Missing terminating delimiter");
+                        /*Eat rest of line to suppress warning error about end of line not reached*/
+                        f1_eatit();
+                        return;
+            }
+            else if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0){
+                break;  /* Reached EOL - End Nicely */
+            }
+
+            /* if no data between delimiters - ".RAD50 //"  */
+            /* Only do this if the three byte packing queue is empty  */
+            if ( (rad50_count == 0) && ((x == 0) || (x >= 3)) ) {
+
+                y=0;
+                if ((edmask&ED_M68) == 0){
+                    /* For little endian CPU's */
+                    *asc_ptr++ = y&0xff;
+                    *asc_ptr++ = y>>8&0xff;
+                }
+                else{
+                    /* For big endian CPU's */
+                    *asc_ptr++ = y>>8&0xff;
+                    *asc_ptr++ = y&0xff;
+                }
+                x=0;
+            }
+
+            ++inp_ptr;   /* eat the terminator */
+            if ( isspace(*inp_ptr) && !no_white_space_allowed )
+            {
+                while ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0 && isspace(*inp_ptr))
+                {
+                    ++inp_ptr;        /* eat ws between blocks */
+                }
+            }
+            if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0){
+                break;   /* Reached EOL - stop */
+            }
+
+            c = *inp_ptr;    /* pickup user data */
+
+            if ( c == expr_open ){    /* test for expression */
+                term_expr = 1;    /* set if expression */
+                term_c = expr_close;    /* new end delimiter */
+                ++inp_ptr;    /* eat the delimiter */
+            }
+            else{
+                term_c = c;    /* new end delimiter */
+                ++inp_ptr;    /* eat the delimiter */
+
+                rad50_count = 0;   /* reset count */
+
+            }   /* end of test for expression */
+
+        }    /* Buffer full or Reached the end of characters to process */
+
+        /* if true end of line and less than three bytes - fill remaing bytes with space */
+        if ( ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0) && (x > 0) && (x < 3) ){
+
+            if ((edmask&ED_M68) == 0){
+                /* For little endian CPU's */
+                *asc_ptr++ = y&0xff;
+                *asc_ptr++ = y>>8&0xff;
+            }
+            else{
+                /* For big endian CPU's */
+                *asc_ptr++ = y>>8&0xff;
+                *asc_ptr++ = y&0xff;
+            }
+            x=0;
+            y=0;
+        }
+
+        /* if any packed data write it to *.ol file and write info into the *.lst file */
+        len = asc_ptr - asc;   /* how much is in there */
+
+        if (len > 0)
+        {
+            /* write to *.ol file */
+            write_to_tmp(TMP_ASTNG,len,asc,sizeof(char));
+
+            /* write to *.lis file */
+            asc_ptr = asc;
+            if (show_line && (list_bin || meb_stats.getting_stuff))
+            {
+                int tlen;
+                char *dst;
+                int n_ct;  /* nibble count */
+
+                /* RAD50 packing always creates a word */
+                /* writing a word (two bytes) at a time to *.lis so cut lenght in half */
+                tlen = len/2;
+                if ( list_radix == 16 ){
+                    /* writing four hex nibbles and the space for a count of 5 */
+                    n_ct = 5;
+                }else{
+                    /* OCTAL - writing six octal nibbles and the space for a count of 7 */
+                    n_ct = 7;
+                }
+                while (1)
+                {
+                    int z;
+                    if (tlen <= 0) break;
+                    z = (LLIST_SIZE - lstat->list_ptr)/n_ct;
+                    if (z <= 0)
+                    {
+                        if (!list_bex) break;
+                        fixup_overflow(lstat);
+                        z = (LLIST_SIZE - LLIST_OPC)/n_ct;
+                        lstat->pc = current_offset+(asc_ptr-asc);
+                        lstat->pc_flag = 1;
+                    }
+                    dst = lstat->line_ptr+lstat->list_ptr;
+                    if (tlen < z) z = tlen;
+                    lstat->list_ptr += z*n_ct;
+                    tlen -= z;
+                    do
+                    {
+                        unsigned char c1;
+                        unsigned char c2;
+                        unsigned int c3;
+
+                        /* For *.lis files - swap low high bytes for little endian CPU's
+                           so that it shows as High byte Low byte in the *.lst file
+                           Unless LIST_COD is on which states list as used in *.ol file */
+                        if ( ((edmask & ED_M68) == 0) && ((lm_bits.list_mask & LIST_COD) == 0) )
+                        {
+                            c2 = *asc_ptr++;
+                            c1 = *asc_ptr++;
+                        }
+                        /* For *.lis files - big endian CPU's */
+                        else
+                        {
+                            c1 = *asc_ptr++;
+                            c2 = *asc_ptr++;
+                        }
+
+                        if ( list_radix == 16 ){
+                            *dst++ = hexdig[(c1>>4)&0x0F];
+                            *dst++ = hexdig[c1&0x0F];
+                            *dst++ = hexdig[(c2>>4)&0x0F];
+                            *dst++ = hexdig[c2&0x0F];
+                        }else{
+
+                            c3 = (c1<<8)|c2;
+
+                            *dst++ = ((c3>>15)&7)+0x30;
+                            *dst++ = ((c3>>12)&7)+0x30;
+                            *dst++ = ((c3>>9)&7)+0x30;
+                            *dst++ = ((c3>>6)&7)+0x30;
+                            *dst++ = ((c3>>3)&7)+0x30;
+                            *dst++ = ((c3)&7)+0x30;
+                        }
+                        ++dst;
+                    } while (--z > 0);
+
+                }    /* -- for each item in asc [while (1)]*/
+            }    /* -- list_bin != 0 */
+            current_offset += len;
+        }    /* -- something to write (len > 0) */
+
+        /* if end of characters to process Stop, otherwise reset buffer and continue*/
+        if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0)   break;
+
+    }    /* End of Set up Buffer */
+
+    if (c != term_c)
+    {
+        bad_token(inp_ptr,"No matching delimiter");
+    }
+
+    out_pc = current_offset;
+    meb_stats.expected_seg = current_section;
+    meb_stats.expected_pc = current_offset;
+    return;
+}
+
+int op_rad50(void)
+{
+    rad50_common();
+    return 0;
+}
+#endif	/* defined(MAC_PP) */  
 

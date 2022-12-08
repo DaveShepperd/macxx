@@ -67,8 +67,8 @@ static struct
     char *string;
     unsigned short flag;
 } list_stuff[] = {
-    { "BIN",LIST_BIN},      /* display binary */
     { "BEX",LIST_BEX},      /* display binary extensions */
+    { "BIN",LIST_BIN},      /* display binary */
     { "BYT",LIST_MES},      /* display macro expansion source */
     { "CND",LIST_CND},      /* display unsatisfied conditionals */
     { "COD",LIST_COD},      /* display binary "as stored" */

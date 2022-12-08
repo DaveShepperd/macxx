@@ -397,6 +397,8 @@ int main(int argc, char *argv[])
 			segPtr->seg_pc = 0;
 			segPtr->seg_base = 0;
 		}
+		op_purgedefines(string_macros);
+		string_macros = NULL;
 	}
 #endif
     if (output_files[OUT_FN_LIS].fn_present)

@@ -41,27 +41,28 @@ static char help_grnhill_mark[1];
 static char *help_msg[] = {
     "Usage: ",UPC,macxx_name," file1 file2 ... [",opt_delim,"","option]\n",
     "Where option is one of ([] implies optional text):\n",
-    opt_delim,"[no]output","[=name]	- name object file\n",
-    opt_delim,"[no]list","[=name]	- select and name listing file\n",
+    opt_delim,"[no]output", "[=name]	- name object file\n",
+    opt_delim,"[no]list",   "[=name]	- select and name listing file\n",
+	opt_delim,"[no]ignore", "	        - Ignore the assembler directives not implemented in this version\n",
 #if !defined(MAC_PP)
     opt_delim,"[no]2_pass", "	        - select to assemble using two pass mode\n",
     opt_delim,"[no]debug",  "[=name]	- select and name temporary work file\n",
 #if 0
     opt_delim,"[no]temp","[=name]	- select and name temporary work file\n",
 #endif
-    opt_delim,"[no]binary","		- select binary or ASCII format object file\n",
-    opt_delim,"[no]boff","		- do global branch offset testing\n",
+    opt_delim,"[no]binary", "		- select binary or ASCII format object file\n",
+    opt_delim,"[no]boff",   "		- do global branch offset testing\n",
     help_cmos_mark,
-    opt_delim,"[no]cmos","		- use 65C02 instruction set\n",
+    opt_delim,"[no]cmos",   "		- use 65C02 instruction set\n",
     help_cmos_mark,
-    opt_delim,"[no]816","		- use 65816 instruction set\n",
+    opt_delim,"[no]816",    "		- use 65816 instruction set\n",
     help_jerry_mark,
-    opt_delim,"[no]jerry","		- use Jaguar's Jerry opcode set\n",
+    opt_delim,"[no]jerry",  "		- use Jaguar's Jerry opcode set\n",
     help_grnhill_mark,
     opt_delim,"[no]greenhills","         - use Green Hills assembler syntax\n",
     opt_delim,"[no]abbreviate","         - Abbreviate error messages\n",
 #else
-    opt_delim,"[no]line","		- place # line info in output file\n",
+    opt_delim,"[no]line",  "		- place # line info in output file\n",
 #endif
     opt_delim,"assem","=string		- \"string\" is assembled before anything\n",
     "			   i.e. ",opt_delim,"assem","=foo=bar will assemble as foo=bar\n",
