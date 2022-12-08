@@ -19,6 +19,6 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_ 1
 
-char *macxx_version = "v11.02";
+char *macxx_version = "v11.03";
 
 #endif /* _VERSION_H_ */
