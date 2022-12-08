@@ -96,6 +96,7 @@
   <pre>
   <b>macpp</b>    - A macro pre-processor; no CPU; it works similar to the C language's CPP.
   <b>mac65</b>    - For the MOS Technology 6502, 65C02 and 65816 CPU's
+  <b>mac68</b>    - For the Motorol 6800 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
   <b>mac682k</b>  - For the Motorola 68020 CPU
   <b>mac11</b>    - For the PDP11 CPU
@@ -887,9 +888,12 @@
       global. Use with care. </td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;WORD</td><td>Undefined opcodes are assumed to be arguments to a .WORD directive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;.WORD</td><td>Same as WORD above.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;BYTE</td><td>Undefined opcodes are assumed to be arguments to a .BYTE directive.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
     </table>
     <p>
   The following keywords are specific to MAC65 and the 6502 processor.
@@ -1081,9 +1085,13 @@
     <tr><td>NDF</td><td>Symbol is not defined</td></tr>
     <tr><td>DEFINED</td><td>Symbol is defined</td></tr>
     <tr><td>NOT_DEFINED</td><td>Symbol is not defined</td></tr>
+    <tr><td>EXISTS</td><td>All terms in expression exist</td></tr>
+    <tr><td>EXIST</td><td>All terms in expression exist</td></tr>
+    <tr><td>NOT_EXISTS</td><td>Any term in expression does not exist</td></tr>
+    <tr><td>NOT_EXIST</td><td>Any term in expression does not exist</td></tr>
   </table>  
     <p>
-  In the DF and NDF cases, the symbol_expression may be more than one symbol separated with 
+  In the DF, NDF, EXISTS, NOT_EXIST cases, the symbol_expression may be more than one symbol separated with 
   either a ampersand (&) for AND or a vertical bar (|) for OR (an
   exclamation point (!) in MAC65). For example:
     </p>
@@ -2366,6 +2374,7 @@
     <tr><td>OCTAL</td><td>varies</td><td>Display numbers in octal in the listing file.</td></tr>
     <tr><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
     <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
+    <tr><td>2_PASS</td><td>No</td><td>All except MACPP; Assembler becomes a 2.5 pass instead of the normal 1.5 pass.</td></tr>
   </table>  
     <p>
   NOTE: On Xenix/Unix/Linux systems, the option delimiter is a dash (-).

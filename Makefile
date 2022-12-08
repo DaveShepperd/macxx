@@ -23,12 +23,13 @@ ALLO1 = endlin.o outx.o pass2.o macros.o psuedo_ops.o
 ALLO2 = listctrl.o sortsym.o qksort.o
 ALLO3 = $(COREO)
 
-ALLO65 = exprs65.o char_tbl65.o opc65.o pass1.o pst65.o debug.o help.o
-ALLOAS = exprs.o char_table.o opcas.o pass1.o pstas.o debug.o help.o
-ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o
-ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o
-ALLO682K = exprs682k.o char_table.o opc682k.o pass168k.o pst682k.o m682types.o debug.o help.o
-ALLO11 = exprs.o char_table.o opc11.o pass1.o pst11.o m11types.o debug.o help.o
+ALLO65 = exprs65.o char_tbl65.o opc65.o pass0.o pass1.o pst65.o debug.o help.o
+ALLO68 = exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
+ALLOAS = exprs.o char_table.o opcas.o pass0.o pass1.o pstas.o debug.o help.o
+ALLOTJ = exprs.o char_table.o opctj.o pass0.o pass1.o psttj.o debug.o help.o
+ALLO68K = exprs68k.o char_table.o opc68k.o pass068k.o pass168k.o pst68k.o m68types.o debug.o help.o
+ALLO682K = exprs682k.o char_table.o opc682k.o pass068k.o pass168k.o pst682k.o m682types.o debug.o help.o
+ALLO11 = exprs.o char_table.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
 
 ALLOPP0 = macxx_pp.o pass1_pp.o lstctlpp.o opcode_pp.o
 ALLOPP1 = gc_tblpp.o gc_pp.o exprs_pp.o macros_pp.o
@@ -74,7 +75,7 @@ ECHO = /bin/echo -e
 	$(ECHO) "\tCompiling $< to $@ ..."
 	$(CC) $(CFLAGS) -E $< > $@
 
-all : macas mac65 mac68k mac682k macpp mactj mac11
+all : macas mac65 mac68 mac68k mac682k macpp mactj mac11
 	echo Done
 
 define link_it
@@ -91,6 +92,9 @@ mactj : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOTJ)
 mac65 : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO65) 
 	$(link_it)
 
+mac68:  Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68)
+	$(link_it)
+
 mac68k : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68K) 
 	$(link_it)
 
@@ -105,11 +109,6 @@ mac11 : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO11)
 	
 dmpod : dmpod.o
 	$(link_it)
-
-exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
-	$(ECHO) "\tCompiling $<..."
-	$C -DMAC_PP -o $@ $<
 
 gc_pp.o : gc.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h gc_struct.h 
@@ -160,6 +159,16 @@ psdo_ops_pp.o : psuedo_ops.c add_defs.h token.h token_defs.h structs.h header.h 
 	$(ECHO) "\tCompiling $<..."
 	$C -DMAC_PP -o $@ $<
 
+exprs65.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  exproper.h listctrl.h lstcnsts.h 
+	$(ECHO) "\tCompiling $<..."
+	$C -DMAC_65 -o $@ $<
+
+exprs68.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  exproper.h listctrl.h lstcnsts.h 
+	$(ECHO) "\tCompiling $<..."
+	$C -DMAC_68 -o $@ $<
+
 exprs68k.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h 
 	$(ECHO) "\tCompiling $<..."
@@ -170,10 +179,15 @@ exprs682k.o : exprs.c token.h token_defs.h m682k.h structs.h add_defs.h header.h
 	$(ECHO) "\tCompiling $<..."
 	$C -DMAC682K -o $@ $<
 
-exprs65.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h 
 	$(ECHO) "\tCompiling $<..."
-	$C -DMAC_65 -o $@ $<
+	$C -DMAC_PP -o $@ $<
+
+pass068k.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
+	$(ECHO) "\tCompiling $<..."
+	$C -DMAC68K -o $@ $<
 
 pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
@@ -183,7 +197,7 @@ pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h
 .PHONY: clean
 
 clean : 
-	/bin/rm -f mac65 macas mac68k macpp mac682k mactj mac11 *.o *.b *@ *.d
+	/bin/rm -f mac65 mac68 macas mac68k macpp mac682k mactj mac11 *.o *.b *@ *.d
 
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 
@@ -195,7 +209,7 @@ dmpod.o : dmpod.c debug.h stab.h stab.def segdef.h
 dumdir.o : dumdir.c 
 dummy.o : dummy.c 
 edits.o : edits.c 
-endlin.o : endlin.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+endlin.o : endlin.c header.h outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   listctrl.h lstcnsts.h exproper.h vlda_structs.h pragma.h pragma1.h segdef.h
 err2str.o : err2str.c  
 exprs.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
@@ -221,12 +235,14 @@ m68types.o : m68types.c token.h token_defs.h \
 macros.o : macros.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h 
 macxx.o : macxx.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-  ct.h qual_tbl.h version.h  strsub.h
+  ct.h qual_tbl.h version.h  strsub.h listctrl.h
 opc11.o : opc11.c token.h token_defs.h pst_tokens.h pst_structs.h exproper.h \
   structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h pdp11.h opcommon.h 
 opc65.o : opc65.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn65.h opcommon.h 
+opc68.o : opc68.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn68.h opcommon.h 
 opc682k.o : opc682k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m682k.h opcommon.h 
 opc68k.o : opc68k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
@@ -248,6 +264,7 @@ pass2.o : pass2.c outx.h token.h token_defs.h structs.h add_defs.h header.h memm
   vlda_structs.h pragma1.h segdef.h pragma.h vlda_structs.h 
 pst11.o : pst11.c pst_tokens.h pst_structs.h pdp11.h opcs11.h dirdefs.h 
 pst65.o : pst65.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
+pst68.o : pst68.c pst_tokens.h pst_structs.h psttkn68.h dirdefs.h 
 pst682k.o : pst682k.c pst_tokens.h pst_structs.h dirdefs.h opcs682k.h 
 pst68k.o : pst68k.c pst_tokens.h pst_structs.h dirdefs.h opcs68k.h 
 pst816.o : pst816.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 

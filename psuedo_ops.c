@@ -1400,9 +1400,12 @@ static struct
     {"GLOBAL",ED_GBL},
     {"WORD",ED_WRD},
     {".WORD",ED_WRD},
+    {"BYTE",ED_BYT},
+    {".BYTE",ED_BYT},
     {"DOLLAR_HEX",ED_DOL},
     {"PC_RELATIVE",ED_PCREL},
     {"DOT_LOCAL", ED_DOTLCL},
+    {"CR", ED_CR},
     {0,0}
 };
 
@@ -1885,9 +1888,18 @@ static void change_section(SEG_struct *new_seg)
 static int op_segcomm(int type, int new_one,SEG_struct *new_seg,
                       int flags,int salign,int dalign,unsigned long maxlen)
 {
+#if 0
+    if ( squeak )
+        printf("op_segcomm(): pass=%d, type=%d, new_one=%d, flags=%04X, maxLen=%ld, Segment '%s': len=%ld, base=%ld, rel=%ld\n",
+               pass, type, new_one, flags, maxlen,
+               new_seg->seg_string, new_seg->seg_len, new_seg->seg_base, new_seg->rel_offset);
+#endif
     if (flags != 0)
     {
-        if (new_seg->seg_len == 0) new_one = 1;   /* pretend it's new if len = 0 */
+        if (new_seg->seg_len == 0)
+        {
+            new_one = 1;   /* pretend it's new if len = 0 */
+        }
         if ((flags&(PS_ABS|PS_REL)) == (PS_ABS|PS_REL))
         {
             bad_token((char *)0,"Can't be both ABS and REL");
@@ -2141,10 +2153,15 @@ int op_psect(void)
     int new_one,flags=0,salign=0,dalign=0;
     unsigned long maxlen=0;
     SEG_struct *new_seg;
-    if ((new_seg = get_segname(".REL.",&new_one)) == 0)
+    
+    if ( (new_seg = get_segname(".REL.", &new_one)) == 0 )
     {
         return 1;
     }
+#if 0
+    if ( squeak )
+        printf("op_psect(): Found section .REL.. new_one=%d\n", new_one);
+#endif
     if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
     {
         while (1)

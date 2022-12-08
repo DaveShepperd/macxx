@@ -428,7 +428,10 @@ void n_to_list( int nibbles, long value, int tag)
     register char *lpr;
     LIST_stat *lstat;
     int lcnt,nyb;
-    tv = value;
+	
+	if ( !pass )
+		return;
+	tv = value;
     nyb = nibbles;
     lcnt = LLIST_SIZE-nyb-1;
     if (tag != 0) lcnt -= 1;

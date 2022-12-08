@@ -392,7 +392,23 @@ int compress_expr( EXP_stk *exptr )
         case EXPR_SYM: {
                 SS_struct *sym_ptr;
                 sym_ptr = src->expr_sym;
-                exptr->base_page_reference |= sym_ptr->flg_base;
+#if 0
+				if ( squeak )
+				{
+					printf("compress_expr(): EXPR_SYM: '%s', exprs=%d, val=%08lX, base=%d, fwd=%d, def=%d, reg=%d, abs=%d, lab=%d\n",
+						   sym_ptr->ss_string,
+						   sym_ptr->flg_exprs,
+						   sym_ptr->ss_value,
+						   sym_ptr->flg_base,
+						   sym_ptr->flg_fwd,
+						   sym_ptr->flg_defined,
+						   sym_ptr->flg_register,
+						   sym_ptr->flg_abs,
+						   sym_ptr->flg_label
+						   );
+				}
+#endif
+				exptr->base_page_reference |= sym_ptr->flg_base;
                 exptr->forward_reference |= sym_ptr->flg_fwd;
                 exptr->register_reference |= sym_ptr->flg_register;
 #if defined(MAC68K)
@@ -1096,6 +1112,8 @@ int do_exprs( int flag, EXP_stk *eps )
                     {  /* process symbol name */
                         return(eps->ptr = -1);
                     }
+					if ( sym_ptr->flg_fwd )
+						eps->forward_reference = 1;
                     if (sym_ptr->flg_defined)
                     {
 #if EXPR_C
@@ -1151,6 +1169,15 @@ int do_exprs( int flag, EXP_stk *eps )
                         expr_ptr->expr_sym = sym_ptr;
                         expr_ptr->expr_value = 0;
                         sym_ptr->flg_ref = 1;     /* signal symbol referenced */
+						if ( !pass )
+						{
+							/* in pass 0, if symbol not defined, then this is a forward reference */
+							if ( !sym_ptr->flg_defined )
+							{
+								sym_ptr->flg_fwd = 1;
+								eps->forward_reference = 1;	/* signal this expression contains a forward reference */
+							}
+						}
 #if defined(MAC68K) || defined(MAC682K)
                         if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
                              && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )

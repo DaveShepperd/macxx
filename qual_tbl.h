@@ -25,6 +25,7 @@
 #if !defined(NO_XREF)
 QTBL(1, 0, 0, 0, 0, 1, QUAL_CROSS,	"CROSS_REFERENCE", 0),	/* cross reference */
 #endif
+QTBL(1, 0, 0, 0, 0, 1, QUAL_2_PASS,	"2_PASS", 0),		/* make a full two pass assembler */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_BINARY,	"BINARY", 0),		/* output binary files */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_CMOS,	"CMOS", 0),		/* 65C02 */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_P816,	"816", 0),		/* 65816 */

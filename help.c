@@ -44,7 +44,8 @@ static char *help_msg[] = {
     opt_delim,"[no]output","[=name]	- name object file\n",
     opt_delim,"[no]list","[=name]	- select and name listing file\n",
 #if !defined(MAC_PP)
-    opt_delim,"[no]debug","[=name]	- select and name temporary work file\n",
+    opt_delim,"[no]2_pass", "	        - select to assemble using two pass mode\n",
+    opt_delim,"[no]debug",  "[=name]	- select and name temporary work file\n",
 #if 0
     opt_delim,"[no]temp","[=name]	- select and name temporary work file\n",
 #endif

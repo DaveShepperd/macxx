@@ -62,10 +62,6 @@ int seg_pool_size;      /* elements remaining in segment pool */
 int no_white_space_allowed;
 
 #if defined(MAC68K) || defined(MAC682K)
-#define WST_LABEL    (0) /* no white space before labels */
-#define WST_OPC      (1) /* one white space before opcode */
-#define WST_OPRAND   (2) /* two white spaces before operand(s) */
-#define WST_COMMENTS (3) /* three white spaces to comments */
 int white_space_section;
 int dotwcontext;
 #endif
@@ -166,7 +162,7 @@ SEG_struct *get_subseg_mem( void )
 #endif
 
 unsigned long record_count;
-static int get_text_assems;
+int get_text_assems;
 
 char *get_token_pool(int amt, int flag) 
 {
@@ -225,25 +221,31 @@ int get_text( void )
     white_space_section = 0;
     no_white_space_allowed = 0;
 #endif
-    if (cmd_assems)
+    if ( get_text_assems < cmd_assems_index )
     {
-        if (get_text_assems >= cmd_assems_index || (s = cmd_assems[get_text_assems++]) == 0)
+		if ( cmd_assems )
         {
-            MEM_free((char *)cmd_assems);
-            cmd_assems = 0;
+			if ( (s=cmd_assems[get_text_assems++]) )
+			{
+				strcpy(inp_str, s);
+				inp_len = strlen(inp_str)+1;
+				s = inp_str+inp_len-1;
+				*s++ = '\n';
+				*s = 0;
+	#if !defined(MAC_PP)
+				if (options[QUAL_DEBUG]) dbg_line(0);
+	#endif
+				++get_text_assems;
+				return 1;
+			}
+			if ( pass )
+			{
+				MEM_free((char *)cmd_assems);
+				cmd_assems = NULL;
+				cmd_assems_index = 0;
+			}
         }
-        else
-        {
-            strcpy(inp_str, s);
-            inp_len = strlen(inp_str)+1;
-            s = inp_str+inp_len-1;
-            *s++ = '\n';
-            *s = 0;
-#if !defined(MAC_PP)
-            if (options[QUAL_DEBUG]) dbg_line(0);
-#endif
-            return 1;
-        }
+		get_text_assems = cmd_assems_index;
     }
     gt_loop:
     inp_ptr = s = inp_str;
@@ -272,9 +274,30 @@ int get_text( void )
                     return EOF;      /* simple EOF on input */
                 }
             }
-            while (*s) *s++ &= 0x7f;   /* zap off any 8th bit */
-            if (s[-1] == '\n') break;  /* if we terminated on a \n, we're done */
-            if (feof(current_fnd->fn_file)) break; /* terminated on an EOF */
+			if ( (edmask&ED_CR) )
+			{
+				while ( *s )
+					*s++ &= 0x7f;       /* zap off any 8th bit */
+			}
+			else
+			{
+				char cc;
+				while ( (cc = *s) )
+				{
+					cc &= 0x7f;			/* zap off any 8th bit */
+					if ( cc == '\r' )
+					{
+						*s++ = '\n';
+						*s = 0;
+						break;
+					}
+					*s++ = cc;
+				}
+			}
+            if (s[-1] == '\n')
+				break;				  /* if we terminated on a \n, we're done */
+            if (feof(current_fnd->fn_file))
+				break;				 /* terminated on an EOF */
             if (presub_str)
             {      /* we're going to realloc, so toss this one */
                 MEM_free(presub_str);
@@ -595,7 +618,10 @@ void show_bad_token( char *ptr, char *msg, int sev )
     int msgsiz,fnl;
     FILE *tfp;
 
-    if (pass < 2)
+	if ( !pass )
+		return;
+
+	if ( pass == 1 )
     {
         tfp = lis_fp;
         lis_fp = (FILE *)0;
@@ -684,7 +710,7 @@ void show_bad_token( char *ptr, char *msg, int sev )
         sprintf(btmsg,":%d - %s\n", (ptr > inp_str) ? ptr-inp_str : 0, msg );
         err_msg(sev, btmsg);
     }
-    if (pass < 2) lis_fp = tfp;
+    if (pass == 1) lis_fp = tfp;
     if (tfp != (FILE *)0 && line_errors_index < 4)
     {
         line_errors_sev[line_errors_index] = sev;
@@ -1182,25 +1208,50 @@ int f1_defg(int flag)
 #endif
     if ((flag&DEFG_LABEL) != 0)
     {    /* if defining a label... */
-        if (ptr->flg_defined)
+		if ( ptr->flg_defined )
         {       /* and it's already defined... */
-            if (include_level > 0)
-            {
-                sprintf(emsg,       /* then it's nfg */
-                        "Label multiply defined; previously defined at line %d\n\t%s%s",
-                        ptr->ss_line,"in .INCLUDEd file ",ptr->ss_fnd->fn_buff);
-            }
-            else
-            {
-                sprintf(emsg,
-                        "Label multiply defined; previously defined at line %d",
-                        ptr->ss_line);
-            }
-            bad_token(tkn_ptr,emsg);
-            if ((flag&DEFG_SYMBOL)) f1_eatit();
-            return 0;
+			if ( !ptr->flg_pass0 )
+			{
+				/* and it has been previously defined in pass 1 */
+				if ( include_level > 0 )
+				{
+					sprintf(emsg,       /* then it's nfg */
+							"Label multiply defined; previously defined at line %d\n\t%s%s",
+							ptr->ss_line,"in .INCLUDEd file ",ptr->ss_fnd->fn_buff);
+				}
+				else
+				{
+					sprintf(emsg,
+							"Label multiply defined; previously defined at line %d",
+							ptr->ss_line);
+				}
+				bad_token(tkn_ptr,emsg);
+				return 0;
+			}
+			if ( ptr->ss_fnd  != current_fnd || ptr->ss_line != current_fnd->fn_line )
+			{
+				sprintf(emsg,
+						"Label defined at line %s:%d in pass 0 and %s:%d in pass 1",
+						ptr->ss_fnd?ptr->ss_fnd->fn_name_only:"", ptr->ss_line,
+						current_fnd ? current_fnd->fn_name_only:"", current_fnd->fn_line);
+				bad_token(tkn_ptr,emsg);
+				return 0;
+			}
+			if (    ptr->flg_exprs
+				 || ptr->ss_value != current_pc
+				 || ptr->ss_seg != current_section
+				)
+			{
+				sprintf(emsg,
+						"Label defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1",
+						ptr->ss_seg ? ptr->ss_seg->seg_string:"", ptr->ss_value, ptr->flg_exprs,
+						current_section->seg_string, current_pc);
+				bad_token(tkn_ptr,emsg);
+				return 0;
+			}
+
         }
-        ptr->flg_label = 1;   /* else make it a label */
+        ptr->flg_label = 1;   /* make it a label */
     }
     else
     {         /* if defining a symbol... */
@@ -1225,6 +1276,7 @@ int f1_defg(int flag)
         ptr->flg_label = 0;   /* else signal that it's a symbol */
     }
     ptr->flg_defined = 1;    /* signal symbol or label is defined */
+	ptr->flg_pass0 = !pass;  /* and signal which pass it was defined in */
 #if 0				/* definition doesn't set reference bit */
     ptr->flg_ref = 1;        /* signal symbol is referenced */
 #endif
@@ -1252,7 +1304,10 @@ int f1_defg(int flag)
             no_white_space_allowed = 1;
         }
 #endif
-        if (exprs(1,&EXP0) < 1) return(-1); /* get a global expression */
+        if (exprs(1,&EXP0) < 1)
+		{
+			return(-1); /* get a global expression */
+		}
         i = EXP0.ptr;
         ptr->flg_register = EXP0.register_reference;
         ptr->flg_regmask = EXP0.register_mask;
@@ -1423,6 +1478,7 @@ SS_struct *do_symbol(int flag)
         sym_ptr = get_symbol_block(1);
         new_symbol = 1;
     }
+	
     switch (new_symbol)
     {
     case 1:       /* symbol is added */
@@ -1436,7 +1492,7 @@ SS_struct *do_symbol(int flag)
                 token_pool += cnt;      /* move the pointer */
                 token_pool_size -= cnt; /* and size */
             }
-            sym_ptr->ss_scope = current_scope;
+			sym_ptr->ss_scope = current_scope;
             if (token_type == TOKEN_local)
                 sym_ptr->flg_local = 1;
             sym_ptr->ss_line = current_fnd->fn_line;   /* and the line # of same */
@@ -1588,19 +1644,26 @@ void pass1( int file_cnt)
     if (file_cnt == 0)
     {
 #ifndef MAC_PP
-        current_section = get_seg_mem(&sym_ptr, ".ABS.");
-        current_section->flg_abs = 1;
-        current_section->flg_ovr = 1;
-        current_section->flg_based = 1;
-        current_section->seg_salign = macxx_abs_salign;
-        current_section->seg_dalign = macxx_abs_dalign;
-        sym_ptr = sym_lookup(current_section->seg_string, 1);
-        sym_ptr->flg_global = 1;
-        current_section = get_seg_mem(&sym_ptr, ".REL.");
-        current_section->seg_salign = macxx_rel_salign;
-        current_section->seg_dalign = macxx_rel_dalign;
-        sym_ptr = sym_lookup(current_section->seg_string, 1);
-        sym_ptr->flg_global = 1;
+		if ( !options[QUAL_2_PASS] )
+		{
+			current_section = get_seg_mem(&sym_ptr, ".ABS.");
+			current_section->flg_abs = 1;
+			current_section->flg_ovr = 1;
+			current_section->flg_based = 1;
+			current_section->seg_salign = macxx_abs_salign;
+			current_section->seg_dalign = macxx_abs_dalign;
+			sym_ptr = sym_lookup(current_section->seg_string, 1);
+			sym_ptr->flg_global = 1;
+			current_section = get_seg_mem(&sym_ptr, ".REL.");
+			current_section->seg_salign = macxx_rel_salign;
+			current_section->seg_dalign = macxx_rel_dalign;
+			sym_ptr = sym_lookup(current_section->seg_string, 1);
+			sym_ptr->flg_global = 1;
+		}
+		else
+		{
+			current_section = find_segment(".REL.",seg_list,seg_list_index);
+		}
 #endif
         opcinit();            /* seed the opcode table */
     }
@@ -2028,9 +2091,12 @@ void pass1( int file_cnt)
                 continue;
             }
 #ifndef MAC_PP
-            if (edmask&ED_WRD)
-            {       /* .word default enabled? */
-                op_word();          /* else pretend its a .word psuedo-op */
+            if ( (edmask&(ED_WRD|ED_BYT)) )
+            {       /* .word or .byte default enabled? */
+				if ( (edmask&ED_BYT) )
+					op_byte();          /* pretend its a .byte psuedo-op */
+				else
+					op_word();          /* pretend its a .word psuedo-op */
                 list_stats.pc_flag = 1;
                 f1_eol();           /* better be at eol */
             }

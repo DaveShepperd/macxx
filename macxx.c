@@ -31,6 +31,7 @@
 #include "version.h"
 #include "memmgt.h"
 #include "strsub.h"
+#include "listctrl.h"
 
 struct stat file_stat;
 unsigned long edmask;           /* enabl/disabl mask */
@@ -90,7 +91,9 @@ void err_msg( int severity, char *msg )
     static char *sev_s[]= {"WARN","SUCCESS","ERROR","INFO","FATAL"};
     char *lemsg, *lmp, lmg[20];
 
-    inlen = inp_str_size+strlen(msg)+22;
+ 	if ( !pass )	/* No errors during pass 0 */
+		return;
+	inlen = inp_str_size + strlen(msg) + 22;
     lmp = lemsg = MEM_alloc(inlen);
     ctrl = severity & MSG_CTRL;
     serr = severity & MSG_NOSTDERR;
@@ -300,6 +303,102 @@ int main(int argc, char *argv[])
     outx_init();
 #endif
     current_fnd = first_inp;     /* get input first file name */
+#if !defined(MAC_PP)
+	if ( options[QUAL_2_PASS] )
+	{
+		int ii;
+		
+		pass = 0;
+		for (file_cnt=0;;file_cnt++)
+		{
+			if (current_fnd->fn_file == 0)
+			{
+				if (current_fnd->fn_stdin == 0)
+				{
+					if ((current_fnd->fn_file = fopen(current_fnd->fn_buff,"r")) == 0)
+					{
+						sprintf(inp_str,"Error opening %s for input:\n",current_fnd->fn_buff);
+						perror(inp_str);
+						EXIT_FALSE;
+					}
+				}
+				else
+				{
+					fputs("Cannot rewind stdin. So two pass assembler option not available\n",stderr);
+					EXIT_FALSE;
+				}
+				if (token_pool_size < 26)
+				{
+					get_token_pool(26, 0);
+				}
+				stat(current_fnd->fn_buff,&file_stat);
+				strcpy(token_pool,ctime(&file_stat.st_mtime));
+				current_fnd->fn_version = token_pool;
+				*(token_pool+24) = 0;
+				token_pool_size -= 25;
+				token_pool += 25;
+			}
+#ifdef TIME_LIMIT
+			if (timed_out && (file_cnt&3 != login_time[0]))
+			{
+				EXIT_TRUE;
+			}
+#endif
+			if (squeak)
+				printf ("Processing file %s\n",current_fnd->fn_buff);
+			pass0(file_cnt); /* else do .MAC file input */
+			if (fclose(current_fnd->fn_file) != 0)
+			{
+				sprintf(emsg,"Unable to close file: %s",
+						current_fnd->fn_buff);
+				pass = 1;	/* fake it so error messages show up */
+				err_msg(MSG_ERROR,emsg);
+				perror("\n\t");
+				show_bad_token((char *)0,emsg,MSG_ERROR|MSG_NOSTDERR);
+				pass = 0;	/* back to pass 0 */
+			}
+			current_fnd->fn_file = NULL;
+			current_fnd->fn_line = 0;
+			if (include_level > 0)
+				--include_level;
+			if (!(current_fnd=current_fnd->fn_next))
+				break;
+			macro_level = current_fnd->macro_level;   /* restore the macro level */
+			current_fnd->macro_level = 0;             /* and make sure we're emtpy */
+		}
+		macro_level = 0;
+		current_fnd = first_inp;	/* get input first file name */
+		current_lsb=1;			    /* current local symbol block number */
+		next_lsb=2;					/* next available local symbol block number */
+		autogen_lsb=65000;			/* autolabel for macro processing */
+		list_stats.expected_pc = 0;
+		list_stats.expected_seg = 0;
+		list_stats.f1_flag = 0;
+		list_stats.f2_flag = 0;
+		list_stats.getting_stuff = 0;
+		list_stats.has_stuff = 0;
+		list_stats.include_level = 0;
+		list_stats.line_no = 0;
+		list_stats.list_ptr = 0;
+		list_stats.pc = 0;
+		list_stats.pc_flag = 0;
+		list_stats.pf_value = 0;
+		get_text_assems = 0;
+		edmask = macxx_edm_default;
+		show_line = 1;
+		list_level = 0;
+		list_radix = 16;
+		for (ii=0; ii < seg_list_index; ++ii)
+		{
+			SEG_struct *segPtr;
+			
+			segPtr = seg_list[ii];
+			segPtr->rel_offset = 0;
+			segPtr->seg_pc = 0;
+			segPtr->seg_base = 0;
+		}
+	}
+#endif
     if (output_files[OUT_FN_LIS].fn_present)
     {
         if (!(lis_fp = fopen(output_files[OUT_FN_LIS].fn_buff,"w")))
@@ -391,8 +490,12 @@ int main(int argc, char *argv[])
     }
 #endif
 #if !defined(MAC_PP)
-    if (options[QUAL_DEBUG]) dbg_init(); /* init the debug structs */
+    if (options[QUAL_DEBUG])
+	{
+		dbg_init(); /* init the debug structs */
+	}
 #endif
+	pass = 1;
     for (file_cnt=0;;file_cnt++)
     {
         if (current_fnd->fn_file == 0)
@@ -436,7 +539,10 @@ int main(int argc, char *argv[])
             EXIT_TRUE;
         }
 #endif
-        if (squeak) printf ("Processing file %s\n",current_fnd->fn_buff);
+        if (squeak)
+		{
+			printf ("Processing file %s\n",current_fnd->fn_buff);
+		}
 #if !defined(MAC_PP)
         if (obj_fp != 0) write_to_tmp(TMP_FILE,1,&current_fnd,sizeof(FN_struct *));
 #endif

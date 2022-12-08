@@ -120,7 +120,8 @@ SS_struct *sym_lookup( char *strng, int err_flag )
 
     if ((st = hash[i]) == SSNULL)
     {
-        if (!err_flag) return(SSNULL); /* no symbol */
+        if (!err_flag)
+			return(SSNULL); /* no symbol */
         st = hash[i] = symbol_pool++; /* pick up pointer to new symbol block */
         --symbol_pool_size;   /* take from total */
         st->ss_string = strng;    /* set the string constant */

@@ -19,6 +19,7 @@
 #include "listctrl.h"
 #include "memmgt.h"
 #include <stdlib.h>         /* Get proto for abort() */
+#include "header.h"
 
 #if !defined(M_UNIX)
     #define MISER (options[QUAL_MISER]) 
@@ -477,7 +478,8 @@ void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz)
     int itz;
     int class = 0;
 
-    if (!output_files[OUT_FN_OBJ].fn_present) return; /* nuthin' to do if no output */
+    if (!pass || !output_files[OUT_FN_OBJ].fn_present)
+        return; /* nuthin' to do if no output */
     if (tmp_pool_size == 0)
     {
         tmp_pool_size = max_token*8;      /* get some memory */
@@ -758,7 +760,9 @@ void trunc_err( long mask, long tv)
     int tsiz,sev;
     long toofar=0;
 
-    if (options[QUAL_OCTAL])
+    if ( !pass )
+        return;
+    if ( options[QUAL_OCTAL] )
     {
         if (mask > 255)
         {
@@ -814,7 +818,10 @@ void trunc_err( long mask, long tv)
         s = fm;
     }
     tsiz = strlen(s)+strlen(current_section->seg_string)+40;
-    if (pass > 1) tsiz += strlen(current_fnd->fn_name_only);
+    if (pass > 1)
+    {
+        tsiz += strlen(current_fnd->fn_name_only);
+    }
     terr = MEM_alloc(tsiz);
     if (mask == 254 || mask == 65534)
     {
@@ -834,7 +841,7 @@ void trunc_err( long mask, long tv)
         {
             sprintf(terr,s,current_offset,current_section->seg_string,tv,tv&mask,current_fnd->fn_line,current_fnd->fn_name_only);
         }
-        else
+        else 
         {
             sprintf(terr,s,current_offset,current_section->seg_string,tv,tv&mask);
         }
@@ -960,7 +967,8 @@ int p1o_byte( EXP_stk *eps )
         write_to_tmp(TMP_EXPR,0,eps,0);
         tv = eps->psuedo_value;      
     }                /* --if 1 absolute term */
-    if (list_bin) n_to_list(macxx_nibbles_byte,tv,pflg);
+    if (list_bin)
+        n_to_list(macxx_nibbles_byte,tv,pflg);
     if (eps->tag_len <= 1)
     {
         current_offset += macxx_mau_byte; /* update current location */
@@ -1187,8 +1195,11 @@ int p1o_var( EXP_stk *eps )
     uBits = bits;
     if (bytes < 1 || bytes > 4)
     {
-        sprintf(emsg,"Internal error - storing illegal bitfield of size %d",eps->tag_len);
-        bad_token((char *)0,emsg);
+        if ( pass )
+        {
+            sprintf(emsg, "Internal error - storing illegal bitfield of size %d", eps->tag_len);
+            bad_token((char *)0,emsg);
+        }
         if (bytes < 1) bytes = 1;
         else if (bytes > 4) bytes = 4;
     }
@@ -1207,12 +1218,18 @@ int p1o_var( EXP_stk *eps )
         out_remaining -= bytes;
         if (tag == 'X')
         {
-            for (j=eps->tag_len-macxx_mau;j>0;j -= macxx_mau) *out_indx++ = (unsigned char)(tv>>j);
+            for (j=eps->tag_len-macxx_mau;j>0;j -= macxx_mau)
+            {
+                *out_indx++ = (unsigned char)(tv>>j);
+            }
             *out_indx++ = (unsigned char)tv;
         }
         else
         {
-            for (j=0;j < (int)eps->tag_len;j += macxx_mau) *out_indx++ = (unsigned char)(tv>>j);
+            for (j=0;j < (int)eps->tag_len;j += macxx_mau)
+            {
+                *out_indx++ = (unsigned char)(tv>>j);
+            }
         }
         pflg = 0;
     }
@@ -1229,7 +1246,7 @@ int p1o_var( EXP_stk *eps )
             pflg = 'x';
         }
     }                /* --if 1 absolute term */
-    if (list_bin)
+    if (pass && list_bin)
     {
         if (list_cod && tag == 'x')
         {

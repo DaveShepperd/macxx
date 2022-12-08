@@ -115,6 +115,27 @@ extern int new_identifier;
 extern int strings_substituted;
 extern unsigned long record_count;
 
+/* pass0 and pass1 specific variables and functions */
+extern int no_white_space_allowed;
+extern int expr_message_tag;
+extern int f1_defg(int gbl_flg);
+#if defined(MAC68K) || defined(MAC682K)
+#define WST_LABEL    (0) /* no white space before labels */
+#define WST_OPC      (1) /* one white space before opcode */
+#define WST_OPRAND   (2) /* two white spaces before operand(s) */
+#define WST_COMMENTS (3) /* three white spaces to comments */
+extern int white_space_section;
+extern int dotwcontext;
+#endif /* M68k */
+extern unsigned long autogen_lsb; /* autolabel for macro processing */
+#define DEFG_SYMBOL 1
+#define DEFG_GLOBAL 2
+#define DEFG_LOCAL  4
+#define DEFG_LABEL  8
+#define DEFG_STATIC 16
+extern int get_text_assems;
+/*****************************/
+
 extern char expr_open;
 extern char expr_close;
 extern char expr_escape;
@@ -246,6 +267,7 @@ extern int f1_org( void );
 extern void lap_timer(char *str);
 extern int display_help(void);
 extern int getcommand(void);
+extern void pass0( int file_cnt);
 extern void pass1( int file_cnt);
 extern int dump_subsects(void);
 extern int sort_symbols(void);

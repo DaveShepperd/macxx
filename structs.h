@@ -114,6 +114,7 @@ typedef struct ss_struct {
    unsigned int flg_regmask:1;	/* symbol is a register mask type */
    unsigned int flg_more:1;	/* there're more symbols in this group */
    unsigned int flg_static:1; /* A static (local) symbol */
+   unsigned int flg_pass0:1;  /* Symbol defined during pass 0 */
    unsigned char ss_scope;	/* scope level */
    unsigned char ss_type;	/* symbol type (for source code debugging) */
 } SS_struct;
