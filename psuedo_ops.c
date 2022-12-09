@@ -1091,7 +1091,7 @@ static unsigned long op_ifcondit(char *condition)
             char *arg1,*arg2;
             int l1,l2;
 			/* eat leading whitespace on arg1 */
-			while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC | CT_COM | CT_WS)) )
+			while ( (cttbl[(int)*inp_ptr] & CT_WS) )
 				++inp_ptr;
 			arg1 = inp_ptr;
 			/* skip to end of non-whitespace string */
@@ -1103,7 +1103,7 @@ static unsigned long op_ifcondit(char *condition)
 				/* eat comma */
                 ++inp_ptr;
 				/* eat leading whitespace on arg2 */
-				while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC | CT_WS)) )
+				while ( (cttbl[(int)*inp_ptr] & CT_WS) )
 					++inp_ptr;
                 arg2 = inp_ptr;
 				/* skip to end of non-whitespace string */
