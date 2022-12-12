@@ -319,14 +319,14 @@ true.
 	&	logical and	A&B
 	|	logical or	A|B
 
-The following are available ONLY in MAC65:
+The following are available ONLY in MAC65, MAC68 and MAC69:
 
-	!	logical or	A!B	(same as |)
-	?	exclusive or	A?B
-	{	shift left	A{B	A is shifted B bits left
-	}	shift right	A}B	A is shifted B bits right
+	!	logical or	 A!B	(same as |)
+	?	exclusive or A?B
+	{	shift left	 A{B	A is shifted B bits left
+	}	shift right	 A}B	A is shifted B bits right
 
-The following are NOT available in MAC65:
+The following are NOT available in MAC65, MAC68 and MAC69:
 
 	^	exclusive or	A^B
 	<<	shift left	A<<B
@@ -355,10 +355,11 @@ following the circumflex is the operator.
 					;and bits 16-23 with bits 24-31
 
 Any term of an expression may be enclosed in a pair of expression
-brackets ('<' and '>' in MAC65 or '(' and ')' in all other assemblers)
-and itself be a collection of one or more terms. For example: 
+brackets ('<' and '>' in MAC65, MAC68 and MAC69 or '(' and ')'
+in all other assemblers) and itself be a collection of one or
+more terms. For example: 
 
-	A+<<B*C/D+6>*100>/4?^V<FRED*10>+^H<0FFF+ABC+1234> ;MAC65
+	A+<<B*C/D+6>*100>/4?^V<FRED*10>+^H<0FFF+ABC+1234> ;MAC65, MAC68 or MAC69
 	A+((B*C/D+6)*100)/4^^V(FRED*10)+^H(0FFF+ABC+1234) ;others
 
 would evaluate in the following order (left to right, all operators having
@@ -606,7 +607,10 @@ Note that the text appearing in the list file will be that with all
 tokens substituted. If the resulting assembly of the line produces
 errors, then the original source line will be output to stderr
 (SYS$ERROR) along with the error message but without the line with the
-circumflex (^). 
+circumflex (^).
+ 
+NOTE: As of version 11.06, using a .DEFINE in an -assem command line
+option doesn't work. Avoid using it until it can be fixed. 
 
 2.12)	.DEFSTACK
 
@@ -621,8 +625,7 @@ where
 	stack_name is an arbitrary name of the stack which does not have 
 		to be unique from a symbol, macro or opcode name. The
 		stack_name is used as an argument to subsequent .PUSH,
-		.POP, .SETPOINTER, .GETPOINTER, .GETVALUE and/or
-		.SETVALUE directives.
+		.POP, .SETPOINTER and/or .GETPOINTER directives.
 
 	size is an expression that resolves to the desired size of the
 		array in elements. If this argument is left blank or
@@ -630,23 +633,19 @@ where
 		returned to the system.
 
 	type is a keyword of BYTE, WORD, LONG or RELATIVE which
-		represents 8 bit, 16 bit, 32 bit and 64 bit element
-		sizes respectively. The default is LONG.
+		represents 1, 2, 4 and ~32 byte element sizes
+		respectively. The default is RELATIVE.
 
 Note that the amount of memory used is the product of the stack size and
 the element type size. Care should be taken as not to create an array so
 large that there is no memory left for the assembler proper. On MS-DOS
 systems, no single array can be larger than 65,536 bytes (32,768 words;
-16,384 longs; 8,192 relative values). 
+16,384 longs; ~2000 relative values). 
 
 There is a stack pointer associated with each array. The pointer will be
 pre-decremented when an item is .PUSH'ed and post-incremented when an item
 is .POP'ped. The pointer always moves by one regardless of the size of 
 the element.
-
-The .GETVALUE and .SETVALUE directives allow for random access to the
-stack. Items are accessed from 0 to size_of_stack-1 in increments of
-one regardless of the size of the element.
 
 The .GETPOINTER and .PUTPOINTER directives will respectively get or set
 the stack pointer on a named stack.

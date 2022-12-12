@@ -40,11 +40,6 @@ DIRDEF(.MPURG,  op_mpurge,  0)
 DIRDEF(.NOCRO,  op_nocross, 0)
 DIRDEF(.PRINT,  op_print,   0)
 DIRDEF(.SYMBO,  op_symbol,  0)
-DIRDEF(.DEFST,  op_defstack,   0)
-DIRDEF(.GETPO,  op_getpointer,   0)
-DIRDEF(.POP,    op_pop,     0)
-DIRDEF(.PUSH,   op_push,    0)
-DIRDEF(.PUTPO,  op_putpointer,  0)
 
 #ifdef ATARIST
 extern void printf();

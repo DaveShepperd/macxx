@@ -33,14 +33,14 @@
 
 /* external references */
 
-/* Static Globals */
+/* Globals */
 
 long sym_pool_used;
 SS_struct *hash[HASH_TABLE_SIZE];  /* hash table */
 SS_struct *symbol_pool; /* pointer to next free symbol space */
 int symbol_pool_size=0;     /* number of symbol spaces left */
 SS_struct *first_symbol;    /* pointer to first symbol of 'duplicate' list */
-int new_symbol;         /* flag indicating that an insert happened */
+int new_symbol;         /* flags indicating that an insert happened */
 /* value (can be added)	*/
 short current_procblk;      /* current procedure block number */
 short current_scopblk;      /* current scope level within block */
@@ -54,7 +54,7 @@ SS_struct *get_symbol_block(int flag)
  * At entry:
  *      flag:
  *		0 = don't take block from pool.
- *		1 = get a block and take it from the pool.
+ *	    non-zero = get a block and take it from the pool.
  *
  * At exit:
  *	returns pointer to next free symbol block (0'd)
@@ -79,7 +79,7 @@ SS_struct *get_symbol_block(int flag)
  *
  * Symbol table lookup and insert
  */
-SS_struct *sym_lookup( char *strng, int err_flag )
+SS_struct *sym_lookup( char *strng, SymInsertFlag_t err_flag )
 /*
  * At entry:
  *	strng - pointer to a null terminated symbol name string
@@ -95,7 +95,8 @@ SS_struct *sym_lookup( char *strng, int err_flag )
  * 	symbol block if symbol not found or old symbol block if symbol
  * 	already in symbol table. If err_flag == 0, then returns
  * 	NULL if symbol not found in the symbol table, else returns with
- * 	pointer to old symbol block.
+ *  pointer to old symbol block. Also sets the global value new_symbol
+ *  with a bit mask of SYM_xxx bits indicating what it did.
  *********************************************************************/
 {
     int i,condit=1;

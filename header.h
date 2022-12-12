@@ -134,6 +134,8 @@ extern unsigned long autogen_lsb; /* autolabel for macro processing */
 #define DEFG_LABEL  8
 #define DEFG_STATIC 16
 extern int get_text_assems;
+extern void purge_data_stacks(const char *name);
+extern int squawk_syms;
 /*****************************/
 
 extern char expr_open;
@@ -148,7 +150,8 @@ extern char macro_arg_genval;
 extern int macro_nesting;
 extern int macro_level;
 
-extern char emsg[];		/* error message buffer */
+#define ERRMSG_SIZE (512)
+extern char emsg[ERRMSG_SIZE];		/* error message buffer */
 extern int show_line;
 extern int lis_line;
 extern int line_errors_index;
@@ -235,8 +238,16 @@ extern SEG_struct *get_seg_mem(SS_struct **ss, char *str);
 extern SEG_struct *get_subseg_mem(void);
 extern SEG_struct *find_segment(char *name,SEG_struct **segl,int segi);
 extern void outseg_def(SEG_struct *seg_ptr);
-extern SS_struct *sym_lookup( char *strng, int err_flag );
-extern SS_struct *do_symbol(int flag);
+typedef enum
+{
+	SYM_DO_NOTHING,				/* if not to insert into symbol table.*/
+	SYM_INSERT_IF_NOT_FOUND,	/* if to insert into symbol table if symbol not found */
+	SYM_INSERT_IF_FOUND,		/* if to insert into symbol table even if symbol found */
+	SYM_INSERT_HIGHER_SCOPE,	/* if to insert into symbol table at higher scope */
+	SYM_INSERT_LOCAL			/* if to insert into symbol table as a static local */
+} SymInsertFlag_t;
+extern SS_struct *sym_lookup( char *strng, SymInsertFlag_t err_flag );
+extern SS_struct *do_symbol(SymInsertFlag_t flag);
 extern SS_struct *get_symbol_block(int flag);
 extern void outsym_def(SS_struct *sym_ptr,int mode);
 extern void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz);

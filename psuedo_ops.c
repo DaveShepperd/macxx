@@ -760,7 +760,7 @@ static int op_byte_with_mask(int inpMask)
 
 int op_byte(void)
 {
-	return op_byte_with_mask(0);
+	return op_byte_with_mask((edmask&ED_TRUNC)?0:1);
 }
 
 static int op_word_with_mask(int inpMask)
@@ -849,7 +849,7 @@ static int op_word_with_mask(int inpMask)
 
 int op_word(void)
 {
-	return op_word_with_mask(0);
+	return op_word_with_mask((edmask&ED_TRUNC)?0:1);
 }
 
 int op_long(void)
@@ -938,7 +938,7 @@ static int if_dfndf_exprs(DFNDF_sense sense,int flag)
         {
 			SS_struct *sPtr;
             *(token_pool+max_symbol_length) = 0;
-			sPtr = sym_lookup(token_pool,0);
+			sPtr = sym_lookup(token_pool,SYM_DO_NOTHING);
 			if ( sense == DFNDF_NDF || sense == DFNDF_DF )
 			{
 				if ( sPtr && sPtr->flg_defined )
@@ -1417,6 +1417,7 @@ static struct
     {"PC_RELATIVE",ED_PCREL},
     {"DOT_LOCAL", ED_DOTLCL},
     {"CR", ED_CR},
+	{"TRUNC_CHECK",ED_TRUNC},
     {0,0}
 };
 
@@ -1620,8 +1621,8 @@ int op_blk8m(void)
 
 int op_mau(void)
 {
-    if (macxx_mau == 8) return op_byte_with_mask(0);
-    if (macxx_mau == 16) return op_word_with_mask(0);
+    if (macxx_mau == 8) return op_byte_with_mask((edmask&ED_TRUNC)?0:1);
+    if (macxx_mau == 16) return op_word_with_mask((edmask&ED_TRUNC)?0:1);
     return op_long();
 }
 
@@ -1634,7 +1635,7 @@ int op_maum(void)
 
 int op_2mau(void)
 {
-    if (macxx_mau == 8) return op_word_with_mask(0);
+    if (macxx_mau == 8) return op_word_with_mask((edmask&ED_TRUNC)?0:1);
     if (macxx_mau == 16) return op_long();
     return bad_mau();
 }
@@ -2147,7 +2148,7 @@ static SEG_struct *get_segname(char *alt_name, int *new )
     new_seg = find_segment(token_pool,seg_list,seg_list_index);
     if (new_seg == 0)
     {
-        sym_ptr = sym_lookup(token_pool,0);
+        sym_ptr = sym_lookup(token_pool,SYM_DO_NOTHING);
         if (sym_ptr != 0 && sym_ptr->flg_defined)
         {
             show_bad_token(tkn_ptr, "Name already in use as a symbol/label name",
@@ -2761,7 +2762,7 @@ void op_purgedefines(struct str_sub *sub)
     return;
 }
 
-#if 1 || SHOW_TEXT
+#if SHOW_TEXT
 static void showText(const char *title, char *msg)
 {
 	char tBuf[128];
@@ -2781,11 +2782,11 @@ int op_define(void)
     int tt,siz;
     char *s,c;
     struct str_sub *sub;
-    if (string_macros != 0)
+    if (string_macros != 0 && presub_str)
     {
         strcpy(inp_str,presub_str);
         inp_ptr = inp_str;
-		showText("op_define: input string: ", inp_str);
+/*		showText("op_define: input string: ", inp_str); */
         while (1)
         {
             tt = get_token();

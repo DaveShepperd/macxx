@@ -262,7 +262,7 @@ int ust_init( void ) {        /* User defined symbol table initialization */
                     strcpy(regname,"pc");
                 }
             }
-            if ((ptr = sym_lookup(regname,1)) == 0)
+            if ((ptr = sym_lookup(regname,SYM_INSERT_IF_NOT_FOUND)) == 0)
             {
                 sprintf(emsg,"Unable to insert symbol %s into symbol table",
                         regname);
@@ -452,7 +452,7 @@ get_oper(AM_details *amd, int amode) {
         if (  (amode&AMOK_IIREG) != 0 &&     /* if we can have indexed register direct */
               token_type == TOKEN_strng)
         {  /* and the next token is a string */
-            ss = sym_lookup(token_pool, 0);   /* see if it is a symbol */
+            ss = sym_lookup(token_pool, SYM_DO_NOTHING);   /* see if it is a symbol */
             if (ss && ss->flg_register && /* if it is a register symbol and... */
                 (ss->ss_value == 14 || ss->ss_value == 15) && /* it is R14 or R15 */
                 *inp_ptr == '+')

@@ -72,7 +72,7 @@ DIRDEF(".DCREF",  op_dcref,	0)
 DIRDEF(".DEFINE", op_define,	0)
 #ifndef MAC_PP
 DIRDEF(".DEFSTACK", op_defstack,	0)
-#if defined(MAC_65)
+#if defined(MAC_65) || defined(MAC_69)
 DIRDEF(".DPAGE",    op_dpage,	0)
 #endif
 DIRDEF(".DSABL",    op_dsabl,	0)

@@ -1003,7 +1003,7 @@ int p1o_word( EXP_stk *eps )
     if ( j <= 0) return 0;
     tag = eps->tag;
     exp_ptr = eps->stack;
-    swapem = tag == 'W' || tag == 'I' || tag == 'U';
+    swapem = tag == 'W' || tag == 'I' || tag == 'U' || tag == 'Y';
     if ( j == 1 && eps->stack->expr_code == EXPR_VALUE && eps->tag_len <= 1)
     {
         tv = exp_ptr->expr_value;

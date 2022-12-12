@@ -185,12 +185,12 @@ static struct rinit reginit[] = {
 int ust_init( void )
 {
     SS_struct *ptr;
-    extern SS_struct *sym_lookup();
+/*    extern SS_struct *sym_lookup(); */
     struct rinit *ri = reginit;
 
     while (ri->name != 0)
     {
-        if ((ptr = sym_lookup(ri->name,1)) == 0)
+        if ((ptr = sym_lookup(ri->name,SYM_INSERT_IF_NOT_FOUND)) == 0)
         {
             sprintf(emsg,"Unable to insert symbol %s into symbol table",
                     ri->name);

@@ -39,7 +39,7 @@ void opcinit( void )          /* preloads the opcode table */
     SEG_struct *segp;
     strcpy(token_pool, ".LITPOOL.");
     token_value = sizeof(".LITPOOL.")-1;
-    literal_pool_sym = sym_ptr = sym_lookup(token_pool, 1);
+    literal_pool_sym = sym_ptr = sym_lookup(token_pool, SYM_INSERT_IF_NOT_FOUND);
     sym_ptr->ss_fnd = current_fnd;
     sym_ptr->ss_line = current_fnd->fn_line;
     sym_ptr->flg_global = 1;

@@ -97,6 +97,7 @@
   <b>macpp</b>    - A macro pre-processor; no CPU; it works similar to the C language's CPP.
   <b>mac65</b>    - For the MOS Technology 6502, 65C02 and 65816 CPU's
   <b>mac68</b>    - For the Motorol 6800 CPU
+  <b>mac69</b>    - For the Motorol 6809 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
   <b>mac682k</b>  - For the Motorola 68020 CPU
   <b>mac11</b>    - For the PDP11 CPU
@@ -130,6 +131,7 @@
     <tr><td><a href="#dir_byte">.BYTE, .WORD, .LONG</a></td><td>Put constants in memory</td>
     <tr><td><a href="#dir_cpu">.CPU</a></td><td>65816 specific instruction</td>
     <tr><td><a href="#dir_define">.DEFINE, .UNDEFINE</a></td><td>Define/Undefine some replacement text</td>
+    <tr><td><a href="#dir_defstack">.DEFSTACK</a></td><td>Define a user stack</td>
     <tr><td><a href="#dir_dpage">.DPAGE</a></td><td>65816 specific instruction</td>
     <tr><td><a href="#dir_enabl">.ENABL, .DSABL</a></td><td>Enable/Disable assembler functions</td>
     <tr><td><a href="#dir_end">.END</a></td><td>End of assembly</td>
@@ -140,6 +142,7 @@
     <tr><td><a href="#dir_escape">.ESCAPE</a></td><td>Set various escape characters</td>
     <tr><td><a href="#dir_even">.EVEN</a></td><td>Align location counter</td>
     <tr><td><a href="#dir_float">.FLOAT</a></td><td>Tom&Jerry specific instruction</td>
+    <tr><td><a href="#dir_getpointer">.GETPOINTER</a></td><td>Get a user's stack pointer</td>
     <tr><td><a href="#dir_globl">.GLOBx</a></td><td>Assign symbol(s) as being global in scope</td>
     <tr><td><a href="#dir_if">.IF, .IFx, .IIF</a></td><td>Conditional assembly</td>
     <tr><td><a href="#dir_include">.INCLUDE</a></td><td>Include another file during assembly starting with this line</td>
@@ -157,13 +160,16 @@
     <tr><td><a href="#dir_even">.ODD</a></td><td>Align location counter</td>
     <tr><td><a href="#dir_outfile">.OUTFILE</a></td><td>Change output file (MACPP only)</td>
     <tr><td><a href="#dir_page">.PAGE</a></td><td>Put form feed in listing</td>
+    <tr><td><a href="#dir_pop">.POP</a></td><td>Pop a value from a user stack</td>
     <tr><td><a href="#dir_psect">.PSECT</a></td><td>Set program section</td>
+    <tr><td><a href="#dir_push">.PUSH</a></td><td>Push an expression onto a user stack</td>
     <tr><td><a href="#dir_radix">.RADIX</a></td><td>Set number interpreter radix</td>
     <tr><td><a href="#dir_restore">.RESTORE</a></td><td>Restore location counter from a previous .SAVE</td>
     <tr><td><a href="#dir_rept">.REPT</a></td><td>Repeat block</td>
     <tr><td><a href="#dir_rexit">.REXIT</a></td><td>Repeat block exit</td>
     <tr><td><a href="#dir_save">.SAVE</a></td><td>Save the current location counter</td>
     <tr><td><a href="#dir_sbttl">.SBTTL</a></td><td>Set a subtitle</td>
+    <tr><td><a href="#dir_setpointer">.SETPOINTER</a></td><td>Set the user stack's pointer</td>
     <tr><td><a href="#dir_sbttl">.SUBTITLE</a></td><td>Set a subtitle</td>
     <tr><td><a href="#dir_stabx">.STABx</a></td><td>Pass stab debug directives through to object file</td>
     <tr><td><a href="#dir_ascix">.STRING</a></td><td>Put constants in memory</td>
@@ -866,6 +872,51 @@
   (SYS$ERROR) along with the error message but without the line with the
   circumflex (^).
     </p>
+  <h3 id="dir_defstack">.DEFSTACK</h3>
+    <pre>
+    .DEFSTACK <i>stack_name</i> [,<i>size</i> [,<i>type</i>]]
+    </pre>
+<p>
+Defines an array that may be used at assembly time as a stack or as
+temporary storage. This is most useful in complex macros that need to
+be able to save and have access to large amounts of data. Where:
+  </p>
+  <table style="width: 50%">
+    <tr><th>Parameter</th><th>What parameter does</th></tr>
+    <tr><td><i>stack_name</i></td><td>Arbitrary name of stack. This parameter is required.</td></tr>
+    <tr><td><i>size</i></td><td>Optional parameter. Expression resolving to absolute value indicating number of elements to allocate.</td></tr>
+    <tr><td><i>type</i></td><td>Optional parameter. Can be one of BYTE, WORD, LONG or RELATIVE</td></tr>
+  </table>
+    <p>
+    The <i>stack_name</i> is an arbitrary name of the stack which does not have 
+		to be unique from a symbol, macro or opcode name. The
+		<i>stack_name</i> is used as an argument to subsequent <b>.PUSH</b>,
+		<b>.POP</b>, <b>.SETPOINTER</b> or <b>.GETPOINTER</b> directives. If the <i>size</i> parameter is
+    blank or resolves to 0, the stack is deleted and memory returned to the O/S.
+	  The <i>type</i> is a keyword of BYTE, WORD, LONG or RELATIVE which
+		represents 1, 2, 4 and ~32 byte element sizes respectively.
+    If the <i>type</i> parameter is blank the default stack type is set to RELATIVE.
+</p>
+    <p>
+Note that the amount of memory used is the product of the stack size and
+the element type size. Care should be taken as not to create an array so
+large that there is no memory left for the assembler proper. On MS-DOS
+systems, no single array can be larger than 65,536 bytes (32,768 words;
+16,384 longs; ~2000 relative values). 
+<p>
+    <p>
+There is a stack pointer associated with each array. The pointer will be
+pre-decremented when an item is .PUSH'ed and post-incremented when an item
+is .POP'ped. The pointer always moves by one regardless of the size of 
+the element. The <b>.GETPOINTER</b> and <b>.PUTPOINTER</b> directives will respectively get or set
+the stack pointer on a named stack. Examples:
+</p>
+    <pre>
+    FRED = 100
+    .DEFSTACK  temp,FRED+2		;make a temp array of longs
+    .DEFSTACK  words,16,WORD	;array of words
+    .DEFSTACK  temp			;purge temp array
+    </pre>
   <h3 id="dir_enabl">.DSABL and .ENABL</h3>
   <pre>
   .DSABL arg[,...]
@@ -1606,6 +1657,35 @@
   not printed. A .PAGE in a macro definition is ignored until the macro 
   is called. The directive accepts no arguments.
     </p>
+
+  <h3 id="dir_pop">.POP</h3>
+  <pre>
+  .POP <i>stack_name</i>,<i>symbol1</i>[,<i>symbol2</i>[,...]]
+  </pre>
+    <p>
+    Pops one or more items from the specified user stack and assigns the value(s) to
+    each successive listed symbol names. Note the assignment is identical to that
+    of the simple syntax <b><i>symbol_name=expression</i></b> where <b><i>symbol_name</i></b> may or may not
+    be an already defined symbol. If the <b><i>symbol_name</i></b> has not already been defined
+    the .POP will create a new symbol. It may be important to note just the value of the
+    symbol is changed. None of the existing symbol flags are altered. That is, for
+    example, if the <b><i>symbol_name</i></b> has been declared global, it will remain global just
+    as it would during any subsequent <b><i>symbol_name=expression</i></b> statement. Also note, if
+    the stack is of type RELATIVE, the assigned value may be either an absolute, a simple
+    relative (section+offset) or even a complex expression including internal and external
+    relocation information. Stack types of BYTE, WORD or LONG only contain absolute integers.
+    </p>
+    <p>It is not legal to pop to a <b><i>symbol_name</i></b> that has previously been defined as a label or, in the case of
+    running in two pass mode, a forward reference. The assembler will emit an error in
+    the illegal cases.
+    </p>
+    <p>There is the special case of POP'ing a program counter directly. This is indicted
+    by having the <b><i>symbol_name</i></b> be the single period, <b>.</b>. If the stack type is
+    RELATIVE the current section might be changed too although the assembler will emit a warning
+    if the section is changed as a result. In all other cases the popped value simply
+    sets the PC's section offset. Use care with this function if changing sections.
+    </p>
+    
   <h3 id="dir_psect">.PSECT</h3>
   <pre>  
     .PSECT name[,argument...]

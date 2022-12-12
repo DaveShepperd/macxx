@@ -19,10 +19,12 @@
 #if !defined(_MEMMGT_H_)
 #define _MEMMGT_H_
 
-extern void *mem_alloc(int size, char *file, int line);	/* external memory allocation routine */
+extern void *mem_alloc(int size, char *file, int line);  	/* external memory allocation routine */
+extern void *mem_calloc(int size, char *file, int line);	/* external memory allocation routine */
 extern void *mem_realloc(void *old, int size, char *file, int line);
 extern int   mem_free(void *old, char *file, int line);
 #define MEM_alloc(size) mem_alloc(size, __FILE__, __LINE__)
+#define MEM_calloc(size) mem_calloc(size, __FILE__, __LINE__)
 #define MEM_free(area) mem_free(area, __FILE__, __LINE__)
 #define MEM_realloc(area, size) mem_realloc(area, size, __FILE__, __LINE__)
 

@@ -123,7 +123,8 @@ enum misc {
    ED_PCREL	=0x0400,	/* enable default pc relative addressing (68k) */
    ED_DOTLCL=0x0800,	/* enable symbols starting with '.' to be local */
    ED_BYT  	=0x1000,	/* enable undefined opcodes to .byte */
-   ED_CR  	=0x2000		/* enable carriage returns in source */
+   ED_CR  	=0x2000,	/* enable carriage returns in source */
+   ED_TRUNC	=0x4000,	/* enable truncation check in .byte and .word */
 };
 
 #endif /* _TOKEN_DEFS_H_ */

@@ -18,6 +18,7 @@
 #include "token.h"
 #include "listctrl.h"
 #include "memmgt.h"
+#include "exproper.h"
 
 int show_line = 1;
 int list_level;
@@ -137,17 +138,24 @@ static int op_list_common( int onoff)
         }
         else
         {
-            for (i=0;list_stuff[i].string != 0;++i)
+			char *savChr;
+			savChr = strchr(token_pool,'(');
+			if ( savChr )
+				*savChr = 0;
+			for ( i = 0; list_stuff[i].string != 0; ++i )
             {
                 tt = strcmp(token_pool,list_stuff[i].string); 
                 if (tt <= 0) break;
             }
-            if (tt != 0)
+			if ( savChr )
+				*savChr = '(';
+			if ( tt != 0 )
             {
                 bad_token(tkn_ptr,"Unknown listing directive");
             }
             else
             {
+				
                 if ( !list_stuff[i].flag )      /* Special OCT keyword */
                 {
                     if ( reset_list_params )
@@ -163,6 +171,21 @@ static int op_list_common( int onoff)
                     {
                         saved_lm_bits.list_mask |= list_stuff[i].flag;
                     }
+					if ( list_stuff[i].flag == LIST_SRC )
+					{
+						if ( *inp_ptr == '(' )
+						{
+							int ctt;
+							/* This is for the case of .LIST SRC(exp) to alter where the source line starts in the listing */
+							/* For now, I just ignore this syntax. */
+							++inp_ptr;	/* eat opening paren */
+							/* Eat everything to EOL or SMC */
+							while ( ((ctt=cttbl[*inp_ptr]) != CT_EOL) && (ctt != CT_SMC) && (*inp_ptr != ')') )
+								++inp_ptr;
+							if ( *inp_ptr == ')' )
+								++inp_ptr;	/* eat closing paren */
+						}
+					}
                 }
             }
         }

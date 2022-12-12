@@ -141,7 +141,7 @@ void err_msg( int severity, char *msg )
                 {
                     char *is;
                     int len;
-                    if (strings_substituted != 0)
+                    if (strings_substituted != 0 && presub_str)
                     {
                         is = presub_str;
                         len = strlen(is);
@@ -398,6 +398,7 @@ int main(int argc, char *argv[])
 			segPtr->seg_base = 0;
 		}
 		op_purgedefines(string_macros);
+		purge_data_stacks(NULL);
 		string_macros = NULL;
 	}
 #endif

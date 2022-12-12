@@ -123,7 +123,7 @@ int ust_init( void )
 
     while (ri->name != 0)
     {
-        if ((ptr = sym_lookup(ri->name,1)) == 0)
+        if ((ptr = sym_lookup(ri->name,SYM_INSERT_IF_NOT_FOUND)) == 0)
         {
             sprintf(emsg,"Unable to insert symbol %s into symbol table",
                     ri->name);

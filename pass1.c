@@ -37,7 +37,7 @@ int strings_substituted;    /* flag indicating string substitution occured */
 unsigned long current_lsb=1;    /* current local symbol block number */
 unsigned long next_lsb=2;   /* next available local symbol block number */
 unsigned long autogen_lsb=65000; /* autolabel for macro processing */
-char emsg[512];         /* space to build error messages */
+char emsg[ERRMSG_SIZE];         /* space to build error messages */
 char *inp_str;          /* place to hold input text */
 int   inp_str_size;     /* size of inp_str */
 char *presub_str;       /* place to hold input before string substitution */
@@ -60,6 +60,7 @@ int seg_list_size;      /* max size of seg list */
 int subseg_list_index,subseg_list_size; /* index and size of subseg list */
 int seg_pool_size;      /* elements remaining in segment pool */
 int no_white_space_allowed;
+int squawk_syms;
 
 #if defined(MAC68K) || defined(MAC682K)
 int white_space_section;
@@ -213,7 +214,7 @@ int get_text( void )
         if (presub_str)
         {
             MEM_free(presub_str);
-            presub_str = 0;
+            presub_str = NULL;
         }
     }
     inp_ptr = inp_str;       /* reset the pointer */
@@ -225,7 +226,7 @@ int get_text( void )
     {
 		if ( cmd_assems )
         {
-			if ( (s=cmd_assems[get_text_assems++]) )
+			if ( (s=cmd_assems[get_text_assems]) )
 			{
 				strcpy(inp_str, s);
 				inp_len = strlen(inp_str)+1;
@@ -301,7 +302,7 @@ int get_text( void )
             if (presub_str)
             {      /* we're going to realloc, so toss this one */
                 MEM_free(presub_str);
-                presub_str =0 ;
+                presub_str = NULL ;
             }
             inp_len = s-inp_str;       /* compute the length so far */
             if (inp_len+MAX_LINE > 32767 || inp_len+MAX_LINE < 0) break;
@@ -404,7 +405,7 @@ int get_text( void )
         struct str_sub *sub;
         int c, inp_str_resized=0;
 
-        if (presub_str == 0)
+        if (presub_str == NULL)
         {
             presub_str = MEM_alloc(inp_str_size);
         }
@@ -592,9 +593,11 @@ void puts_lis(char *string, int lines )
 }
 
 /******************************************************************/
-
-char *line_errors[4];
-char line_errors_sev[4];
+#if !defined(MAX_LINE_ERRORS)
+#define MAX_LINE_ERRORS (4)
+#endif
+char *line_errors[MAX_LINE_ERRORS];
+char line_errors_sev[MAX_LINE_ERRORS];
 int line_errors_index;
 static char *btmsg;
 static int btmsg_siz;
@@ -632,7 +635,7 @@ void show_bad_token( char *ptr, char *msg, int sev )
     }
     fnl = (strlen(current_fnd->fn_name_only)+7) & -8;
     msgsiz = strlen(msg)+fnl+16;
-    if (strings_substituted == 0)
+    if (strings_substituted == 0 || !presub_str)
     {
         msgsiz += inp_len;
     }
@@ -711,7 +714,7 @@ void show_bad_token( char *ptr, char *msg, int sev )
         err_msg(sev, btmsg);
     }
     if (pass == 1) lis_fp = tfp;
-    if (tfp != (FILE *)0 && line_errors_index < 4)
+    if (tfp && line_errors_index < MAX_LINE_ERRORS)
     {
         line_errors_sev[line_errors_index] = sev;
         if (ptr != (char *)0)
@@ -1443,7 +1446,7 @@ int f1_org( void )
  * Process symbol type token. This token has the syntax of:
  *	string
  */
-SS_struct *do_symbol(int flag)
+SS_struct *do_symbol(SymInsertFlag_t flag)
 /*
  * At entry:
  *	flag -
@@ -1473,9 +1476,10 @@ SS_struct *do_symbol(int flag)
 	
     switch (new_symbol)
     {
-    case 1:       /* symbol is added */
-    case 5:       /* symbol added and is a duplicate */
-    case 3: {     /* symbol is added, first in the hash table */
+    case SYM_ADD:           /* symbol is added */
+    case SYM_ADD|SYM_DUP:   /* symbol added and is a duplicate */
+    case SYM_FIRST|SYM_ADD: /* symbol is added, first in the hash table */
+		{
             int cnt;
             sym_ptr->ss_fnd = current_fnd;
             if (new_symbol != 5)
@@ -1489,7 +1493,9 @@ SS_struct *do_symbol(int flag)
                 sym_ptr->flg_local = 1;
             sym_ptr->ss_line = current_fnd->fn_line;   /* and the line # of same */
         }
-    case 0:  {        /* no symbol added */
+		/* FALL through to no symbol case */
+    case 0:
+		{        /* no symbol added */
 #if !defined(MAC_PP) && !defined(NO_XREF)
             if (options[QUAL_CROSS]) do_xref_symbol(sym_ptr,0);
 #endif
@@ -1503,12 +1509,28 @@ SS_struct *do_symbol(int flag)
             err_msg(MSG_FATAL,emsg);
         }
     }
-    if ( flag == 4 )
+    if ( flag == SYM_INSERT_LOCAL )
     {
         sym_ptr->flg_static = 1;
         sym_ptr->flg_global = 0;       /* Incase this was previously set */
     }
-    return(sym_ptr);
+#if !defined(MAC_PP)
+					if ( squawk_syms )
+					{
+						snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, defined=%d, exprs=%d, segment=%d, more=%d, value=0x%lX, segPtr=%p",
+								 sym_ptr->ss_string,
+								 (void *)sym_ptr,
+								 (void *)sym_ptr->ss_next,
+								 sym_ptr->flg_defined,
+								 sym_ptr->flg_exprs,
+								 sym_ptr->flg_segment,
+								 sym_ptr->flg_more,
+								 sym_ptr->ss_value,
+								 (void *)sym_ptr->ss_seg);
+						show_bad_token(NULL,emsg, MSG_WARN);
+					}
+#endif
+    return sym_ptr;
 }
 
 int expr_message_tag = 0;
@@ -1644,12 +1666,12 @@ void pass1( int file_cnt)
 			current_section->flg_based = 1;
 			current_section->seg_salign = macxx_abs_salign;
 			current_section->seg_dalign = macxx_abs_dalign;
-			sym_ptr = sym_lookup(current_section->seg_string, 1);
+			sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
 			sym_ptr->flg_global = 1;
 			current_section = get_seg_mem(&sym_ptr, ".REL.");
 			current_section->seg_salign = macxx_rel_salign;
 			current_section->seg_dalign = macxx_rel_dalign;
-			sym_ptr = sym_lookup(current_section->seg_string, 1);
+			sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
 			sym_ptr->flg_global = 1;
 		}
 		else

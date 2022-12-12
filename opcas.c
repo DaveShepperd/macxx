@@ -937,7 +937,7 @@ int op_using( Opcode *opc )
             f1_eatit();
             return 0;
         }
-        sym = sym_lookup(token_pool, 1);
+        sym = sym_lookup(token_pool, SYM_INSERT_IF_NOT_FOUND);
         if ((new_symbol&SYM_ADD) != 0)
         {
             sym->ss_fnd = current_fnd;

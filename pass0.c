@@ -30,11 +30,6 @@
     #define MDEBUG(x) do { ; } while (0)
 #endif
 
-extern Mcall_struct *marg_head;
-extern char **cmd_assems;
-extern int cmd_assems_index;
-extern void mexit_common( int depth);
-
 static void found_symbol( int gbl_flg, int tokt )
 {
     int c;
@@ -113,12 +108,12 @@ void pass0( int file_cnt)
         current_section->flg_based = 1;
         current_section->seg_salign = macxx_abs_salign;
         current_section->seg_dalign = macxx_abs_dalign;
-        sym_ptr = sym_lookup(current_section->seg_string, 1);
+        sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
         sym_ptr->flg_global = 1;
         current_section = get_seg_mem(&sym_ptr, ".REL.");
         current_section->seg_salign = macxx_rel_salign;
         current_section->seg_dalign = macxx_rel_dalign;
-        sym_ptr = sym_lookup(current_section->seg_string, 1);
+        sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
         sym_ptr->flg_global = 1;
         opcinit();            /* seed the opcode table */
     }

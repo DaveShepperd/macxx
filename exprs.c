@@ -21,7 +21,8 @@
 #if defined(MAC682K)
     #include "m682k.h"
 #endif
-#if defined(MAC_65)
+
+#if defined(MAC_65) || defined(MAC_68) || defined(MAC_69)
     #define EXPR_C 0
 #endif
 
@@ -1109,8 +1110,9 @@ int do_exprs( int flag, EXP_stk *eps )
 #endif
                     if (token_type == TOKEN_strng) *(token_pool+max_symbol_length) = 0;
                     if ((sym_ptr = do_symbol(1)) == 0)
-                    {  /* process symbol name */
-                        return(eps->ptr = -1);
+                    { 
+						/* process symbol name */
+                        return (eps->ptr = -1);
                     }
 					if ( sym_ptr->flg_fwd )
 						eps->forward_reference = 1;
