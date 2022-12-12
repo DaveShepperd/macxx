@@ -1,5 +1,5 @@
 /*
-	psuedo_ops.c - Part of macxx, a cross assembler family for various micro-processors
+    stack_ops.c - Part of macxx, a cross assembler family for various micro-processors
 	Copyright (C) 2008 David Shepperd
 
 	This program is free software: you can redistribute it and/or modify
@@ -15,6 +15,13 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/******************************************************************************
+Change Log
+
+    01-29-2022	- Stack support added by - Tim Giddens
+
+******************************************************************************/
 #if !defined(VMS) && !defined(ATARIST)
 	#include "add_defs.h"
 	#include "token.h"
@@ -84,7 +91,7 @@ typedef enum
 	TypeByte,
 	TypeWord,
 	TypeLong,
-	TypeRelative,
+	TypeRelative
 } StackType_t;
 
 /* Structure to represent User Stack */
@@ -106,7 +113,7 @@ typedef struct user_stack {
 } UserStack_t;
 UserStack_t *usr_stk_first, *usr_stk_this, *usr_stk_new;
 
-/** purge_expressions() - Free any expressions stored on a RELATIVE stack
+/** purge_expressions() - Free any expressions stored on a un-popped RELATIVE stack
  *
  *  At entry:
  *  pointer to stack
@@ -204,10 +211,9 @@ void purge_data_stacks(const char *name)
  * BYTE     = char      = 1 byte
  * WORD     = short     = 2 byte
  * LONG     = long      = 4 byte
- * SYMBOL   = long      = 4 byte	(To be compatable with older versions of MACxx)
- * RELATIVE = long long = 8 byte
+ * SYMBOL   = struct    = ~32+ bytes
+ * RELATIVE = struct    = ~32+ bytes
  * 
- * For now SYMBOL and RELATIVE 64 bits not supported
  * 
  ************************************************************************/
 
@@ -367,7 +373,7 @@ struct user_stack* find_stack(char *tmp_name)
  * BYTE     = char      = 1 byte
  * WORD     = short     = 2 bytes
  * LONG     = long      = 4 bytes
- * RELATIVE = struct	= sizeof(SS_struct) (~32) bytes 
+ * RELATIVE = struct	= sizeof(SS_struct) (~32+) bytes 
  * 
  *
  ************************************************************************/
@@ -794,8 +800,7 @@ int op_push(void)
  * BYTE     = char      = 1 byte
  * WORD     = short     = 2 bytes
  * LONG     = long      = 4 bytes
- * SYMBOL   = long      = 4 bytes
- * RELATIVE = long long = 8 bytes
+ * RELATIVE = struct    = ~32+ bytes
  * 
  ************************************************************************/
 

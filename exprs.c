@@ -15,16 +15,31 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+/******************************************************************************
+Change Log
+
+    04/04/2022	- Changed added support for MAC69  - Tim Giddens
+
+    03/26/2022	- Changed added support for MAC68  - Tim Giddens
+
+******************************************************************************/
 #if defined(MAC68K)
     #include "m68k.h"
 #endif
 #if defined(MAC682K)
     #include "m682k.h"
 #endif
-
+/*********************************************tg*/
+/* 04/04/2022 changed for MAC69 support by Tim Giddens
+ * 03/26/2022 changed for MAC68 support by Tim Giddens
+#if defined(MAC_65)
+    #define EXPR_C 0
+#endif
+*/
 #if defined(MAC_65) || defined(MAC_68) || defined(MAC_69)
     #define EXPR_C 0
 #endif
+/*********************************************etg*/
 
 #ifndef EXPR_C
     #define EXPR_C 1
@@ -1110,8 +1125,7 @@ int do_exprs( int flag, EXP_stk *eps )
 #endif
                     if (token_type == TOKEN_strng) *(token_pool+max_symbol_length) = 0;
                     if ((sym_ptr = do_symbol(1)) == 0)
-                    { 
-						/* process symbol name */
+                    {  /* process symbol name */
                         return (eps->ptr = -1);
                     }
 					if ( sym_ptr->flg_fwd )

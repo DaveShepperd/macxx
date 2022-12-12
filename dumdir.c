@@ -16,6 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/******************************************************************************
+Change Log
+
+    02/17/2022	- Changed added support for the following commands  - Tim Giddens
+		  .defstack
+		  .getpointer
+		  .pop
+		  .push
+		  .putpointer
+		  .print
+
+******************************************************************************/
+
 #include "token.h"
 
 #define DIRDEF(name,func,flags) int func() { /* printf("Found %s\n","name"); */ no_such_opcode(); return 0; }
@@ -38,7 +51,6 @@ DIRDEF(.MACLI,  op_maclib,  0)
 DIRDEF(.MCALL,  op_mcall,   DFLSMC)
 DIRDEF(.MPURG,  op_mpurge,  0)
 DIRDEF(.NOCRO,  op_nocross, 0)
-DIRDEF(.PRINT,  op_print,   0)
 DIRDEF(.SYMBO,  op_symbol,  0)
 
 #ifdef ATARIST

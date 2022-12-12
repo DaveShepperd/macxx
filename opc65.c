@@ -15,6 +15,13 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/******************************************************************************
+Change Log
+
+    12/10/2022	- Changed default LIST Flags  - Tim Giddens
+
+******************************************************************************/
 #if !defined(MAC_65)
 	#define MAC_65
 #endif
@@ -52,7 +59,13 @@ char macxx_nibbles_long = 8;
 
 unsigned long macxx_edm_default = ED_AMA;   /* default edmask */
 /* default list mask */
+/**************************************************tg*/
+/* 12/10/2022 Changed default LIST Flags by Tim Giddens
+ *
 unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);
+*/
+unsigned long macxx_lm_default = ~(LIST_MES | LIST_LD | LIST_COD);
+/*************************************************etg*/
 int current_radix = 16;     /* default the radix to hex */
 char expr_open = '<';       /* char that opens an expression */
 char expr_close = '>';      /* char that closes an expression */

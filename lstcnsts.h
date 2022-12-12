@@ -16,6 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/******************************************************************************
+Change Log
+
+    01/19/2022	- Changed - Added support for HLLxxF  - Tim Giddens
+
+******************************************************************************/
+
 #ifndef _LSTCNSTS_H_
 #define _LSTCNSTS_H_ 1
 
@@ -81,6 +88,25 @@ extern int LLIST_OPR;
 #define LLIST_RPT	10	/* repeat count */
 #define LLIST_CND	9	/* conditional level */
 #endif
-#define LLIST_MAXSRC	(256)	/* maximum length of listing line */
+/**************************************************tg*/
+/*  01-19-2022  changed to support real input line size of 255 characters - Tim Giddens   
+    01-19-2022  Added support for HLLxxF (up to 9, three space indents)
+
+ True 255 (0-254) so (254 + 2 (CR & LF)) Characters per line support
+ plus 40 Characters for LLIST_SIZE
+ Support for Formatted Higher Level Language MACROS (HLLxxF)
+ plus max of 27 Characters for HLLxxF
+
+removed
+#define LLIST_MAXSRC	(256)	* maximum length of listing line */
+
+/* added */
+#define LLIST_MAXSRC	(256+LLIST_SIZE+27)	/* maximum length of listing line */
+extern int LLIST_SRC;				/* listing line location for source code */
+extern int LLIST_SRC_QUED;			/* queued listing line location for source code */
+extern int LLIST_REQ_NEWL;			/* Request a new listing line */
+extern unsigned char LLIST_TXT_BUF[18];		/* Buffer for text storage - 1 location + 16 characters + null */
+
+/*************************************************etg*/
 
 #endif /* _LSTCNSTS_H_ */

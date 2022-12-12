@@ -16,6 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/******************************************************************************
+Change Log
+
+    01/24/2022	- Changed - Added support for HLLxxF  - Tim Giddens
+
+******************************************************************************/
+
 #ifndef _LISTCTRL_H_
 #define _LISTCTRL_H_ 1
 
@@ -100,5 +107,14 @@ extern LIST_mask lm_bits,saved_lm_bits,qued_lm_bits;
 #define list_src lm_bits.list_bits.lm_src
 #define list_sym lm_bits.list_bits.lm_sym
 #define list_toc lm_bits.list_bits.lm_toc
+
+/**************************************************tg*/
+/*    01-24-2022  Added for HLLxxF support by TG
+*/
+extern int list_args(int *arg, int cnt);
+extern char listing_temp[];
+
+/*************************************************etg*/
+
 
 #endif /* _LISTCTRL_H_ */

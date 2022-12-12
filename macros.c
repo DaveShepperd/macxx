@@ -15,6 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+/******************************************************************************
+Change Log
+
+    02-06-2022	- Changed added support for HLLxxF  - Tim Giddens
+
+******************************************************************************/
 #include "token.h"
 #include "pst_tokens.h"
 #include "listctrl.h"
@@ -518,7 +525,39 @@ static void setup_mebstats( void )
     meb_stats.getting_stuff = 1;
     meb_stats.list_ptr = LLIST_OPC;
     meb_stats.f1_flag = meb_stats.f2_flag = 0;
+/**************************************************tg*/
+/*    02-06-2022  Added for HLLxxF support by Tim Giddens
+ *
+ *  Can't process this here because the indent does not trigger
+ *  until we are well into the macro function.  So let's set a 
+ *  marker into the line buffer and store the macro call source
+ *  line in a safe place for processing later in the normal
+ *  listing function.
+ *
+ *  Removed
+ *
+ *    strcpy(&listing_meb[LLIST_SIZE],inp_str);
+ *
+ *  Added
+ */
+
+/*    listing_meb[LLIST_SIZE] = 1;
+    strcpy(&listing_temp[LLIST_SIZE],inp_str);
+ *    listing_temp[LLIST_SIZE] = 1;
+
+
+
+            for (s; s < (lp+LLIST_SRC); ++s)
+            {
+                *s = ' ';
+            }
+
     strcpy(&listing_meb[LLIST_SIZE],inp_str);
+*/
+
+    strcpy(&listing_meb[LLIST_SIZE],inp_str);
+
+/*************************************************etg*/
     meb_stats.has_stuff = 1;
     meb_stats.line_no = list_stats.line_no;
     meb_stats.include_level = list_stats.include_level;
@@ -1263,7 +1302,11 @@ void mexit_common( int depth)
     {
         if (meb_stats.has_stuff || meb_stats.list_ptr != LLIST_OPC)
         {
-            display_line(&meb_stats);
+
+/*    listing_meb[LLIST_SIZE] = 1;
+    listing_temp[LLIST_SIZE] = 1;
+    strcpy(&listing_temp[LLIST_SIZE],inp_str);
+*/            display_line(&meb_stats);
         }
         else
         {

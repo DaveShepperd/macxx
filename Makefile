@@ -45,7 +45,7 @@ DBG = -g
 
 # For Generic Unix/x86
 DEFINES = -DEXTERNAL_PACKED_STRUCTS -DM_UNIX -DINCLUDE_FLOAT -DNO_XREF -DGCC -DHAS_STRERROR -D_ISOC99_SOURCE #-DMAX_LINE_ERRORS=12 #-DDEBUG_TXT_INP
-CHKS = -Wall -ansi -pedantic -Wno-char-subscripts -std=c99
+CHKS = -Wall -ansi -pedantic -Wno-char-subscripts #-std=c99
 CFLAGS = $(OPT) $(DBG) $(DEFINES) $(MODE) -I. $(CHKS)
 CC = gcc
 L = $(CC) $(MODE)

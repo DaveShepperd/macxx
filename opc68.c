@@ -17,6 +17,18 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/******************************************************************************
+Change Log
+
+    12/10/2022	- Changed default LIST Flags  - Tim Giddens
+
+    03/18/2022	- 6800 CPU support added by Tim Giddens
+		  using David Shepperd's work as a reference
+
+******************************************************************************/
+
+
 #if !defined(MAC_68)
     #define MAC_68
 #endif
@@ -57,7 +69,7 @@ char macxx_nibbles_long = 8;
 unsigned long macxx_edm_default = ED_AMA|ED_M68;  /* default edmask */
 
 /* default list mask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD);
+unsigned long macxx_lm_default = ~(LIST_MES|LIST_LD|LIST_COD);
 
 
 int current_radix = 16;     /* default the radix to hex */
