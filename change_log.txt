@@ -1,0 +1,490 @@
+
+Starting Version 11.04
+
+================================================================
+================================================================
+12/10/2022
+
+List of all files changed or added
+
+opc68.c  ----------  Changed
+pst68.c  ----------  Changed
+psttkn68.c  -------  Changed
+stack_ops.c  ------  Fixed
+opc65.c  ----------  Changed
+opc69.c  ----------  Added
+pst69.c  ----------  Added
+psttkn69.h  -------  Added
+Makefile  ---------  Changed
+exprs.c  ----------  Changed
+dirdefs.h  --------  Changed
+dumdirstk.c  ------  Added
+listctrl.c  -------  Changed
+listctrl.h  -------  Changed
+lstcnsts.h  -------  Changed
+psued0_ops.c  -----  Changed
+macros.c ----------  This is the problem  how to get the source line 
+
+================================================================
+================================================================
+12/10/2022
+
+File opc68.c
+
+Change default LIST Flags
+
+ADDED Line #21--------------------
+/******************************************************************************
+Change Log
+
+    12/10/2022	- Changed default LIST Flags  - Tim Giddens
+
+    03/18/2022	- 6800 CPU support added by Tim Giddens
+		  using David Shepperd's work as a reference
+
+******************************************************************************/
+
+REMOVED Line #71 -----------------
+/* default list mask */
+unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD);
+
+
+ADDED  ----------------------
+/* default list mask */
+unsigned long macxx_lm_default = ~(LIST_MES|LIST_LD|LIST_COD);
+
+
+================================================================
+================================================================
+12/10/2022
+
+File pst68.c
+
+REMOVED Line #2 -----------------
+/*  TG -  edited Dave Shepperd code 12/07/2022 */
+
+
+ADDED Line #1--------------------
+/*
+	pst68.c - Part of macxx, a cross assembler family for various micro-processors
+	Copyright (C) 2008 David Shepperd
+ 
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+/******************************************************************************
+Change Log
+
+    03/18/2022	- 6800 CPU support added by Tim Giddens
+		  using David Shepperd's work as a reference
+
+******************************************************************************/
+
+================================================================
+================================================================
+12/10/2022
+
+File psttkn68.c
+
+REMOVED Line #2 -----------------
+/*  TG -  edited Dave Shepperd code 12/07/2022 */
+
+
+ADDED Line #1--------------------
+/*
+	psttkn68.c - Part of macxx, a cross assembler family for various micro-processors
+	Copyright (C) 2008 David Shepperd
+ 
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+/******************************************************************************
+Change Log
+
+    03/18/2022	- 6800 CPU support added by Tim Giddens
+		  using David Shepperd's work as a reference
+
+******************************************************************************/
+
+================================================================
+================================================================
+12/10/2022
+
+File opc65.c
+
+Change default LIST Flags
+
+ADDED Line #18--------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    12/10/2022	- Changed default LIST Flags  - Tim Giddens
+
+******************************************************************************/
+
+REMOVED Line #62------------------
+unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);
+
+
+ADDED  ---------------------------
+/**************************************************tg*/
+/* 12/10/2022 Changed default LIST Flags by Tim Giddens
+/*
+unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);
+*/
+unsigned long macxx_lm_default = ~(LIST_MES | LIST_LD | LIST_COD);
+/*************************************************etg*/
+
+================================================================
+================================================================
+12/10/2022
+
+Added support for 6809 cpu  --- MAC69
+
+Files added
+opc69.c
+pst69.c
+psttkn69.h
+
+================================================================
+================================================================
+12/10/2022
+
+
+File Makefile
+
+
+REMOVED  --------------------
+
+ALLO65 = exprs65.o char_tbl65.o opc65.o pass0.o pass1.o pst65.o debug.o help.o
+ALLO68 = exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
+
+
+all : macas mac65 mac68 mac68k mac682k macpp mactj mac11
+
+clean : 
+	/bin/rm -f mac65 macas mac68k macpp mac682k mactj mac11 *.o *.b *@ *.d
+
+
+ADDED  ----------------------
+
+CORE1 = symbol.o hashit.o memmgt.o dumdirstk.o dummy.o opcnds.o err2str.o add_defs.o
+
+ALLO4 = $(CORE1)
+
+ALLO65 = stack_ops.o exprs65.o char_tbl65.o opc65.o pass0.o pass1.o pst65.o debug.o help.o
+ALLO68 = stack_ops.o exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
+
+all : macas mac65 mac68 mac69 mac68k mac682k macpp mactj mac11
+
+clean : 
+	/bin/rm -f macas mac65 mac68 mac69 mac68k mac682k macpp mactj mac11 *.o *.b *@ *.d
+
+ALLO69 = stack_ops.o exprs69.o char_tbl65.o opc69.o pass0.o pass1.o pst69.o debug.o help.o
+
+mac65 : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO4) $(ALLO65) 
+	$(link_it)
+
+mac68:  Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO4) $(ALLO68)
+	$(link_it)
+
+mac69:	Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO4) $(ALLO69)
+	$(link_it)
+
+exprs69.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  exproper.h listctrl.h lstcnsts.h 
+	$(ECHO) "\tCompiling $<..."
+	$C -DMAC_69 -o $@ $<
+
+
+opc69.o : opc69.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn69.h opcommon.h 
+
+pst69.o : pst69.c pst_tokens.h pst_structs.h psttkn69.h dirdefs.h 
+
+
+dumdirstk.o : dumdirstk.c 
+
+================================================================
+================================================================
+12/10/2022
+
+File - exprs.c
+
+
+ADDED line #18 -------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    04/04/2022	- Changed added support for MAC69  - Tim Giddens
+
+    03/26/2022	- Changed added support for MAC68  - Tim Giddens
+
+******************************************************************************/
+
+
+REMOVED Line #32 -----------------
+
+#if defined(MAC_65)
+    #define EXPR_C 0
+#endif
+
+
+ADDED Line #32 -------------------
+
+/*********************************************tg*/
+/* 04/04/2022 changed for MAC69 support by Tim Giddens
+/* 03/26/2022 changed for MAC68 support by Tim Giddens
+#if defined(MAC_65)
+    #define EXPR_C 0
+#endif
+*/
+#if defined(MAC_65) || defined(MAC_68) || defined(MAC_69)
+    #define EXPR_C 0
+#endif
+/*********************************************etg*/
+
+================================================================
+================================================================
+12/10/2022
+
+file dirdefs.h
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    03/26/2022	- Changed added support for MAC69  - Tim Giddens
+
+******************************************************************************/
+
+
+ADDED line #72 ---------------------------
+DIRDEF(".COPY",	op_copy,	0)
+
+
+REMOVED Line #83 -----------------
+
+#if defined(MAC_65)
+DIRDEF(".DPAGE",    op_dpage,	0)
+#endif
+
+
+ADDED Line #83 -------------------
+/**************************************************tg*/
+/* 03/26/2022 changed for MAC69 support by Tim Giddens
+#if defined(MAC_65)
+DIRDEF(".DPAGE",    op_dpage,	0)
+#endif
+*/
+#if defined(MAC_65) || defined(MAC_69)
+DIRDEF(".DPAGE",    op_dpage,	0)
+#endif
+/*************************************************etg*/
+
+
+================================================================
+================================================================
+12/10/2022
+
+file - psued0_ops.c
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    04/06/2022  - updated .PRINT command - suppress leading zeros not working correctly - Fixed
+		  added supprot for RADIX by  Tim Giddens
+
+    01/26/2022	- added support for the .PRINT command by Tim Giddens
+ 
+    01-05-2022	- added support for the .RAD50 command by Tim Giddens 
+
+******************************************************************************/
+
+ADDED line #3528 ---------------------------
+.print support - see file
+
+
+================================================================
+================================================================
+12/10/2022
+
+file - lstcnsts.h
+
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    01/19/2022	- Changed - Added support for HLLxxF  - Tim Giddens
+
+******************************************************************************/
+
+
+ADDED line #91 ---------------------------
+/**************************************************tg*/
+/*  01-19-2022  changed to support real input line size of 255 characters - Tim Giddens   
+    01-19-2022  Added support for HLLxxF (up to 9, three space indents)
+
+ True 255 (0-254) so (254 + 2 (CR & LF)) Characters per line support
+ plus 40 Characters for LLIST_SIZE
+ Support for Formatted Higher Level Language MACROS (HLLxxF)
+ plus max of 27 Characters for HLLxxF
+
+removed
+#define LLIST_MAXSRC	(256)	/* maximum length of listing line */
+
+/* added */
+#define LLIST_MAXSRC	(256+LLIST_SIZE+27)	/* maximum length of listing line */
+extern int LLIST_SRC;				/* listing line location for source code */
+extern int LLIST_SRC_QUED;			/* queued listing line location for source code */
+extern int LLIST_REQ_NEWL;			/* Request a new listing line */
+extern unsigned char LLIST_TXT_BUF[18];		/* Buffer for text storage - 1 location + 16 characters + null */
+
+/*************************************************etg*/
+
+================================================================
+================================================================
+12/10/2022
+
+file - listctrl.h
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    01/24/2022	- Changed - Added support for HLLxxF  - Tim Giddens
+
+******************************************************************************/
+
+
+ADDED line #111 ---------------------------
+/**************************************************tg*/
+/*    01-24-2022  Added for HLLxxF support by TG
+*/
+extern int list_args(int *arg, int cnt);
+extern char listing_temp[];
+
+/*************************************************etg*/
+
+================================================================
+================================================================
+12/10/2022
+
+file - listctrl.c
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    03/26/2022	- Changed added support for MAC69  - Tim Giddens
+
+******************************************************************************/
+
+Note: Starwars uses .NLIST BYTE
+ADDED line #80 ---------------------------
+    { "BYTE",LIST_MES},      /* display macro expansion source */
+
+
+ADDED  ---------------------------
+support for HLLxxF - see file
+
+================================================================
+================================================================
+12/10/2022
+
+file - macros.c
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    03/26/2022	- Changed added support for HLLxxF  - Tim Giddens
+
+******************************************************************************/
+
+ADDED line #528 ---------------------------
+/**************************************************tg*/
+/*    02-06-2022  Added for HLLxxF support by Tim Giddens
+ *
+ *  Can't process this here because the indent does not trigger
+ *  until we are well into the macro function.  So let's set a 
+ *  marker into the line buffer and store the macro call source
+ *  line in a safe place for processing later in the normal
+ *  listing function.
+ *
+ *  Removed
+ *
+ *    strcpy(&listing_meb[LLIST_SIZE],inp_str);
+ *
+ *  Added
+ */
+
+    listing_meb[LLIST_SIZE] = 1;
+    strcpy(&listing_temp[LLIST_SIZE],inp_str);
+/*************************************************etg*/
+
+
+================================================================
+================================================================
+12/10/2022
+
+file - stack_ops.c
+
+
+REMOVED Line #2 -----------------
+    psuedo_ops.c - Part of macxx, a cross assembler family for various micro-processors
+
+ADDED line #2 ---------------------------
+    stack_ops.c - Part of macxx, a cross assembler family for various micro-processors
+
+ADDED line #18 ---------------------------
+New Line - CR/LF
+/******************************************************************************
+Change Log
+
+    01-29-2022	- Stack support added by - Tim Giddens
+
+******************************************************************************/
+
+see file
+
+
+================================================================
+================================================================
+
+
+

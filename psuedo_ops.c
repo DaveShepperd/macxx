@@ -34,6 +34,7 @@ Change Log
 #include "listctrl.h"
 #include "strsub.h"
 #include "memmgt.h"
+#include "utils.h"
 #include <errno.h>
 #include <time.h>
 #include <string.h>
@@ -241,7 +242,7 @@ static void ascii_common(int arg)
 {
 	int term_c, c = 0;
 	int len = 0, fake;
-	LIST_stat *lstat;
+	LIST_stat_t *lstat;
 	if ( meb_stats.getting_stuff )
 	{
 		lstat = &meb_stats;
@@ -368,7 +369,7 @@ static void ascii_common(int arg)
 							lstat->pc = current_offset + (asc_ptr - asc);
 							lstat->pc_flag = 1;
 						}
-						dst = lstat->line_ptr + lstat->list_ptr;
+						dst = lstat->listBuffer + lstat->list_ptr;
 						if ( tlen < z )
 							z = tlen;
 						lstat->list_ptr += z * 3;
@@ -458,7 +459,7 @@ static void ascii_common(int arg)
 							char *s;
 							if ( lstat->list_ptr > LLIST_SIZE - fs )
 								fixup_overflow(lstat);
-							s = lstat->line_ptr + lstat->list_ptr;
+							s = lstat->listBuffer + lstat->list_ptr;
 							*s++ = hexdig[((unsigned char)val) >> 4];
 							*s++ = hexdig[val & 15];
 							if ( !abs )
@@ -495,7 +496,7 @@ static void ascii_common(int arg)
 								char *s;
 								if ( lstat->list_ptr > LLIST_SIZE - 3 )
 									fixup_overflow(lstat);
-								s = lstat->line_ptr + lstat->list_ptr;
+								s = lstat->listBuffer + lstat->list_ptr;
 								*s++ = '0';
 								*s = '0';
 								lstat->list_ptr += 3;
@@ -3119,7 +3120,7 @@ int op_proc(void)
 	}
 	if ( show_line != 0 )
 	{
-		sprintf(listing_line + LLIST_RPT - 1, "(%d.%d)", current_procblk / -SCOPE_PROC,
+		sprintf(list_stats.listBuffer + LLIST_RPT - 1, "(%d.%d)", current_procblk / -SCOPE_PROC,
 				current_scopblk);
 	}
 #if !defined(MAC_PP)
@@ -3138,7 +3139,7 @@ int op_endp(void)
 	{
 		if ( show_line != 0 )
 		{
-			sprintf(listing_line + LLIST_RPT - 1, "(%d.%d)", current_procblk / -SCOPE_PROC,
+			sprintf(list_stats.listBuffer + LLIST_RPT - 1, "(%d.%d)", current_procblk / -SCOPE_PROC,
 					current_scopblk);
 		}
 		if ( current_scopblk > 0 )
@@ -3227,7 +3228,7 @@ static void rad50_common(void)
 {
 	int term_c, c = 0, y = 0, x = 0, term_expr = 0;
 	int len = 0, rad50_count = 0;
-	LIST_stat *lstat;
+	LIST_stat_t *lstat;
 	if ( meb_stats.getting_stuff )
 	{
 		lstat = &meb_stats;
@@ -3255,8 +3256,6 @@ static void rad50_common(void)
 		return;
 	}
 	move_pc();           /* always set the PC */
-
-
 	term_c = *inp_ptr;    /* get termination delimiter */
 	if ( term_c == expr_open )
 	{
@@ -3268,24 +3267,19 @@ static void rad50_common(void)
 	while ( 1 )    /* Set up Buffer */
 	{       /* for all that will fit in asc
 			   asc is a buffer of 128 bytes used for temp storage */
-
 		char *asc_ptr, *asc_end;
 		asc_ptr = asc;
 		/* save four spaces for packing at the end of buffer if
 		   not three bytes yet */
 		asc_end = asc + sizeof(asc) - 4;
-
 		while ( 1 )
 		{        /* process line of characters */
-
 			if ( asc_ptr >= asc_end )
 			{
 				break;   /* Reached end of data buffer (out of storage space) */
 			}
-
 			if ( term_expr == 1 )    /* have an expression ? */
 			{
-
 				char *ip, s1, s2;
 				int nst;
 
@@ -3316,12 +3310,10 @@ static void rad50_common(void)
 						++nst;
 					}
 				}  /* end of while find matching expr_close*/
-
 				s1 = *ip;        /* save the two chars after expr_close */
 				*ip++ = 0x0A;        /* and replace with a \linefeed\0 */
 				s2 = *ip;
 				*ip = 0;
-
 				get_token();     /* setup the variables */
 				/*  Call exprs with Force absolute which will cause error if not absolute */
 				exprs(0, &EXP0);      /* evaluate the exprssion */
@@ -3334,9 +3326,7 @@ static void rad50_common(void)
 						++inp_ptr;
 					}
 				}
-
 				c = EXP0SP->expr_value;
-
 				if ( c >= 40 )
 				{
 					sprintf(emsg, "Unknown RADIX-50 Character - Hex Value = %X", c);
@@ -3345,7 +3335,6 @@ static void rad50_common(void)
 					f1_eatit();
 					return;
 				}
-
 				/* Each y assignment packs the remaining bytes with spaces */
 				if ( x == 0 )
 					y = c * 1600;
@@ -3353,13 +3342,10 @@ static void rad50_common(void)
 					y = y + (c * 40);
 				if ( x == 2 )
 					y = y + c;
-
 				x++;
-
 				/* three bytes yet - put in buffer */
 				if ( x >= 3 )
 				{
-
 					if ( (edmask & ED_M68) == 0 )
 					{
 						/* For little endian CPU's */
@@ -3375,15 +3361,11 @@ static void rad50_common(void)
 					x = 0;
 					y = 0;
 				}
-
 				c = *inp_ptr;   /* pick up ending delimiter */
-
 				term_expr = 0;    /* expression complete */
-
 			}
 			else   /* not an expression */
 			{
-
 				while ( 1 )   /* convert loop */
 				{
 					c = *inp_ptr;   /* pickup user data */
@@ -3391,9 +3373,7 @@ static void rad50_common(void)
 					{
 						break;    /* reached EOL or ending delimiter */
 					}
-
 					rad50_count = 1;
-
 					if ( c == ' ' )
 					{
 						c = 0;
@@ -3438,13 +3418,10 @@ static void rad50_common(void)
 						y = y + (c * 40);
 					if ( x == 2 )
 						y = y + c;
-
 					x++;
-
 					/* three bytes yet - put in buffer */
 					if ( x >= 3 )
 					{
-
 						if ( (edmask & ED_M68) == 0 )
 						{
 							/* For little endian CPU's */
@@ -3460,13 +3437,9 @@ static void rad50_common(void)
 						x = 0;
 						y = 0;
 					}
-
 					++inp_ptr;    /* point to next data byte */
-
 				}   /* end of while convert loop */
-
 			}   /* end of else an expression */
-
 			if ( ((cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0) && (c != term_c) )
 			{
 				bad_token(inp_ptr, "Missing terminating delimiter");
@@ -3478,12 +3451,10 @@ static void rad50_common(void)
 			{
 				break;  /* Reached EOL - End Nicely */
 			}
-
 			/* if no data between delimiters - ".RAD50 //"  */
 			/* Only do this if the three byte packing queue is empty  */
 			if ( (rad50_count == 0) && ((x == 0) || (x >= 3)) )
 			{
-
 				y = 0;
 				if ( (edmask & ED_M68) == 0 )
 				{
@@ -3499,7 +3470,6 @@ static void rad50_common(void)
 				}
 				x = 0;
 			}
-
 			++inp_ptr;   /* eat the terminator */
 			if ( isspace(*inp_ptr) && !no_white_space_allowed )
 			{
@@ -3512,9 +3482,7 @@ static void rad50_common(void)
 			{
 				break;   /* Reached EOL - stop */
 			}
-
 			c = *inp_ptr;    /* pickup user data */
-
 			if ( c == expr_open )    /* test for expression */
 			{
 				term_expr = 1;    /* set if expression */
@@ -3525,17 +3493,12 @@ static void rad50_common(void)
 			{
 				term_c = c;    /* new end delimiter */
 				++inp_ptr;    /* eat the delimiter */
-
 				rad50_count = 0;   /* reset count */
-
 			}   /* end of test for expression */
-
 		}    /* Buffer full or Reached the end of characters to process */
-
 		/* if true end of line and less than three bytes - fill remaing bytes with space */
 		if ( ((cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0) && (x > 0) && (x < 3) )
 		{
-
 			if ( (edmask & ED_M68) == 0 )
 			{
 				/* For little endian CPU's */
@@ -3551,15 +3514,12 @@ static void rad50_common(void)
 			x = 0;
 			y = 0;
 		}
-
 		/* if any packed data write it to *.ol file and write info into the *.lst file */
 		len = asc_ptr - asc;   /* how much is in there */
-
 		if ( len > 0 )
 		{
 			/* write to *.ol file */
 			write_to_tmp(TMP_ASTNG, len, asc, sizeof(char));
-
 			/* write to *.lis file */
 			asc_ptr = asc;
 			if ( show_line && (list_bin || meb_stats.getting_stuff) )
@@ -3567,7 +3527,6 @@ static void rad50_common(void)
 				int tlen;
 				char *dst;
 				int n_ct;  /* nibble count */
-
 				/* RAD50 packing always creates a word */
 				/* writing a word (two bytes) at a time to *.lis so cut lenght in half */
 				tlen = len / 2;
@@ -3596,7 +3555,7 @@ static void rad50_common(void)
 						lstat->pc = current_offset + (asc_ptr - asc);
 						lstat->pc_flag = 1;
 					}
-					dst = lstat->line_ptr + lstat->list_ptr;
+					dst = lstat->listBuffer + lstat->list_ptr;
 					if ( tlen < z )
 						z = tlen;
 					lstat->list_ptr += z * n_ct;
@@ -3643,23 +3602,18 @@ static void rad50_common(void)
 						}
 						++dst;
 					} while ( --z > 0 );
-
 				}    /* -- for each item in asc [while (1)]*/
 			}    /* -- list_bin != 0 */
 			current_offset += len;
 		}    /* -- something to write (len > 0) */
-
 		/* if end of characters to process Stop, otherwise reset buffer and continue*/
 		if ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
 			break;
-
 	}    /* End of Set up Buffer */
-
 	if ( c != term_c )
 	{
 		bad_token(inp_ptr, "No matching delimiter");
 	}
-
 	out_pc = current_offset;
 	meb_stats.expected_seg = current_section;
 	meb_stats.expected_pc = current_offset;
@@ -3670,14 +3624,6 @@ int op_rad50(void)
 {
 	rad50_common();
 	return 0;
-}
-
-static int ltoa(long a1, char *str, int a2)
-{
-	return 0;
-}
-static void strupr(const char *str)
-{
 }
 
 /******************************************************************
@@ -3692,8 +3638,7 @@ static void strupr(const char *str)
  */
 int op_print(void)
 {
-	LIST_stat *lstat;
-	char *lp;
+	LIST_stat_t *lstat;
 	char rad_num[18];
 	long sav_data;
 	int tt;
@@ -3711,38 +3656,38 @@ int op_print(void)
  *
  * Notes:
  *
- *        .PRINT number_data(arg[1],arg[2],arg[3],arg[4],arg[5],arg[6])
+ *        .PRINT number_data(arg[ListArg_Dst],arg[ListArg_Len],arg[ListArg_Radix],arg[ListArg_NLZ],arg[ListArg_Sign],arg[ListArg_NewLine])
  *
  *  Exp.
  *        .PRINT number_data(43,3,10,1)
  *
  *              num_data = Any valid number to be printed
- *	Not Used   arg[0]   = Format ID #  -  (this is not used in .PRINT - arg[1] is first arg
- *	required   arg[1]   = Target of data field - line location
- *	required   arg[2]   = Field lenght - Number of characters to print 
- *	optional   arg[3]   = Field Radix - print number using this radix             
- *                                  0 = current selected radix  - Default
- *                                  1 = set to MACxx default radix
- *                                  2 = set radix Binary
- *                                  8 = set radix Octal
- *                                 10 = set radix Decimal
- *                                 16 = set radix Hexadecimal
- *	optional   arg[4] = Flag - if .NE. suppress leading zeros  - Default No - set to zero
- *	optional   arg[5] = Flag - if .NE. prefix a sign           - Default No - set to zero
- *	optional   arg[6] = Flag - if .NE. request a new list line - Default No - set to zero
+ *	Not Used   arg[ListArg_ID]      = Format ID #  -  (this is not used in .PRINT - arg[1] is first arg
+ *	required   arg[ListArg_Dst]     = Target of data field - line location
+ *	required   arg[ListArg_Len]     = Field lenght - Number of characters to print 
+ *	optional   arg[ListArg_Radix]   = Field Radix - print number using this radix             
+ *                                     0 = current selected radix  - Default
+ *                                     1 = set to MACxx default radix
+ *                                     2 = set radix Binary
+ *                                     8 = set radix Octal
+ *                                    10 = set radix Decimal
+ *                                    16 = set radix Hexadecimal
+ *	optional   arg[ListArg_LZ]     = Flag - if .NE. include leading zeros   - Default No - set to zero
+ *	optional   arg[ListArg_Sign]    = Flag - if .NE. prefix a sign           - Default No - set to zero
+ *	optional   arg[ListArg_NewLine] = Flag - if .NE. request a new list line - Default No - set to zero
  *                                  0 = No
  *                                  / = Yes - New line requested
- *
+ * NOTE: The '/' in the text indicating 'NewLine' can technically appear in any of those of the positions.
+ * The arg[ListArg_NewLine] is only a placeholder and will not be set in any case.
  *
  *	To print optional text put it before or after the options 
  *	Format - line location 'optional text'
  *
  *  Exp.
  *        .PRINT number_data(40'optional text',43,3,10,1)
- *        .PRINT number_data(43,3,10,1,43'appended text')
+ *  	  .PRINT number_data(43,3,10,1,46'appended text')
+ *  	  .PRINT number_data(44.,/,3)	; Prints 3 chars of number_data in current radix at column 44. Forces line to print.
  *
- *
- *	As of now arg[5] "sign" is not supported
  */
 
 	if ( meb_stats.getting_stuff )   /* is this a macro line */
@@ -3766,93 +3711,57 @@ int op_print(void)
 	}
 	if ( *inp_ptr == '(' )
 	{
-		int arg[7] = { 0, 0, 0, 0, 0, 0, 0 };
-		int start;
+		int arg[ListArg_MAX];
+		int ltoaRadix;
 /*        int arg_cnt; */
 
-		start = 1;
-
 		/* pickup any options */
-		/* arg_cnt = */ list_args(arg, start);
+		/* arg_cnt = */ list_args(arg, ListArg_MAX, ListArg_Dst, list_source.optTextBuf, sizeof(list_source.optTextBuf));
 
-		/*  Set radix to current radix */
-		ltoa(sav_data, rad_num, current_radix);
-
-		/*  Change radix and convert number to printable ASCII string */
-		if ( arg[3] != 0 )
-		{   /* Make sure optional radix is valid */
-			if ( arg[3] == 1 )
-				ltoa(sav_data, rad_num, list_radix);  /* set MACxx default listing radix */
-			if ( arg[3] == 2 )
-				ltoa(sav_data, rad_num, arg[3]);      /* set RADIX to Binary */
-			if ( arg[3] == 8 )
-				ltoa(sav_data, rad_num, arg[3]);      /* set RADIX to Octal */
-			if ( arg[3] == 10 )
-				ltoa(sav_data, rad_num, arg[3]);     /* set RADIX to Decimal */
-			if ( arg[3] == 16 )
-				ltoa(sav_data, rad_num, arg[3]);     /* set RADIX to Hexadecimal */
-		}
-
-		strupr(rad_num);   /* Convert string number to upper case for Hexadecimal */
-
-		if ( (arg[1] != 0) && (arg[1] < 256) )   /* valid line location */
+		switch (arg[ListArg_Radix])
 		{
-			lp = lstat->line_ptr - 1 + arg[1];
-			arg[2] = strlen(rad_num) - arg[2];   /* number of characters to print */
-
-			while ( 1 )
-			{
-				if ( arg[4] != 0 )           /* suppress leading zeros */
-				{
-					if ( arg[2] < 0 )
-					{
-						/* skip the leading zero */
-					}
-					else
-					{
-						*lp = rad_num[arg[2]];
-						lp++;
-					}
-				}
-				else
-				{
-					if ( arg[2] < 0 )
-					{
-						*lp = '0';
-						lp++;
-					}
-					else
-					{
-						*lp = rad_num[arg[2]];
-						lp++;
-					}
-				}
-				arg[2]++;
-				if ( arg[2] >= 0 )   /* Do not test until inside buffer */
-				{
-					if ( rad_num[arg[2]] == 0 )
-						break;
-				}
-			}
+		default:
+		case 0:
+			ltoaRadix = current_radix;	/* Use whatever is the current radix */
+			break;
+		case 1:
+			ltoaRadix = list_radix;  /* set MACxx default listing radix */
+			break;
+		case 2:		/* Binary */
+		case 8:		/* Octal */
+		case 10:	/* Decimal */
+		case 16:	/* Hexadecimal */
+			ltoaRadix = arg[ListArg_Radix];
+			break;
 		}
-
+		longToAscii(sav_data, rad_num, sizeof(rad_num), arg[ListArg_Len], arg[ListArg_LZ], ltoaRadix);
+		if ( (arg[ListArg_Dst] != 0) && (arg[ListArg_Dst] < 256) )   /* valid line location */
+		{
+			int idx;
+			char *lp, *lpe;
+			lp = lstat->listBuffer - 1 + arg[ListArg_Dst];
+			lpe = lp+arg[ListArg_Len];
+			for (idx=0; rad_num[idx] && lp < lpe; ++idx)
+				*lp++ = rad_num[idx];
+		}
+		
 		/* If optional text to print - buffer (not NULL) */
-		if ( LLIST_TXT_BUF[0] != 0 )
+		if ( list_source.optTextBuf[0] != 0 )
 		{
 			int x = 0;
 			while ( 1 )
 			{
-				*(lstat->line_ptr - 1 + LLIST_TXT_BUF[0] + x) = LLIST_TXT_BUF[1 + x];
+				*(lstat->listBuffer - 1 + list_source.optTextBuf[0] + x) = list_source.optTextBuf[1 + x];
 				x++;
-				if ( LLIST_TXT_BUF[1 + x] == 0 )
+				if ( list_source.optTextBuf[1 + x] == 0 )
 					break;
 			}
 		}
 
-		if ( LLIST_REQ_NEWL != 0 )
+		if ( list_source.reqNewLine )
 		{
 			line_to_listing();   /* FORCE LINE TO PRINT */
-			LLIST_REQ_NEWL -= 1;
+			list_source.reqNewLine = 0;
 		}
 
 		tt = 0;

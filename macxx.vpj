@@ -309,6 +309,7 @@
 			<F N="sortsym.c"/>
 			<F N="stack_ops.c"/>
 			<F N="symbol.c"/>
+			<F N="utils.c"/>
 		</Folder>
 		<Folder
 			Name="Header Files"
@@ -351,6 +352,7 @@
 			<F N="tjop_class.h"/>
 			<F N="token.h"/>
 			<F N="token_defs.h"/>
+			<F N="utils.h"/>
 			<F N="version.h"/>
 			<F N="vlda_structs.h"/>
 		</Folder>
@@ -366,6 +368,7 @@
 			Name="Other Files"
 			Filters=""
 			GUID="{0D4A941C-8098-42E8-B5A1-9AEC1513BD63}">
+			<F N="i.mac"/>
 			<F N="macxx.doc"/>
 			<F
 				N="Makefile"

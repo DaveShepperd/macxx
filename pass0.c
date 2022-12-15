@@ -41,7 +41,7 @@ static void found_symbol( int gbl_flg, int tokt )
     {  /* unsatisfied conditional */
         if (list_cnd)
         {
-            listing_line[LLIST_USC] = 'X';
+            list_stats.listBuffer[LLIST_USC] = 'X';
         }
         f1_eatit();      /* eat the line */
         return;

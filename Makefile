@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #
 
-COREO = symbol.o hashit.o memmgt.o dumdir.o dummy.o opcnds.o err2str.o add_defs.o
+COREO = symbol.o hashit.o memmgt.o dumdir.o dummy.o opcnds.o err2str.o add_defs.o utils.o
 
 ALLO0 = macxx.o gc_table.o gc.o opcode.o
 ALLO1 = endlin.o outx.o pass2.o macros.o psuedo_ops.o
@@ -296,3 +296,4 @@ test.o : test.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h 
 tjtst.o : tjtst.c tjop_class.h tj_ops.h 
 types.o : types.c stab.def
+utils.o : utils.c utils.h

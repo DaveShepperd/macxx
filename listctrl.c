@@ -26,27 +26,26 @@ Change Log
 #include "listctrl.h"
 #include "memmgt.h"
 #include "exproper.h"
+#include "utils.h"
 
 int show_line = 1;
 int list_level;
 int list_radix = 16;
 void (*reset_list_params)(int onoff);
+
 #ifndef MAC_PP
-	#if 0
-		#define LLIST_OPC	14	/* opcode */
-		#define LLIST_OPR	17	/* operands */
-	#endif
 int LLIST_OPC = 14;
 int LLIST_OPR = 17;
-char listing_meb[LLIST_MAXSRC+2] = "     1";
-char listing_line[LLIST_MAXSRC+2] = "     1";
-LIST_stat meb_stats = { listing_meb, listing_line + LLIST_MAXSRC + 2 };
+LIST_stat_t meb_stats;
 #else
 char listing_line[LLIST_MAXSRC+2] = "    1";
 #endif
-LIST_stat list_stats = { listing_line, listing_line + LLIST_MAXSRC + 2 };
+
+LIST_stat_t list_stats;
+LIST_Source_t list_source;
 union list_mask lm_bits,saved_lm_bits,qued_lm_bits;
 
+#if 0
 /**************************************************tg*/
 /*  01/20/2022  Adds Support for HLLxxF  - Tim Giddens */
 #include "exproper.h"
@@ -59,10 +58,11 @@ int LLIST_SRC_QUED = 40;
 #endif
 int LLIST_REQ_NEWL = 0;
 unsigned char LLIST_TXT_BUF[18] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-void list_do_args(char *list_opt);
 char listing_temp[LLIST_MAXSRC+2] = "     1";
 int tab_wth = 8;  /* width of tab character */
 /*************************************************etg*/
+#endif
+
 int list_init(int onoff)
 {
 	if ( onoff == 0 )
@@ -112,6 +112,120 @@ static struct
 	{ "TOC", LIST_TOC },      /* display table of contents */
 	{ 0, 0 }
 };
+
+
+/******************************************************************
+ * 01/19/2022   added for HLLxxF support by TG
+ *
+ * list_do_args - sets the list args from the input file.
+ */
+static void list_do_args(char *list_opt)
+{
+/*
+ * At entry:
+ *	list_opt - pointer to the .list option
+		   option is either SRC, SEQ, LOC, COM, or BIN
+ * At exit:
+ *	SRC - Sets	LLIST_SRC
+ * 			LLIST_SRC_QUED
+ *			LLIST_NEWL
+ *
+*/
+/*
+arg[ListArg_ID]      = Format ID #
+arg[ListArg_Dst]     = Target of data field - line location
+arg[ListArg_Que]     = In this context, .ne. means to queue
+arg[ListArg_Radix]   = placeholder
+arg[ListArg_LZ]      = placeholder
+arg[ListArg_Sign]    = placeholder
+arg[ListArg_NewLine] = Flag - .ne. means flush the line
+*/
+	int arg[ListArg_MAX];
+	int arg_cnt;
+	
+	memset(arg,0,sizeof(arg));
+	/* Do for directive SRC */
+	if ( strcmp(list_opt, "SRC") == 0 )
+	{
+		int pos;
+/*  SRC only uses the follow args
+arg[ListArg_Dst]     = Target of data field - line location
+arg[ListArg_Que]     = Flag - if .NE. just queue it 
+arg[ListArg_NewLine] = Flag - if .NE. request a new list line
+*/
+		if ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
+		{
+			return;
+		}
+/* in SRC - so data starts with arg[ListArg_Dst] */
+		/* is there a key word */
+		arg_cnt = list_args(arg, 3, ListArg_Dst, list_source.optTextBuf, sizeof(list_source.optTextBuf));
+		if ( arg_cnt == 0 )       /* Error */
+		{
+			/* printf( "\n No SRC data so no change  \n" ); */
+			return;
+		}
+		pos = arg[ListArg_Dst];
+		if ( pos )
+		{
+			pos = limitSrcPosition(pos);
+			if ( arg[ListArg_Que] == 0 )        /* Do now or que it */
+			{
+#ifndef MAC_PP
+				int sLen;
+				/* This it the tricky part. Since we're moving the source position immediately, we need to move it in the line buffer */
+				/* First figure out long our source line is (the only buffer it could be in is in meb_stats) */
+				sLen = strlen(meb_stats.listBuffer + list_source.srcPosition);
+				/* Now check that we won't write past the end of the buffer */
+				if ( sLen + pos > LLIST_MAXSRC )
+				{
+					/* trim sLen */
+					sLen -= sLen+pos-LLIST_MAXSRC;
+				}
+				if ( sLen )
+				{
+					/* Have to use memmove() to ensure the data overwrites itseslf properly (move left or move right) */
+					memmove(meb_stats.listBuffer+pos,meb_stats.listBuffer+list_source.srcPosition,sLen);
+					/* Make sure new position has a '\n'+0 terminator */
+					if ( meb_stats.listBuffer[pos+sLen-1] != '\n' )
+					{
+						meb_stats.listBuffer[pos+sLen] = '\n';
+						++sLen;
+					}
+					meb_stats.listBuffer[pos+sLen] = 0;
+				}
+#endif
+				list_source.srcPosition = pos;
+				list_source.srcPositionQued = pos;
+			}
+			else
+			{
+				/* remember this for next time */
+				list_source.srcPositionQued = pos;
+			}
+		}
+	}
+/* Following not supported as of now */
+	if ( strcmp(list_opt, "SEQ") == 0 )
+	{
+
+	}
+	if ( strcmp(list_opt, "LOC") == 0 )
+	{
+
+	}
+	if ( strcmp(list_opt, "COM") == 0 )
+	{
+
+	}
+	if ( strcmp(list_opt, "BIN") == 0 )
+	{
+
+	}
+	return;
+
+}
+/*************************************************etg*/
 
 static int op_list_common(int onoff)
 {
@@ -172,54 +286,35 @@ static int op_list_common(int onoff)
 		if ( *inp_ptr == ',' )
 			++inp_ptr;
 		ip = inp_ptr;
-
-
-
-
 		while ( (isspace(*ip)) && ((cttbl[(int)*ip] & (CT_SMC | CT_EOL)) == 0) )
 		{
 			++ip;
 		} /* eat ws */
-
-
 		if ( (cttbl[(int)*ip] & (CT_SMC | CT_EOL)) != 0 )
 		{
-
 			tt = EOL;
-
 			return 0;
 		}
 		else
 		{
-
 			while ( ((*ip != ',') && (*ip != '(') && (*ip != '=')) && ((cttbl[(int)*ip] & (CT_SMC | CT_EOL)) == 0) )
 			{
-
 				++ip;
 			}
-
-
 			if ( (cttbl[(int)*ip] & (CT_SMC | CT_EOL)) != 0 )
 			{
-
 				tt = get_token();
-
 			}
 			else
 			{
-
 				s1 = *ip;        /* save the two chars after .LIST arg */
 				*ip++ = ',';        /* and replace with a \comma\0 */
 				s2 = *ip;
 				*ip = 0;
 				tt = get_token();
-
 				*ip = s2;        /* restore the source record */
 				*--ip = s1;
-
 			}
-
-
 		}
 /*************************************************etg*/
 		edmask = old_edmask;
@@ -375,18 +470,30 @@ void dump_oct6(long value, char *ptr)
 	return;
 }
 
-void clear_list(LIST_stat *lstat)
+int limitSrcPosition(int pos)
+{
+	if ( pos < LLIST_SIZE )
+		pos = LLIST_SIZE;
+	else if ( pos > LLIST_MAX_SRC_OFFSET )
+		pos  = LLIST_MAX_SRC_OFFSET;
+	return pos;
+}
+
+void clear_list(LIST_stat_t *lstat)
 {
 	lstat->f1_flag = 0;
 	lstat->f2_flag = 0;
-	memset(lstat->line_ptr, ' ', LLIST_SIZE);
-	*(lstat->line_ptr + LLIST_SIZE) = 0;
+	list_source.srcPosition = limitSrcPosition(list_source.srcPositionQued);
+	memset(lstat->listBuffer, ' ', list_source.srcPosition);
+	lstat->listBuffer[list_source.srcPosition] = 0;
+#if 0
 /**************************************************tg*/
 /*  01/27/2022  Adds Support for HLLxxF  - TG */
 
 	LLIST_SRC = LLIST_SRC_QUED;
 
 /*************************************************etg*/
+#endif
 #ifndef MAC_PP
 	lstat->pc_flag = 0;
 	lstat->has_stuff = 0;
@@ -395,21 +502,23 @@ void clear_list(LIST_stat *lstat)
 	return;
 }
 
-void display_line(LIST_stat *lstat)
+void display_line(LIST_stat_t *lstat)
 {
+#if 0
 /**************************************************tg*/
 /*  01/26/2022  Adds Support for HLLxxF  - TG */
 
 	char *tmp_inp_str;
 	int tab_cnt;
 /*************************************************etg*/
-	register char *s, *lp;
-	lp = lstat->line_ptr;
+#endif
+	char *chrPtr, *outLinePtr;
+	outLinePtr = lstat->listBuffer;
 	if ( list_seq )
 	{
 		if ( lstat->line_no != 0 )
 		{
-			sprintf(lp + LLIST_SEQ, "%5ld%c",
+			sprintf(outLinePtr + LLIST_SEQ, "%5ld%c",
 					lstat->line_no, (lstat->include_level > 0) ? '+' : ' ');
 		}
 	}
@@ -419,9 +528,9 @@ void display_line(LIST_stat *lstat)
 		if ( lstat->pc_flag != 0 )
 		{
 			if ( list_radix == 16 )
-				dump_hex4((long)lstat->pc, lp + LLIST_LOC);
+				dump_hex4((long)lstat->pc, outLinePtr + LLIST_LOC);
 			else
-				dump_oct6((long)lstat->pc, lp + LLIST_LOC);
+				dump_oct6((long)lstat->pc, outLinePtr + LLIST_LOC);
 		}
 	}
 #endif
@@ -429,13 +538,13 @@ void display_line(LIST_stat *lstat)
 	{
 		if ( list_radix == 16 )
 		{
-			dump_hex8((long)lstat->pf_value, lp + LLIST_PF1);
-			*(lp + LLIST_PF1 + 8) = lstat->f1_flag >> 8;
+			dump_hex8((long)lstat->pf_value, outLinePtr + LLIST_PF1);
+			*(outLinePtr + LLIST_PF1 + 8) = lstat->f1_flag >> 8;
 		}
 		else
 		{
-			dump_oct6((long)lstat->pf_value, lp + LLIST_PF1);
-			*(lp + LLIST_PF1 + 6) = lstat->f1_flag >> 8;
+			dump_oct6((long)lstat->pf_value, outLinePtr + LLIST_PF1);
+			*(outLinePtr + LLIST_PF1 + 6) = lstat->f1_flag >> 8;
 		}
 	}
 	else
@@ -444,152 +553,56 @@ void display_line(LIST_stat *lstat)
 		{
 			if ( list_radix == 16 )
 			{
-				dump_hex8((long)lstat->pf_value, lp + LLIST_PF2);
+				dump_hex8((long)lstat->pf_value, outLinePtr + LLIST_PF2);
 #ifndef MAC_PP
-				*(lp + LLIST_PF2 - 1) = '(';
-				*(lp + LLIST_PF2 + 8) = ')';
+				*(outLinePtr + LLIST_PF2 - 1) = '(';
+				*(outLinePtr + LLIST_PF2 + 8) = ')';
 #endif
 			}
 			else
 			{
-				dump_oct6((long)lstat->pf_value, lp + LLIST_PF2);
+				dump_oct6((long)lstat->pf_value, outLinePtr + LLIST_PF2);
 #ifndef MAC_PP
-				*(lp + LLIST_PF2 - 1) = '(';
-				*(lp + LLIST_PF2 + 6) = ')';
+				*(outLinePtr + LLIST_PF2 - 1) = '(';
+				*(outLinePtr + LLIST_PF2 + 6) = ')';
 #endif
 			}
 		}
-	}
-/**************************************************tg*/
-/*  01/26/2022  Adds Support for HLLxxF  - TG
-added*/
-
-
-	for ( s = lp; s < lp + LLIST_SIZE; ++s )   /* Convert all zero's to spaces */
-	{
-		if ( *s == 0 )
-			*s = ' ';
-	}
-
-
-/*    if (*s == 1)  * List macro call source line ? */
-	if ( 0 == 1 )  /* List macro call source line ? */
+    }
+	for ( chrPtr = outLinePtr; chrPtr < outLinePtr + list_source.srcPosition; ++chrPtr )
+    {
+        if (*chrPtr == 0)
+			*chrPtr = ' ';	/* Replace any \0's with ' ' in area leading up to source position */
+    }
+	/* chrPtr will point to a nul if this is NOT a meb thing. I.e. nothing has yet been placed in the source region */
+    if ( chrPtr[0] == 0)
 	{
 #ifndef MAC_PP
-		if ( list_src != 0 || line_errors_index != 0 )
+		if (((macro_nesting > 0) ? list_mes : list_src) != 0 || line_errors_index != 0 )
 		{
-#endif
-
-			if ( listing_temp[LLIST_SIZE] == '\t' )
-			{
-				for ( ; s < (lp + LLIST_SRC + tab_wth); ++s )
-				{
-					*s = ' ';
-				}
-				strcpy(s, &listing_temp[LLIST_SIZE + 1]);
-			}
-			else
-			{
-				for ( ; s < (lp + LLIST_SRC); ++s )
-				{
-					*s = ' ';
-				}
-				strcpy(s, &listing_temp[LLIST_SIZE]);
-			}
-
-#ifndef MAC_PP
+			chrPtr += deTab(inp_str, 8, 0, 0, lstat->listBuffer + list_source.srcPosition, sizeof(meb_stats.listBuffer) - list_source.srcPosition);
+			/* make sure it is '\n'+nul terminated */
+			if ( chrPtr[-1] != '\n' )
+				*chrPtr++ = '\n';
+			*chrPtr = 0;
 		}
 		else
 		{
-			*s++ = '\n';
-			*s = 0;
-		}
-#endif
-
-	}
-
-
-
-
-
-	if ( *s == 0 )   /* List source code ? (0 for yes) */
-
-
-/*************************************************etg*/
-	{
-#ifndef MAC_PP
-		int sho;
-		sho = (macro_nesting > 0) ? list_mes : list_src;
-		if ( sho != 0 || line_errors_index != 0 )
-		{
-#endif
-/**************************************************tg*/
-/* 01/19/2022   added by TG 
-
-
-*/
-
-
-			for ( ; s < (lp + LLIST_SRC); ++s )
+			if ( !strchr(chrPtr-1,'\n') )
 			{
-				*s = ' ';
+				/* It's just a blank line */
+				*chrPtr++ = '\n';
+				*chrPtr = 0;
 			}
-
-
-
-			tmp_inp_str = inp_str;
-			for ( tab_cnt = 0; tab_cnt < tab_wth; ++tab_cnt )
-			{
-				if ( *tmp_inp_str != '\t' )
-				{
-					*s++ = *tmp_inp_str++;
-				}
-				else
-				{
-
-					for ( ; s < (lp + LLIST_SRC + tab_wth); ++s )
-					{
-						*s = ' ';
-
-					}
-					++tmp_inp_str;  /* skip tab */
-					break;
-				}
-			}
-
-
-
-
-
-
-
-
-
-			lstat->line_ptr[LLIST_MAXSRC] = '\n';
-			lstat->line_ptr[LLIST_MAXSRC + 1] = 0;
-			if ( lstat->line_end - s - 2 > 0 )
-				strncpy(s, tmp_inp_str, lstat->line_end - s - 2);
-
-
-/*            if (lstat->line_end-s-2 > 0) strncpy(s, tmp_inp_str, lstat->line_end-s-2);
- *************************************************etg*/
-/*            lstat->line_ptr[LLIST_MAXSRC] = '\n';
-			lstat->line_ptr[LLIST_MAXSRC+1] = 0;
-			if (lstat->line_end-s-2 > 0) strncpy(s, inp_str, lstat->line_end-s-2);
-*/
-
-#ifndef MAC_PP
 		}
-		else
-		{
-			*s++ = '\n';
-			*s = 0;
-		}
+#else
+		if ( lstat->listBuffer+LLIST_MAXSRC - chrPtr - 2 > 0 )
+			strncpy(chrPtr, inp_str, lstat->listBuffer+LLIST_MAXSRC - chrPtr - 2);
+		lstat->listBuffer[LLIST_MAXSRC] = '\n';
+		lstat->listBuffer[LLIST_MAXSRC + 1] = 0;
 #endif
 	}
-
-
-	puts_lis(lp, 1);
+	puts_lis(outLinePtr, 1);
 	if ( line_errors_index != 0 )
 	{
 		int z;
@@ -634,7 +647,7 @@ void line_to_listing(void)
 }
 
 #ifndef MAC_PP
-int fixup_overflow(LIST_stat *lstat)
+int fixup_overflow(LIST_stat_t *lstat)
 {
 	char *lp;
 	display_line(lstat);
@@ -642,7 +655,7 @@ int fixup_overflow(LIST_stat *lstat)
 	lstat->expected_seg = current_section;
 	lstat->pc_flag = 1;
 	lstat->line_no = 0;          /* don't print seq numb next time */
-	lp = lstat->line_ptr + LLIST_SIZE;
+	lp = lstat->listBuffer + list_source.srcPosition;
 	*lp++ = '\n';
 	*lp = 0;
 	return 0;
@@ -652,7 +665,7 @@ void n_to_list(int nibbles, long value, int tag)
 {
 	register unsigned long tv;
 	register char *lpr;
-	LIST_stat *lstat;
+	LIST_stat_t *lstat;
 	int lcnt, nyb;
 
 	if ( !pass )
@@ -701,7 +714,7 @@ void n_to_list(int nibbles, long value, int tag)
 			return;
 		fixup_overflow(lstat);
 	}
-	lpr = lstat->line_ptr + lstat->list_ptr + nyb;
+	lpr = lstat->listBuffer + lstat->list_ptr + nyb;
 	if ( tag != 0 )
 	{
 		*lpr = tag;
@@ -734,127 +747,87 @@ void n_to_list(int nibbles, long value, int tag)
 }
 #endif
 
+/* ListArg Error Messages */
+typedef struct
+{
+	int max;
+	int isFlag;
+	char *msg;
+} ListErrs_t;
+
+static const ListErrs_t ListErrs[ListArg_MAX] =
+{
+	{ 15, 0, "Format ID number"},
+	{132, 0, "Location on list line"},
+	{  8, 0, "Number of fields to list"},
+	{ 16, 0, "RADIX to used"},
+	{255, 1, "Suppressed zeros"},
+	{255, 1, "Prefixed signs"},
+	{255, 1, "New line (placeholder)"}
+};
 
 /******************************************************************
  * 01/19/2022   added for HLLxxF support by TG
  *
  * list_args - gets the list args from the input file.
  */
-int list_args(int *arg, int cnt)
-/*
+/** list_args() - parse optional arguments on a .LIST directive
  * At entry:
- * 	    arg - pointer to an int array with a size of at least seven
+ * @param arg - pointer to an int array
+ * @param maxIdx - maximum number of arguments to expect
+ * @param idx - starting element in array to process
+ * @param optTextBuf - pointer to place to deposit any optional text
+ * @param optTextBufSize - size of buffer above
+ * Global pointers:
  *	inp_ptr - points to next source byte
  *	inp_str - contains the source line
  *
  * At exit:
+ * @return Number of arguments parsed
  *	Array arg - filled with source args
  *
- *	returns a 0 if no args, otherwise returns the number of args
- *
- * Notes:
- *	Array	arg[0] = Format ID #
- *		arg[1] = Target of data field - line location
- *		arg[2] = Lenght of field - lenght of data in bytes 
- *		arg[3] = Field Radix
- *		arg[4] = Flag - if .NE. suppress leading zeros 
- *		arg[5] = Flag - if .NE. prefix a sign
- *		arg[6] = Flag - if .NE. request a new list line
+ * @note
+ *  Array
+ *      arg[ListArg_ID] = Format ID #
+ *		arg[ListArg_Dst] = Target of data field - line location
+ *		arg[ListArg_Len] = Lenght of field - lenght of data in bytes 
+ *		arg[ListArg_Radix] = Field Radix
+ *		arg[ListArg_LZ] = Flag - if .NE. include leading zeros 
+ *		arg[ListArg_Sign] = Flag - if .NE. prefix a sign
+ *		arg[ListArg_NewLine] = Flag - if .NE. request a new list line
  *
  *
  *   Setting with .LIST BIN() not supported for now
  */
-
+int list_args(int arg[ListArg_MAX], const int maxIdx, int idx, unsigned char *optTextBuf, size_t optTextBufSize)
 {
-
-
-/*
-as of now these options not supported
-
-Format ID's
-Number of Fields
-
-prefixed signs
-
-
-*/
-
-
 	int cr = current_radix;    /* save current */
-	char *err_arg[6];
-	int err_cnt;
-	unsigned char *txtbuf_ptr, *txtbuf_end;
-
-
-	/* Error Codes for testing */
-	int tst[7] = { 15, 132, 8, 16, 255, 255, 0 };
-	/*  Max values of Variables
-	tst[0] =  15.	;no more than 15 formats (ID's)
-	tst[1] = 132.	;line location can't be greater than 132
-	tst[2] =   8.	;number fields can't be greater than 8
-	tst[3] =  16.	;RADIX can't be greater than 16
-	tst[4] =  -1	;no limit on number of leading zeros suppressed
-	tst[5] =  -1	;no limit on number of prefixed signs
-	tst[6] =   0	;not used - flag to request a new listing line
-*/
-
-	/* Error Messages */
-	err_arg[0] = "Format ID number";
-	err_arg[1] = "Location on list line";
-	err_arg[2] = "Number of fields to list";
-	err_arg[3] = "RADIX to used";
-	err_arg[4] = "Suppressed zeros";
-	err_arg[5] = "Prefixed signs";
-
-
-
+	int numArgs = 0;
+	
 	current_radix = 10;      /* set RADIX to 10 */
-
-
-
-
-
-
-
-
-	txtbuf_ptr = LLIST_TXT_BUF;
-	/* save one space null at the end of buffer */
-	txtbuf_end = LLIST_TXT_BUF + sizeof(LLIST_TXT_BUF) - 1;
-
-	/* clear text buffer */
-	for ( err_cnt = 0; err_cnt <= (sizeof(LLIST_TXT_BUF)); err_cnt++ )
+	if ( optTextBuf )
 	{
-		txtbuf_ptr[err_cnt] = 0;
+		if ( optTextBufSize > 0 )
+			optTextBuf[0] = 0;
+		if ( optTextBufSize > 1 )
+			optTextBuf[1] = 0;
 	}
-
 	/* clear data buffer */
-	for ( err_cnt = 0; err_cnt <= 6; err_cnt++ )
-	{
-		arg[err_cnt] = 0;
-	}
-
-	/* error count */
-	err_cnt = 6 - cnt;
-
-
-
+	memset(arg,0,ListArg_MAX*sizeof(int));
+	/* eat optional equal sign */
 	if ( *inp_ptr == '=' )
 		inp_ptr++;
 	if ( *inp_ptr == '(' )
 	{
+		/* eat paren */
 		inp_ptr++;
-
 		/* just in case */
 		comma_expected = 0;
-
-
 		while ( 1 )
 		{
-
 			if ( *inp_ptr == '/' )
 			{
-				LLIST_REQ_NEWL += 1;
-
+				arg[ListArg_NewLine] = 1;
 				inp_ptr++;
 				if ( *inp_ptr == ')' )
 				{
@@ -862,61 +835,48 @@ prefixed signs
 					break;
 				}
 			}
-
 			if ( *inp_ptr == ',' )        /* any more tokens on this line of code */
 			{
 				inp_ptr++;
 			}
-
 			get_token();     /* setup the variables */
 			/*  Call exprs with Force absolute which will cause error if not absolute */
 			exprs(0, &EXP0);      /* evaluate the exprssion */
-
-
-
 			if ( *inp_ptr == '\'' )       /* is it text */
 			{
-				*txtbuf_ptr = EXP0SP->expr_value;
-
-
-
-
-				txtbuf_ptr++;
-
+				if ( optTextBuf && optTextBufSize > 2 )
+				{
+					*optTextBuf++ = EXP0SP->expr_value;
+					--optTextBufSize;
+				}
 				while ( 1 )
 				{
-
-
-
 					inp_ptr++;
-
-
 					if ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
 					{
 						bad_token(inp_ptr, "Missing closing apostrophie");
 						f1_eatit();
+						current_radix = cr;
 						return (0);
 					}
-
 					if ( *inp_ptr == '\'' )   /* is it end of text */
 					{
 						if ( *(inp_ptr + 1) == '\'' )   /* is it 2 in a row */
 						{
 							inp_ptr++;
-
-
-							*txtbuf_ptr = *inp_ptr;
-							txtbuf_ptr++;
-
-							if ( txtbuf_ptr >= txtbuf_end )
+							if ( optTextBuf && optTextBufSize > 1 )
 							{
-
+								*optTextBuf++ = *inp_ptr;
+								*optTextBuf = 0;
+								--optTextBufSize;
+							}
+							if ( optTextBufSize <= 1 )
+							{
 								/* Reached end of text data buffer (out of storage space) */
 								bad_token(inp_ptr, "Line List text buffer overflow, Max of 16 Characters");
 								f1_eatit();
-
+								current_radix = cr;
 								return (0);
-
 							}
 						}
 						else
@@ -924,70 +884,58 @@ prefixed signs
 							inp_ptr++;
 							break;
 						}
-
 					}
 					else
 					{
-
-
-						*txtbuf_ptr = *inp_ptr;
-						txtbuf_ptr++;
-
-						if ( txtbuf_ptr >= txtbuf_end )
+						if ( optTextBuf && optTextBufSize > 1 )
 						{
-
-							/* Reached end of text data buffer (out of storage space) */
-							bad_token(inp_ptr + 1, "Line List text buffer overflow, Max of 16 Characters");
-							f1_eatit();
-
-							return (0);
-
+							*optTextBuf++ = *inp_ptr;
+							*optTextBuf = 0;
+							--optTextBufSize;
 						}
-
-
-
+						if ( optTextBufSize <= 1 )
+						{
+							/* Reached end of text data buffer (out of storage space) */
+							bad_token(inp_ptr, "Line List text buffer overflow, Max of 16 Characters");
+							f1_eatit();
+							current_radix = cr;
+							return (0);
+						}
 					}
-
-
 				}
 			}
 			else
 			{
-				arg[cnt] = EXP0SP->expr_value;
-				if ( arg[cnt] > tst[cnt] )
+				if ( ListErrs[idx].isFlag )
+					arg[idx] = EXP0SP->expr_value ? 1 : 0;
+				else
 				{
-					sprintf(emsg, "%s set to max value of %d  , requested %d", err_arg[cnt], tst[cnt], arg[cnt]);
-					show_bad_token((inp_ptr - 1), emsg, MSG_ERROR);
-					arg[cnt] = tst[cnt];
-/*                        sprintf(emsg,"Set to max value of %d", arg[cnt]);
-						show_bad_token((inp_ptr),emsg,MSG_ERROR);
-						f1_eatit();
-
-						return (0);
-*/
-
+					arg[idx] = EXP0SP->expr_value;
+					if ( arg[idx] > ListErrs[idx].max )
+					{
+						sprintf(emsg, "%s set to max value of %d  , requested %d", ListErrs[idx].msg, ListErrs[idx].max, arg[idx]);
+						show_bad_token((inp_ptr - 1), emsg, MSG_ERROR);
+						arg[idx] = ListErrs[idx].max;
+					}
 				}
-
-				cnt++;
-				if ( cnt == 6 )
+				idx++;
+				++numArgs;
+				if ( numArgs >= maxIdx )
 				{
-					sprintf(emsg, "Too many directive arguments, Max of %d allowed", err_cnt);
+					sprintf(emsg, "Too many directive arguments, Found %d, Max of %d allowed", numArgs, maxIdx);
 					show_bad_token((inp_ptr), emsg, MSG_ERROR);
 					f1_eatit();
+					current_radix = cr;
 					return (0);
 				}
 			}
-
-
-
 			if ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
 			{
 				bad_token(inp_ptr, "Missing closing parenthesis");
 				f1_eatit();
+				current_radix = cr;
 				return (0);
 			}
-
-
 			if ( *inp_ptr == ')' )
 			{
 				inp_ptr++;
@@ -997,120 +945,11 @@ prefixed signs
 			{
 				inp_ptr++;
 			}
-
 		}
-
-
-
 	}
-
 	current_radix = cr;      /* restore radix */
-
-	return (cnt);
-
+	return numArgs;
 }
 
-
-/******************************************************************
- * 01/19/2022   added for HLLxxF support by TG
- *
- * list_do_args - sets the list args from the input file.
- */
-void list_do_args(char *list_opt)
-{
-/*
- * At entry:
- *	list_opt - pointer to the .list option
-		   option is either SRC, SEQ, LOC, COM, or BIN
- * At exit:
- *	SRC - Sets	LLIST_SRC
- * 			LLIST_SRC_QUED
- *			LLIST_NEWL
- *
-*/
-
-
-	int arg[7] = { 0, 0, 0, 0, 0, 0, 0 };
-/*
-arg[0] = Format ID #
-arg[1] = Target of data field - line location
-arg[2] = Lenght of field - lenght of data in bytes or Flag - if .NE. just queue it 
-arg[3] = Field Radix
-arg[4] = Flag - if .NE. suppress leading zeros 
-arg[5] = Flag - if .NE. prefix a sign
-arg[6] = Flag - if .NE.
-*/
-
-	int arg_cnt;
-	int start;
-
-	/* Do for directive SRC */
-	if ( strcmp(list_opt, "SRC") == 0 )
-	{
-
-/*  SRC only uses the follow args
-arg[1] = Target of data field - line location
-arg[2] = Flag - if .NE. just queue it 
-arg[6] = Flag - if .NE. request a new list line
-*/
-		if ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
-		{
-/*
-							f1_eatit();
-*/
-			return;
-		}
-
-
-
-
-/* in SRC - so data starts with arg[1] */
-		start = 1;
-
-		/* is there a key word */
-		arg_cnt = list_args(arg, start);
-
-
-		if ( arg_cnt == 0 )       /* Error */
-		{
-			/* printf( "\n No SRC data so no change  \n" ); */
-			return;
-		}
-
-		if ( arg[2] == 0 )        /* Do now or que it */
-		{
-			LLIST_SRC = arg[1] - 1;       /* because HLLxxF uses 41  for line start */
-			LLIST_SRC_QUED = arg[1] - 1;  /* because HLLxxF uses 41  for line start */
-		}
-		else
-		{
-			LLIST_SRC_QUED = arg[1] - 1;  /* because HLLxxF uses 41 ??? for line start */
-		}
-
-
-
-	}
-
-/* Following not supported as of now */
-	if ( strcmp(list_opt, "SEQ") == 0 )
-	{
-
-	}
-	if ( strcmp(list_opt, "LOC") == 0 )
-	{
-
-	}
-	if ( strcmp(list_opt, "COM") == 0 )
-	{
-
-	}
-	if ( strcmp(list_opt, "BIN") == 0 )
-	{
-
-	}
-
-	return;
-
-}
 
 

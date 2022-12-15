@@ -287,4 +287,8 @@ extern void display_mem(void);
 extern void show_timer( void );
 void qksort (SS_struct *array[],unsigned int num_elements);
 
+#ifndef n_elts
+#define n_elts(x) (int)(sizeof(x)/sizeof((x)[0]))
+#endif
+
 #endif /* _HEADER_H_ */

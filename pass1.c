@@ -204,7 +204,7 @@ int get_text( void )
  *	routine returns TRUE
  */
 {
-    char *s;
+    char *strPtr;
     if (token_pool_size <= MAX_TOKEN) get_token_pool(max_token, 1);
     if (inp_str_size < MAX_LINE)
     {   /* make sure there's room */
@@ -226,13 +226,13 @@ int get_text( void )
     {
 		if ( cmd_assems )
         {
-			if ( (s=cmd_assems[get_text_assems]) )
+			if ( (strPtr=cmd_assems[get_text_assems]) )
 			{
-				strcpy(inp_str, s);
+				strcpy(inp_str, strPtr);
 				inp_len = strlen(inp_str)+1;
-				s = inp_str+inp_len-1;
-				*s++ = '\n';
-				*s = 0;
+				strPtr = inp_str+inp_len-1;
+				*strPtr++ = '\n';
+				*strPtr = 0;
 	#if !defined(MAC_PP)
 				if (options[QUAL_DEBUG]) dbg_line(0);
 	#endif
@@ -248,8 +248,9 @@ int get_text( void )
         }
 		get_text_assems = cmd_assems_index;
     }
-    gt_loop:
-    inp_ptr = s = inp_str;
+gt_loop:
+	strPtr = inp_str;
+	inp_ptr = inp_str;
     if (macro_level == 0)
     {
         ++current_fnd->fn_line;   /* increment the source line # */
@@ -257,9 +258,9 @@ int get_text( void )
         while (1)
         {
             inp_str[inp_str_size-3] = 0;   /* make sure the line is null terminated */
-            if (!fgets(s, inp_str_size-3-inp_len, current_fnd->fn_file))
+            if (!fgets(strPtr, inp_str_size-3-inp_len, current_fnd->fn_file))
             {
-                *s = '\0';
+                *strPtr = '\0';
                 if (!feof(current_fnd->fn_file))
                 {
                     MDEBUG(("Got an input error. So far, line is:\n%s\n", inp_str));
@@ -277,25 +278,25 @@ int get_text( void )
             }
 			if ( (edmask&ED_CR) )
 			{
-				while ( *s )
-					*s++ &= 0x7f;       /* zap off any 8th bit */
+				while ( *strPtr )
+					*strPtr++ &= 0x7f;       /* zap off any 8th bit */
 			}
 			else
 			{
 				char cc;
-				while ( (cc = *s) )
+				while ( (cc = *strPtr) )
 				{
 					cc &= 0x7f;			/* zap off any 8th bit */
 					if ( cc == '\r' )
 					{
-						*s++ = '\n';
-						*s = 0;
+						*strPtr++ = '\n';
+						*strPtr = 0;
 						break;
 					}
-					*s++ = cc;
+					*strPtr++ = cc;
 				}
 			}
-            if (s[-1] == '\n')
+            if (strPtr[-1] == '\n')
 				break;				  /* if we terminated on a \n, we're done */
             if (feof(current_fnd->fn_file))
 				break;				 /* terminated on an EOF */
@@ -304,11 +305,11 @@ int get_text( void )
                 MEM_free(presub_str);
                 presub_str = NULL ;
             }
-            inp_len = s-inp_str;       /* compute the length so far */
+            inp_len = strPtr-inp_str;       /* compute the length so far */
             if (inp_len+MAX_LINE > 32767 || inp_len+MAX_LINE < 0) break;
             inp_str_size += MAX_LINE;  /* make buffer bigger */
             inp_str = MEM_realloc(inp_str, inp_str_size); /* move the buffer */
-            s = inp_str+inp_len;       /* move pointer */
+            strPtr = inp_str+inp_len;       /* move pointer */
         }
 #if !defined(MAC_PP)
         if (options[QUAL_DEBUG]) dbg_line(0);
@@ -321,23 +322,23 @@ int get_text( void )
         MDEBUG(("Reading macro\n"));
         while (1)
         {
-            int c;
-            c = *src++;
-            if ((c & 0x80) != 0)
+            int cc;
+            cc = *src++;
+            if ((cc & 0x80) != 0)
             {
                 int t;
                 char *ts;
-                if (c == MAC_LINK)
+                if (cc == MAC_LINK)
                 {    /* end of text area? */
                     ADJ_ALIGN(src)
                     src = *(unsigned char **)src; /* link to next area */
                     MDEBUG(("\tLinked to %p\n", src));
                     continue;        /* and continue */
                 }
-                else if (c == MAC_EOM)
+                else if (cc == MAC_EOM)
                 {  /* end of macro */
-                    c = marg_head->marg_flag;
-                    if (c == 1)
+                    cc = marg_head->marg_flag;
+                    if (cc == 1)
                     {        /* .rept type */
                         --marg_head->marg_count;  /* decrement the loop cnt */
                         MDEBUG(("\tEOM on .REPT macro. count now %d\n", marg_head->marg_count));
@@ -347,7 +348,7 @@ int get_text( void )
                             goto gt_loop;      /* retry the get */
                         }
                     }
-                    else if (c == 2)
+                    else if (cc == 2)
                     { /* .IRP */
                         char **ap,**ap1;
                         ap = marg_head->marg_args;
@@ -361,7 +362,7 @@ int get_text( void )
                             goto gt_loop;  /* and continue */
                         }
                     }
-                    else if (c == 3)
+                    else if (cc == 3)
                     { /* .irpc */
                         char **ap,**ap1,chr;
                         ap = marg_head->marg_args;
@@ -380,17 +381,18 @@ int get_text( void )
                     mexit_common(1);     /* zap 1 level of macro */
                     goto gt_loop;        /* and continue */
                 }               /* -- MAC_EOM */
-                t = c&0x7F;         /* get index to argument */
+                t = cc&0x7F;         /* get index to argument */
                 ts = *(marg_head->marg_args+t); /* point to arg ptr */
                 MDEBUG(("\tArgument %d substitution. Placing %s\n", t, ts));
-                while ( (*s++ = *ts++) );    /* copy in argument */
-                --s;            /* backup over the null */
+                while ( (*strPtr++ = *ts++) )
+					;    /* copy in argument */
+                --strPtr;            /* backup over the null */
                 continue;
             }
-            *s++ = c;
-            if (c == 0)
+            *strPtr++ = cc;
+            if (cc == 0)
             {
-                --s;            /* endup pointing to NULL */
+                --strPtr;       /* leave pointing to NULL */
                 break;          /* done */
             }
         } 
@@ -403,7 +405,7 @@ int get_text( void )
         char *src, *scmp;
         char *dst;
         struct str_sub *sub;
-        int c, inp_str_resized=0;
+        int cc, inp_str_resized=0;
 
         if (presub_str == NULL)
         {
@@ -412,25 +414,25 @@ int get_text( void )
         src = inp_str;            /* exchange buffers */
         dst = inp_str = presub_str;
         presub_str = src;
-        while ((c = *src++) != 0)
+        while ((cc = *src++) != 0)
         {
             char *dp, *tp, *tpend;
             int tic;
-            if (c != '\'' && (cttbl[c]&CT_ALP) == 0)
+            if (cc != '\'' && (cttbl[cc]&CT_ALP) == 0)
             {
-                *dst++ = c;
+                *dst++ = cc;
                 continue;
             }
             dp = dst;
-            if (c == '\'')
+            if (cc == '\'')
             {
                 if ((cttbl[(int)*src]&CT_ALP) == 0)
                 {
-                    *dst++ = c;
+                    *dst++ = cc;
                     continue;
                 }
-                *dp++ = c;      /* pass the tic in case token doesn't match */
-                c = *src++;     /* and pickup the next char */
+                *dp++ = cc;      /* pass the tic in case token doesn't match */
+                cc = *src++;     /* and pickup the next char */
                 tic = 1;        /* signal token began with a tic */
             }
             else
@@ -441,13 +443,13 @@ int get_text( void )
             tpend = tp+token_pool_size;
             if ((edmask&ED_LC) == 0)
             {
-                *tp++ = _toupper(c);    /* upcase the first char */
-                *dp++ = c;      /* incase its not a token */
-                c = *src;       /* pickup second char of token */
-                while ((cttbl[(int)c] & (CT_ALP|CT_NUM)) != 0)
+                *tp++ = _toupper(cc);    /* upcase the first char */
+                *dp++ = cc;      /* incase its not a token */
+                cc = *src;       /* pickup second char of token */
+                while ((cttbl[(int)cc] & (CT_ALP|CT_NUM)) != 0)
                 { /* while its a ALP_NUM */
-                    *tp++ = _toupper(c);
-                    *dp++ = c;
+                    *tp++ = _toupper(cc);
+                    *dp++ = cc;
                     if (tp >= tpend)
                     {
                         int ii;
@@ -455,7 +457,7 @@ int get_text( void )
                         tp = get_token_pool(ii, 1) + ii;
                         tpend = token_pool + token_pool_size;
                     }
-                    c = *++src;
+                    cc = *++src;
                 }
                 *tp = 0;
                 scmp = token_pool;
@@ -463,12 +465,12 @@ int get_text( void )
             }
             else
             {
-                *dp++ = c;      /* incase its not a token */
-                c = *src;       /* pickup second char of token */
-                while ((cttbl[c] & (CT_ALP|CT_NUM)) != 0)
+                *dp++ = cc;      /* incase its not a token */
+                cc = *src;       /* pickup second char of token */
+                while ((cttbl[cc] & (CT_ALP|CT_NUM)) != 0)
                 { /* while its a ALP_NUM */
-                    *dp++ = c;
-                    c = *++src;
+                    *dp++ = cc;
+                    cc = *++src;
                 }
                 *dp = 0;
                 token_value = dp-dst;
@@ -508,32 +510,34 @@ int get_text( void )
             dst = dp;
             continue;
         }
-        s = dst;
-        *s = 0;
+        strPtr = dst;
+        *strPtr = 0;
         if (inp_str_resized)
         {
             presub_str = MEM_realloc(presub_str, inp_str_size);    /* in case there's an error */
         }
     }
-    inp_len = s-inp_str;
+    inp_len = strPtr-inp_str;
     record_count++;
-    if (*(s-1) != '\n')
+    if (*(strPtr-1) != '\n')
     {    /* last thing on line a \n? */
-        if (*(s-1) == '\r')
+        if (*(strPtr-1) == '\r')
         { /* a cr is ok, though */
-            *(s-1) = '\n';     /* but replace it with a \n */
+            *(strPtr-1) = '\n';     /* but replace it with a \n */
         }
         else
         {
-            *s++ = '\n';       /* nope, so add one */
-            *s   = '\0';       /* and terminate it too */
-            if (inp_len >= inp_str_size-3) bad_token((char *)0,"Line too long; Truncated");
+            *strPtr++ = '\n';       /* nope, so add one */
+            *strPtr   = '\0';       /* and terminate it too */
+            if (inp_len >= inp_str_size-3)
+				bad_token((char *)0,"Line too long; Truncated");
         }
     }
-    if (inp_len > 2 && *(s-2) == '\r') *(s-2) = ' '; /* eat extra \r's */
+    if (inp_len > 2 && *(strPtr-2) == '\r')
+		*(strPtr-2) = ' ';		 /* eat extra \r's */
     if (inp_str[0] == '\f')
     {
-        inp_str[0] = ' ';
+        inp_str[0] = ' ';		/* replace formfeed with space */
         lis_line = 0;
     }
     MDEBUG(("After string substitutions: %s\n", inp_str));
@@ -1215,6 +1219,15 @@ int f1_defg(int flag)
         {       /* and it's already defined... */
 			if ( !ptr->flg_pass0 )
 			{
+				if (    !ptr->flg_exprs
+					 && ptr->ss_value == current_pc
+					 && ptr->ss_seg == current_section
+					)
+				{
+					/* Assigning a label to the same location so that's okay */
+					f1_eatit();
+					return 0;
+				}
 				/* and it has been previously defined in pass 1 */
 				if ( include_level > 0 )
 				{
@@ -1580,7 +1593,7 @@ static void found_symbol( int gbl_flg, int tokt )
     {  /* unsatisfied conditional */
         if (list_cnd)
         {
-            listing_line[LLIST_USC] = 'X';
+			list_stats.listBuffer[LLIST_USC] = 'X';
 #ifdef MAC_PP
             binary_output_flag = 1; /* in case we're in a macro */
 #endif
@@ -1743,8 +1756,8 @@ void pass1( int file_cnt)
                 }
                 else
                 {
-                    memset(listing_line,' ',LLIST_SIZE);
-                    listing_line[LLIST_SIZE] = 0;
+					memset(list_stats.listBuffer, ' ', LLIST_SIZE);
+					list_stats.listBuffer[LLIST_SIZE] = 0;
                     list_stats.pc_flag = 0;
                     list_stats.f1_flag = 0;
                     list_stats.f2_flag = 0;
@@ -1975,7 +1988,7 @@ void pass1( int file_cnt)
                     {
                         if (condit_word < 0 && old_condit < 0)
                         {
-                            listing_line[LLIST_USC] = 'X';
+							list_stats.listBuffer[LLIST_USC] = 'X';
                         }
                         else
                         {
@@ -1985,7 +1998,7 @@ void pass1( int file_cnt)
                             }
                             if ((opc->op_class&(~DFLCND)) == 0)
                             {
-                                sprintf(listing_line+LLIST_CND,"(%d)",old_nest);
+                                sprintf(list_stats.listBuffer+LLIST_CND,"(%d)",old_nest);
                             }
                         }
 #ifdef MAC_PP
@@ -1996,9 +2009,10 @@ void pass1( int file_cnt)
                 }
                 if (condit_word < 0)
                 {
-                    if ((list_mes == 0 && macro_nesting > 0) ||
-                        list_cnd == 0) show_line = 0;
-                    if (show_line != 0) listing_line[LLIST_USC] = 'X';
+                    if ((list_mes == 0 && macro_nesting > 0) || list_cnd == 0)
+						show_line = 0;
+                    if (show_line != 0)
+						list_stats.listBuffer[LLIST_USC] = 'X';
                     f1_eatit();      /* eat rest of line */
 #ifdef MAC_PP
                     binary_output_flag = show_line;  /* in case we're in a macro */
@@ -2056,7 +2070,7 @@ void pass1( int file_cnt)
                             {
                                 if ((list_mes == 0 && macro_nesting > 0) ||
                                     list_cnd == 0) show_line = 0;
-                                if (show_line != 0) listing_line[LLIST_USC] = 'X';
+                                if (show_line != 0) list_stats.listBuffer[LLIST_USC] = 'X';
                                 f1_eatit();     /* eat rest of line */
                             }
                             continue;
@@ -2082,7 +2096,7 @@ void pass1( int file_cnt)
         }                 /* -- type is string */
         if (condit_word < 0)
         {
-            if (list_cnd) listing_line[LLIST_USC] = 'X';
+            if (list_cnd) list_stats.listBuffer[LLIST_USC] = 'X';
             f1_eatit();            /* eat rest of line */
 #ifdef MAC_PP
             binary_output_flag = list_cnd; /* in case we're in a macro */

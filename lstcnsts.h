@@ -65,7 +65,7 @@ Change Log
 #endif
 
 #ifndef MAC_PP
-#define LLIST_SIZE	40	/* listing field size */
+#define LLIST_SIZE	40	/* listing field size (area to the left of source text) */
 #define LLIST_SEQ	0	/* statement number */
 #define LLIST_LOC	9	/* program counter */
 #define LLIST_USC	22	/* unsatisified conditinal's X */
@@ -102,11 +102,16 @@ removed
 
 /* added */
 #define LLIST_MAXSRC	(256+LLIST_SIZE+27)	/* maximum length of listing line */
+#if 0	/* dms: moved to LIST_stat_t struct and renamed */
 extern int LLIST_SRC;				/* listing line location for source code */
 extern int LLIST_SRC_QUED;			/* queued listing line location for source code */
 extern int LLIST_REQ_NEWL;			/* Request a new listing line */
 extern unsigned char LLIST_TXT_BUF[18];		/* Buffer for text storage - 1 location + 16 characters + null */
-
+#else
+#define LLIST_SRC	40				/* column position for source to begin */
+#define LLIST_MAX_SRC_OFFSET (LLIST_SRC+40)	/* Maximum number of columns source may be repositioned */
+#define OPT_TXT_BUF_SIZE (1+16+1)	/* Buffer for text storage - 1 location + 16 characters + null */
+#endif
 /*************************************************etg*/
 
 #endif /* _LSTCNSTS_H_ */

@@ -62,6 +62,7 @@ DIRDEF(".BYTE",	op_byte,	DFLGBM)
 DIRDEF(".CCDEF", op_ccdef,	0)
 #endif
 DIRDEF(".CKSUM",  op_cksum,	DFLGBM)
+DIRDEF(".COPY",	op_copy,	0)
 #if defined(MAC_65)
 DIRDEF(".CPU",	op_cpu,		0)
 #endif

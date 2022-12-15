@@ -298,6 +298,8 @@ int main(int argc, char *argv[])
     {         /* process input command options */
         EXIT_FALSE;
     }
+    list_source.srcPosition = LLIST_SIZE;
+    list_source.srcPositionQued = LLIST_SIZE;
     init_exprs();
 #if !defined(MAC_PP)
     outx_init();
@@ -371,18 +373,10 @@ int main(int argc, char *argv[])
 		current_lsb=1;			    /* current local symbol block number */
 		next_lsb=2;					/* next available local symbol block number */
 		autogen_lsb=65000;			/* autolabel for macro processing */
-		list_stats.expected_pc = 0;
-		list_stats.expected_seg = 0;
-		list_stats.f1_flag = 0;
-		list_stats.f2_flag = 0;
-		list_stats.getting_stuff = 0;
-		list_stats.has_stuff = 0;
-		list_stats.include_level = 0;
-		list_stats.line_no = 0;
-		list_stats.list_ptr = 0;
-		list_stats.pc = 0;
-		list_stats.pc_flag = 0;
-		list_stats.pf_value = 0;
+		memset(&list_stats,0,sizeof(list_stats));
+		memset(&meb_stats,0,sizeof(meb_stats));
+		list_source.srcPosition = LLIST_SIZE;
+		list_source.srcPositionQued = LLIST_SIZE;
 		get_text_assems = 0;
 		edmask = macxx_edm_default;
 		show_line = 1;

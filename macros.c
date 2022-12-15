@@ -27,6 +27,7 @@ Change Log
 #include "listctrl.h"
 #include "memmgt.h"
 #include "exproper.h"
+#include "utils.h"
 
 unsigned char *macro_pool;   /* pointer to free space for macro expansion */
 int macro_pool_size;    /* amount of space left in macro pool */
@@ -521,47 +522,19 @@ int op_macro( void )      /* define a macro */
 #ifndef MAC_PP
 static void setup_mebstats( void )
 {
-    meb_stats.line_ptr = listing_meb;
     meb_stats.getting_stuff = 1;
     meb_stats.list_ptr = LLIST_OPC;
-    meb_stats.f1_flag = meb_stats.f2_flag = 0;
-/**************************************************tg*/
-/*    02-06-2022  Added for HLLxxF support by Tim Giddens
- *
- *  Can't process this here because the indent does not trigger
- *  until we are well into the macro function.  So let's set a 
- *  marker into the line buffer and store the macro call source
- *  line in a safe place for processing later in the normal
- *  listing function.
- *
- *  Removed
- *
- *    strcpy(&listing_meb[LLIST_SIZE],inp_str);
- *
- *  Added
- */
-
-/*    listing_meb[LLIST_SIZE] = 1;
-    strcpy(&listing_temp[LLIST_SIZE],inp_str);
- *    listing_temp[LLIST_SIZE] = 1;
-
-
-
-            for (s; s < (lp+LLIST_SRC); ++s)
-            {
-                *s = ' ';
-            }
-
-    strcpy(&listing_meb[LLIST_SIZE],inp_str);
-*/
-
-    strcpy(&listing_meb[LLIST_SIZE],inp_str);
-
-/*************************************************etg*/
+    meb_stats.f1_flag = 0;
+	meb_stats.f2_flag = 0;
     meb_stats.has_stuff = 1;
     meb_stats.line_no = list_stats.line_no;
     meb_stats.include_level = list_stats.include_level;
     meb_stats.pc_flag = 0;
+	list_source.optTextBuf[0] = 0;
+	list_source.reqNewLine = 0;
+	list_source.srcPosition = limitSrcPosition(list_source.srcPositionQued);
+	/* detab the whole line */
+	deTab(inp_str, 8, 0, 0, meb_stats.listBuffer + list_source.srcPosition, sizeof(meb_stats.listBuffer) - list_source.srcPosition);
     return;
 }
 #endif
@@ -718,7 +691,7 @@ int macro_call(Opcode *opc)
                     if (nest < 0)
                     {  /* end of term? */
                         ++inp_ptr;    /* yep, eat the terminator character */
-                        goto term_arg;    /* and terminate the argument */
+                        break;    /* and terminate the argument */
                     }
                 }
                 else if (c == beg)
@@ -737,7 +710,8 @@ int macro_call(Opcode *opc)
             while (1)
             {        /* copy string */
                 c = *inp_ptr;   /* pickup next char */
-                if ((cttbl[c]&(CT_EOL|CT_WS|CT_COM)) != 0) goto term_arg;
+                if ((cttbl[c]&(CT_EOL|CT_WS|CT_COM|CT_SMC)) != 0)
+					break;
                 *tpp++ = _toupper(c);   /* upcase the keyword */
                 if (not_kw && c == '=')
                 {   /* asking for keyword parameter? */
@@ -760,7 +734,7 @@ int macro_call(Opcode *opc)
                 ++inp_ptr;
             }
         }  
-        term_arg:
+term_arg:
         *args++ = 0;      /* null terminate the string */
         ++argptr;         /* skip to next arg */
         while ((cttbl[c = *inp_ptr]&CT_WS) != 0) ++inp_ptr; /* skip over trailing white space */
@@ -1034,6 +1008,7 @@ int op_irpc( void )           /* .IRPC macro */
     int c,size,tt,nest;
     Mcall_struct *marg;
     Macargs *ma;
+	int noOpenBrace;
 
     tt = get_token();
     if (tt != TOKEN_strng)
@@ -1092,7 +1067,8 @@ int op_irpc( void )           /* .IRPC macro */
     ma->mac_numargs = 1;         /* .IRPC has only 1 replaceable argument */
 #endif
 
-    while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+    while (isspace(*inp_ptr))
+		++inp_ptr; /* skip over white space */
     if (*inp_ptr != ',')
     {       /* next thing must be a comma */
         bad_token(inp_ptr,"Expected a comma here. One is assumed");
@@ -1102,13 +1078,17 @@ int op_irpc( void )           /* .IRPC macro */
         ++inp_ptr;            /* eat the comma */
         while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
     }
+	while (isspace(*inp_ptr))
+		++inp_ptr; /* skip over white space */
     if (*inp_ptr != macro_arg_open)
     {        /* next thing must be open brace */
-        bad_token(inp_ptr,"Expected an macro_arg_open here. One is assumed");
+/*        bad_token(inp_ptr,"Expected an macro_arg_open here. One is assumed"); */
+		noOpenBrace = 1;
     }
     else
     {
         ++inp_ptr;            /* eat opening bracket */
+		noOpenBrace = 0;
     }
     dst = (char *)mac_pool;          /* point to start of free space */
     nest = 0;                /* assume no nesting */
@@ -1119,14 +1099,25 @@ int op_irpc( void )           /* .IRPC macro */
     while (1)
     {              /* for chars in string */
         c = *inp_ptr;         /* pickup char */
-        if ((cttbl[c]&CT_EOL) != 0) break; /* stop if hit EOL */
+        if ((cttbl[c]&CT_EOL) != 0)
+			break; /* stop if hit EOL */
         ++inp_ptr;            /* eat the char */
-        if (c == macro_arg_close)
-        {           /* see if EOL */
-            --nest;
-            if (nest < 0) break;       /* end of string */
-        }
-        if (c == macro_arg_open) ++nest;      /* rollup nest level */
+		if ( !noOpenBrace )
+		{
+			if ( c == macro_arg_close )
+			{           /* see if EOL */
+				--nest;
+				if (nest < 0)
+					break;       /* end of string */
+			}
+			if (c == macro_arg_open)
+				++nest;      /* rollup nest level */
+		}
+		else
+		{
+			if ( (cttbl[c]&(CT_EOL|CT_WS|CT_SMC)) )
+				 break;
+		}
         *dst++ = c;           /* pass the character */
     }
     *dst = 0;                /* terminate the string */
@@ -1134,7 +1125,8 @@ int op_irpc( void )           /* .IRPC macro */
     dst = *key_pool;         /* point back to beginning of string */
     *first_targ = *dst;          /* record the first char */
     f1_eol();                /* should be a EOL here */
-    if (show_line != 0) line_to_listing();   /* display it */
+    if (show_line != 0)
+		line_to_listing();   /* display it */
     macro_pool = 0;
     macro_pool_size = 0;         /* start with fresh memory */
 #ifdef DUMP_MACRO
@@ -1222,10 +1214,10 @@ int op_rept( void )           /* .REPT macro */
     }
     sprintf(macro_name,REPT_NAME,rept_count);
     ma->mac_numargs = 0;         /* .REPT has 0 replaceable args */
-    dump_hex4((long)rept_count&0xFFFF,listing_line+LLIST_RPT);
+	dump_hex4((long)rept_count & 0xFFFF, list_stats.listBuffer + LLIST_RPT);
 #ifndef MAC_PP
-    listing_line[LLIST_RPT-1] = '(';
-    listing_line[LLIST_RPT+4] = ')';
+    list_stats.listBuffer[LLIST_RPT-1] = '(';
+    list_stats.listBuffer[LLIST_RPT+4] = ')';
 #endif
     if (show_line != 0) line_to_listing();   /* display it */
     macro_pool_size = 0;
@@ -1301,17 +1293,9 @@ void mexit_common( int depth)
     if (macro_level == 0 && meb_stats.getting_stuff)
     {
         if (meb_stats.has_stuff || meb_stats.list_ptr != LLIST_OPC)
-        {
-
-/*    listing_meb[LLIST_SIZE] = 1;
-    listing_temp[LLIST_SIZE] = 1;
-    strcpy(&listing_temp[LLIST_SIZE],inp_str);
-*/            display_line(&meb_stats);
-        }
+            display_line(&meb_stats);
         else
-        {
             clear_list(&meb_stats);
-        }
         meb_stats.getting_stuff = 0;
         clear_list(&list_stats);
     }
