@@ -231,7 +231,7 @@ gototst.o : gototst.c
 hashit.o : hashit.c 
 help.o : help.c add_defs.h 
 listctrl.o : listctrl.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h listctrl.h lstcnsts.h 
+  qual_tbl.h listctrl.h lstcnsts.h utils.h
 m11types.o : m11types.c /usr/include/stdio.h token.h \
   token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h pdp11.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
@@ -242,7 +242,7 @@ m68types.o : m68types.c token.h token_defs.h \
   structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   m68k.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
 macros.o : macros.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h 
+  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h utils.h
 macxx.o : macxx.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
   ct.h qual_tbl.h version.h  strsub.h listctrl.h
 opc11.o : opc11.c token.h token_defs.h pst_tokens.h pst_structs.h exproper.h \
@@ -284,7 +284,7 @@ pstas.o : pstas.c pst_tokens.h pst_structs.h dirdefs.h asap_ops.h op_class.h
 pstpp.o : pstpp.c pst_tokens.h pst_structs.h dirdefs.h 
 psttj.o : psttj.c pst_tokens.h pst_structs.h dirdefs.h tjop_class.h tj_ops.h 
 psuedo_ops.o : psuedo_ops.c add_defs.h token.h token_defs.h structs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h 
+  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h utils.h
 qksort.o : qksort.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h 
 sortsym.o : sortsym.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   listctrl.h lstcnsts.h 

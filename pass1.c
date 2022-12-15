@@ -1177,7 +1177,7 @@ int f1_defg(int flag)
             int csave;
             csave = current_scope;     /* save the current scope */
             current_scope = current_procblk = current_scopblk = 0;
-            ptr = do_symbol(1);        /* add level 0 symbol/label */
+            ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);        /* add level 0 symbol/label */
             current_scope = csave;     /* restore */
             current_procblk = csave&SCOPE_PROC;
             current_scopblk = csave&~SCOPE_PROC;
@@ -1185,12 +1185,12 @@ int f1_defg(int flag)
         }
         else
         {
-            ptr = do_symbol(3);        /* add higher level symbol */
+            ptr = do_symbol(SYM_INSERT_HIGHER_SCOPE);        /* add higher level symbol */
         }
     }
     else
     {
-        ptr = do_symbol(1);       /* add level 0 symbol/label */
+        ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);       /* add level 0 symbol/label */
     }
     if (ptr == 0)
     {
@@ -1225,8 +1225,7 @@ int f1_defg(int flag)
 					)
 				{
 					/* Assigning a label to the same location so that's okay */
-					f1_eatit();
-					return 0;
+					return 1;
 				}
 				/* and it has been previously defined in pass 1 */
 				if ( include_level > 0 )

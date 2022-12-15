@@ -1577,32 +1577,32 @@ static int op_glbcomm(int code)
 		{
 		case 0:
 			{
-				sym_ptr = do_symbol(1);
+				sym_ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);
 				sym_ptr->flg_global = 1;    /* signal it's global */
 				break;
 			}
 		case 1:
 			{
-				sym_ptr = do_symbol(1);
+				sym_ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);
 				sym_ptr->flg_global = 1;    /* signal it's global */
 				sym_ptr->flg_base = 1;  /* and whether it's base page */
 				break;
 			}
 		case 2:
 			{
-				sym_ptr = do_symbol(1);
+				sym_ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);
 				sym_ptr->flg_global = 1;    /* signal it's global */
 				sym_ptr->flg_register = 1;  /* signal it's a register */
 				break;
 			}
 		case 3:
 			{
-				sym_ptr = do_symbol(3); /* declare it local */
+				sym_ptr = do_symbol(SYM_INSERT_HIGHER_SCOPE); /* declare it local */
 				break;
 			}
 		case 4:
 			{
-				sym_ptr = do_symbol(4); /* declare it static */
+				sym_ptr = do_symbol(SYM_INSERT_LOCAL); /* declare it static */
 				break;
 			}
 		}

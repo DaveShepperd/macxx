@@ -1,4 +1,42 @@
 
+Version 11.08, 12/14/2022
+DMS
+
+Files updated:
+# Changes to be committed:
+#       modified:   Makefile
+#       new file:   change_log.txt
+#       modified:   dirdefs.h
+#       modified:   header.h
+#       modified:   listctrl.c
+#       modified:   listctrl.h
+#       modified:   lstcnsts.h
+#       modified:   macros.c
+#       modified:   macxx.c
+#       modified:   macxx.vpj
+#       modified:   pass0.c
+#       modified:   pass1.c
+#       modified:   psuedo_ops.c
+#       new file:   utils.c
+#       new file:   utils.h
+#       modified:   version.h
+
+Makefile - added new module utils.c
+change_log.txt - this file (also look in git log)
+dirdefs.h - added op_copy
+header.h - Added n_elts()
+listctrl.c - Lots of changes/fixes to support .PRINT and special .LIST options
+listctrl.h - Moved and renamed lots of variables. See listctrl.c
+lstcnsts.h - See listctrl.c
+macros.c - Fixes to accomodate .PRINT and .LIST SRC options.
+macxx.c - Fixes to accomodate .PRINT and .LIST SRC options.
+pass0.c - Fixes to accomodate .PRINT and .LIST SRC options.
+pass1.c - Fixes to accomodate .PRINT and .LIST SRC options.
+psuedo_ops.c - Fixes to accomodate .PRINT and .LIST SRC options.
+utils.[ch] - new file with support functions
+version.h - rolled version to 11.08
+================================================================
+
 Starting Version 11.04
 
 ================================================================

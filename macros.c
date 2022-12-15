@@ -1377,7 +1377,7 @@ int op_nchr( void )
         return 0;
     }
     *(token_pool+max_symbol_length) = 0;
-    sym_ptr = do_symbol(1);  /* get a symbol */
+    sym_ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);  /* get a symbol */
     if (sym_ptr->flg_label)
     {
         bad_token(tkn_ptr,"Symbol name already used as a label");
@@ -1445,7 +1445,7 @@ int op_narg( void )
         return 0;
     }
     *(token_pool+max_symbol_length) = 0;
-    sym_ptr = do_symbol(1);  /* get a symbol */
+    sym_ptr = do_symbol(SYM_INSERT_IF_NOT_FOUND);  /* get a symbol */
     if (sym_ptr->flg_label)
     {
         bad_token(tkn_ptr,"Symbol name already used as a label");
