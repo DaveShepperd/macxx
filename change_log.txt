@@ -1,3 +1,22 @@
+================================================================
+Version 11.09 12/15/2022
+DMS
+
+Files updated:
+# Changes to be committed:
+#       modified:   Makefile
+#       modified:   change_log.txt
+#       modified:   exprs.c
+#       modified:   macros.c
+#       modified:   pass1.c
+#       modified:   psuedo_ops.c
+#       modified:   version.h
+
+Wierd. For some reason git didn't commit the above files yesterday.
+pass1.c - fixed problem with duplicate label definition
+The others: see version 11.08 about fixes to print and list.
+
+================================================================
 
 Version 11.08, 12/14/2022
 DMS
