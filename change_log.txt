@@ -1,4 +1,20 @@
 ================================================================
+Version 11.11 12/16/2022
+DMS
+
+# Changes to be committed:
+#       modified:   listctrl.c
+#       modified:   opc69.c
+#       modified:   utils.c
+#       modified:   version.h
+
+listctrl.c - Fixed the extra blank line in listing after ELSE macro call
+             in programs assembled using the HLLxxF macros.
+opc69.c - Attempt to fix @0(X) address mode. Not done yet.
+utils.c - fix strnrchr(). It was doing the wrong thing.
+version.h - update to version 11.11.
+
+================================================================
 Version 11.10 12/15/2022
 DMS
 
