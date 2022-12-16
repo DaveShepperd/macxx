@@ -2,6 +2,20 @@
 Version 11.10 12/15/2022
 DMS
 
+# Changes to be committed:
+#       modified:   change_log.txt
+#       modified:   listctrl.c
+#       modified:   macros.c
+#       modified:   utils.c
+#       modified:   utils.h
+#       modified:   version.h
+
+Replaced the incorrect use of strchr() in listctrl with a new function 
+strnrchr() which replaces the more dangerous strrchr() function, the
+one meant to be used there.
+Changed macro IRP and IRPC error report to a warning.
+Rolled version to 11.10.
+
 ================================================================
 Version 11.09 12/15/2022
 DMS
