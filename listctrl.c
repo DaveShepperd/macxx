@@ -588,13 +588,14 @@ void display_line(LIST_stat_t *lstat)
 		}
 		else
 		{
-			if ( !strchr(chrPtr-1,'\n') )
+			if ( !strnrchr(chrPtr-1,'\n',chrPtr-outLinePtr) )
 			{
 				/* It's just a blank line */
 				*chrPtr++ = '\n';
 				*chrPtr = 0;
 			}
 		}
+
 #else
 		if ( lstat->listBuffer+LLIST_MAXSRC - chrPtr - 2 > 0 )
 			strncpy(chrPtr, inp_str, lstat->listBuffer+LLIST_MAXSRC - chrPtr - 2);

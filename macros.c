@@ -857,7 +857,7 @@ int op_irp( void )            /* .IRP macro */
     while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
     if (*inp_ptr != ',')
     {       /* next thing must be a comma */
-        bad_token(inp_ptr,"Expected a comma here. One is assumed");
+        show_bad_token(inp_ptr,"Expected a comma here. One is assumed", MSG_WARN);
     }
     else
     {
@@ -866,7 +866,7 @@ int op_irp( void )            /* .IRP macro */
     }
     if (*inp_ptr != macro_arg_open)
     {        /* next thing must be open brace */
-        bad_token(inp_ptr,"Expected a macro_arg_open here. One is assumed");
+        show_bad_token(inp_ptr,"Expected a macro_arg_open here. One is assumed", MSG_WARN);
     }
     else
     {
@@ -1071,7 +1071,7 @@ int op_irpc( void )           /* .IRPC macro */
 		++inp_ptr; /* skip over white space */
     if (*inp_ptr != ',')
     {       /* next thing must be a comma */
-        bad_token(inp_ptr,"Expected a comma here. One is assumed");
+        show_bad_token(inp_ptr,"Expected a comma here. One is assumed", MSG_WARN);
     }
     else
     {
