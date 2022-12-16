@@ -185,7 +185,7 @@ arg[ListArg_NewLine] = Flag - if .NE. request a new list line
 				if ( sLen )
 				{
 					/* Have to use memmove() to ensure the data overwrites itseslf properly (move left or move right) */
-					memmove(meb_stats.listBuffer+pos,meb_stats.listBuffer+list_source.srcPosition,sLen);
+					memmove(meb_stats.listBuffer + pos, meb_stats.listBuffer + list_source.srcPosition, sLen);
 					/* Make sure new position has a '\n'+0 terminator */
 					if ( meb_stats.listBuffer[pos+sLen-1] != '\n' )
 					{
@@ -486,14 +486,6 @@ void clear_list(LIST_stat_t *lstat)
 	list_source.srcPosition = limitSrcPosition(list_source.srcPositionQued);
 	memset(lstat->listBuffer, ' ', list_source.srcPosition);
 	lstat->listBuffer[list_source.srcPosition] = 0;
-#if 0
-/**************************************************tg*/
-/*  01/27/2022  Adds Support for HLLxxF  - TG */
-
-	LLIST_SRC = LLIST_SRC_QUED;
-
-/*************************************************etg*/
-#endif
 #ifndef MAC_PP
 	lstat->pc_flag = 0;
 	lstat->has_stuff = 0;
@@ -504,14 +496,6 @@ void clear_list(LIST_stat_t *lstat)
 
 void display_line(LIST_stat_t *lstat)
 {
-#if 0
-/**************************************************tg*/
-/*  01/26/2022  Adds Support for HLLxxF  - TG */
-
-	char *tmp_inp_str;
-	int tab_cnt;
-/*************************************************etg*/
-#endif
 	char *chrPtr, *outLinePtr;
 	outLinePtr = lstat->listBuffer;
 	if ( list_seq )
@@ -571,8 +555,11 @@ void display_line(LIST_stat_t *lstat)
     }
 	for ( chrPtr = outLinePtr; chrPtr < outLinePtr + list_source.srcPosition; ++chrPtr )
     {
-        if (*chrPtr == 0)
-			*chrPtr = ' ';	/* Replace any \0's with ' ' in area leading up to source position */
+		/* Replace any nul's with ' ' in area leading up to source position unless we find a newline first */
+		if ( *chrPtr == '\n' )
+			break;
+		if ( *chrPtr == 0 )
+			*chrPtr = ' ';
     }
 	/* chrPtr will point to a nul if this is NOT a meb thing. I.e. nothing has yet been placed in the source region */
     if ( chrPtr[0] == 0)
@@ -588,7 +575,7 @@ void display_line(LIST_stat_t *lstat)
 		}
 		else
 		{
-			if ( !strnrchr(chrPtr-1,'\n',chrPtr-outLinePtr) )
+			if ( !strnrchr(outLinePtr,'\n',chrPtr-outLinePtr) )
 			{
 				/* It's just a blank line */
 				*chrPtr++ = '\n';

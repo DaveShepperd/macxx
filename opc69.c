@@ -20,8 +20,14 @@
 /******************************************************************************
 Change Log
 
+	12/15/2022	- Changed to use same op_code offset for both indirect
+			  JMP instructions JMP @(X) and JMP @0(X) both are legal
+			  and preform the same function. By using same op_code
+			  offset we can save one byte of memory per instruction.
+			  Cleaned up code some.			Tim Giddens
+
 	03/26/2022	- 6809 CPU support added by Tim Giddens
-		  using David Shepperd's work as a reference
+			  using David Shepperd's work as a reference
 
 ******************************************************************************/
 
@@ -54,22 +60,20 @@ unsigned short macxx_abs_salign = 0;    /* default alignments for .ABS. segment 
 unsigned short macxx_abs_dalign = 0;
 unsigned short macxx_min_dalign = 0;
 
-char macxx_mau = 8;         /* number of bits/minimum addressable unit */
+char macxx_mau = 8;         	/* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
 char macxx_mau_byte = 1;        /* number of mau's in a byte */
 char macxx_mau_word = 2;        /* number of mau's in a word */
 char macxx_mau_long = 4;        /* number of mau's in a long */
-char macxx_nibbles_byte = 2;        /* For the listing output routines */
+char macxx_nibbles_byte = 2;    /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
-
 
 /* default edmask */
 unsigned long macxx_edm_default = ED_AMA | ED_M68;
 
 /* default list mask */
 unsigned long macxx_lm_default = ~(LIST_MES | LIST_LD | LIST_COD);
-
 
 
 int current_radix = 16;     /* default the radix to hexdecimal */
@@ -84,7 +88,6 @@ char macro_arg_genval = '\\';   /* char indicating generated value for macro */
 char open_operand = '(';    /* char that opens an operand indirection */
 char close_operand = ')';   /* char that closes an operand indirection */
 
-
 int max_opcode_length = 6; /* significant length of opcodes */
 int max_symbol_length = 6; /* significant length of symbols */
 
@@ -92,8 +95,6 @@ extern int dotwcontext;
 extern int no_white_space_allowed;
 static char *am_ptr;
 static char *tmp_ptr;
-
-
 
 enum
 {
@@ -105,8 +106,6 @@ enum
 /* End of processor specific stuff */
 
 
-
-
 enum amflag
 {
 	MNBI = 1,
@@ -116,8 +115,6 @@ enum amflag
 	OPENBKT = OPENAT << 1,
 	GOTSTK = OPENBKT << 1
 };
-
-
 
 #if 0
 static struct
@@ -169,8 +166,6 @@ forced_am[] =
 #endif
 
 
-
-
 typedef struct
 {
 	int flag;            /* .ne. if value is expression */
@@ -182,36 +177,18 @@ typedef struct
 
 DPage **dpage;
 static int dpage_size,dpage_stack;
-/*
-static EXP_stk *tmp_expr;
-static int tmp_expr_size;
-*/
-
 
 int ust_init(void)
 {
-/*
-	if (image_name != 0)
-	{
-		char *s;
-		s = strchr(image_name->name_only,'8');
-	}
-*/
 	dpage_size = 16;
 	dpage = (DPage **)MEM_alloc(dpage_size * sizeof(DPage *));
-
 	return 0;            /* would fill a user symbol table */
 }
-
-
-
-/*  This dpage function is most likely not correct but it works */
 
 static int check_4_dpage(EXP_stk *estk)
 {
 	DPage *dp;
-/*    EXP_stk *testk,*dexp; */
-	EXPR_struct *expr; /*,*texpr,*tp; */
+	EXPR_struct *expr;
 	expr = estk->stack;
 	dp = *(dpage + dpage_stack);
 
@@ -231,7 +208,6 @@ static int check_4_dpage(EXP_stk *estk)
 			 (estk->forward_reference == 0) )
 			return 1;
 	}
-
 	return 0;
 
 }
@@ -241,7 +217,6 @@ int op_dpage(void)
 {
 	int i, cnt, typ;
 	DPage *dp;
-
 	typ = get_token();           /* pickup the next token */
 	if ( typ == EOL )
 	{
@@ -332,7 +307,6 @@ static void do_branch(Opcode *opc)
 {
 	long offset;
 	EXPR_struct *exp_ptr;
-
 	offset = (opc->op_amode & SPL) ? 4 : 2;
 	if ( (opc->op_amode & SPL) && (!(opc->op_amode & SP10)) )
 		offset = 3;
@@ -359,7 +333,6 @@ static void do_branch(Opcode *opc)
 	/*  in file pass2.c  tag values */
 	/*  lower case 'y' causes low byte then high byte  Upper case 'Y' is high byte then low byte */
 	EXP1.tag = (opc->op_amode & SPL) ? 'Y' : 'z'; /* set branch type operand */
-
 	exp_ptr = EXP1.stack;
 	if ( EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE )
 	{
@@ -386,11 +359,8 @@ static void do_branch(Opcode *opc)
 	{
 		EXP1.psuedo_value = 0;
 	}
-
 	return;
 }
-
-
 
 
 static int do_operand(Opcode *opc)
@@ -400,7 +370,6 @@ static int do_operand(Opcode *opc)
 
 	int ct;
 	long amflag = 0;
-
 	int z = 0;
 	int j = 0;
 	long k = 0;
@@ -417,25 +386,24 @@ static int do_operand(Opcode *opc)
 	int flg_PC         = 0x040; /* offset from Program Counter */
 	int flg_ABD        = 0x080;
 	int flg_noffset    = 0x100;
+	int flg_zoff_jmp   = 0x200; /* indexed/indirect zero offset JMP flag */ 
 	int flg_neg        = 0x0;
 
 	int ireg_X = 0x0;
 	int ireg_Y = 0x1;
 	int ireg_U = 0x2;
 	int ireg_S = 0x3;
-/*    int ireg_PC=0x4; */
 
-	int reg_CCR = 0xA;    /* condition code */
-	int reg_A = 0x8;  /* A */
-	int reg_B = 0x9;  /* one minus sign */
-	int reg_DPR = 0xB;    /* direct page */
-	int reg_X = 0x1;  /* X */
-	int reg_Y = 0x2;  /* Y */
-	int reg_S = 0x4;  /* hardware stack */
-	int reg_U = 0x3;  /* user stack */
-	int reg_PC = 0x5; /* Program Counter */
-	int reg_D = 0x0;  /* D */
-
+	int reg_CCR = 0xA;	/* condition code */
+	int reg_A = 0x8;	/* A */
+	int reg_B = 0x9;	/* one minus sign */
+	int reg_DPR = 0xB;	/* direct page */
+	int reg_X = 0x1;	/* X */
+	int reg_Y = 0x2;	/* Y */
+	int reg_S = 0x4;	/* hardware stack */
+	int reg_U = 0x3;	/* user stack */
+	int reg_PC = 0x5;	/* Program Counter */
+	int reg_D = 0x0;	/* D */
 
 	ct = get_token();            /* pickup the next token */
 	switch (ct)
@@ -504,7 +472,7 @@ static int do_operand(Opcode *opc)
 			{
 				if ( token_value == '@' )
 				{
-					indexed_mode = indexed_mode | flg_indirect;
+					indexed_mode = (indexed_mode | flg_indirect);
 
 					if ( *inp_ptr == open_operand )
 					{
@@ -576,19 +544,19 @@ static int do_operand(Opcode *opc)
 
 				if ( j == 'X' )
 				{
-					temp = temp | (ireg_X << 5);
+					temp = (temp | (ireg_X << 5));
 				}
 				else if ( j == 'Y' )
 				{
-					temp = temp | (ireg_Y << 5);
+					temp = (temp | (ireg_Y << 5));
 				}
 				else if ( j == 'U' )
 				{
-					temp = temp | (ireg_U << 5);
+					temp = (temp | (ireg_U << 5));
 				}
 				else if ( j == 'S' )
 				{
-					temp = temp | (ireg_S << 5);
+					temp = (temp | (ireg_S << 5));
 				}
 
 				++inp_ptr;         /* eat the reg */
@@ -602,7 +570,6 @@ static int do_operand(Opcode *opc)
 				EXP1.ptr = 1;            /* second stack has operand (1 element) */
 
 				return I_NUM;
-
 			}
 
 			get_token();       /* pickup the next token */
@@ -610,7 +577,6 @@ static int do_operand(Opcode *opc)
 		}             /* fall through to rest */
 	default:
 		{
-
 			tmp_ptr = inp_ptr;
 			j = 0;
 			while ( !(cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) )
@@ -645,44 +611,44 @@ static int do_operand(Opcode *opc)
 						/* Find - Reg */
 						if ( strcmp(token_pool, "CCR") == 0 )
 						{
-							temp = temp | 1;
+							temp = (temp | 1);
 						}
 						if ( strcmp(token_pool, "A") == 0 )
 						{
-							temp = temp | (1 << 1);
+							temp = (temp | (1 << 1));
 						}
 						if ( strcmp(token_pool, "B") == 0 )
 						{
-							temp = temp | (1 << 2);
+							temp = (temp | (1 << 2));
 						}
 						if ( strcmp(token_pool, "D") == 0 )
 						{
-							temp = temp | (1 << 1);
-							temp = temp | (1 << 2);
+							temp = (temp | (1 << 1));
+							temp = (temp | (1 << 2));
 						}
 						if ( strcmp(token_pool, "DPR") == 0 )
 						{
-							temp = temp | (1 << 3);
+							temp = (temp | (1 << 3));
 						}
 						if ( strcmp(token_pool, "X") == 0 )
 						{
-							temp = temp | (1 << 4);
+							temp = (temp | (1 << 4));
 						}
 						if ( strcmp(token_pool, "Y") == 0 )
 						{
-							temp = temp | (1 << 5);
+							temp = (temp | (1 << 5));
 						}
 						if ( strcmp(token_pool, "S") == 0 )
 						{
-							temp = temp | (1 << 6);
+							temp = (temp | (1 << 6));
 						}
 						if ( strcmp(token_pool, "U") == 0 )
 						{
-							temp = temp | (1 << 6);
+							temp = (temp | (1 << 6));
 						}
 						if ( strcmp(token_pool, "PC") == 0 )
 						{
-							temp = temp | (1 << 7);
+							temp = (temp | (1 << 7));
 						}
 
 						if ( *inp_ptr == ',' )
@@ -768,19 +734,19 @@ static int do_operand(Opcode *opc)
 					}
 					if ( strcmp(token_pool, "X") == 0 )
 					{
-						temp = temp | (ireg_X << 5);
+						temp = (temp | (ireg_X << 5));
 					}
 					else if ( strcmp(token_pool, "Y") == 0 )
 					{
-						temp = temp | (ireg_Y << 5);
+						temp = (temp | (ireg_Y << 5));
 					}
 					else if ( strcmp(token_pool, "U") == 0 )
 					{
-						temp = temp | (ireg_U << 5);
+						temp = (temp | (ireg_U << 5));
 					}
 					else if ( strcmp(token_pool, "S") == 0 )
 					{
-						temp = temp | (ireg_S << 5);
+						temp = (temp | (ireg_S << 5));
 					}
 
 					EXP0SP->expr_value = opc->op_value + 0x20;
@@ -793,7 +759,6 @@ static int do_operand(Opcode *opc)
 					return I_NUM;
 
 				}
-
 /* give error here */
 
 			}
@@ -903,7 +868,7 @@ static int do_operand(Opcode *opc)
 							if ( (k == 0) && ((indexed_mode & flg_5bit) != 0) )
 							{
 								temp = 0x84;
-								indexed_mode = (indexed_mode & ~flg_5bit) | flg_noffset;  /* Force no offset for 0(r) */
+								indexed_mode = ((indexed_mode & ~flg_5bit) | flg_noffset);  /* Force no offset for 0(r) */
 
 							}
 
@@ -943,12 +908,17 @@ static int do_operand(Opcode *opc)
 								{
 									temp = 0x89;
 								}
+
 							}
 
 						}
 
 					}
 
+					if ( (strcmp(token_pool, "JMP") == 0)&&(indexed_mode & flg_indirect)&&(k==0) )
+					{
+						indexed_mode = (indexed_mode | flg_zoff_jmp);
+					}
 					if ( *inp_ptr == open_operand )
 					{
 						++inp_ptr;         /* eat the open_operand */
@@ -1043,7 +1013,6 @@ static int do_operand(Opcode *opc)
 						}
 						else
 						{
-
 							EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set Post Byte value */
 							EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
 							EXP1.tag = 'b';
@@ -1055,7 +1024,12 @@ static int do_operand(Opcode *opc)
 					{
 						if ( (EXP2SP->expr_code == EXPR_VALUE) && (EXP2.ptr < 2) )
 						{
-
+							  /* Force 5 bits for JMP @0(X) */
+							if ( (indexed_mode & flg_zoff_jmp) && (strcmp(token_pool, "X") == 0 ) && (k ==0) )
+							{
+									temp = 0x94;
+									indexed_mode = ((indexed_mode & ~flg_5bit & ~flg_8bit) | flg_noffset);
+							}
 							if ( indexed_mode & flg_noffset )
 							{
 								EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand no offset value */
@@ -1094,9 +1068,7 @@ static int do_operand(Opcode *opc)
 								EXP2.tag = (edmask & ED_M68) ? 'W' : 'w';
 								/*               EXP2.ptr = 1;             * third stack has operand (1 element) */
 							}
-
 							return I_NUM;
-
 						}
 						else
 						{
@@ -1124,7 +1096,6 @@ static int do_operand(Opcode *opc)
 							}
 
 							return I_NUM;
-
 						}
 
 					}
@@ -1152,7 +1123,6 @@ static int do_operand(Opcode *opc)
 						sprintf(emsg, "Not an indirect Extended mode - %s", token_pool);
 						bad_token((char *)0, emsg);
 						f1_eatit();       /* eat rest of line */
-
 					}
 
 				}
@@ -1166,7 +1136,6 @@ static int do_operand(Opcode *opc)
 					bad_token(am_ptr, "Invalid address mode syntax");
 					break;
 				}
-
 				/* Convert to Upper Case */
 				j = 0;
 				while ( token_pool[j] )
@@ -1174,7 +1143,6 @@ static int do_operand(Opcode *opc)
 					token_pool[j] = toupper(token_pool[j]);
 					++j;
 				}
-
 				/* TFR and EXG opcodes */
 				/* There is a better way to do this, but for now it's down and dirty */
 				if ( (opc->op_value == 0x1F) || (opc->op_value == 0x1E) )
@@ -1183,52 +1151,52 @@ static int do_operand(Opcode *opc)
 					/* Find - Reg */
 					if ( strcmp(token_pool, "CCR") == 0 )
 					{
-						temp = reg_CCR << 4;
+						temp = (reg_CCR << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "A") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_A << 4;
+						temp = (reg_A << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "B") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_B << 4;
+						temp = (reg_B << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "DPR") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_DPR << 4;
+						temp = (reg_DPR << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "X") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_X << 4;
+						temp = (reg_X << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "Y") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_Y << 4;
+						temp = (reg_Y << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "S") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_S << 4;
+						temp = (reg_S << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "U") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_U << 4;
+						temp = (reg_U << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "PC") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_PC << 4;
+						temp = (reg_PC << 4);
 						j = 1;
 					}
 					else if ( (strcmp(token_pool, "D") == 0) && (*inp_ptr == ',') )
 					{
-						temp = reg_D << 4;
+						temp = (reg_D << 4);
 						j = 1;
 					}
 
@@ -1247,43 +1215,43 @@ static int do_operand(Opcode *opc)
 
 						if ( strcmp(token_pool, "CCR") == 0 )
 						{
-							temp = temp | reg_CCR;
+							temp = (temp | reg_CCR);
 						}
 						else if ( strcmp(token_pool, "A") == 0 )
 						{
-							temp = temp | reg_A;
+							temp = (temp | reg_A);
 						}
 						else if ( strcmp(token_pool, "B") == 0 )
 						{
-							temp = temp | reg_B;
+							temp = (temp | reg_B);
 						}
 						else if ( strcmp(token_pool, "DPR") == 0 )
 						{
-							temp = temp | reg_DPR;
+							temp = (temp | reg_DPR);
 						}
 						else if ( strcmp(token_pool, "X") == 0 )
 						{
-							temp = temp | reg_X;
+							temp = (temp | reg_X);
 						}
 						else if ( strcmp(token_pool, "Y") == 0 )
 						{
-							temp = temp | reg_Y;
+							temp = (temp | reg_Y);
 						}
 						else if ( strcmp(token_pool, "S") == 0 )
 						{
-							temp = temp | reg_S;
+							temp = (temp | reg_S);
 						}
 						else if ( strcmp(token_pool, "U") == 0 )
 						{
-							temp = temp | reg_U;
+							temp = (temp | reg_U);
 						}
 						else if ( strcmp(token_pool, "PC") == 0 )
 						{
-							temp = temp | reg_PC;
+							temp = (temp | reg_PC);
 						}
 						else if ( strcmp(token_pool, "D") == 0 )
 						{
-							temp = temp | reg_D;
+							temp = (temp | reg_D);
 						}
 
 						EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand value */
@@ -1324,16 +1292,14 @@ static int do_operand(Opcode *opc)
 				else if ( strcmp(token_pool, "E") == 0 )
 				{
 					amdcdnum = E;
-					EXP0SP->expr_value = opc->op_value + 0x30;
+					EXP0SP->expr_value = (opc->op_value + 0x30);
 					EXP1.tag = (edmask & ED_M68) ? 'W' : 'w';
-
 				}
-
 
 				/* mode "NE"   */
 				else if ( strcmp(token_pool, "NE") == 0 )
 				{
-					EXP0SP->expr_value = opc->op_value + 0x20;
+					EXP0SP->expr_value = (opc->op_value + 0x20);
 					++inp_ptr;       /* eat the comma */
 					get_token();        /* get the next token */
 					if ( exprs(1, &EXP2) < 1 )
@@ -1344,12 +1310,9 @@ static int do_operand(Opcode *opc)
 					EXP1.ptr = 1;            /* second stack has operand (1 element) */
 					EXP2.tag = (edmask & ED_M68) ? 'W' : 'w';
 					/*          EXP2.ptr = 1;             * third stack has operand (1 element) */
-
 					return I_NUM;
 
 				}
-
-
 
 				if ( amdcdnum < UNDEF_NUM )
 				{
@@ -1384,11 +1347,11 @@ static int do_operand(Opcode *opc)
 					/* If no AM option - Default  Direct (Absolute Zero Page) */
 					if ( ((opc->op_amode) == (SHFTAM)) || (opc->op_amode & SPDP) )
 					{
-						EXP0SP->expr_value = opc->op_value - 0x40;
+						EXP0SP->expr_value = (opc->op_value - 0x40);
 					}
 					else
 					{
-						EXP0SP->expr_value = opc->op_value + 0x10;
+						EXP0SP->expr_value = (opc->op_value + 0x10);
 					}
 
 				}
@@ -1401,11 +1364,11 @@ static int do_operand(Opcode *opc)
 						{
 							if ( opc->op_amode & SPDP )
 							{
-								EXP0SP->expr_value = opc->op_value - 0x40;
+								EXP0SP->expr_value = (opc->op_value - 0x40);
 							}
 							else
 							{
-								EXP0SP->expr_value = opc->op_value + 0x10;
+								EXP0SP->expr_value = (opc->op_value + 0x10);
 							}
 
 							EXP1.psuedo_value = EXP1SP->expr_value = (EXP1SP->expr_value & 0xFF);  /* set operand value */
@@ -1441,30 +1404,24 @@ static int do_operand(Opcode *opc)
 }
 
 
-
-
 void do_opcode(Opcode *opc)
 {
-/*    int i,ct;*/
-
-/*    AModes amdcdnum=UNDEF_NUM,forced_am_num; */
 
 	int err_cnt = error_count[MSG_ERROR];
-/*    EXPR_struct *exp_ptr; */
-	EXP0.tag = 'b';          /* opcode is default 8 bit byte */
-	EXP0.tag_len = 1;            /* only 1 byte */
-	EXP1.tag = 'b';          /* assume operand is byte */
-	EXP1.tag_len = 1;            /* and only 1 entry long */
+
+	EXP0.tag = 'b';		/* opcode is default 8 bit byte */
+	EXP0.tag_len = 1;	/* only 1 byte */
+	EXP1.tag = 'b';		/* assume operand is byte */
+	EXP1.tag_len = 1;	/* and only 1 entry long */
 	EXP0SP->expr_code = EXPR_VALUE;
-	/* set the opcode expression *//* expression component is an absolute value */
+	/* set the opcode expression - expression component is an absolute value */
 	EXP0SP->expr_value = opc->op_value;
-	EXP0.ptr = 1;            /* first stack has opcode (1 element) */
-	EXP1.ptr = 0;            /* assume no operands */
-	EXP2.ptr = 0;            /* assume no operands */
-	EXP3.ptr = 0;            /* assume no operands */
-/*    exp_ptr = EXP1SP; */
-	am_ptr = inp_ptr;            /* remember where am starts */
-/*    forced_am_num = UNDEF_NUM; */
+	EXP0.ptr = 1;		/* first stack has opcode (1 element) */
+	EXP1.ptr = 0;		/* assume no operands */
+	EXP2.ptr = 0;		/* assume no operands */
+	EXP3.ptr = 0;		/* assume no operands */
+
+	am_ptr = inp_ptr;	/* remember where am starts */
 
 	if ( (opc->op_amode & SP10) == SP10 )
 	{    /*  Set two byte opcode  */
@@ -1472,14 +1429,12 @@ void do_opcode(Opcode *opc)
 		EXP0.psuedo_value = EXP0SP->expr_value = opc->op_value;
 		EXP0.tag = (edmask & ED_M68) ? 'W' : 'w';
 	}
-
 	if ( (opc->op_amode & SP11) == SP11 )
 	{    /*  Set two byte opcode  */
 		opc->op_value = opc->op_value | 0x1100;
 		EXP0.psuedo_value = EXP0SP->expr_value = opc->op_value;
 		EXP0.tag = (edmask & ED_M68) ? 'W' : 'w';
 	}
-
 	if ( (opc->op_amode == ACC) || (opc->op_amode == IMP) )
 	{
 		/* no operands */
@@ -1494,20 +1449,16 @@ void do_opcode(Opcode *opc)
 		{
 			/* amdcdnum = */ do_operand(opc);
 		}
-
 	}
-
 	if ( err_cnt != error_count[MSG_ERROR] )
 	{   /* if any errors detected... */
 		while ( !(cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) )
 			++inp_ptr; /* ...eat to EOL */
 	}
-
 	/*  When you swap from a byte opcode to a word opcode you need to use this command
 		to set eps->stack->psuedo_value so the opcodes list correctly in the .lis file
 		compress_expr_psuedo(&EXP0);
 	*/
-
 	if ( EXP0.ptr > 0 )
 	{
 		if ( list_bin )
@@ -1532,13 +1483,11 @@ void do_opcode(Opcode *opc)
 }   /* -- opc69() */
 
 
-
 int op_ntype(void)
 {
 	f1_eatit();
 	return 1;
 }
-
 
 
 #include "opcommon.h"

@@ -236,7 +236,7 @@ int deTab(const char *input, int tabWidth, int numTabs, int column, char *output
 
 /** strnrchr() Look backwards through a string for character
  *  At entry:
- *  @param ptr - pointer to end of string to search
+ *  @param ptr - pointer to string to search
  *  @param chr - character to search for
  *  @param len - maximum number of characters to look through
  *  At exit:
@@ -247,14 +247,18 @@ int deTab(const char *input, int tabWidth, int numTabs, int column, char *output
  **/
 const char *strnrchr(const char *ptr, int chr, size_t len)
 {
-	while ( len > 0 && *ptr )
+	const char *found=NULL;
+	if ( ptr && len )
 	{
-		if ( *ptr == chr )
-			return ptr;
-		--ptr;
-		--len;
+		const char *end = ptr+len;
+		while ( ptr < end && *ptr  )
+		{
+			if ( *ptr == chr )
+				found = ptr;
+			++ptr;
+		}
 	}
-	return NULL;
+	return found;
 }
 
 
