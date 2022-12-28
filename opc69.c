@@ -20,14 +20,28 @@
 /******************************************************************************
 Change Log
 
-	12/15/2022	- Changed to use same op_code offset for both indirect
-			  JMP instructions JMP @(X) and JMP @0(X) both are legal
-			  and preform the same function. By using same op_code
-			  offset we can save one byte of memory per instruction.
+	12/27/2022	- Fixed dpage problem that was causing LLF Truncation
+			  warnings for dpage offsets.
+			  Added some Error checking		Tim Giddens
+
+	12/15/2022	- Fixed optimization problem, was not working for all
+			  @0(r) instructions.
 			  Cleaned up code some.			Tim Giddens
 
 	03/26/2022	- 6809 CPU support added by Tim Giddens
 			  using David Shepperd's work as a reference
+
+			  The 6809 has three offset modes
+			   5 bit - uses one byte	   -16 to    +15	   n(r)
+			   8 bit - uses two bytes	  -128 to   +127	  nn(r)
+			  16 bit - uses three bytes	-32768 to +32767	nnnn(r)
+
+			  Optimization:
+				Motorola states that any @n(r) or n(r) instruction use 8 bit offset mode
+				@(r) and @0(r) are both legal instructions and use an offset of zero to perform
+				the same function only difference is that @(r) uses one byte and @0(r) uses
+				two bytes.  MAC69 has been optimized to convert all @0(r) instructions into
+				@(r) this saves one byte of memory for each occurrence of these instructions.
 
 ******************************************************************************/
 
@@ -185,7 +199,7 @@ int ust_init(void)
 	return 0;            /* would fill a user symbol table */
 }
 
-static int check_4_dpage(EXP_stk *estk)
+static int check_4_dzpage(EXP_stk *estk)
 {
 	DPage *dp;
 	EXPR_struct *expr;
@@ -208,6 +222,37 @@ static int check_4_dpage(EXP_stk *estk)
 			 (estk->forward_reference == 0) )
 			return 1;
 	}
+	return 0;
+
+}
+
+
+static int make_dpage_ref(EXP_stk *estk)
+{
+	DPage *dp;
+	EXP_stk *dpstk;
+	EXPR_struct * src,*dst;
+	int i;
+	dp = *dpage + dpage_stack;
+	if ( dp == 0 )
+		return 0;   /* nothing to do */
+	dst = estk->stack + estk->ptr;
+	dpstk = dp->exptr;
+	src = dpstk->stack;
+	i = dpstk->ptr + estk->ptr + 1;
+	if ( i >= EXPR_MAXDEPTH )
+	{
+		bad_token((char *)0, "Direct page expression too complex");
+		return 0;
+	}
+	memcpy(dst, src, dpstk->ptr * sizeof(EXPR_struct));
+	dst->expr_value = ((dst->expr_value) << 8);
+	dst += dpstk->ptr;
+	dst->expr_code = EXPR_OPER;
+	dst->expr_value = '-';
+	estk->ptr += dpstk->ptr + 1;
+	estk->tag = 'c';
+	estk->ptr = compress_expr(estk);
 	return 0;
 
 }
@@ -359,6 +404,7 @@ static void do_branch(Opcode *opc)
 	{
 		EXP1.psuedo_value = 0;
 	}
+
 	return;
 }
 
@@ -369,48 +415,50 @@ static int do_operand(Opcode *opc)
 	AModes amdcdnum = ILL_NUM;
 
 	int ct;
-	long amflag = 0;
-	int z = 0;
-	int j = 0;
-	long k = 0;
-	int temp = 0;
+	int j		= 0;
+	int temp	= 0;
+	long amflag	= 0;
+	int z_page	= 0;	/* zero page */
+	long con_offset	= 0;	/* constant offset */
 
-	int indexed_mode   = 0x00;  /* holds current mode flags */
+	int indexed_mode	= 0x00;  /* holds current mode flags */
 
-	int flg_1decr      = 0x001; /* one minus sign */
-	int flg_2decr      = 0x002; /* two minus signs */
-	int flg_5bit       = 0x004; /* 5 bit offset */
-	int flg_8bit       = 0x008; /* 8 bit offset */
-	int flg_indirect   = 0x010;
-	int flg_offset     = 0x020;
-	int flg_PC         = 0x040; /* offset from Program Counter */
-	int flg_ABD        = 0x080;
-	int flg_noffset    = 0x100;
-	int flg_zoff_jmp   = 0x200; /* indexed/indirect zero offset JMP flag */ 
-	int flg_neg        = 0x0;
+	/* mode flags */
+	int flg_1decr		= 0x001; /* one minus sign  - decrement by one */
+	int flg_2decr		= 0x002; /* two minus signs - decrement by two */
+	int flg_5bit		= 0x004; /*  5 bit constant offset */
+	int flg_8bit		= 0x008; /*  8 bit constant offset */
+	int flg_16bit		= 0x010; /* 16 bit constant offset */
+	int flg_indirect	= 0x020; /* indirect - @(r) */
+	int flg_PC		= 0x040; /* offset from Program Counter */
+	int flg_ABD		= 0x080; /* Accumulator offset */
+	int flg_neg		= 0x000;
 
-	int ireg_X = 0x0;
-	int ireg_Y = 0x1;
-	int ireg_U = 0x2;
-	int ireg_S = 0x3;
+	/* indexed/indirect register flags */
+	int ireg_X	= 0x0;
+	int ireg_Y	= 0x1;
+	int ireg_U	= 0x2;
+	int ireg_S	= 0x3;
 
-	int reg_CCR = 0xA;	/* condition code */
-	int reg_A = 0x8;	/* A */
-	int reg_B = 0x9;	/* one minus sign */
-	int reg_DPR = 0xB;	/* direct page */
-	int reg_X = 0x1;	/* X */
-	int reg_Y = 0x2;	/* Y */
-	int reg_S = 0x4;	/* hardware stack */
-	int reg_U = 0x3;	/* user stack */
-	int reg_PC = 0x5;	/* Program Counter */
-	int reg_D = 0x0;	/* D */
+	/* register flags */
+	int reg_D	= 0x0;	/* double accumulator D (A & B)	- 16bit register */
+	int reg_X	= 0x1;	/* index register X		- 16bit register */
+	int reg_Y	= 0x2;	/* index register Y		- 16bit register */
+	int reg_U	= 0x3;	/* user stack pointer		- 16bit register */
+	int reg_S	= 0x4;	/* hardware stack pointer	- 16bit register */
+	int reg_PC	= 0x5;	/* Program Counter PC		- 16bit register */
+	int reg_A	= 0x8;	/* accumulator A		-  8bit register */
+	int reg_B	= 0x9;	/* accumulator B		-  8bit register */
+	int reg_CCR	= 0xA;	/* condition code register	-  8bit register */
+	int reg_DPR	= 0xB;	/* direct page register		-  8bit register */
 
-	ct = get_token();            /* pickup the next token */
+
+	ct = get_token();		/* pickup the next token */
 	switch (ct)
 	{
 	case EOL:
 		{
-			return -1;         /* no operand supplied */
+			return -1;	/* no operand supplied */
 		}
 
 	case TOKEN_oper:
@@ -422,27 +470,27 @@ static int do_operand(Opcode *opc)
 
 				if ( (token_value == '-') && (*inp_ptr == open_operand) && (*(inp_ptr + 2) == close_operand) )
 				{
-					indexed_mode++;      /* Set one minus sign */
+					indexed_mode++;	/* Set one minus sign */
 					flg_neg = 0;
-					inp_ptr++;       /* eat the open_operand */
+					inp_ptr++;	/* eat the open_operand */
 				}
 				else if ( (token_value == '-') && (*inp_ptr == '-') && (*(inp_ptr + 1) == open_operand) && (*(inp_ptr + 3) == close_operand) )
 				{
 					indexed_mode++;
-					indexed_mode++;      /* Set two minus sign */
+					indexed_mode++;	/* Set two minus sign */
 					flg_neg = 0;
-					inp_ptr++;   /* eat the 2nd '-' */
-					inp_ptr++;    /* eat the open_operand */
+					inp_ptr++;	/* eat the 2nd '-' */
+					inp_ptr++;	/* eat the open_operand */
 				}
 				else
 				{
-					inp_ptr--;       /* backup to the minus sign */
+					inp_ptr--;	/* backup to the minus sign */
 				}
 
 			}
 			else
 			{
-				inp_ptr--;       /* backup to the minus sign */
+				inp_ptr--;		/* backup to the minus sign */
 			}
 
 		}
@@ -452,9 +500,9 @@ static int do_operand(Opcode *opc)
 
 			if ( token_value == '#' )
 			{
-				get_token();        /* get the next token */
+				get_token();	/* get the next token */
 				if ( exprs(1, &EXP1) < 1 )
-					break; /* quit if expr nfg */
+					break;	/* quit if expr nfg */
 
 				/* If it is a 2 BYTE immediate mode address */
 				if ( (opc->op_amode & SPC) == SPC )
@@ -462,7 +510,7 @@ static int do_operand(Opcode *opc)
 					EXP1.tag = (edmask & ED_M68) ? 'W' : 'w';
 				}
 
-				return I_NUM;       /* return with immediate mode address */
+				return I_NUM;	/* return with immediate mode address */
 			}
 			if ( token_value == open_operand )
 			{
@@ -477,7 +525,7 @@ static int do_operand(Opcode *opc)
 					if ( *inp_ptr == open_operand )
 					{
 						amflag = FIN;
-						inp_ptr++;   /* eat the open_operand */
+						inp_ptr++;	/* eat the open_operand */
 					}
 					else if ( *inp_ptr != '-' )
 					{
@@ -491,19 +539,19 @@ static int do_operand(Opcode *opc)
 						}
 						if ( (*inp_ptr == '-') && (*(inp_ptr + 1) == open_operand) && (*(inp_ptr + 3) == close_operand) )
 						{
-							indexed_mode++; /* Set one minus sign */
+							indexed_mode++;	/* Set one minus sign */
 							flg_neg = 0;
-							inp_ptr++;   /* eat the minus sign */
-							inp_ptr++;   /* eat the open_operand */
+							inp_ptr++;	/* eat the minus sign */
+							inp_ptr++;	/* eat the open_operand */
 						}
 						else if ( (*inp_ptr == '-') && (*(inp_ptr + 1) == '-') && (*(inp_ptr + 2) == open_operand) && (*(inp_ptr + 4) == close_operand) )
 						{
 							indexed_mode++;
-							indexed_mode++; /* Set two minus sign */
+							indexed_mode++;	/* Set two minus sign */
 							flg_neg = 0;
-							inp_ptr++;   /* eat the minus sign */
-							inp_ptr++;   /* eat the 2nd '-' */
-							inp_ptr++;   /* eat the open_operand */
+							inp_ptr++;	/* eat the minus sign */
+							inp_ptr++;	/* eat the 2nd '-' */
+							inp_ptr++;	/* eat the open_operand */
 						}
 
 					}
@@ -513,14 +561,13 @@ static int do_operand(Opcode *opc)
 			}
 
 
-			/*  -(r) or --(r) or @-(r) or @--(r)  */
 			if ( ((indexed_mode & flg_1decr) || (indexed_mode & flg_2decr)) && (flg_neg == 0) )
-			{
+			{  /* ----> Start of -(r), --(r), @-(r), and @--(r) opcodes */
 				if ( indexed_mode & flg_1decr )
 				{
 					if ( indexed_mode & flg_indirect )
 					{
-						temp = 0x93;  /* decrement by one (0x92) not allowed in indirect mode - so dec. by two (0x93)*/
+						temp = 0x93;	/* decrement by one (0x92) not allowed in indirect mode - so dec. by two (0x93)*/
 					}
 					else
 					{
@@ -559,22 +606,22 @@ static int do_operand(Opcode *opc)
 					temp = (temp | (ireg_S << 5));
 				}
 
-				++inp_ptr;         /* eat the reg */
-				++inp_ptr;         /* eat the close_operand */
+				++inp_ptr;	/* eat the reg */
+				++inp_ptr;	/* eat the close_operand */
 
 				EXP0SP->expr_value = opc->op_value + 0x20;
 
-				EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand value */
-				EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+				EXP1.psuedo_value = EXP1SP->expr_value = temp;	/* set operand value */
+				EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
 				EXP1.tag = 'b';
-				EXP1.ptr = 1;            /* second stack has operand (1 element) */
+				EXP1.ptr = 1;			/* second stack has operand (1 element) */
 
 				return I_NUM;
-			}
+			}  /* <---- End of -(r), --(r), @-(r), and @--(r) opcodes */
 
-			get_token();       /* pickup the next token */
+			get_token();	/* pickup the next token */
 
-		}             /* fall through to rest */
+		}	/* fall through to rest */
 	default:
 		{
 			tmp_ptr = inp_ptr;
@@ -593,7 +640,7 @@ static int do_operand(Opcode *opc)
 
 			if ( token_type == TOKEN_strng )
 			{
-				/* PSHS, PSHU, PULS and PULU opcodes */
+				/* ---->  Start of  PSHS, PSHU, PULS and PULU opcodes */
 				/* There is a better way to do this, but for now it's down and dirty */
 				if ( (opc->op_value == 0x34) || (opc->op_value == 0x35) || (opc->op_value == 0x36) || (opc->op_value == 0x37) )
 				{
@@ -654,7 +701,7 @@ static int do_operand(Opcode *opc)
 						if ( *inp_ptr == ',' )
 						{
 							inp_ptr++;
-							get_token();       /* pickup the next token */
+							get_token();	/* pickup the next token */
 						}
 						else
 						{
@@ -662,29 +709,30 @@ static int do_operand(Opcode *opc)
 						}
 
 					}
-					EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand value */
-					EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+					EXP1.psuedo_value = EXP1SP->expr_value = temp;	/* set operand value */
+					EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
 					EXP1.tag = 'b';
-					EXP1.ptr = 1;            /* second stack has operand (1 element) */
+					EXP1.ptr = 1;			/* second stack has operand (1 element) */
 
 					return I_NUM;
-				}
+				}  /* <----  End of PSHS, PSHU, PULS and PULU opcodes */
 
 			}
 
 			if ( (token_type == TOKEN_numb) && (*inp_ptr == open_operand) )
-			{             /* 0(r)+ or 0(r)++ */
-				if ( (token_value == 0) && (*inp_ptr == open_operand) && (*(inp_ptr + 2) == close_operand) && (*(inp_ptr + 3) == '+') )
-				{
+			{
+				if ( (token_value == 0) && (*inp_ptr == open_operand) && (*(inp_ptr + 2) == close_operand) )
+				{	/*  optimize: if 0(r), 0(r)+, 0(r)++, @0(r), @0(r)+, @0(r)++ */
+					/*            convert to (r), (r)+, (r)++, @(r), @(r)+, @(r)++  */
 					amflag = FIN;
-					inp_ptr++;   /* eat the open_operand */
-					get_token();       /* pickup the next token */
+					inp_ptr++;	/* eat the open_operand */
+					get_token();	/* pickup the next token */
 				}
 
 			}
 
 			if ( amflag == FIN )
-			{    /* (r) or (r)+ or (r)++ or @(r) or @(r)+ or @(r)++ */
+			{  /* ----> Start of (r), (r)+, (r)++, @(r), @(r)+, @(r)++ */
 
 				/* Convert to Upper Case */
 				j = 0;
@@ -695,7 +743,7 @@ static int do_operand(Opcode *opc)
 				}
 				if ( *inp_ptr == close_operand )
 				{
-					++inp_ptr;         /* eat the close_operand */
+					++inp_ptr;		/* eat the close_operand */
 					if ( (*inp_ptr == '+') && (*(inp_ptr + 1) == '+') )
 					{
 						if ( indexed_mode & flg_indirect )
@@ -706,24 +754,24 @@ static int do_operand(Opcode *opc)
 						{
 							temp = 0x81;
 						}
-						++inp_ptr;         /* eat the 1st '+' */
-						++inp_ptr;         /* eat the 2nd '+' */
+						++inp_ptr;	/* eat the 1st '+' */
+						++inp_ptr;	/* eat the 2nd '+' */
 					}
 					else if ( *inp_ptr == '+' )
 					{
 						if ( indexed_mode & flg_indirect )
 						{
-							temp = 0x91;  /* increment by one (0x90) not allowed in indirect mode - so inc. by two (0x91)*/
-						}
+							temp = 0x91;	/* increment by one (0x90) not allowed in indirect mode */
+						}			/* use increment by two (0x91) */
 						else
 						{
 							temp = 0x80;
 						}
-						++inp_ptr;         /* eat the '+' */
+						++inp_ptr;		/* eat the '+' */
 					}
 					else
 					{
-						if ( indexed_mode & flg_indirect ) /* No offset */
+						if ( indexed_mode & flg_indirect )	/* No offset */
 						{
 							temp = 0x94;
 						}
@@ -751,20 +799,24 @@ static int do_operand(Opcode *opc)
 
 					EXP0SP->expr_value = opc->op_value + 0x20;
 
-					EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand value */
-					EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+					EXP1.psuedo_value = EXP1SP->expr_value = temp;	/* set operand value */
+					EXP1SP->expr_code = EXPR_VALUE;		/* set expression component is an absolute value */
 					EXP1.tag = 'b';
-					EXP1.ptr = 1;            /* second stack has operand (1 element) */
+					EXP1.ptr = 1;				/* second stack has operand (1 element) */
 
 					return I_NUM;
 
 				}
-/* give error here */
+				sprintf(emsg, "using amflag = FIN error - amflag value = %lX Hex", amflag);
+				bad_token((char *)0, emsg);
+				f1_eatit();	/* eat rest of line */
+				return -1;
 
-			}
+
+			}  /* <---- End of (r), (r)+, (r)++, @(r), @(r)+, @(r)++ */
 
 			if ( (((token_type == TOKEN_strng) || (token_type == TOKEN_numb)) && ((*inp_ptr == open_operand) || (j) || (amflag == OPENAT))) || ((token_type == TOKEN_oper) && (j)) )
-			{  /* (r) or n(r) or @(r) or @n(r) or @nnnn */
+			{  /* ----> Start of (r) or n(r) or nnnn(r) or @(r) or @n(r) or @nnnn(r) */
 
 				if ( j )
 				{
@@ -813,34 +865,66 @@ static int do_operand(Opcode *opc)
 					}
 
 					if ( (indexed_mode & flg_ABD) == 0 )
-					{
+					{  /* if not ABD flag do this */
 						if ( exprs(1, &EXP2) < 1 )
-							return -1;   /* test operand */
-						k = EXP2SP->expr_value;
+						{  /* test operand */
+							sprintf(emsg, "unknown operand ");
+							bad_token((char *)0, emsg);
+							f1_eatit();	/* eat rest of line */
+							return -1;
+						}
+
+						con_offset  = EXP2SP->expr_value;
 
 						if ( (EXP2SP->expr_code != EXPR_VALUE) || (EXP2.ptr > 1) )
-						{
-							z = 1;
-						}
-						else
-						{
-							z = 0;
-							/* -17 >< 16 */
-							if ( ((k > -17) && (k < 16)) && (!(indexed_mode & flg_indirect)) )
+						{  /* if unknown value - treat as 8bit or 16bit mode */
+
+							z_page = 0x1 & (EXP2.base_page_reference);	/* check for base page */
+							if ( z_page )
 							{
-								indexed_mode = indexed_mode | flg_5bit;   /* Really four bit with negative flag */
+								indexed_mode = indexed_mode | flg_8bit;    /* Really seven bit with negative flag */
 								if ( indexed_mode & flg_indirect )
 								{
 									temp = 0x98;
-									indexed_mode = (indexed_mode & ~flg_5bit) | flg_8bit;  /* Force 8 bits for @n(r) */
+								}
+								else
+								{
+									temp = 0x88;
+								}
+							}
+							else
+							{
+								indexed_mode = indexed_mode | flg_16bit;  /* Really fifteen bit with negative flag */
+								if ( indexed_mode & flg_indirect )
+								{
+									temp = 0x99;
+								}
+								else
+								{
+									temp = 0x89;
+								}
+
+							}
+
+						}
+						else
+						{  /* if absolute value */
+
+							if ( ((con_offset  > -17) && (con_offset  < 16)) && (!(indexed_mode & flg_indirect)) )
+							{  /* -17 >< +16 */
+								indexed_mode = indexed_mode | flg_5bit;	/* Really four bit with negative flag */
+								if ( indexed_mode & flg_indirect )
+								{
+									temp = 0x98;	/* Force 8 bits for @n(r) */
+									indexed_mode = (indexed_mode & ~flg_5bit) | flg_8bit;
 								}
 								else
 								{
 									temp = 0x0;
 								}
-							} /* -129 >< 128 */
-							else if ( (k > -129) && (k < 128) )
-							{
+							}
+							else if ( (con_offset  > -129) && (con_offset  < 128) )
+							{  /* -129 >< +128 */
 								indexed_mode = indexed_mode | flg_8bit;   /* Really seven bit with negative flag */
 								if ( indexed_mode & flg_indirect )
 								{
@@ -851,9 +935,9 @@ static int do_operand(Opcode *opc)
 									temp = 0x88;
 								}
 							}
-							else
-							{
-								indexed_mode = indexed_mode | flg_offset;
+							else if ( (con_offset  > -32769) && (con_offset  < 32768) )
+							{ /* -32769 >< +32768 */
+								indexed_mode = indexed_mode | flg_16bit;
 								if ( indexed_mode & flg_indirect )
 								{
 									temp = 0x99;
@@ -863,66 +947,38 @@ static int do_operand(Opcode *opc)
 									temp = 0x89;
 								}
 							}
-
-							/* If zero offset - set to NO offset mode */
-							if ( (k == 0) && ((indexed_mode & flg_5bit) != 0) )
-							{
-								temp = 0x84;
-								indexed_mode = ((indexed_mode & ~flg_5bit) | flg_noffset);  /* Force no offset for 0(r) */
-
-							}
-
-						}
-
-						if ( z )
-						{
-							z = 1;
-							for ( j = 0; j < EXP2.ptr; j++ )
-							{
-								if ( (EXP2SP[j].expr_code) == 0x20 )
-								{
-									z = z & (EXP2SP[j].expr_sym->flg_base);
-								}
-							}
-							z = z & (EXP2.base_page_reference);
-							if ( z )
-							{
-								indexed_mode = indexed_mode | flg_8bit;   /* Really seven bit with negative flag */
-								if ( indexed_mode & flg_indirect )
-								{
-									temp = 0x98;
-								}
-								else
-								{
-									temp = 0x88;
-								}
-							}
 							else
 							{
-								indexed_mode = indexed_mode | flg_offset;   /* Really fifteen bit with negative flag */
+								sprintf(emsg, "only values less than 16 bits allowed - constant offset = %lX Hex", con_offset);
+								bad_token((char *)0, emsg);
+								f1_eatit();	/* eat rest of line */
+								return -1;
+							}
+
+							/* offset is now an absolute variable so it might have a value of zero */
+							/* If zero offset - set 0(r), @0(r) to (r), @(r) 5bit mode */
+							if (con_offset  == 0)
+							{
 								if ( indexed_mode & flg_indirect )
 								{
-									temp = 0x99;
+									temp = 0x94;
 								}
 								else
 								{
-									temp = 0x89;
+									temp = 0x84;
 								}
-
+								/* Force 0(r), @0(r) to (r), @(r) */
+								indexed_mode = ((indexed_mode & ~flg_8bit & ~flg_16bit) | flg_5bit);
 							}
 
 						}
 
-					}
 
-					if ( (strcmp(token_pool, "JMP") == 0)&&(indexed_mode & flg_indirect)&&(k==0) )
-					{
-						indexed_mode = (indexed_mode | flg_zoff_jmp);
 					}
 					if ( *inp_ptr == open_operand )
 					{
-						++inp_ptr;         /* eat the open_operand */
-						get_token();       /* pickup the next token */
+						++inp_ptr;	/* eat the open_operand */
+						get_token();	/* pickup the next token */
 					}
 					else
 					{
@@ -938,7 +994,7 @@ static int do_operand(Opcode *opc)
 					}
 					if ( *inp_ptr == close_operand )
 					{
-						++inp_ptr;         /* eat the close_operand */
+						++inp_ptr;	/* eat the close_operand */
 					}
 
 					if ( strcmp(token_pool, "X") == 0 )
@@ -978,7 +1034,7 @@ static int do_operand(Opcode *opc)
 								temp = 0x8C;
 							}
 						}
-						else if ( indexed_mode & flg_offset )
+						else if ( indexed_mode & flg_16bit )
 						{
 							if ( indexed_mode & flg_indirect )
 							{
@@ -997,70 +1053,57 @@ static int do_operand(Opcode *opc)
 					{
 						sprintf(emsg, "token_pool Does not match any legit Reg - %s", token_pool);
 						bad_token((char *)0, emsg);
-						f1_eatit();       /* eat rest of line */
+						f1_eatit();	/* eat rest of line */
 						return -1;
 					}
 
 					EXP0SP->expr_value = opc->op_value + 0x20;
 					if ( indexed_mode & flg_ABD )
-					{
+					{  /* if ABD flag */
 						if ( strcmp(token_pool, "PC") == 0 )
 						{
 							sprintf(emsg, "Not A Valid Register for accumulator offset - %s", token_pool);
 							bad_token((char *)0, emsg);
-							f1_eatit();       /* eat rest of line */
+							f1_eatit();	/* eat rest of line */
 							return -1;
 						}
 						else
 						{
-							EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set Post Byte value */
-							EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+							EXP1.psuedo_value = EXP1SP->expr_value = temp;	/* set Post Byte value */
+							EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
 							EXP1.tag = 'b';
-							EXP1.ptr = 1;            /* second stack has operand (1 element) */
+							EXP1.ptr = 1;			/* second stack has operand (1 element) */
 						}
 						return I_NUM;
 					}
 					else
 					{
 						if ( (EXP2SP->expr_code == EXPR_VALUE) && (EXP2.ptr < 2) )
-						{
-							  /* Force 5 bits for JMP @0(X) */
-							if ( (indexed_mode & flg_zoff_jmp) && (strcmp(token_pool, "X") == 0 ) && (k ==0) )
-							{
-									temp = 0x94;
-									indexed_mode = ((indexed_mode & ~flg_5bit & ~flg_8bit) | flg_noffset);
-							}
-							if ( indexed_mode & flg_noffset )
-							{
-								EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand no offset value */
-								EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+						{  /* if absolute value */
+
+							if ( indexed_mode & flg_5bit )
+							{  /* 5 bit mode */
+								EXP1.psuedo_value = EXP1SP->expr_value = temp | (con_offset  & 0x1f);  /* set operand 5bit value */
+								EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
 								EXP1.tag = 'b';
-								EXP1.ptr = 1;            /* second stack has operand (1 element) */
-								EXP2.ptr = 0;            /* second stack has operand (1 element) */
-							}
-							else if ( indexed_mode & flg_5bit )
-							{
-								EXP1.psuedo_value = EXP1SP->expr_value = temp | (k & 0x1f);  /* set operand 5bit value */
-								EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
-								EXP1.tag = 'b';
-								EXP1.ptr = 1;            /* second stack has operand (1 element) */
-								EXP2.ptr = 0;            /* second stack has operand (1 element) */
+								EXP1.ptr = 1;			/* second stack has operand (1 element) */
+								EXP2.ptr = 0;			/* third stack has no operand (1 element) */
 							}
 							else if ( indexed_mode & flg_8bit )
-							{
-								EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set Post Byte value */
-								EXP2.psuedo_value = EXP2SP->expr_value = (k & 0xFF);  /* set operand 8bit value */
-								EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
-								EXP2SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+							{  /* 8 bit mode */
+								EXP1.psuedo_value = EXP1SP->expr_value = temp;	/* set Post Byte value */
+								EXP2.psuedo_value = EXP2SP->expr_value = (con_offset  & 0xFF);	/* set operand 8bit value */
+								EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
+								EXP2SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
 								EXP1.tag = 'b';
-								EXP1.ptr = 1;            /* second stack has operand (1 element) */
+								EXP1.ptr = 1;			/* second stack has operand (1 element) */
 								EXP2.tag = 'b';
 								/*               EXP2.ptr = 1;             * third stack has operand (1 element) */
 							}
-							else   /* 16 bit mode */
-							{
+							else
+							{  /* 16 bit mode */
 								EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set Post Byte value */
-								EXP2.psuedo_value = EXP2SP->expr_value = (k & 0xFFFF);  /* set operand 16bit value */
+								EXP2.psuedo_value = EXP2SP->expr_value = (con_offset  & 0xFFFF);  /* set operand 16bit value */
 								EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
 								EXP2SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
 								EXP1.tag = 'b';
@@ -1127,7 +1170,7 @@ static int do_operand(Opcode *opc)
 
 				}
 
-			}
+			}  /* <---- (r) or n(r) or nnnn(r) or @(r) or @n(r) or @nnnn(r) */
 
 			if ( (token_type == TOKEN_strng) && (*inp_ptr == ',') )
 			{
@@ -1202,8 +1245,8 @@ static int do_operand(Opcode *opc)
 
 					if ( j )
 					{
-						++inp_ptr;       /* eat the comma */
-						get_token();     /* pickup the next token */
+						++inp_ptr;	/* eat the comma */
+						get_token();	/* pickup the next token */
 
 						/* Convert to Upper Case */
 						j = 0;
@@ -1254,12 +1297,32 @@ static int do_operand(Opcode *opc)
 							temp = (temp | reg_D);
 						}
 
-						EXP1.psuedo_value = EXP1SP->expr_value = temp;  /* set operand value */
-						EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
-						EXP1.tag = 'b';
-						EXP1.ptr = 1;            /* second stack has operand (1 element) */
+						if ( temp > 0xBB )
+						{
+							sprintf(emsg, "illegal register use - Register values = %X Hex", temp);
+							bad_token((char *)0, emsg);
+							f1_eatit();	/* eat rest of line */
+							return -1;
+						}
+						if ( ((temp >> 4) < 0x6) && ((temp & 0xF) > 0x7) )
+						{
+							sprintf(emsg, "can not move 16bit reg to 8bit reg - Register values = %X Hex", temp);
+							bad_token((char *)0, emsg);
+							f1_eatit();	/* eat rest of line */
+							return -1;
+						}
+						if ( ((temp >> 4) > 0x7) && ((temp & 0xF) < 0x6) )
+						{
+							sprintf(emsg, "can not move 8bit reg to 16bit reg - Register values = %X Hex", temp);
+							bad_token((char *)0, emsg);
+							f1_eatit();	/* eat rest of line */
+							return -1;
+						}
 
-						/* need error checking - make sure not putting a 16 bit reg into a 8 reg, etc */
+						EXP1.psuedo_value = EXP1SP->expr_value = temp;	/* set operand value */
+						EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
+						EXP1.tag = 'b';
+						EXP1.ptr = 1;			/* second stack has operand (1 element) */
 
 						return I_NUM;
 
@@ -1269,10 +1332,10 @@ static int do_operand(Opcode *opc)
 
 				if ( strcmp(token_pool, "I") == 0 )
 				{
-					++inp_ptr;       /* eat the comma */
-					get_token();        /* get the next token */
+					++inp_ptr;	/* eat the comma */
+					get_token();	/* get the next token */
 					if ( exprs(1, &EXP1) < 1 )
-						break; /* quit if expr nfg */
+						break;	/* quit if expr nfg */
 
 					/* If it is a 2 BYTE immediate mode address */
 					if ( (opc->op_amode & SPC) == SPC )
@@ -1280,7 +1343,7 @@ static int do_operand(Opcode *opc)
 						EXP1.tag = (edmask & ED_M68) ? 'W' : 'w';
 					}
 
-					return I_NUM;       /* return with immediate mode address */
+					return I_NUM;	/* return with immediate mode address */
 
 				}
 				else if ( strcmp(token_pool, "D") == 0 )
@@ -1295,19 +1358,17 @@ static int do_operand(Opcode *opc)
 					EXP0SP->expr_value = (opc->op_value + 0x30);
 					EXP1.tag = (edmask & ED_M68) ? 'W' : 'w';
 				}
-
-				/* mode "NE"   */
 				else if ( strcmp(token_pool, "NE") == 0 )
-				{
+				{  /* mode "NE"   */
 					EXP0SP->expr_value = (opc->op_value + 0x20);
-					++inp_ptr;       /* eat the comma */
-					get_token();        /* get the next token */
+					++inp_ptr;		/* eat the comma */
+					get_token();		/* get the next token */
 					if ( exprs(1, &EXP2) < 1 )
-						return -1;   /* test operand */
-					EXP1.psuedo_value = EXP1SP->expr_value = 0x9F;  /* set Post Byte value */
-					EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+						return -1;	/* test operand */
+					EXP1.psuedo_value = EXP1SP->expr_value = 0x9F;	/* set Post Byte value */
+					EXP1SP->expr_code = EXPR_VALUE;	/* set expression component is an absolute value */
 					EXP1.tag = 'b';
-					EXP1.ptr = 1;            /* second stack has operand (1 element) */
+					EXP1.ptr = 1;			/* second stack has operand (1 element) */
 					EXP2.tag = (edmask & ED_M68) ? 'W' : 'w';
 					/*          EXP2.ptr = 1;             * third stack has operand (1 element) */
 					return I_NUM;
@@ -1319,9 +1380,9 @@ static int do_operand(Opcode *opc)
 					bad_token(am_ptr, "Unknown address mode");
 					break;
 				}
-				++inp_ptr;       /* eat the comma */
-				get_token();     /* pickup the next token */
-				amflag = MNBI;       /* signal nothing else allowed */
+				++inp_ptr;	/* eat the comma */
+				get_token();	/* pickup the next token */
+				amflag = MNBI;	/* signal nothing else allowed */
 			}
 			else
 			{
@@ -1336,15 +1397,15 @@ static int do_operand(Opcode *opc)
 
 				exp_ptr = EXP1.stack;
 
-				if ( (opc->op_amode & D) &&         /* if Direct (Absolute Zero Page) mode is legal */
-					 (((edmask & ED_AMA) == 0) ||   /* and not AMA mode */
-					  (EXP1.base_page_reference != 0) || /* base page expression */
-					  ((EXP1.ptr == 1) &&        /* or expression is < 256 */
-					   (exp_ptr->expr_code == EXPR_VALUE) &&
-					   ((exp_ptr->expr_value & -256) == 0) &&
-					   (EXP1.forward_reference == 0))) )
+				if ( (opc->op_amode & D) &&			/* if Direct (Absolute Zero Page) mode is legal */
+					(((edmask & ED_AMA) == 0) ||		/* and not AMA mode */
+					(EXP1.base_page_reference != 0) ||	/* or base page expression */
+					((EXP1.ptr == 1) &&			/* or expression is < 256 */
+					(exp_ptr->expr_code == EXPR_VALUE) &&
+					((exp_ptr->expr_value & -256) == 0) &&
+					(EXP1.forward_reference == 0))) )
 				{
-					/* If no AM option - Default  Direct (Absolute Zero Page) */
+					/* If no AM option - Default Direct (Absolute Zero Page) */
 					if ( ((opc->op_amode) == (SHFTAM)) || (opc->op_amode & SPDP) )
 					{
 						EXP0SP->expr_value = (opc->op_value - 0x40);
@@ -1353,14 +1414,15 @@ static int do_operand(Opcode *opc)
 					{
 						EXP0SP->expr_value = (opc->op_value + 0x10);
 					}
-
+					make_dpage_ref(&EXP1);
+					EXP1.tag = 'c';
 				}
 				else
 				{
 					if ( opc->op_amode & D )
-					{        /* If no AM option - Check for dpage  */
+					{  /* If no AM option - Check for dpage  */
 
-						if ( check_4_dpage(&EXP1) )
+						if ( check_4_dzpage(&EXP1) )
 						{
 							if ( opc->op_amode & SPDP )
 							{
@@ -1371,14 +1433,14 @@ static int do_operand(Opcode *opc)
 								EXP0SP->expr_value = (opc->op_value + 0x10);
 							}
 
-							EXP1.psuedo_value = EXP1SP->expr_value = (EXP1SP->expr_value & 0xFF);  /* set operand value */
-							EXP1SP->expr_code = EXPR_VALUE;  /* set expression component is an absolute value */
+							EXP1.psuedo_value = EXP1SP->expr_value = (EXP1SP->expr_value & 0xFF);	/* set operand value */
+							EXP1SP->expr_code = EXPR_VALUE;		/* set expression component is an absolute value */
 							EXP1.tag = 'b';
-							EXP1.ptr = 1;            /* second stack has operand (1 element) */
+							EXP1.ptr = 1;				/* second stack has operand (1 element) */
 
 						}
 						else if ( opc->op_amode & E )
-						{        /* If no AM option - Default  Extended (Absolute) */
+						{  /* If no AM option - Default  Extended (Absolute) */
 							EXP0SP->expr_value = opc->op_value + 0x30;
 							EXP1.tag = (edmask & ED_M68) ? 'W' : 'w';
 						}
@@ -1424,13 +1486,13 @@ void do_opcode(Opcode *opc)
 	am_ptr = inp_ptr;	/* remember where am starts */
 
 	if ( (opc->op_amode & SP10) == SP10 )
-	{    /*  Set two byte opcode  */
+	{	/*  Set two byte opcode  */
 		opc->op_value = opc->op_value | 0x1000;
 		EXP0.psuedo_value = EXP0SP->expr_value = opc->op_value;
 		EXP0.tag = (edmask & ED_M68) ? 'W' : 'w';
 	}
 	if ( (opc->op_amode & SP11) == SP11 )
-	{    /*  Set two byte opcode  */
+	{	/*  Set two byte opcode  */
 		opc->op_value = opc->op_value | 0x1100;
 		EXP0.psuedo_value = EXP0SP->expr_value = opc->op_value;
 		EXP0.tag = (edmask & ED_M68) ? 'W' : 'w';
@@ -1447,11 +1509,11 @@ void do_opcode(Opcode *opc)
 		}
 		else
 		{
-			/* amdcdnum = */ do_operand(opc);
+			do_operand(opc);	/* amdcdnum =   */
 		}
 	}
 	if ( err_cnt != error_count[MSG_ERROR] )
-	{   /* if any errors detected... */
+	{	/* if any errors detected... */
 		while ( !(cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) )
 			++inp_ptr; /* ...eat to EOL */
 	}
@@ -1464,7 +1526,7 @@ void do_opcode(Opcode *opc)
 		if ( list_bin )
 			compress_expr_psuedo(&EXP0);
 
-		p1o_any(&EXP0);           /* output the opcode */
+		p1o_any(&EXP0);		/* output the opcode */
 		if ( EXP1.ptr > 0 )
 		{
 			if ( list_bin )
@@ -1480,7 +1542,7 @@ void do_opcode(Opcode *opc)
 
 	}
 
-}   /* -- opc69() */
+}  /* -- opc69() */
 
 
 int op_ntype(void)
