@@ -3640,7 +3640,7 @@ int op_print(void)
 {
 	LIST_stat_t *lstat;
 	char rad_num[18];
-	long sav_data;
+	long sav_data=0;
 	int tt;
 
 /*
