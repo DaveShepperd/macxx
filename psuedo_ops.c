@@ -19,18 +19,24 @@
 /******************************************************************************
 Change Log
 
-	12/28/2022	- Added support for the .COPY command   - Tim Giddens
+	12/29/2022	- Added error checking to .COPY command		- Tim Giddens
+			  Check to see if there is a List file and if .LIST is on.
+
+	12/29/2022	- Fix to .COPY command to handle zeros at the end	- David Shepperd
+			  of file being listed.
+
+	12/28/2022	- Added support for the .COPY command.   - Tim Giddens
 
 	12/14/2022	- Fixes to accomodate .PRINT and .LIST SRC options. - David Shepperd
 
-	12/10/2022	- Added change log info			- David Shepperd
+	12/10/2022	- Added change log info.			- David Shepperd
 
 	04/06/2022	- Fixed .PRINT command - suppress leading zeros not working correctly
-			  Added supprot for RADIX to .PRINT command by Tim Giddens
+			  Added supprot for RADIX to .PRINT command by Tim Giddens.
 
-	01/26/2022	- Added support for the .PRINT command by Tim Giddens
+	01/26/2022	- Added support for the .PRINT command by Tim Giddens.
  
-	01-05-2022	- Added support for the .RAD50 command by Tim Giddens 
+	01-05-2022	- Added support for the .RAD50 command by Tim Giddens.
 
 ******************************************************************************/
 #include "add_defs.h"
@@ -3808,46 +3814,58 @@ int op_copy(void)
 	char buff[256];
 	FILE *file_cpy;
 
-	tt = get_token();
-
-	if ( tt == TOKEN_strng )
+	/* If no List file - do nothing just return */
+	if ( lis_fp == 0 )
 	{
-		/* open the file */    
-		file_cpy = fopen(token_pool,"rt");    
-		if ( !file_cpy )
+		f1_eatit();
+		return 1;
+	}
+
+	/* is .LIST turned on ? */
+	if ( show_line > 0)
+	{
+		tt = get_token();
+		if ( tt == TOKEN_strng )
 		{
-			sprintf(emsg," Unable to open file \"%s\" - file not found!", token_pool);
+			/* open the file */    
+			file_cpy = fopen(token_pool,"rt");    
+			if ( !file_cpy )
+			{
+				sprintf(emsg," Unable to open file \"%s\" - file not found!", token_pool);
+				show_bad_token(tkn_ptr, emsg, MSG_ERROR);
+				f1_eatit();	/* eat rest of line */
+				return -1;
+			}
+			line_to_listing();
+			show_line = 0;		/* Don't show the .copy line again */
+			buff[sizeof(buff)-1] = 0;
+			while( fgets(buff,sizeof(buff)-2,file_cpy) )
+			{
+				int len = strlen(buff);
+				if ( len )
+				{
+					/* only print non-null lines */
+					if ( len >= (int)sizeof(buff) - 2 || buff[len - 1] != '\n' )
+					{
+						/* make sure all lines end in a newline */
+						buff[len++] = '\n';
+						buff[len] = 0;
+					}
+					puts_lis(buff, 1);
+				}
+			}
+			fclose(file_cpy);
+		}
+		else
+		{
+			sprintf(emsg," Missing file name ");
 			show_bad_token(tkn_ptr, emsg, MSG_ERROR);
 			f1_eatit();	/* eat rest of line */
 			return -1;
-		}
-		line_to_listing();
-		show_line = 0;		/* Don't show this line again */
-		buff[sizeof(buff)-1] = 0;
-		while( fgets(buff,sizeof(buff)-2,file_cpy) )
-		{
-			int len = strlen(buff);
-			if ( len )
-			{
-				if ( len >= (int)sizeof(buff) - 2 || buff[len - 1] != '\n' )
-				{
-					buff[len++] = '\n';
-					buff[len] = 0;
-				}
-				puts_lis(buff, 1);
-			}
-		}
-		fclose(file_cpy);
-		f1_eatit();		/* eat rest of line */
-	}
-	else
-	{
-		sprintf(emsg," Missing file name ");
-		show_bad_token(tkn_ptr, emsg, MSG_ERROR);
-		f1_eatit();	/* eat rest of line */
-		return -1;
 
+		}
 	}
+	f1_eatit();		/* eat rest of line */
 	return 0;
 
 }
