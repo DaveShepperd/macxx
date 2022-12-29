@@ -19,6 +19,8 @@
 /******************************************************************************
 Change Log
 
+    12/28/2022	- Changed added support for the .copy command   - Tim Giddens
+
     02/17/2022	- Changed added support for the following commands  - Tim Giddens
 		  .defstack
 		  .getpointer
@@ -41,7 +43,6 @@ static int no_such_opcode(void)
 	return 0;
 }
 
-DIRDEF(.COPY,   op_copy,    0)
 DIRDEF(.CROSS,  op_cross,   0)
 DIRDEF(.DCREF,  op_dcref,   0)
 DIRDEF(.ECREF,  op_ecref,   0)

@@ -546,7 +546,7 @@ gt_loop:
 }
 /******************************************************************/
 
-char *lis_title=0,*lis_subtitle=0;
+char lis_title[LIS_TITLE_LEN], lis_subtitle[LIS_TITLE_LEN];
 
 /**************************************************************************
  * PUTS_LIS - put a string to LIS file
@@ -560,24 +560,29 @@ void puts_lis(char *string, int lines )
 {
     int i;
     char *s;
-    if (lis_fp == 0) return;     /* easy out if no lis file */
-    if (lis_title == 0)
+    if (lis_fp == 0)
+		return;     /* easy out if no lis file */
+    if (!lis_title[0])
     {
-        misc_pool_used += 133;
-        lis_title = MEM_alloc(133);   /* get some memory for a title */
-        sprintf(lis_title,"%-40s %s %s   %s\n",
+        snprintf(lis_title,sizeof(lis_title),"\r%-40s %s %s   %s\n",
                 output_files[OUT_FN_OBJ].fn_name_only,
                 macxx_name,macxx_version,ascii_date);
     }
     if ((i=lines) == 0)
     {
-        if ((s = string) != 0 )           /* point to string */
-            while (*s) if (*s++ == '\n') i++;  /* count \n's in text */
+        if ((s = string) != 0 )			   /* point to string */
+		{
+			while (*s)
+			{
+				if (*s++ == '\n')
+					i++;  /* count \n's in text */
+			}
+		}
     }
     if (i == 0 || i > lis_line)
     {    /* room on page? */
         fputs(lis_title,lis_fp);      /* write title line */
-        if (lis_subtitle == 0)
+        if (!lis_subtitle[0])
         {
             fputs("\n\n",lis_fp);      /* no subtitle yet */
         }
@@ -585,7 +590,7 @@ void puts_lis(char *string, int lines )
         {
             fputs(lis_subtitle,lis_fp);    /* write subtitle line */
         }
-        lis_line = 60-3;          /* reset the line counter */
+        lis_line = LIS_LINES_PER_PAGE-3;          /* reset the line counter */
         *lis_title = '\f';        /* make first char a FF */
     }
     if (i != 0)

@@ -152,14 +152,16 @@ extern int macro_level;
 
 #define ERRMSG_SIZE (512)
 extern char emsg[ERRMSG_SIZE];		/* error message buffer */
+#define LIS_LINES_PER_PAGE (60)
 extern int show_line;
 extern int lis_line;
 extern int line_errors_index;
 extern char *line_errors[];
 extern char line_errors_sev[];
 extern int error_count[];
-extern char *lis_title;
-extern char *lis_subtitle;
+#define LIS_TITLE_LEN (133)
+extern char lis_title[LIS_TITLE_LEN];
+extern char lis_subtitle[LIS_TITLE_LEN];
 extern char ascii_date[];
 
 #include "memmgt.h"

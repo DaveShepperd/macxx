@@ -209,7 +209,7 @@ int sort_symbols(void)
             char *map_page,*d;
             int col,line_page,lc;
             extern int lis_line;
-            lis_subtitle = "Symbol Table\n\n";
+            strncpy(lis_subtitle, "Symbol Table\n\n", sizeof(lis_subtitle));
             ls = sorted_symbols;
             misc_pool_used += 132*60;
             map_page = MEM_alloc(132*60);  /* get a whole map page of memory */
@@ -302,7 +302,7 @@ int sort_symbols(void)
     {
         int seg_num;
         SEG_struct **spp,*seg_ptr;
-        lis_subtitle = "Segment summary";
+        strncpy(lis_subtitle,"Segment summary",sizeof(lis_subtitle));
         puts_lis("\nSegment summary:\nNum  Length   Maxlen  Salign  Dalign c/o base name\n-------------------------------------------------------------------------\n",4);
         seg_num = 0;
         spp = seg_list;

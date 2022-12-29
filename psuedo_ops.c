@@ -19,12 +19,18 @@
 /******************************************************************************
 Change Log
 
-	04/06/2022  - updated .PRINT command - suppress leading zeros not working correctly - Fixed
-		  added supprot for RADIX to .PRINT command by Tim Giddens
+	12/28/2022	- Added support for the .COPY command   - Tim Giddens
 
-	01/26/2022	- added support for the .PRINT command by Tim Giddens
+	12/14/2022	- Fixes to accomodate .PRINT and .LIST SRC options. - David Shepperd
+
+	12/10/2022	- Added change log info			- David Shepperd
+
+	04/06/2022	- Fixed .PRINT command - suppress leading zeros not working correctly
+			  Added supprot for RADIX to .PRINT command by Tim Giddens
+
+	01/26/2022	- Added support for the .PRINT command by Tim Giddens
  
-	01-05-2022	- added support for the .RAD50 command by Tim Giddens 
+	01-05-2022	- Added support for the .RAD50 command by Tim Giddens 
 
 ******************************************************************************/
 #include "add_defs.h"
@@ -72,18 +78,12 @@ int op_title(void)
 			++s;
 			++len;
 		}
-		if ( lis_title == 0 )
-		{
-			misc_pool_used += 133;
-			lis_title = MEM_alloc(133);    /* get some memory for a title */
+		if ( !(c=lis_title[0]) )
 			c = '\r';
-		}
-		else
-		{
-			c = *lis_title;
-		}
-		sprintf(lis_title, "%c%-40s %s %s   %s\n",
+		snprintf(lis_title, sizeof(lis_title), "%c%-40s %s %s   %s\n",
 				c, " ", macxx_name, macxx_version, ascii_date);
+		if ( len > (int)sizeof(lis_title)-3 )
+			len = sizeof(lis_title)-3;
 		memcpy(lis_title + 1, inp_ptr, len);
 	}
 	f1_eatit();
@@ -104,13 +104,8 @@ int op_sbttl(void)
 			++s;
 			++len;
 		}
-		if ( lis_subtitle != 0 )
-		{
-			misc_pool_used -= strlen(lis_subtitle) + 1;
-			MEM_free(lis_subtitle);
-		}
-		lis_subtitle = MEM_alloc(len + 3);  /* get some memory for a subtitle */
-		misc_pool_used += len + 3;
+		if ( len > (int)sizeof(lis_subtitle)-3 )
+			len = sizeof(lis_subtitle)-3;
 		memcpy(lis_subtitle, inp_ptr, len);
 		s = lis_subtitle + len;
 		*s++ = '\n';
@@ -3787,6 +3782,67 @@ int op_print(void)
 	}
 
 	return 0;
+}
+
+
+/******************************************************************
+ * 12/28/2022   added .copy Command by Tim Giddens
+ *
+ *
+ *	.copy -	Copies a text file into the listing file
+ * 
+ * At entry:
+ * 	inp_ptr - must be pointing the text file name. 
+ *
+ * At exit:
+ *	The named text file is printed to the LIST file *.lst
+ *
+ * Exp.
+ *		.COPY filename.ext
+ *		.COPY WSMAIN.LNK
+ *
+ *******************************************************************/
+int op_copy(void)
+{
+	int tt;
+	char buff[256];
+	FILE *file_cpy;
+
+	tt = get_token();
+
+	if ( tt == TOKEN_strng )
+	{
+		/* open the file */    
+		file_cpy = fopen(token_pool,"rt");    
+		if ( !file_cpy )
+		{
+			sprintf(emsg," Unable to open file \"%s\" - file not found!", token_pool);
+			show_bad_token(tkn_ptr, emsg, MSG_ERROR);
+			f1_eatit();	/* eat rest of line */
+			return -1;
+		}
+		line_to_listing();
+		show_line = 0;		/* Don't show this line again */
+		while( fgets(buff,256,file_cpy) )
+		{
+			puts_lis(buff, 1);
+			--lis_line;
+			if ( lis_line < 0 )
+				lis_line = LIS_LINES_PER_PAGE-3;
+		}
+		fclose(file_cpy);
+		f1_eatit();		/* eat rest of line */
+	}
+	else
+	{
+		sprintf(emsg," Missing file name ");
+		show_bad_token(tkn_ptr, emsg, MSG_ERROR);
+		f1_eatit();	/* eat rest of line */
+		return -1;
+
+	}
+	return 0;
+
 }
 
 #endif	/* defined(MAC_PP) */
