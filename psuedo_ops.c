@@ -3823,12 +3823,19 @@ int op_copy(void)
 		}
 		line_to_listing();
 		show_line = 0;		/* Don't show this line again */
-		while( fgets(buff,256,file_cpy) )
+		buff[sizeof(buff)-1] = 0;
+		while( fgets(buff,sizeof(buff)-2,file_cpy) )
 		{
-			puts_lis(buff, 1);
-			--lis_line;
-			if ( lis_line < 0 )
-				lis_line = LIS_LINES_PER_PAGE-3;
+			int len = strlen(buff);
+			if ( len )
+			{
+				if ( len >= (int)sizeof(buff) - 2 || buff[len - 1] != '\n' )
+				{
+					buff[len++] = '\n';
+					buff[len] = 0;
+				}
+				puts_lis(buff, 1);
+			}
 		}
 		fclose(file_cpy);
 		f1_eatit();		/* eat rest of line */

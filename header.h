@@ -163,6 +163,7 @@ extern int error_count[];
 extern char lis_title[LIS_TITLE_LEN];
 extern char lis_subtitle[LIS_TITLE_LEN];
 extern char ascii_date[];
+extern void puts_titles(void);
 
 #include "memmgt.h"
 

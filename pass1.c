@@ -548,6 +548,21 @@ gt_loop:
 
 char lis_title[LIS_TITLE_LEN], lis_subtitle[LIS_TITLE_LEN];
 
+void puts_titles(void)
+{
+	fputs(lis_title,lis_fp);      /* write title line */
+	 if (!lis_subtitle[0])
+	 {
+		 fputs("\n\n",lis_fp);      /* no subtitle yet */
+	 }
+	 else
+	 {
+		 fputs(lis_subtitle,lis_fp);    /* write subtitle line */
+	 }
+	 lis_line = LIS_LINES_PER_PAGE-3;          /* reset the line counter */
+	 *lis_title = '\f';        /* make first char a FF */
+}
+
 /**************************************************************************
  * PUTS_LIS - put a string to LIS file
  */
@@ -581,17 +596,7 @@ void puts_lis(char *string, int lines )
     }
     if (i == 0 || i > lis_line)
     {    /* room on page? */
-        fputs(lis_title,lis_fp);      /* write title line */
-        if (!lis_subtitle[0])
-        {
-            fputs("\n\n",lis_fp);      /* no subtitle yet */
-        }
-        else
-        {
-            fputs(lis_subtitle,lis_fp);    /* write subtitle line */
-        }
-        lis_line = LIS_LINES_PER_PAGE-3;          /* reset the line counter */
-        *lis_title = '\f';        /* make first char a FF */
+		puts_titles();
     }
     if (i != 0)
     {
