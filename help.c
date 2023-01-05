@@ -99,7 +99,7 @@ static char *help_msg[] = {
 
 int display_help(void)
 {
-    int i, upc = 0, were_mac65=0, were_tj=0, were_mac68k=0;
+    int i, upc = 0, were_mac65=0, were_mac68=0, were_mac69=0, were_tj=0, were_mac68k=0;
 #if 0
     int were_816=0;
 #endif
@@ -122,9 +122,11 @@ int display_help(void)
     }
     else
     {
-        if (macxx_name[3] == '6' && macxx_name[4] == '8') were_mac68k = 1;
-        if (macxx_name[3] == '6' && macxx_name[4] == '5') were_mac65 = 1;
-        if (macxx_name[3] == 't' && macxx_name[4] == 'j') were_tj = 1;
+		if (macxx_name[3] == '6' && macxx_name[4] == '5') were_mac65 = 1;
+        else if (macxx_name[3] == '6' && macxx_name[4] == '8' && macxx_name[5]) were_mac68k = 1;
+		else if (macxx_name[3] == '6' && macxx_name[4] == '8' ) were_mac68 = 1;
+		else if (macxx_name[3] == '6' && macxx_name[4] == '9') were_mac69 = 1;
+        else if (macxx_name[3] == 't' && macxx_name[4] == 'j') were_tj = 1;
     }
     for (i=0;help_msg[i] && i < sizeof(help_msg)/sizeof(char *);++i)
     {
@@ -151,7 +153,7 @@ int display_help(void)
         }
         if (help_msg[i] == help_grnhill_mark)
         {
-            if (!were_mac68k)
+            if (!were_mac68k && !were_mac68 && !were_mac69)
             {
                 i += 3;     /* skip the delim, option name and text */
             }
