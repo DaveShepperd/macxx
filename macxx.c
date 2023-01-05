@@ -33,6 +33,7 @@
 #include "strsub.h"
 #include "listctrl.h"
 
+extern int gc_pass;
 struct stat file_stat;
 unsigned long edmask;           /* enabl/disabl mask */
 FN_struct *current_fnd;     /* global current_fnd for error handlers */
@@ -91,7 +92,7 @@ void err_msg( int severity, char *msg )
     static char *sev_s[]= {"WARN","SUCCESS","ERROR","INFO","FATAL"};
     char *lemsg, *lmp, lmg[20];
 
- 	if ( !pass )	/* No errors during pass 0 */
+ 	if ( !pass && !gc_pass )	/* No errors during pass 0 */
 		return;
 	inlen = inp_str_size + strlen(msg) + 22;
     lmp = lemsg = MEM_alloc(inlen);

@@ -361,6 +361,7 @@ int getcommand(void)
     char **argv;
 
     argv = gc_argv;
+	gc_pass = 1;
     add_defs(*argv,(char **)0,(char **)0,ADD_DEFS_SYNTAX,&image_name);
     s = *++argv;
     for (i=1; i < gc_argc;i++,s= *++argv)
@@ -480,6 +481,7 @@ int getcommand(void)
     {
         sprintf(emsg,"No files input.\n");
         err_msg(MSG_FATAL,emsg);
+		gc_pass = 0;
         return FALSE;
     }
 #if !defined(MAC_PP)
@@ -599,6 +601,7 @@ int getcommand(void)
             rms_errors += process_outfile(fnd, desc_ptr, &defname, i);
         }
     }
+	gc_pass = 0;
     if (gc_err || rms_errors) return FALSE;  /* exit false if errors */
     return TRUE;             /* exit true if no errors */
 }

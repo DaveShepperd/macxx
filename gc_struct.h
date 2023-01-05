@@ -39,6 +39,8 @@ struct qual {
    char *value;			/* pointer to user's value string */
 };
 
+extern int gc_pass, gc_err;
+
 #if defined(INTERNAL_PACKED_STRUCTS)
 #include "pragma.h"
 #endif

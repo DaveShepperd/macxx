@@ -56,7 +56,7 @@ struct qual qual_tbl[] = {
 };
 int max_qual = QUAL_MAX;
 
-extern int gc_pass,gc_err;
+int gc_pass, gc_err;
 
 char *do_option(char *str)
 {
