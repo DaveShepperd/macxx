@@ -152,7 +152,7 @@ static int get_indxea(int amflg, int treg, EA *amp )
 static int get_mitsyntax( int areg, EA *amp )
 {
     int legit = 0, amflg=0;
-    char *cp, epsTag='I';
+    char *cp=NULL, epsTag='I';
     EXP_stk *eps;
 
 	M68DBG(("Made it to get_mitsyntax. areg=%d, tkn_ptr='%s', inp_ptr='%s'\n", areg, tkn_ptr, inp_ptr));
