@@ -206,7 +206,7 @@ pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h
 .PHONY: clean
 
 clean : 
-	/bin/rm -f mac65 mac68 macas mac68k macpp mac682k mactj mac11 *.o *.b *@ *.d
+	/bin/rm -f mac65 mac68 mac69 macas mac68k macpp mac682k mactj mac11 *.o *.b *@ *.d
 
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 
