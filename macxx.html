@@ -2423,7 +2423,7 @@ the stack pointer on a named stack. Examples:
       MACxx [options...] file(s)... [options...]
     </pre>
   <p>  
-  where <u>MACxx</u> is the name of the program (MACPP, MAC65, MAC68K, MAC682K, MAC11, MACAS or MACTJ),
+  where <u>MACxx</u> is the name of the program (MACPP, MAC65, MAC68, MAC68K, MAC682K, MAC69, MAC11, MACAS or MACTJ),
   <u>file(s)</u> represents one or more files separated with whitespace or 
   commas and options represents one of the options itemized below. The 
   options and filenames can appear on the command line in any order.
@@ -2434,7 +2434,8 @@ the stack pointer on a named stack. Examples:
   <p>
   <table style="width: 50%">
     <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
-    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory</td></tr>
+    <tr><td>2_PASS</td><td>No</td><td>Assembler runs in 2 pass mode instead of the normal faster 1.5 mode.</td></tr>
+    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory.</td></tr>
     <tr><td>RELATIVE</td><td>Yes</td><td>Output object file is relative.</td></tr>
     <tr><td>BOFF</td><td>Yes</td><td>MACAS only; Include a branch offset test in the output.</td></tr>
     <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
@@ -2484,6 +2485,8 @@ the stack pointer on a named stack. Examples:
   <table style="width: 20%">
     <tr><th>Assembler</th><th>Default</th></tr>
     <tr><td>MAC65</td><td>6</td></tr>
+    <tr><td>MAC68</td><td>6</td></tr>
+    <tr><td>MAC69</td><td>6</td></tr>
     <tr><td>MAC68K</td><td>16</td></tr>
     <tr><td>MAC682K</td><td>16</td></tr>
     <tr><td>MAC11</td><td>16</td></tr>
@@ -2590,7 +2593,8 @@ the stack pointer on a named stack. Examples:
     opc addr,X     ;absolute indexed by X (assembler will try to figure out whether 8 or 16 bit address)
     opc addr,Y     ;absolute indexed by Y (16 bit address)
     opc #imm       ;load immediate (8 bit immediate)
-    opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, etc.)
+    opc            ;operand implied (i.e. RTS, CLC, SEC, ASL, LSR, etc.)
+    opc A          ;operand is accumulator (i.e. ASL, LSR, etc.)
     opc (addr)     ;absolute indirect (16 bit address)
     opc (addr,X)   ;indirect indexed by X (8 bit address)
     opc (addr),Y   ;index by Y indirect (8 bit address)
@@ -2718,8 +2722,8 @@ the stack pointer on a named stack. Examples:
     <h3 id="mac11_specials">MAC11 special psuedo-ops and operations</h3>
     <p>
     The syntax of this assembler matches that of the default DEC PDP11 MACRO-11 assembler. We shipped some coin-op games
-    using the T-11 processor on our SystemII platform. The games were coded using BLISS-16 cross compiled on VAX/VMS.
-    I'm not sure if we used mac11+llf+mixit at any point in the process. It's possible.
+    using the T-11 processor on our SystemII platform. The games were coded using BLISS-16 cross compiled on VAX/VMS with its
+    output fed into mac11 then llf'd to get a final output.
     </p>
     <pre>
     opc             ; implied (NOP, CLC, RTI, etc.)
