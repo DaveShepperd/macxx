@@ -279,7 +279,8 @@ static int do_operand(Opcode *opc)
 	AModes amdcdnum = ILL_NUM;
 	int ct;
 	long amflag = 0;
-
+	int str=0;
+	
 	ct = get_token();            /* pickup the next token */
 	switch (ct)
 	{
@@ -317,7 +318,15 @@ static int do_operand(Opcode *opc)
 			if ( amflag == 0 )
 				break;    /* give 'em an illegal am */
 			get_token();       /* pickup the next token */
-		}             /* fall through to rest */
+		}
+		str = 1; /* force fall through to default */
+		/* fall through to default */
+	case TOKEN_strng:
+		if ( !str && (edmask & ED_MOS) && ((1L << AC_NUM) & opc->op_amode) && token_type == TOKEN_strng && token_value == 1 && _toupper(*token_pool) == 'A' )
+		{
+			return AC_NUM;
+		}
+		/* else fall through to default */
 	default:
 		{
 			if ( options[QUAL_P816] || (edmask & ED_MOS) )
