@@ -1135,8 +1135,9 @@ Argument	Default		Function
 BIN		list		list/nlist generated binary code
 BEX		list		list/nlist generated binary code
 					that overflows a single line
-CND		no list		list/nlist the text in unsatisfied
-					conditional blocks.
+CND		no list		list conditional directives and blocks
+					or nlist both conditional directives
+					and unsatisfied conditional blocks.
 COD		no list		list/nlist the generated binary code
 					"as stored" in the object file
 					rather than "as used". See more
@@ -1148,10 +1149,10 @@ LOC		list		list/nlist the current location counter (pc).
 MC		list		list/nlist macro calls.
 MD		list		list/nlist macro definitions
 ME		no list		list/nlist macro expansions
-MEB		no list		list/nlist only lines in macro expansions that
-					generate binary.
-MES		no list		list/nlist source on line of macro expansion
-					that generates binary.
+MEB		no list		list/nlist only macro call and binary produced
+					by the macro.
+MES		no list		list/nlist macro call and only macro expansion
+					line that generates binary.
 SEQ		list		list/nlist the statement sequence number
 SRC		list		list/nlist the source code.
 SYM		list		list/nlist the symbol table at the end of
@@ -1165,10 +1166,9 @@ call. This option is selected with the combination of .LIST MEB and
 Examples:
 
 	.LIST			;increments the list level
-	.LIST MEB		;list lines in macro expansion that
-				;   generate code.
-	.NLIST MES		;but don't list the source of the macro
-				;   expansions.
+	.LIST MEB		;list macro call and generated code.
+	.LIST MES		;list macro call and only lines that
+					;generate code (i.e. no assigns, etc)
 	.LIST COD		;causes the binary to be displayed "as
 				;   stored" rather than "as used". This
 				;   option is significant only on little

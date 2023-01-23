@@ -1386,16 +1386,16 @@ the stack pointer on a named stack. Examples:
     <tr><th>Keyword</th><th>Default</th><th>Function</th></tr>
     <tr><td>BIN</td><td>list</td><td>list/nlist generated binary code</td></tr>
     <tr><td>BEX</td><td>list</td><td>list/nlist generated binary code that overflows a single line</td></tr>
-    <tr><td>CND</td><td>no list</td><td>list/nlist the text in unsatisfied conditional blocks.</td></tr>
+    <tr><td>CND</td><td>no list</td><td>list conditional directives and blocks or nlist both conditional directives and unsatisfied conditional blocks.</td></tr>
     <tr><td>COD</td><td>no list</td><td>list/nlist the generated binary code "as stored" in the object file rather than "as used". See <a href="#gen_list_examples">EXAMPLES</a>.</td></tr>
     <tr><td>COM</td><td>list</td><td>list/nlist comments</td></tr>
     <tr><td>LD</td><td>no list</td><td>list/nlist listing directives that have no arguments.</td></tr>
     <tr><td>LOC</td><td>list</td><td>list/nlist the current location counter (pc).</td></tr>
     <tr><td>MC</td><td>list</td><td>list/nlist macro calls.</td></tr>
     <tr><td>MD</td><td>list</td><td>list/nlist macro definitions</td></tr>
-    <tr><td>ME</td><td>no list</td><td>list/nlist macro expansions</td></tr>
-    <tr><td>MEB</td><td>no list</td><td>list/nlist only lines in macro expansions that generate binary.</td></tr>
-    <tr><td>MES</td><td>no list</td><td>list/nlist source on line of macro expansion that generates binary.</td></tr>
+    <tr><td>ME</td><td>no list</td><td>list/nlist macro expansion source</td></tr>
+    <tr><td>MEB</td><td>no list</td><td>list/nlist macro call and only the binary it generates.</td></tr>
+    <tr><td>MES</td><td>no list</td><td>list/nlist macro call and only expansion lines that generate binary or call another macro.</td></tr>
     <tr><td>SEQ</td><td>list</td><td>list/nlist the statement sequence number</td></tr>
     <tr><td>SRC</td><td>list</td><td>list/nlist the source code.</td></tr>
     <tr><td>SYM</td><td>list</td><td>list/nlist the symbol table at the end of the assembly listing.</td></tr>
@@ -1411,10 +1411,8 @@ the stack pointer on a named stack. Examples:
   <p>
     <pre>
       .LIST          ;increments the list level. If the count becomes &gt; 0 then all items are listed.
-      .LIST MEB      ;list lines in macro expansion that
-                     ;   generate code.
-      .NLIST MES     ;but don't list the source of the macro
-                     ;   expansions.
+      .LIST MEB      ;list macro call and any binary produced by macro.
+      .LIST MES      ;list macro call and only lines within macro that produce binary.
       .LIST COD		   ;causes the binary to be displayed "as
                      ;   stored" rather than "as used". This
                      ;   option is significant only on little

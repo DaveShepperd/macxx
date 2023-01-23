@@ -58,14 +58,8 @@ char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
 unsigned long macxx_edm_default = ED_AMA;   /* default edmask */
-/* default list mask */
-/**************************************************tg*/
-/* 12/10/2022 Changed default LIST Flags by Tim Giddens
- *
-unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);
-*/
-unsigned long macxx_lm_default = ~(LIST_MES | LIST_LD | LIST_COD);
-/*************************************************etg*/
+unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);  /* default list mask */
+
 int current_radix = 16;     /* default the radix to hex */
 char expr_open = '<';       /* char that opens an expression */
 char expr_close = '>';      /* char that closes an expression */

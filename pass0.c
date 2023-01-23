@@ -57,8 +57,9 @@ static void found_symbol( int gbl_flg, int tokt )
         gbl_flg |= DEFG_LOCAL;
     }
     gbl_flg = f1_defg(gbl_flg); /* define a symbol */
+#if 0
     list_stats.pf_value = EXP0.psuedo_value;
-    if (macro_nesting > 0 && list_me)
+    if (macro_nesting > 0 && list_me )
     {
         show_line = 1;
     }
@@ -80,6 +81,7 @@ static void found_symbol( int gbl_flg, int tokt )
             }
         }
     }
+#endif
     f1_eol();           /* better be at eol */
 }
 

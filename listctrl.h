@@ -72,7 +72,8 @@ extern void clear_list(LIST_stat_t *lstat);
 extern int fixup_overflow(LIST_stat_t *lstat);
 extern int limitSrcPosition(int value);
 
-typedef struct list_bits {
+typedef struct list_bits
+{
    unsigned int lm_bin:1;
    unsigned int lm_bex:1;
    unsigned int lm_cnd:1;
@@ -91,7 +92,8 @@ typedef struct list_bits {
    unsigned int lm_toc:1;
 } LIST_bits;
 
-typedef union list_mask {
+typedef union list_mask
+{
    unsigned short list_mask;
    struct list_bits list_bits;
 } LIST_mask;

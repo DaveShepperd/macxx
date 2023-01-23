@@ -350,7 +350,8 @@ int macro_to_mem( Macargs *ma, char *name)
             ++tkncnt;      /* count the token */
         }             /* -- while all arguments */
         inp_ptr = src;        /* move the pointer */
-        if (show_line != 0) line_to_listing();
+        if (show_line != 0)
+			line_to_listing();
         *dst++ = 0;       /* insert a terminator */
         macro_pool_size -= dst-macro_pool;
         macro_pool = dst;
@@ -497,7 +498,8 @@ int op_macro( void )      /* define a macro */
         ma->mac_numargs += 1;
         continue;         /* next argument */
     }                /* -- while all arguments */
-    if (show_line != 0) line_to_listing();
+    if (show_line != 0)
+		line_to_listing();
     macro_pool_size = 0;
     macro_pool = 0;
 #ifdef DUMP_MACRO
@@ -557,13 +559,13 @@ int macro_call(Opcode *opc)
     {
         show_line = list_mc;
 #ifndef MAC_PP
-        if (list_meb && !list_mes) setup_mebstats();
+        if (list_meb && !list_mes && !list_me)
+			setup_mebstats();
 #endif
-        list_mes = show_line;
     }
     else
     {
-        show_line = list_mes & list_mc;
+        show_line = list_me & list_mc;
     }
     ++macro_level;       /* bump macro level */
     ++macro_nesting;     /* keep 2 copies */
@@ -953,7 +955,8 @@ int op_irp( void )            /* .IRP macro */
     }                    /* -- while all arguments */
     marg->marg_icount = key_pool-marg->marg_args-1;
     f1_eol();                /* should be a EOL here */
-    if (show_line != 0) line_to_listing();   /* display it */
+    if (show_line != 0)
+		line_to_listing();   /* display it */
     macro_pool = 0;
     macro_pool_size = 0;         /* start with fresh memory */
 #ifdef DUMP_MACRO
@@ -994,8 +997,8 @@ int op_irp( void )            /* .IRP macro */
 #ifndef MAC_PP
         if (list_meb && !list_mes) setup_mebstats();
 #endif
-        list_mes = 1;     /* make sure the .ENDR shows up */
-    }
+/*	list_mes = 1; */     /* make sure the .ENDR shows up */
+	}
     return 0;            /* continue with macro next */
 }
 
@@ -1219,7 +1222,8 @@ int op_rept( void )           /* .REPT macro */
     list_stats.listBuffer[LLIST_RPT-1] = '(';
     list_stats.listBuffer[LLIST_RPT+4] = ')';
 #endif
-    if (show_line != 0) line_to_listing();   /* display it */
+    if (show_line != 0)
+		line_to_listing();   /* display it */
     macro_pool_size = 0;
     macro_pool = 0;
     if (macro_to_mem(ma,macro_name) == EOF)
@@ -1271,7 +1275,8 @@ void mexit_common( int depth)
     }
     else
     {
-        if (depth > macro_level) depth = macro_level;
+        if (depth > macro_level)
+			depth = macro_level;
         macro_level -= depth;
         macro_nesting -= depth;
         while (depth > 0)
@@ -1298,6 +1303,8 @@ void mexit_common( int depth)
             clear_list(&meb_stats);
         meb_stats.getting_stuff = 0;
         clear_list(&list_stats);
+		if ( list_level <= 0 || !(lm_bits.list_mask & (LIST_ME | LIST_MES)) )
+			show_line = 0;
     }
 #endif
     return;

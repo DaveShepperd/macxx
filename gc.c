@@ -249,7 +249,8 @@ FN_struct *get_fn_struct(void)
     return(fn_struct_pool++);
 }
 
-int gc_err;
+/* int gc_err; */
+
 #if 0
     #if !defined(GCC)
 extern int mkstemp( char *template );

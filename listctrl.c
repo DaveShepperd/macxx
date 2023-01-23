@@ -102,7 +102,7 @@ static struct
 	{ "LOC", LIST_LOC },      /* display location counter */
 	{ "MC", LIST_MC },        /* display macro calls */
 	{ "MD", LIST_MD },        /* display macro definitions */
-	{ "ME", LIST_ME | LIST_MEB | LIST_MES }, /* display macro expansions */
+	{ "ME", LIST_ME | LIST_MES }, /* display macro expansions */
 	{ "MEB", LIST_MEB },      /* display macro expansions which produce binary */
 	{ "MES", LIST_MES },      /* display macro expansion source */
 	{ "OCT", 0 },             /* display address and object data in octal */
@@ -227,6 +227,7 @@ arg[ListArg_NewLine] = Flag - if .NE. request a new list line
 }
 /*************************************************etg*/
 
+#if 0		/* DMS: This whole function is broken. It is re-written below */
 static int op_list_common(int onoff)
 {
 	int i;
@@ -361,7 +362,7 @@ static int op_list_common(int onoff)
 /**************************************************tg*/
 /*  01/24/2021   added for HLLxxF support  by TG 
 			   Don't do if .nlist */
-					if ( onoff == 1 )
+					if ( onoff == 1 && (list_stuff[i].flag&(LIST_BIN|LIST_COM|LIST_LOC|LIST_SEQ|LIST_SRC)))
 					{
 						list_do_args(list_stuff[i].string);
 					}
@@ -378,6 +379,129 @@ static int op_list_common(int onoff)
 			LIST_CND | LIST_LD | LIST_MC | LIST_MD | LIST_ME | LIST_SRC | LIST_MES | LIST_BIN | LIST_LOC;
 	}
 	qued_lm_bits.list_mask = lm_bits.list_mask;
+	return 1;
+}
+#endif		/* Broken */
+
+static int op_list_common(int onoff)
+{
+	char *ip;
+
+	if ( lis_fp == 0 )
+	{
+		/* No listing file, so nothing to do */
+		f1_eatit();
+		return 1;
+	}
+	/* eat ws */
+	ip = inp_ptr;
+	while ( ((cttbl[(int)*ip]&CT_EOL) == 0) && (isspace(*ip)) )
+		++ip;
+	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) != 0 )
+	{
+		/* This is a .NLIST/.LIST directive with no arguments */
+		list_level += onoff;
+		if ( list_level == 0 )
+		{
+			lm_bits.list_mask = saved_lm_bits.list_mask;
+		}
+		else if ( list_level == -1 || list_level == 1 )
+		{
+			if ( onoff > 0 )
+			{
+				lm_bits.list_mask |=
+					LIST_CND | LIST_LD | LIST_MC | LIST_MD | LIST_ME | LIST_SRC | LIST_MES | LIST_BIN | LIST_LOC;
+			}
+			else
+			{
+				lm_bits.list_mask = 0;
+			}
+		}
+		if ( list_level > 0 )
+			show_line = 1;
+		if ( list_level == 0 )
+			show_line = list_ld;
+		if ( list_level < 0 )
+			show_line = 0;
+		qued_lm_bits.list_mask = lm_bits.list_mask;
+		return 1;
+	}
+	/* There must be stuff on the line */
+	while ( 1 )
+	{
+		int ii, tt;
+		unsigned long old_edmask;
+
+		old_edmask = edmask;
+		edmask &= ~(ED_LC | ED_DOL);
+		tt = get_token();
+		edmask = old_edmask;
+		if ( tt == EOL )
+			break;
+		if ( tt != TOKEN_strng )
+		{
+			/* The argument has to be a string */
+			bad_token(tkn_ptr, "Expected a symbolic string here");
+			f1_eatit();	/* skip the rest of the line */
+			return 1;
+		}
+		for ( ii = 0; list_stuff[ii].string != 0; ++ii )
+		{
+			/* Look through our list of arguments we handle */
+			tt = strcmp(token_pool, list_stuff[ii].string);
+			if ( tt <= 0 )
+				break;	/* Found one */
+		}
+		if ( tt != 0 )
+		{
+			bad_token(tkn_ptr, "Unknown listing directive");
+			f1_eatit();	/* Skip the rest of the line */
+			return 1;
+		}
+		if ( onoff == 1 )
+		{
+			/* .LIST directive has specials for BIN, COM, LOC, SEQ and SRC */
+			if ( (list_stuff[ii].flag&(LIST_BIN|LIST_COM|LIST_LOC|LIST_SEQ|LIST_SRC)) )
+			{
+				/* eat ws */
+				while ( ((cttbl[(int)*inp_ptr]&CT_EOL) == 0) && (isspace(*inp_ptr)) )
+					++inp_ptr;
+				if ( *inp_ptr == '=' || *inp_ptr == '(')
+				{
+					list_do_args(list_stuff[ii].string);
+					comma_expected = 1;
+					continue;
+				}
+				/* Nothing special with these options, just fall through to normal */
+			}
+		}
+		if ( !list_stuff[ii].flag )      /* Special OCT keyword */
+		{
+			if ( reset_list_params )
+				reset_list_params(onoff);
+		}
+		else
+		{
+			if ( onoff < 0 )
+			{
+				saved_lm_bits.list_mask &= ~list_stuff[ii].flag;
+			}
+			else
+			{
+				saved_lm_bits.list_mask |= list_stuff[ii].flag;
+			}
+		}
+		comma_expected = 1;
+	}
+	if ( list_level == 0 )
+		lm_bits.list_mask = saved_lm_bits.list_mask;
+	if ( list_level > 0 )
+	{
+		lm_bits.list_mask = saved_lm_bits.list_mask |
+			LIST_CND | LIST_LD | LIST_MC | LIST_MD | LIST_ME | LIST_SRC | LIST_MES | LIST_BIN | LIST_LOC;
+	}
+	qued_lm_bits.list_mask = lm_bits.list_mask;
+/*	printf("op_list_common(): list_level=%d, lm_bits.list_mask=0x%04X\n", list_level, lm_bits.list_mask); */
 	return 1;
 }
 
@@ -565,7 +689,17 @@ void display_line(LIST_stat_t *lstat)
     if ( chrPtr[0] == 0)
 	{
 #ifndef MAC_PP
-		if (((macro_nesting > 0) ? list_mes : list_src) != 0 || line_errors_index != 0 )
+		int flg = line_errors_index;
+		if ( !flg )
+		{
+			if ( macro_nesting == 0 )
+				flg = list_src;
+			else if ( macro_nesting == 1 )
+				flg = list_mc;
+			else
+				flg = list_me || list_mes;
+		}
+		if ( flg )
 		{
 			chrPtr += deTab(inp_str, 8, 0, 0, lstat->listBuffer + list_source.srcPosition, sizeof(meb_stats.listBuffer) - list_source.srcPosition);
 			/* make sure it is '\n'+nul terminated */
@@ -630,7 +764,7 @@ void line_to_listing(void)
 	{
 		display_line(&list_stats);
 	}
-	show_line = 1;       /* assume to show it */
+	show_line = 1;       /* assume to show it next time */
 	return;
 }
 

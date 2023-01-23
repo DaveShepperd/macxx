@@ -1633,7 +1633,7 @@ static void found_symbol( int gbl_flg, int tokt )
 #endif
     gbl_flg = f1_defg(gbl_flg); /* define a symbol */
     list_stats.pf_value = EXP0.psuedo_value;
-    if (macro_nesting > 0 && list_me)
+    if (macro_nesting > 0 && list_me )
     {
         show_line = 1;
     }
@@ -1745,16 +1745,17 @@ void pass1( int file_cnt)
 #endif
             if (lis_fp != 0)
             {
-                if (line_errors_index != 0) show_line = 1;
+                if (line_errors_index != 0)
+					show_line = 1;
                 if (show_line == 0)
                 {
-                    if (macro_nesting > 0 &&
+                    if (macro_nesting > 0
 #ifndef MAC_PP
-                        list_meb &&
+                        && (list_meb || list_mes)
 #else
-                        list_mes && 
+                        && list_mes
 #endif
-                        binary_output_flag != 0)
+                        && binary_output_flag != 0)
                     {
                         show_line = 1;
                     }
@@ -1793,7 +1794,7 @@ void pass1( int file_cnt)
                 list_stats.line_no = current_fnd->fn_line;
             }
             list_stats.include_level = include_level;
-            if (list_level > 0 || (list_level == 0 && (macro_nesting == 0 || list_me) && 
+            if (list_level > 0 || (list_level == 0 && (macro_level == 0 || list_me ) && 
                                    (condit_word >= 0 || list_cnd)))
             {
                 show_line = 1;
@@ -1991,9 +1992,10 @@ void pass1( int file_cnt)
                     {
                         (*opc->op_func)();    /* do the conditional */
                     }
-                    show_line = (line_errors_index != 0) ||
-                                (list_cnd && ((macro_nesting == 0) || list_mes));
-                    if (show_line)
+                    show_line =    (line_errors_index != 0)
+								|| (list_cnd && ((macro_nesting == 0) || list_me))
+								;
+					if ( show_line )
                     {
                         if (condit_word < 0 && old_condit < 0)
                         {
@@ -2018,7 +2020,7 @@ void pass1( int file_cnt)
                 }
                 if (condit_word < 0)
                 {
-                    if ((list_mes == 0 && macro_nesting > 0) || list_cnd == 0)
+                    if ((!list_me && !list_mes && macro_nesting > 0) || list_cnd == 0)
 						show_line = 0;
                     if (show_line != 0)
 						list_stats.listBuffer[LLIST_USC] = 'X';
@@ -2077,9 +2079,10 @@ void pass1( int file_cnt)
                         {
                             if (rv == 0)
                             {
-                                if ((list_mes == 0 && macro_nesting > 0) ||
-                                    list_cnd == 0) show_line = 0;
-                                if (show_line != 0) list_stats.listBuffer[LLIST_USC] = 'X';
+                                if ((!list_me && !list_mes && macro_nesting > 0) || list_cnd == 0)
+									show_line = 0;
+                                if (show_line != 0)
+									list_stats.listBuffer[LLIST_USC] = 'X';
                                 f1_eatit();     /* eat rest of line */
                             }
                             continue;
