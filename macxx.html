@@ -65,7 +65,7 @@
   <p>
   There never were any release notes kept on this application so there is no record of what got changed when. It just is what it is.
   I wrote the PDP11/RT11 version in the late 1970's and the current C version in the early to mid 1980's. It continued to get development until the late 1990's
-    and continues to get bug fixes to this day.
+    and continues to get bug fixes and new features to this day.
     </p>
     <p>
     Recently I got involved in rebuilding some of old Atari coin-op game code (some of which recently
@@ -89,7 +89,8 @@
   Later it was rewritten in the C language and has been ported to various operating systems. The RT11 version was implemented as a 2 pass
   assembler. The current C version is a 1.5 pass assembler meaning it makes one pass through the source code producing both a listing and
   an intermediate internally maintained binary object "file". Once all the souce has been parsed, it makes another pass through its internally
-  maintained object "file" resolving all expressions it is able to and producing the actual binary or ASCII object file.
+  maintained object "file" resolving all expressions it is able to and producing the actual binary or ASCII object file. As of version 11.??
+  a new command line -option of -2_PASS can be used to force the assembler to run in a full 2 pass mode.
   </p>
   <p> The macxx sources produce a unique macro assembler for the following processors:
   </p>
@@ -2514,13 +2515,14 @@ the stack pointer on a named stack. Examples:
 <h2>Appendex</h2>
     <h3 id="mac65_specials">MAC65 special psuedo-ops, operations and address modes</h3>
     <p>
-    <em>NOTE: If you find yourself wanting to use this mac65 to build old Atari coin-op games, at least those
-    that included HLL65F.MAC in their sources, you will find it does not assemble without error. Instead you will need
-    to replace it with the hll65f.mac file included in the sources with macxx and set the variable
-    CMAC65=1 somewhere. I.e. add the command line: <b>-assem=CMAC65=1</b> or just edit the file and
-    set it to 1 permanently. And pay attention to filename case. On *nix systems there will be
-    trouble with the automatic add of lowercase .mac to files <b>.INCLUDE</b>d in game sources. Symlinks
-    might be in order.
+    <em>NOTE: If you find yourself wanting to use this macxx to build old Atari coin-op games, at least those
+    that included HLL65F.MAC in their sources, you will find it does not assemble without error in the default
+    1.5 pass mode. Instead you will need to either use the -2_PASS command line option (the simplest method but
+    only available with macxx version 11.xx or later) or replace the HLL65F.mac in your source kit with the hll65f.mac
+    file included in the sources with macxx AND set the variable CMAC65=1 somewhere. I.e. add the command line:
+    <b>-assem=CMAC65=1</b> or just edit hll65f.mac and set it to 1 permanently.<br>
+    And pay attention to filename case. On *nix systems there will be trouble with the automatic add of
+    lowercase .mac to files <b>.INCLUDE</b>d in game sources. Symlinks might be a quick and easy workaround.
     </em></p>
     <p>
     MAC65 has a bit of history at Atari. See more details in the <a href="#history">HISTORY</a>
