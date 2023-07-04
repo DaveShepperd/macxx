@@ -133,6 +133,7 @@ extern unsigned long autogen_lsb; /* autolabel for macro processing */
 #define DEFG_LOCAL  4
 #define DEFG_LABEL  8
 #define DEFG_STATIC 16
+#define DEFG_FIXED	32
 extern int get_text_assems;
 extern void purge_data_stacks(const char *name);
 extern int squawk_syms;

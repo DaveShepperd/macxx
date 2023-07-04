@@ -1615,7 +1615,18 @@ static void found_symbol( int gbl_flg, int tokt )
         ++inp_ptr;       /* eat the second = */
         gbl_flg |= DEFG_GLOBAL;  /* and set the global bit */
     }
-    no_white_space_allowed = options[QUAL_GRNHILL] ? 1 : 0;
+	if ( (gbl_flg&DEFG_FIXED) )
+	{
+		SS_struct *sym;
+		if ( (sym = sym_lookup(token_pool, SYM_DO_NOTHING)) && (sym->flg_defined) )
+		 {
+			 bad_token(tkn_ptr," Symbol cannot be redefined");
+			 f1_eatit();
+			 return;
+		 }
+		 gbl_flg &= ~DEFG_FIXED;
+	}
+	no_white_space_allowed = options[QUAL_GRNHILL] ? 1 : 0;
     if (tokt == TOKEN_local)
         gbl_flg |= DEFG_LOCAL;
 #ifdef MAC_PP
@@ -1842,8 +1853,8 @@ void pass1( int file_cnt)
 #ifndef MAC_PP
                 if (c == '=')
                 {
-                    gbl_flg &= ~DEFG_LABEL;  /* it's not a label */
-                    found_symbol(gbl_flg, tokt); /* a := construct? */
+                    gbl_flg |= DEFG_FIXED; /* is a := construct  */
+                    found_symbol(gbl_flg, tokt);
                     continue;
                 }
 #endif

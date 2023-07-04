@@ -162,6 +162,7 @@
     <tr><td><a href="#dir_outfile">.OUTFILE</a></td><td>Change output file (MACPP only)</td>
     <tr><td><a href="#dir_page">.PAGE</a></td><td>Put form feed in listing</td>
     <tr><td><a href="#dir_pop">.POP</a></td><td>Pop a value from a user stack</td>
+    <tr><td><a href="#dir_print">.PRINT</a></td><td>Print text on line printer output</td>
     <tr><td><a href="#dir_psect">.PSECT</a></td><td>Set program section</td>
     <tr><td><a href="#dir_push">.PUSH</a></td><td>Push an expression onto a user stack</td>
     <tr><td><a href="#dir_radix">.RADIX</a></td><td>Set number interpreter radix</td>
@@ -1407,7 +1408,7 @@ the stack pointer on a named stack. Examples:
   call. This option is selected with the combination of .LIST MEB and
   .NLIST MES.
   </p>
-    <p id="gen_list_examples">
+  <p id="gen_list_examples">
   Examples:
   <p>
     <pre>
@@ -1424,6 +1425,24 @@ the stack pointer on a named stack. Examples:
       .LIST ME,CND,SRC,SYM	;multiple arguments can be specified
       .NLIST         ;decrements the list level. If the count becomes &lt; 0 then all items are suppressed from listing.
     </pre>
+  </p></p>
+  <p id="dir_list_src">  
+    The .LIST SRC has special options to allow control where on listing line the source text is placed.
+    These options are provided by including them in surrounding parenthesis immediately following the SRC directive.
+  </p>
+  <p> Examples:
+    <pre>
+    .LIST <i>[...,]</i>SRC<i>[=]</i>(<i><b>aa</b>[,<b>bb</b>[,<b>cc</b>]]</i>)<i>[,...]</i>
+    
+    Where <i>[]</i> indicates optional arguments:
+    <i><b>aa</b></i> = column on the listing line where to place the first character of the source (default is 40).
+    <i><b>bb</b></i> = If present means apply these changes on the next source line.
+    <i><b>cc</b></i> = If present means to flush the listing output.
+    </pre>
+  </p>
+  <p>
+    See the <a href="#dir_print_examples">these examples</a> for some what can be done with this option.
+  </p>
   <h3 id="dir_long">.LONG</h3>
     <pre>
       .LONG [expression[,...]]
@@ -1685,6 +1704,98 @@ the stack pointer on a named stack. Examples:
     sets the PC's section offset. Use care with this function if changing sections.
     </p>
     
+  <h3 id="dir_print">.PRINT</h3>
+    <p>This directive has two forms (the <b><i>[]</i></b>'s indicate optional arguments):</p>
+  <pre>  
+    .PRINT [expr]  [; message]
+  </pre>
+  <p>Will display the result of the optional expression and the text of what would otherwise be
+    a comment as an assembly error. This is expected to be used in a macro to allow the programmer
+    to indicate an error condition.
+  </p>
+  <p>The other form:</p>
+  <pre>
+    .PRINT expr(<i><b>aa</b>[,<b>bb</b>[,<b>cc</b>[,<b>dd</b>[,<b>ee</b>[,<b>ff</b>]]]]]</i><b>)</b>  [; comment]
+  </pre>
+  <p>
+    Prints the results of the expression beginning at the column specified by the <b><i>aa</i></b> parameter and according to
+    the other optional parameters. In this form the comment remains as a comment.<br>
+    <b>NOTE:</b>What distinguishes this form from the one listed above is the presence of the <b>()</b>'s delimited content immediately following the
+    expression.
+  </p>
+  <p>
+  The arguments in this form are defined as follows:
+  </p>
+  </p>
+    <pre>
+    <b><i>aa</i></b> = expression indicating column position on the listing line to start the number output.
+    <b><i>bb</i></b> = expression indicating length of number text (0=however long the number converts to text; max of 16)
+    <b><i>cc</i></b> = expression resolving to radix to use to convert according to:
+         0 = current selected radix
+         1 = default radix for macxx
+         2 = binary radix
+         8 = octal radix
+        10 = decimal radix
+        16 = hexidecimal radix
+    <b><i>dd</i></b> = if not zero, include leading zeros.
+    <b><i>ee</i></b> = if not zero, include a +/- sign as appropriate.
+    <b><i>ff</i></b> = if the single character '/', flush the line to listing.
+    </pre>
+  <p>
+    Technically, the single character '/' can appear in any of the positions to indicate to flush the line to listing. And if present as such, does not change
+    the order of the rest of the arguments.
+  </p>
+  <p>
+    There is one additional special parameter that may be used in any of the argument positions. It does not replace the argument, but as with the '/' character above,
+    does not change the order or presence of any of the arguments as defined. It consists of two items: an expression and immediate text delimited with single quotes.
+    The expression resolves to the column where to place the text and the quoted text, sans quotes, is placed on the listing line starting at the supplied column.
+    For a better description, see the following examples.
+  </p>
+  <p>
+  Some examples:
+  </p>
+    <pre>
+    number_data = 12
+    .PRINT number_data                     ; This is the assembler error message that will be displayed along with the hexidecimal of 12
+    len = 3
+    txt = 43
+    num = 40
+    rad = 10
+    lz = 1
+    .PRINT number_data(txt'->',num,len,rad,lz) ; Displays a number 12 in decimal in 3 positions with leading zeros starting at column 43
+                                               ;   It also deposits the text <b>-></b> at columns 40 and 41
+    number_data = 23
+    txt = 46
+    .PRINT number_data(num,len,rad,lz,txt'<-') ; Displays a number 23 in decimal in 3 positions with leading zeros starting at column 43
+                                               ;   It also deposits the text <b><-</b> at columns 46 and 47
+    number_data = 34
+    num = 44
+    .PRINT number_data(num,/,len)              ; Displays a number 34 in decimal in 2 positions without leading zeros starting at column 44
+                                               ;   It also flushes the line to the listing file.
+    </pre>
+  <p id="dir_print_examples">
+     Here are some examples of the listing output one might see if using macros properly designed
+     to use the features of the .PRINT directive coupled with the  <a href="#dir_list_src">.LIST SRC</a> with its () options:
+  </p>
+  <pre>
+    43   006A    24    FE           0->         IFLO                    ;NO, GO ON
+    44                              1->            BEGIN                   ;PROCESS LIST
+    45   006C  E6C0                                   LDB (U)+
+    46   006E    C1    D6                             CMPB #MESSZ             ;IS IT A VALID MESSAGE NUMBER?
+    47   0070    24    FE           2->               IFLO                    ;YES, DO IT
+    48   0072    F7  0000G                               STB MESNUM              ;SAVE IT FOR LATER--->MESOUT
+    49   0075    BD  0F1D'                               JSR MOUT2               ;OUTPUT CHARACTERS
+    50   0071    06                 2<-               ENDIF
+    51   0078  11B3  0000G                            CMPU MESLST             ;DONE? (U UPDATED AT BEGINNING OF LOOP)
+    52   007C    25    EE           1<-            HSEND
+    53   006B    12                 0<-         ENDIF
+    54  
+  </pre>
+  <p>
+  As a complete example of the definitions of the approrpate macros for a 6052 implentation of these features, look at the hll65f.mac included
+  with the macxx source kit for details.
+  </p>
+      
   <h3 id="dir_psect">.PSECT</h3>
   <pre>  
     .PSECT name[,argument...]
@@ -1921,7 +2032,7 @@ the stack pointer on a named stack. Examples:
     ...1 = .               ;get location of text message
       .ASCIZ \MSG\         ;insert message in the ASCII section
       .RESTORE             ;back to main section (whatever that is)
-      .PRINT #...1         ;display message
+      PRINT #...1          ;display message
       .ENDM
       
       SAY &lt;This is a test of the .SAVE directive&gt; ;say message
