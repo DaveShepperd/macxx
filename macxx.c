@@ -60,7 +60,8 @@ long *tptr;
 {
     int stat;
     stat = sys$gettim(tptr);
-    if (!(stat&1)) err_msg(MSG_FATAL,"Error getting system time.");
+	if ( !(stat & 1) )
+		err_msg(MSG_FATAL, "Error getting system time.");
     return;
 }
 #endif
@@ -71,7 +72,7 @@ long *tptr;
  * well as stderr.
  */
 
-void err_msg( int severity, char *msg )
+void err_msg( int severity, const char *msg )
 /*
  * At entry:
  *      severity - low order 3 bits = error severity:
@@ -84,107 +85,130 @@ void err_msg( int severity, char *msg )
  *              8 - use msg as control string for sprintf
  *             16 - don't output message to stderr
  *             32 - include inp_str in print control
+ *  		   64 - do not add anything extra to message
  *      msg - pointer to error message string
  */
 {
-    int spr=1,ctrl,serr,pinpstr, inlen;
+    int spr=1,ctrl,serr,pinpstr, inlen=0, noExtra;
     static char sev_c[]="WSEIF";
     static char *sev_s[]= {"WARN","SUCCESS","ERROR","INFO","FATAL"};
-    char *lemsg, *lmp, lmg[20];
+    char *lemsg=NULL;
+    const char *lmp=NULL;
 
  	if ( !pass && !gc_pass )	/* No errors during pass 0 */
 		return;
-	inlen = inp_str_size + strlen(msg) + 22;
-    lmp = lemsg = MEM_alloc(inlen);
     ctrl = severity & MSG_CTRL;
     serr = severity & MSG_NOSTDERR;
     pinpstr = severity & MSG_PINPSTR;
+	noExtra = severity & MSG_NO_EXTRA;
     severity &= 7;
-    if (serr == 0 && severity <= MSG_FATAL) ++error_count[severity];
+    if (serr == 0 && severity <= MSG_FATAL)
+        ++error_count[severity];
     switch (severity)
     {
     default:                  /* eat any unknown severity message */
     case MSG_SUCCESS: return; /* success text is always eaten */
-    case MSG_WARN: {          /* warning */
-            if (!warning_enable)
-            {
-                MEM_free(lemsg);    /* toss the buffer */
-                return;         /* because we're gonna eat warnings */
-            }
-            break;                 /* maybe goes to MAP too */
-        }
-    case MSG_INFO: {          /* info */
-            if (!info_enable)
-            {
-                MEM_free(lemsg);    /* toss the buffer */
-                return;         /* because we're gonna eat infos */
-            }
-            break;                 /* and into map maybe */
-        }
+    case MSG_WARN:          /* warning */
+        if (!warning_enable)
+            return;         /* because we're gonna eat warnings */
+        break;                 /* maybe goes to MAP too */
+    case MSG_INFO:          /* info */
+        if (!info_enable)
+            return;         /* because we're gonna eat infos */
+        break;                 /* and into map maybe */
     case MSG_ERROR:           /* error */
-    case MSG_FATAL: {         /* fatal */
-            break;
-        }
-    case MSG_CONT: {
-            spr = 0;               /* don't do the sprintf */
-            lmp = msg;             /* point to source string */
-            break;
-        }
+    case MSG_FATAL:        /* fatal */
+        break;
+    case MSG_CONT:
+        spr = 0;               /* don't do the sprintf */
+        lmp = msg;             /* point to source string */
+        break;
     }
-    if ( !options[QUAL_ABBREV] )
+    if ( !noExtra )
     {
-        if (spr)
+        if ( !lmp )
         {
-            sprintf(lmg,"%%%s-%c-%s,",macxx_name,sev_c[severity],sev_s[severity]);
-            if (ctrl)
+            inlen = inp_str_size + strlen(msg) + 22;
+            lmp = lemsg = MEM_alloc(inlen);
+        }
+        if ( !options[QUAL_ABBREV] )
+        {
+            if (spr)
             {
-                if (pinpstr)
+                char lmBuf[20];
+                if ( !options[QUAL_IDE_SYNTAX])
                 {
-                    char *is;
-                    int len;
-                    if (strings_substituted != 0 && presub_str)
-                    {
-                        is = presub_str;
-                        len = strlen(is);
-                    }
-                    else
-                    {
-                        is = inp_str;
-                        len = inp_len;
-                    }
-                    if (len == 0) is = "";
-                    sprintf(lemsg,msg,is,lmg);
+                    snprintf(lmBuf,sizeof(lmBuf),"%%%s-%c-%s,",macxx_name,sev_c[severity],sev_s[severity]);
                 }
                 else
                 {
-                    sprintf(lemsg,msg,lmg);
+                    lmBuf[0] = sev_c[severity];
+                    lmBuf[1] = '-';
+                    lmBuf[2] = 0;
                 }
+                if (ctrl)
+                {
+                    if (pinpstr)
+                    {
+                        char *is;
+                        int len;
+                        if (strings_substituted != 0 && presub_str)
+                        {
+                            is = presub_str;
+                            len = strlen(is);
+                        }
+                        else
+                        {
+                            is = inp_str;
+                            len = inp_len;
+                        }
+                        if (len == 0)
+                            is = "";
+                        snprintf(lemsg,inlen,msg,is,lmBuf);
+                    }
+                    else
+                    {
+                        snprintf(lemsg,inlen,msg,lmBuf);
+                    }
+                }
+                else
+                {
+                    snprintf(lemsg,inlen,"%s%s\n",lmBuf,msg);
+                }
+            }
+        }
+        else if ( lemsg )
+        {
+            char *needNL="";
+            int mLen;
+            mLen = strlen(msg);
+            if ( mLen && msg[mLen-1] != '\n')
+                needNL = "\n";
+            if ( current_fnd )
+            {
+                snprintf(lemsg,inlen,"%s:%d: %s%s",
+                    current_fnd->fn_name_only, current_fnd->fn_line, msg, needNL );
             }
             else
             {
-                sprintf(lemsg,"%s%s\n",lmg,msg);
+                snprintf(lemsg,inlen,"%s%s", msg, needNL );
             }
+            lmp = lemsg;
         }
     }
-    else
+    if ( !lmp )
+        lmp = msg;
+    if ( lmp)
     {
-        if ( current_fnd )
-        {
-            snprintf(lemsg,inlen,"%s:%d%s",
-                current_fnd->fn_name_only, current_fnd->fn_line, msg );
+        if ( serr == 0 )
+            fputs(lmp,stderr);         /* write string to stderr */
+        if (lis_fp)
+        {                /* LIS file? */
+            puts_lis(lmp,0);          /* write string to lis file too */
         }
-        else
-        {
-            snprintf(lemsg,inlen,"%s\n", msg );
-        }
-        lmp = lemsg;
     }
-    if (serr == 0)
-        fputs(lmp,stderr);         /* write string to stderr */
-    if (lis_fp)
-    {                /* LIS file? */
-        puts_lis(lmp,0);          /* write string to lis file too */
-    }
+    if ( lemsg )
+        MEM_free(lemsg);
     return;                      /* done */
 }
 
@@ -348,7 +372,7 @@ int main(int argc, char *argv[])
 			}
 #endif
 			if (squeak)
-				printf ("Processing file %s\n",current_fnd->fn_buff);
+				printf("Processing file %s\n", current_fnd->fn_nam->relative_name);
 			pass0(file_cnt); /* else do .MAC file input */
 			if (fclose(current_fnd->fn_file) != 0)
 			{
@@ -632,7 +656,7 @@ int main(int argc, char *argv[])
                 sprintf(inp_str,"Error deleting file: %s\n",current_fnd->fn_buff);
                 perror(inp_str);
             }
-            err_msg(MSG_INFO,"No object file produced");
+            err_msg(MSG_WARN,"No object file produced");
         }
     }
     if (lis_fp) fclose(lis_fp);

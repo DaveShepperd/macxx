@@ -34,6 +34,7 @@ QTBL(1, 0, 0, 0, 0, 1, QUAL_MISER,	"MISER", 0),		/* memory miser mode */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_BOFF,	"BOFF", 0),		/* MACAS global branch offset test */
 QTBL(0, 1, 1, 0, 0, 1, QUAL_TEMP,	"TEMPFILE", 0),		/* use temp files */
 #endif
+QTBL(1, 0, 0, 0, 0, 1, QUAL_IDE_SYNTAX,	"IDE_ERROR_SYNTAX", 0),		/* output error messages in IDE syntax */
 QTBL(0, 1, 0, 1, 0, 1, QUAL_OUTPUT,	"OUTPUT", OUT_FN_OBJ),	/* object file description */
 QTBL(0, 1, 0, 1, 0, 1, QUAL_LIST,	"LIST", OUT_FN_LIS),	/* list file description */
 QTBL(0, 1, 0, 1, 0, 1, QUAL_DEBUG,	"DEBUG", OUT_FN_DEB),	/* debug file description */

@@ -22,11 +22,13 @@ typedef struct file_name {
 #if defined(VMS)
    int wild_cards;
 #endif
-   char *full_name;
-   char *path;
-   char *name_only;
-   char *type_only;
-   char *name_type;
+   char *full_name;			/* Full filename including path */
+   char *path;				/* Filename's path */
+   const char *cwd;			/* current working directory */
+   char *relative_name;		/* Filename's path+name+type relative to cwd */
+   char *name_only;			/* file's name only */
+   char *type_only;			/* file's type only */
+   char *name_type;			/* file's name+type */
 } FILE_name;
 
 #define ADD_DEFS_EACCESS -2		/* try to access file for input */

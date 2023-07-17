@@ -324,11 +324,12 @@ int pass2( void )
                         {
                             s = "\t(%04lX bytes offset from segment {%s})\n";
                         }
-                        sprintf(emsg,s,current_offset,current_section->seg_string);
+                        snprintf(emsg,ERRMSG_SIZE,s,current_offset,current_section->seg_string);
                         err_msg(MSG_ERROR|MSG_CTRL,emsg);
                     }
 #ifdef PC_DEBUG
-                    fprintf(stderr,"EXPR at line %d, pc = %08lX, sec = {%s}, tag=%c:%d\n",
+                    fprintf(stderr,"%s:%d: EXPR pc = %08lX, sec = {%s}, tag=%c:%d\n",
+							current_fnd->fn_buff,
                             current_fnd->fn_line,current_offset,
                             current_section->seg_string,
                             EXP0.tag,EXP0.tag_len);
@@ -403,9 +404,11 @@ int pass2( void )
         case TMP_ASTNG: {
                 if (noout_flag == 0) outbstr((char *)tmp_pool,(int)tmp_ptr->tf_length);
 #ifdef PC_DEBUG
-                fprintf(stderr,"TXT, %d bytes at line %d, pc = %08lX, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: TXT, %d bytes, pc = %08lX, sec = {%s}\n",
+						current_fnd->fn_buff,
+						current_fnd->fn_line,
                         tmp_ptr->tf_length,    
-                        current_fnd->fn_line,current_offset,
+                        current_offset,
                         current_section->seg_string);
 #endif
                 current_offset += tmp_ptr->tf_length*macxx_mau_byte;
@@ -438,8 +441,10 @@ int pass2( void )
                 noout_flag = seg_ptr->flg_noout;
                 if (noout_flag == 0) outorg(&EXP0);
 #ifdef PC_DEBUG
-                fprintf(stderr,"ORG at line %d, newpc = %08lX, sec = {%s}\n",
-                        current_fnd->fn_line,current_offset,
+                fprintf(stderr,"%s:%d: ORG at line %d, newpc = %08lX, sec = {%s}\n",
+						current_fnd->fn_buff,
+                        current_fnd->fn_line,
+						current_offset,
                         current_section->seg_string);
 #endif
                 break;

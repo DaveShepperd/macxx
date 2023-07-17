@@ -474,7 +474,7 @@ static void ascii_common(int arg)
 						epv = EXP0SP->expr_value;
 						if ( epv > 255 || epv < -256 )
 						{
-							sprintf(emsg, "Byte truncation error. Desired: %08X, stored: %02X",
+							snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08X, stored: %02X",
 									epv, epv & 255);
 							show_bad_token(strt, emsg, MSG_WARN);
 							EXP0SP->expr_value = epv & 0xFF;
@@ -643,7 +643,7 @@ static int op_dcb_with_mask(int inpMask)
 			{
 				if ( epv > 255 || epv < -256 )
 				{
-					sprintf(emsg, "Byte truncation error. Desired: %08lX, stored: %02lX",
+					snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08lX, stored: %02lX",
 							epv, epv & 255);
 					show_bad_token(otp, emsg, MSG_WARN);
 				}
@@ -754,7 +754,7 @@ static int op_byte_with_mask(int inpMask)
 			{
 				if ( epv > 255 || epv < -256 )
 				{
-					sprintf(emsg, "Byte truncation error. Desired: %08lX, stored: %02lX",
+					snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08lX, stored: %02lX",
 							epv, epv & 255);
 					show_bad_token(otp, emsg, MSG_WARN);
 				}
@@ -841,7 +841,7 @@ static int op_word_with_mask(int inpMask)
 				{
 					if ( epv > 65535l || epv < -65536l )
 					{
-						sprintf(emsg, "Word truncation error. Desired: %08lX, stored: %04lX",
+						snprintf(emsg, ERRMSG_SIZE, "Word truncation error. Desired: %08lX, stored: %04lX",
 								epv, epv & 65535);
 						show_bad_token(otp, emsg, MSG_WARN);
 						EXP0SP->expr_value &= 0xFFFF;
@@ -1887,7 +1887,10 @@ int op_include(void)
 	rms_err = add_defs(tfnd->fn_buff, def_inp_ptr, cmd_includes,
 					   ADD_DEFS_INPUT, &tfnd->fn_nam);
 	if ( tfnd->fn_nam != 0 )
+	{
 		tfnd->fn_buff = tfnd->fn_nam->full_name;
+		tfnd->fn_name_only = tfnd->fn_nam->name_type;
+	}
 	if ( rms_err || (tfnd->fn_file = fopen(tfnd->fn_buff, "r")) == 0 )
 	{
 		sprintf(emsg, "Unable to open \"%s\" for input: %s",

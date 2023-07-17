@@ -2253,6 +2253,12 @@ The valid options are:
 	/ASSEM=txt   Provide an additional line of source to be assembled
 	             before any files are processed. As many of these
 				 options may be provided as needed.
+	/INCLUDE=path No  Defines a path that will be used to find files
+	             included via a .INCLUDE directive. Any number of these
+				 options may be provided.
+	/IDE_SYNTAX  No  Selects the format of error messages such that
+	             they may be interpreted by an Integrated Development
+				 Environment.
 
 NOTE: On Xenix/Unix systems, the slash (/) is replaced with a dash (-).
 

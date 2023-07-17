@@ -41,8 +41,7 @@ static void show_undef_local(SS_struct *st)
             ++sn;
         }
     }
-    sprintf(emsg,"Undefined local symbol (%s) first referenced at line %d",
-            sn,st->ss_line);
+	snprintf(emsg, ERRMSG_SIZE, "%s:%d: Undefined local symbol: '%s'", st->ss_fnd->fn_nam->relative_name, st->ss_line, sn);
     err_msg(MSG_ERROR,emsg);
     st->flg_defined = 1;     /* define it as absolute */
     st->flg_abs = 1;
@@ -167,16 +166,8 @@ int sort_symbols(void)
             {
                 if (!st->flg_defined)
                 {
-                    if (lis_fp == 0)
-                    {
-                        sprintf(emsg,"Undefined symbol {%s} first referenced at source line %d in %s",
-                                st->ss_string,st->ss_line,st->ss_fnd->fn_name_only);
-                    }
-                    else
-                    {
-                        sprintf(emsg,"Undefined symbol {%s} first referenced at line %d in %s",
-                                st->ss_string,st->ss_line,st->ss_fnd->fn_name_only);
-                    }
+					snprintf(emsg,ERRMSG_SIZE,"%s%d: Undefined symbol '%s'",
+							 st->ss_fnd->fn_nam->relative_name, st->ss_line, st->ss_string);
                     err_msg(MSG_WARN,emsg);
                     st->flg_defined = 1;     /* define it as absolute */
                     st->flg_abs = 1;

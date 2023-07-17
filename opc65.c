@@ -258,8 +258,8 @@ static void do_branch(Opcode *opc)
 			exp_ptr->expr_code = EXPR_OPER;
 			(exp_ptr++)->expr_value = EXPROPER_TST | (EXPROPER_TST_NE << 8);
 			EXP2.ptr = exp_ptr - EXP2.stack;
-			sprintf(emsg, "Branch or jmp out of program bank at line %d in %s",
-					current_fnd->fn_line, current_fnd->fn_name_only);
+			snprintf(emsg, ERRMSG_SIZE, "%s:%d: Branch or jmp out of program bank",
+					 current_fnd->fn_buff,current_fnd->fn_line);
 			write_to_tmp(TMP_TEST, 0, &EXP2, 0);
 			write_to_tmp(TMP_ASTNG, strlen(emsg) + 1, emsg, 1);
 			EXP2.ptr = 0;          /* don't use this expression any more */
@@ -1543,7 +1543,7 @@ int op_triplet(void)
 			/*        0x00000000            0x00000000 */
 			if ( epv > 0x00FFFFFFl || epv < -0x01000000l )
 			{
-				sprintf(emsg, "Triplet truncation error. Desired: %08lX, stored: %06lX",
+				snprintf(emsg, ERRMSG_SIZE, "Triplet truncation error. Desired: %08lX, stored: %06lX",
 						epv, epv & 0x00FFFFFFl);
 				show_bad_token(otp, emsg, MSG_WARN);
 				EXP0SP->expr_value &= 0x00FFFFFF;

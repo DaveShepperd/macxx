@@ -217,7 +217,9 @@
   <h3 id="gen_label">Label field</h3>
   <p>
   A label is a user defined symbol that is unique to the first n characters
-  (the default is 6, but can be changed to any number up to 32) and is 
+  (various assemblers have various defaults for 'n' but the value for 'n'
+  may be changed to any number up to 32 with a command line option or asssembler
+  directive) and is 
   assigned to the value of the current location counter and entered into 
   the user symbol table (as opposed to the 'permanent' symbol table). The 
   value may be either absolute (fixed at a specific location in memory at 
@@ -316,12 +318,14 @@
     <tr><td>$._AB_C.$$</td><td>9$AB_.</td></tr>
   </table>
   <p>
-  The symbol length is, by default, significant to the first 6 characters
-  only. The length can, however, be changed via a command line option or
-  an assembler directive. In either case the significant length cannot be
+  The symbol length is, by default, significant to the first 'n' characters
+  only. The default value for 'n' varies from assmbler to assembler however
+  it may be changed via a command line option or an assembler directive.
+  In either case the significant length cannot be
   reduced to less than 6 nor made greater then 32. Symbols output in the
   object file will be uppercased (unless the .ENABL LOWER option has been
-  selected) and truncated to the significant length. Symbols are delimited
+  selected; its default varies from assembler to assembler) and truncated
+  to the significant length. Symbols are delimited
   by any character that is not included in the list of valid symbol
   characters. Be advised that not all load file formats accept symbol names
   as long as 32 characters. Extended TEKhex, for example, will only pass 
@@ -2540,32 +2544,33 @@ the stack pointer on a named stack. Examples:
   Whitespace must separate an option from a filename following it but is 
   otherwise optional except on Xenix/Unix systems where white space must
   separate filenames and options from one another. Commas are treated
-  as whitespace. The valid options are:
+  as whitespace. The text of the option can be abbreviated to the fewest
+      number of characters that will make it unique. The valid options are:
   <p>
   <table style="width: 50%">
     <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
-    <tr><td>2_PASS</td><td>No</td><td>Assembler runs in 2 pass mode instead of the normal faster 1.5 mode.</td></tr>
-    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory.</td></tr>
-    <tr><td>RELATIVE</td><td>Yes</td><td>Output object file is relative.</td></tr>
+    <tr><td>2_PASS</td><td>No</td><td>All except MACPP; Assembler becomes a 2.5 pass instead of the normal 1.5 pass.</td></tr>
+    <tr><td>ABBREV</td><td>No</td><td>Abbreviate the error messages</td></tr>
+    <tr><td>ASSEM="string"</td><td>No</td><td><u>string</u> is a line to be assembled before anything else. Any number of these may be used</td></tr>
+    <tr><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
     <tr><td>BOFF</td><td>Yes</td><td>MACAS only; Include a branch offset test in the output.</td></tr>
-    <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
-    <tr><td>OUTPUT=name</td><td>No</td><td>Create an output object file with <u>name</u>[.ol] or <u>name</u>[.ob]</td></tr>
+    <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
+    <tr><td>GREENHILLS</td><td>No</td><td>MAC68K and MAC682K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
+    <tr><td>IDE_SYNTAX</td><td>No</td><td>Sets output format of any error messages such that they may be interpreted by an Integrated Development Environment.</td></tr>
+    <tr><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
+    <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
     <tr><td>LIST</td><td>No</td><td>Create a listing output file</td></tr>
     <tr><td>LIST=name</td><td>No</td><td>Create a listing output file with <u>name</u>[.lis]</td></tr>
-    <tr><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
+    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory.</td></tr>
+    <tr><td>OCTAL</td><td>varies</td><td>Display numbers in octal in the listing file.</td></tr>
+    <tr><td>OPCODE_LEN=n</td><td>varies</td><td>Sets the significant length of the opcodes and macros to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
+    <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
+    <tr><td>OUTPUT=name</td><td>No</td><td>Create an output object file with <u>name</u>[.ol] or <u>name</u>[.ob]</td></tr>
+    <tr><td>RELATIVE</td><td>Yes</td><td>Output object file is relative.</td></tr>
+    <tr><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
+    <tr><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
     <tr><td>TEMPFILE</td><td>No</td><td>Use temporary file to hold intermediate object file</td></tr>
     <tr><td>TEMPFILE=name</td><td>No</td><td>Use temporary file <u>name</u> to hold intermediate object file</td></tr>
-    <tr><td>GREENHILLS</td><td>No</td><td>MAC68K and MAC682K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
-    <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
-    <tr><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
-    <tr><td>OPCODE_LEN=n</td><td>varies</td><td>Sets the significant length of the opcodes and macros to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
-    <tr><td>ABBREV</td><td>No</td><td>Abbreviate the error messages</td></tr>
-    <tr><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
-    <tr><td>ASSEM="string"</td><td>No</td><td><u>string</u> is a line to be assembled before anything else. Any number of these may be used</td></tr>
-    <tr><td>OCTAL</td><td>varies</td><td>Display numbers in octal in the listing file.</td></tr>
-    <tr><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
-    <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
-    <tr><td>2_PASS</td><td>No</td><td>All except MACPP; Assembler becomes a 2.5 pass instead of the normal 1.5 pass.</td></tr>
   </table>  
     <p>
   NOTE: On Xenix/Unix/Linux systems, the option delimiter is a dash (-).

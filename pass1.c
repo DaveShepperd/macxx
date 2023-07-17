@@ -566,7 +566,7 @@ void puts_titles(void)
 /**************************************************************************
  * PUTS_LIS - put a string to LIS file
  */
-void puts_lis(char *string, int lines )
+void puts_lis(const char *string, int lines )
 /*
  * At entry:
  *	string - pointer to text to write to map file
@@ -574,7 +574,7 @@ void puts_lis(char *string, int lines )
  */
 {
     int i;
-    char *s;
+    const char *s;
     if (lis_fp == 0)
 		return;     /* easy out if no lis file */
     if (!lis_title[0])
@@ -616,10 +616,149 @@ int line_errors_index;
 static char *btmsg;
 static int btmsg_siz;
 
+#define MAX_ERROR_LINE_LEN (120)
+
+/******************************************************************
+ * Display bad string in IDE syntax
+ */
+static void show_bad_token_ide( const char *ptr, const char *msg, int sev )
+/*
+ * At entry:
+ * 	ptr - points to character in error in inp_str
+ *	msg - pointer to string that is the error message to display
+ *	sev - message severity (one of MSG_ERROR, MSG_WARN, etc.)
+ * At exit:
+ *  stderr/stdout gets string:
+ *       filename:line_no:char_pos: severity: msg
+ *		 <1 space> inp_str (de-tabbed)
+ *       <1 space>   ^ (at column of error)
+ *  list file gets msg and line with ^ in it.
+ */
+{
+	char *s, *is=inp_str,*leadMsg;
+	int msgsiz,msgLen,fnl;
+	FILE *tfp;
+	static const char *sev_s[]= {"warn","note","error","info","FATAL"};
+	
+	if ( pass == 1 )
+	{
+		tfp = lis_fp;
+		lis_fp = NULL;
+	}
+	else
+	{
+		tfp = NULL;
+	}
+	if ( sev < 0 || sev > n_elts(sev_s) )
+		sev = 2;
+	msgLen = strlen(msg);
+	fnl = strlen(current_fnd->fn_nam->full_name) + 1;
+	msgsiz = msgLen+fnl;
+	if (strings_substituted == 0 || !presub_str)
+		msgsiz += 2*inp_len;
+	else
+		msgsiz += strlen(presub_str);
+	msgsiz += 16;
+	leadMsg = MEM_alloc(msgsiz+2);
+	/* Prepare error message string to show on stderr/stdout */
+	if ( current_fnd )
+	{
+		const char *fName,*lineBreak="";
+
+#if 0
+		printf("pass1.c: current_fnd=%p, current_fnd->fn_nam=%p, current_fnd->fn_nam->relative_only=%p, '%s'\n",
+			   (void *)current_fnd,
+			   (void *)current_fnd->fn_nam,
+			   (void *)current_fnd->fn_nam->relative_name,
+			   current_fnd->fn_nam->relative_name ? current_fnd->fn_nam->relative_name : "<nil>"
+			   );
+#endif			   
+		fName = include_level ? current_fnd->fn_nam->full_name : current_fnd->fn_nam->relative_name;
+		if ( ptr )
+		{
+			if ( strlen(fName)+msgLen+inp_len >= MAX_ERROR_LINE_LEN )
+				lineBreak = "\n";
+			snprintf(leadMsg, msgsiz + 1, "%s:%d:%d: %s:%s %s\n", current_fnd->fn_nam->relative_name, current_fnd->fn_line, ptr-inp_str, sev_s[sev], lineBreak, msg);
+		}
+		else
+		{
+			if ( strlen(fName)+msgLen >= MAX_ERROR_LINE_LEN )
+				lineBreak = "\n";
+			snprintf(leadMsg, msgsiz + 1, "%s:%d: %s:%s %s\n", current_fnd->fn_nam->relative_name, current_fnd->fn_line, sev_s[sev], lineBreak, msg);
+		}
+	}
+	else
+	{
+		snprintf(leadMsg, msgsiz + 1, " %s: %s\n", sev_s[sev], msg);
+	}
+	/* display error text */
+	err_msg(MSG_NO_EXTRA,leadMsg);
+	if (ptr != 0)
+	{
+		char ch;
+
+		/* copy the input string replacing all tabs with a single space */
+		s = leadMsg;
+		*s++ = ' ';
+		while ((ch = *is++) && (ch != '\n'))
+		{
+			if ( ch == '\t' )
+				*s++ = ' ';
+			else
+				*s++ = ch;
+		}
+		*s++ = '\n';
+		/* if there were no substitutions in the input make a line with an arrow poiting to the error */
+		if ( strings_substituted == 0 )
+		{
+			*s++ = ' ';
+			is = inp_str;
+			/* make a string with a marker highlighting the error */
+			while (is < ptr && (ch = *is++) && (ch != '\n'))
+			{
+				*s++ = ' ';
+			}
+			*s++ = '^';
+			*s++ = '\n';
+		}
+		*s = 0;
+		err_msg(MSG_NO_EXTRA,leadMsg);
+	}
+	if (pass == 1)
+		lis_fp = tfp;
+	if (tfp && line_errors_index < MAX_LINE_ERRORS)
+	{
+		char *lerrPtr;
+		int lerrLen;
+		
+		line_errors_sev[line_errors_index] = sev;
+		s = leadMsg;
+		is = inp_str;
+		while (is < ptr)
+		{
+			*s++ = (*is++ != '\t') ? ' ' : '\t';
+		}
+		*s++ = '^';
+		*s   = '\0';
+		lerrLen = msgLen+(s-leadMsg)+LLIST_SIZE+7+3;
+		lerrPtr = MEM_alloc(lerrLen+1);
+		if ( lerrPtr )
+		{
+			if ( ptr )
+				snprintf(lerrPtr, lerrLen, "%*.0s%s\n%s: %s\n",LLIST_SIZE," ", leadMsg, sev_s[sev], msg);
+			else
+				snprintf(lerrPtr, lerrLen, "%s: %s\n", sev_s[sev], msg);
+			line_errors[line_errors_index] = lerrPtr;
+			++line_errors_index;
+		}
+	}
+	MEM_free(leadMsg);
+}
+
 /******************************************************************
  * Display bad string.
  */
-void show_bad_token( char *ptr, char *msg, int sev )
+void show_bad_token( const char *ptr, const char *msg, int sev )
 /*
  * At entry:
  * 	ptr - points to character in error in inp_str
@@ -638,6 +777,11 @@ void show_bad_token( char *ptr, char *msg, int sev )
 	if ( !pass )
 		return;
 
+	if ( options[QUAL_IDE_SYNTAX] )
+	{
+		show_bad_token_ide(ptr,msg,sev);
+		return;
+	}
 	if ( pass == 1 )
     {
         tfp = lis_fp;
@@ -752,7 +896,7 @@ void show_bad_token( char *ptr, char *msg, int sev )
     err_str = 0;
 }
 
-void bad_token( char *ptr, char *msg )
+void bad_token( char *ptr, const char *msg )
 {
     show_bad_token(ptr,msg,MSG_ERROR);
 }
@@ -1240,15 +1384,20 @@ int f1_defg(int flag)
 				/* and it has been previously defined in pass 1 */
 				if ( include_level > 0 )
 				{
-					sprintf(emsg,       /* then it's nfg */
-							"Label multiply defined; previously defined at %s:%d",
-							ptr->ss_fnd->fn_buff,ptr->ss_line);
+					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+							"%s:%d: Label multiply defined; previously defined at %s:%d",
+							 current_fnd->fn_nam->full_name,
+							 current_fnd->fn_line,
+							 ptr->ss_fnd->fn_nam->relative_name,
+							 ptr->ss_line);
 				}
 				else
 				{
-					sprintf(emsg,
-							"Label multiply defined; previously defined at line %d",
-							ptr->ss_line);
+					snprintf(emsg,ERRMSG_SIZE,
+							"%s:%d: Label multiply defined; previously defined at line %d",
+							 current_fnd->fn_nam->relative_name,
+							 current_fnd->fn_line,
+							 ptr->ss_line);
 				}
 				bad_token(tkn_ptr,emsg);
 				return 0;
@@ -1262,7 +1411,7 @@ int f1_defg(int flag)
 						"Label defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1 at %s:%d",
 						ptr->ss_seg ? ptr->ss_seg->seg_string:"", ptr->ss_value, ptr->flg_exprs,
 						current_section->seg_string, current_pc,
-						ptr->ss_fnd->fn_buff, ptr->ss_line);
+						ptr->ss_fnd->fn_nam->relative_name, ptr->ss_line);
 				bad_token(tkn_ptr,emsg);
 				return 0;
 			}
@@ -1276,14 +1425,20 @@ int f1_defg(int flag)
         { /* and it's already a label... */
             if (include_level > 0)
             {
-                sprintf(emsg,       /* then it's nfg */
-                        "Symbol multiply defined; previously defined at line %d\n\t%s%s",
-                        ptr->ss_line,"in .INCLUDEd file ",ptr->ss_fnd->fn_buff);
+                snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+                        "%s:%d: Symbol multiply defined; previously defined in .INCLUDEd file %s:%d\n",
+						 current_fnd->fn_nam->relative_name,
+						 current_fnd->fn_line,
+						 ptr->ss_fnd->fn_nam->relative_name,
+						 ptr->ss_line
+						 );
             }
             else
             {
-                sprintf(emsg,       /* then it's nfg */
-                        "Symbol multiply defined; previously defined at line %d",
+                snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+                        "%s:%d: Symbol multiply defined; previously defined at line %d",
+						 current_fnd->fn_nam->relative_name,
+						 current_fnd->fn_line,
                         ptr->ss_line);
             }
             bad_token(tkn_ptr,emsg);

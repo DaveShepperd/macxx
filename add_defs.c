@@ -148,20 +148,33 @@ static void strncpy_upc(char *dst, char *src, int len )
 }
     #endif
 
-static FILE_name *fill_in_file( char *full)
+static FILE_name *fill_in_file( const char *full, const char *cwd )
 {
     FILE_name *fnp;
-    char *name,*type,*s;
-    int pathlen,namelen,typelen,tot;
-    name = strrchr(full,C_PATH);
+    const char *name;
+	char *type,*s;
+	const char *relative;
+    int wholelen,pathlen,namelen,typelen,tot;
+	
+	relative = full;
+	if ( cwd )
+	{
+		int cwdlen;
+		cwdlen = strlen(cwd);
+		s = strstr(full,cwd);
+		if ( s )
+		{
+			relative = s+cwdlen;
+			if ( *relative == C_PATH )
+				++relative;
+		}
+	}
+	wholelen = strlen(relative);
+	name = strrchr(full, C_PATH);
     if (name != 0)
-    {
         ++name;           /* skip over path terminator */
-    }
     else
-    {
         name = full;
-    }
     pathlen = name-full;     /* compute length of pathname */
     type = strrchr(name,'.');    /* find filetype */
     if (type == 0)
@@ -174,7 +187,7 @@ static FILE_name *fill_in_file( char *full)
         namelen = type-name;
         typelen = strlen(type);
     }
-    tot = 2*pathlen+3*namelen+2*typelen+sizeof(FILE_name)+8;
+    tot = 2*pathlen+3*namelen+2*typelen+sizeof(FILE_name)+8+wholelen;
     fnp = (FILE_name *)malloc(tot);
     if (fnp == 0)
     {
@@ -197,7 +210,12 @@ static FILE_name *fill_in_file( char *full)
     strncpy_upc(s,name,namelen+typelen);
     s += namelen+typelen;
     *s++ = 0;
-    fnp->type_only = fnp->name_type+namelen;
+	fnp->relative_name = s;
+	strncpy_upc(s,relative,wholelen);
+	s += wholelen;
+	*s++ = 0;
+	fnp->type_only = fnp->name_type + namelen;
+	fnp->cwd = cwd;
 #if MALLOCDEBUG
     fprintf(stderr,"Malloc'd %d at %08lX. Wrote %d\n",
             tot,fnp,s-(char *)fnp);
@@ -243,13 +261,15 @@ static char *add_ext( char *sptr, char **ext, char **path)
  *	sptr - ptr to filename string
  *	ext - ptr to array of ptrs to filetypes to append
  *	path - ptr to array of ptrs to pathnames to prepend
- *		(Note: path is not used on VMS systems)
+ *  	(Note: path is not used on VMS systems)
  */
 {
     int pathlen=0,extlen=0,namelen;
     char *lp,*rp,*typtr,*tmp;
     struct stat file_stat;
-    if (sptr == 0) return sptr;
+	
+    if (sptr == 0)
+		return sptr;
 #if defined(MS_DOS)
 #define DOS_PATH strchr(sptr,':') == 0 && 
 #else
@@ -268,7 +288,7 @@ static char *add_ext( char *sptr, char **ext, char **path)
         perror("add_defs: ran out of room during filename processing");
         EXIT_FALSE;
     }
-    *tmp = 0;
+    *lp = 0;
     if (pathlen != 0)
     {
         strcpy_upc(lp,*path);
@@ -279,7 +299,7 @@ static char *add_ext( char *sptr, char **ext, char **path)
             *lp = 0;
         }
     }
-    if (namelen > 0)
+	if ( namelen > 0 )
     {
         strcpy_upc(lp,sptr);
         lp += namelen;
@@ -304,7 +324,7 @@ static char *add_ext( char *sptr, char **ext, char **path)
         if (pathlen == 0)
         {
             free(tmp);     /* done with tmp area */
-            return sptr;       /* already has a file type, return */
+			return sptr;       /* already has a file type, return */
         }
     }
     else
@@ -351,6 +371,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
     char *s;
     char **default_types;
     struct stat file_stat;
+	FILE_name *fnPtr;
 #if defined(VMS)
     nam = cc$rms_nam;
     nam.nam$l_esa = tmp_esa;
@@ -413,39 +434,41 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
 #else
     if (default_paths == 0)
     {
-        if (our_cwd[0] == 0)
+        if (our_cwd[0] == NULL)
         {
             int cl;
             char *tmps;
-            our_cwd[0] = (char *)malloc(256+2);
-#if MALLOCDEBUG
-            fprintf(stderr,"add_defs: malloc'd %d at %08lX\n",258,our_cwd[0]);
-#endif
-            tmps = (char *)getcwd(our_cwd[0],256);
+            tmps = (char *)getcwd(our_cwd[0],0);
+			our_cwd[0] = tmps;
             if (tmps != 0)
             {
                 cl = strlen(tmps);
-#if MALLOCDEBUG
-                fprintf(stderr,"\tcopied %d bytes to it\n",cl+1);
-#endif
                 if (cl == 0 || tmps[cl-1] != C_PATH)
                 {
-                    tmps[cl++] = C_PATH;
+					tmps = (char *)realloc(tmps,cl+3);
+					if ( !tmps )
+					{
+						fprintf(stderr,"add_defs: ran out of memory allocating %d bytes\n", cl+3);
+						EXIT_FALSE;
+					}
+					tmps[cl++] = C_PATH;
+					tmps[cl] = 0;
                 }
-                tmps[cl++] = 0;
-                tmps = (char *)malloc(cl);
+                tmps = (char *)malloc(cl+1);
 #if MALLOCDEBUG
                 fprintf(stderr,"add_defs: malloc'd %d bytes at %08lX\n",cl,tmps);
 #endif
-                if (tmps != 0)
-                {
+				if ( !tmps )
+				{
+					fprintf(stderr,"add_defs: ran out of memory allocating %d bytes\n", cl+1);
+					EXIT_FALSE;
+				}
 #if MALLOCDEBUG
-                    fprintf(stderr,"\tCopied %d bytes to it\n",cl);
+				fprintf(stderr,"\tCopied %d bytes to it\n",cl);
 #endif
-                    strcpy_upc(tmps,our_cwd[0]);
-                    free(our_cwd[0]);
-                    our_cwd[0] = tmps;
-                }
+				strcpy_upc(tmps,our_cwd[0]);
+				free(our_cwd[0]);
+				our_cwd[0] = tmps;
             }
         }
         default_paths = our_cwd;
@@ -457,7 +480,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
         {
             if (!S_ISDIR(file_stat.st_mode))
             {
-                *retptr = fill_in_file(src_nam);    /* not a directory, use name as supplied */
+                *retptr = fill_in_file(src_nam,our_cwd[0]);    /* not a directory, use name as supplied */
                 return 0;
             }
         }
@@ -491,7 +514,9 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
             break;
         } while (default_types && *++default_types);
     } while (err && err == ENOENT && default_paths && *++default_paths);
-    *retptr = fill_in_file(s);
+    fnPtr = fill_in_file(s,our_cwd[0]);
+/*	printf("add_defs: fnPtr=%p, nameWOcwd=%p, *nameWOcwd='%s'\n", (void *)fnPtr, (void *)nameWOcwd, nameWOcwd ? nameWOcwd : "<nil>"); */
+	*retptr = fnPtr;
     if (s != 0 && s != src_nam)
     {
         free(s);

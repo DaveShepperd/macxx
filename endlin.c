@@ -745,6 +745,104 @@ void rewind_tmp()
     return;
 }
 
+static void ide_trunc_err( long mask, long tv)
+{
+	int tsiz,sev=MSG_WARN;
+	long toofar=0;
+	char lclTxt[256];
+	int lclTxtLen;
+	char *fm,*em="%s:%d: ";
+	
+	if ( options[QUAL_OCTAL] )
+	{
+		if (mask > 255)
+		{
+			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt), "Truncation at {%s}+0%06lo. Wanted: 0%010lo, output: 0%06lo",
+							 current_section->seg_string,current_offset,
+							 tv,
+							 tv&mask);
+		}
+		else
+		{
+			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0%06lo. Wanted: 0%010lo, output: 0%03lo",
+							current_section->seg_string,current_offset,
+							tv,
+							tv&mask);
+		}
+	}
+	else
+	{
+		if (mask > 255 && mask != 65534)
+		{
+			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0x%04lX. Wanted: 0x%08lX, output: 0x%04lX",
+							current_section->seg_string,current_offset,
+							tv,
+							tv&mask);
+		}
+		else
+		{
+			int range = 127;
+			if (mask == 254 || mask == 65534)
+			{
+				toofar = tv;
+				if (toofar == 0)
+				{
+					lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Branch offset of 0x%02lX is illegal at {%s}+0x%04lX",
+									toofar,
+									current_section->seg_string,current_offset
+									);
+				}
+				else
+				{
+					if (mask == 65534)
+						range = 65535;
+					if (toofar > 0)
+					{
+						toofar -= range;
+					}
+					else
+					{
+						toofar = -toofar-(range+1);
+					}
+					lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Branch offset 0x%02lX out of range at {%s}+0x%04lX",
+										 toofar,
+										 current_section->seg_string,current_offset
+										 );
+				}
+				sev = MSG_ERROR;      /* branch fail is ERROR */
+			}
+			else
+			{
+				lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0x%04lX. Wanted: 0x%08lX, output: 0x%02lX",
+									 current_section->seg_string,current_offset,
+									 tv,
+									 tv&mask
+									 );
+			}      
+		}
+	}
+	tsiz = strlen(current_fnd->fn_buff)+10+lclTxtLen+strlen(em)+1;
+	fm = MEM_alloc(tsiz);
+	if ( fm )
+	{
+		snprintf(fm,tsiz,"%s%d: %s\n",
+				 current_fnd->fn_nam->relative_name,
+				 current_fnd->fn_line,
+				 lclTxt
+				 );
+		if (pass > 1)
+		{
+			err_msg(sev|MSG_NO_EXTRA,fm);
+		}
+		else
+		{
+			show_bad_token((char *)0,fm,sev|MSG_NO_EXTRA);
+		}
+		MEM_free(fm);
+	}
+	return;
+}
+
 /**********************************************************************
  * Display truncation error
  */
@@ -762,7 +860,12 @@ void trunc_err( long mask, long tv)
 
     if ( !pass )
         return;
-    if ( options[QUAL_OCTAL] )
+	if ( pass > 1 && options[QUAL_IDE_SYNTAX] )
+	{
+		ide_trunc_err(mask,tv);
+		return;
+	}
+	if ( options[QUAL_OCTAL] )
     {
         if (mask > 255)
         {
@@ -811,7 +914,7 @@ void trunc_err( long mask, long tv)
     }
     if (pass > 1)
     {
-        char *fm,*em="\n\tAt line %d in file %s";
+        char *fm,*em="\n\tAt %s:%d";
         fm = MEM_alloc(strlen(s)+strlen(em)+1);
         strcpy(fm,s);
         strcat(fm,em);
@@ -827,11 +930,11 @@ void trunc_err( long mask, long tv)
     {
         if (pass > 1)
         {
-            sprintf(terr,s,toofar,current_offset,current_section->seg_string,current_fnd->fn_line,current_fnd->fn_name_only);
+			snprintf(terr, tsiz, s, toofar, current_offset, current_section->seg_string, current_fnd->fn_nam->relative_name, current_fnd->fn_line);
         }
         else
         {
-            sprintf(terr,s,toofar,current_offset,current_section->seg_string);
+            snprintf(terr,tsiz,s,toofar,current_offset,current_section->seg_string);
         }
         sev = MSG_ERROR;      /* branch fail is ERROR */
     }
@@ -839,11 +942,11 @@ void trunc_err( long mask, long tv)
     {
         if (pass > 1)
         {
-            sprintf(terr,s,current_offset,current_section->seg_string,tv,tv&mask,current_fnd->fn_line,current_fnd->fn_name_only);
+			snprintf(terr, tsiz, s, current_offset, current_section->seg_string, tv, tv & mask, current_fnd->fn_nam->relative_name, current_fnd->fn_line);
         }
         else 
         {
-            sprintf(terr,s,current_offset,current_section->seg_string,tv,tv&mask);
+            snprintf(terr,tsiz,s,current_offset,current_section->seg_string,tv,tv&mask);
         }
         sev = MSG_WARN;       /* others are light weight errors */
     }

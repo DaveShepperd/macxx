@@ -85,6 +85,7 @@ static int cmd_includes_index;
     #define boff_desc	qual_tbl[QUAL_BOFF]
     #define green_desc  qual_tbl[QUAL_GRNHILL]
 #endif
+#define ide_desc	qual_tbl[QUAL_IDE_SYNTAX]
 #define obj_desc	qual_tbl[QUAL_OUTPUT]
 #define lis_desc	qual_tbl[QUAL_LIST]
 #define deb_desc	qual_tbl[QUAL_DEBUG]
@@ -244,7 +245,7 @@ FN_struct *get_fn_struct(void)
         misc_pool_used += t*sizeof(FN_struct);
     }
     fn_init(fn_struct_pool);
-    fn_struct_pool->fn_nam = 0;
+    fn_struct_pool->fn_nam = NULL;
     --fn_struct_poolsize;
     return(fn_struct_pool++);
 }
@@ -487,25 +488,32 @@ int getcommand(void)
     }
 #if !defined(MAC_PP)
 #if !defined(NO_XREF)
-    if (options[QUAL_CROSS]) lis_desc.present = 1;   /* cross defaults to /LIS */
+    if (options[QUAL_CROSS])
+		lis_desc.present = 1;   /* cross defaults to /LIS */
 #endif
-    if (!boff_desc.present) options[QUAL_BOFF] = 1;  /* default to global branch offset testing */
-    if (!rel_desc.present) options[QUAL_RELATIVE] = 1;
+    if (!boff_desc.present)
+		options[QUAL_BOFF] = 1;  /* default to global branch offset testing */
+    if (!rel_desc.present)
+		options[QUAL_RELATIVE] = 1;
 #if defined(VMS)
-    if (!bin_desc.present) options[QUAL_BINARY] = 1; /* default to binary mode */
+    if (!bin_desc.present)
+		options[QUAL_BINARY] = 1; /* default to binary mode */
 #endif
 #if !defined(SUN)
-    if (!miser_desc.present) options[QUAL_MISER] = 1;    /* default to miser mode */
+    if (!miser_desc.present)
+		options[QUAL_MISER] = 1;    /* default to miser mode */
 #endif
 #endif	/* !defined(MAC_PP) */
-    if (syml_desc.present)
-    {
+#if 0
+	if ( !ide_desc.present )
+		options[QUAL_IDE_SYNTAX] = 1;	/* Default to IDE error syntax */
+	if ( options[QUAL_IDE_SYNTAX] )
+		options[QUAL_ABBREV] = 0;		/* Cannot have both ABBREV and IDE */
+#endif
+	if ( syml_desc.present )
         if ((int)syml_desc.value > 6) max_symbol_length = (int)syml_desc.value;
-    }
     if (opcl_desc.present)
-    {
         if ((int)opcl_desc.value > 6) max_opcode_length = (int)opcl_desc.value;
-    }
     while (fnd != 0)
     {
         int err;
@@ -522,10 +530,19 @@ int getcommand(void)
         {
             fnd->fn_buff = fnd->fn_nam->full_name;
             fnd->fn_name_only = fnd->fn_nam->name_type;
+#if 0
+			printf("getcommand(): fnd=%p, fnd->fn_nam=%p, fnd->fn_nam->relative_name_only=%p '%s'\n",
+				   (void *)fnd,
+				   (void *)fnd->fn_nam,
+				   fnd->fn_nam->relative_name,
+				   fnd->fn_nam->relative_name
+				   );
+#endif
         }
         else
         {
             fnd->fn_name_only = fnd->fn_buff;
+			printf("getcommand(): fnd=%p, fnd->fn_nam=NULL\n", (void *)fnd);
         }
         fnd = fnd->fn_next;
     }

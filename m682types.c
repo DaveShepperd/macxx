@@ -2315,8 +2315,8 @@ int type19( int inst, int bwl)
         tagl_save = eps->tag_len;
         eps->tag = eps->tag_len = 0;
         write_to_tmp(TMP_TEST,0,eps,0);
-        sprintf(emsg,"TRAP vector out of range at line %d in %s",
-                current_fnd->fn_line,current_fnd->fn_name_only);
+        sprintf(emsg,"%s:%d: TRAP vector out of range",
+                current_fnd->fn_buff,current_fnd->fn_line);
         write_to_tmp(TMP_ASTNG,strlen(emsg)+1,emsg,sizeof(char));
         eps->tag = tag_save;
         eps->tag_len = tagl_save;
@@ -2858,8 +2858,8 @@ int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea)
         eps->ptr += 8;
         eps->tag = eps->tag_len = 0;        /* no tag or tag length */
         write_to_tmp(TMP_TEST,0,eps,0);     /* write test statement */
-        sprintf(emsg,"Quick immediate value out of range at line %d in %s",
-                current_fnd->fn_line,current_fnd->fn_name_only); /* and message */
+        sprintf(emsg,"%s:%d: Quick immediate value out of range",
+                current_fnd->fn_buff,current_fnd->fn_line); /* and message */
         write_to_tmp(TMP_ASTNG,strlen(emsg)+1,emsg,sizeof(char));
         exp = texp;         /* remove the test stuff from stack */
         eps->ptr = tptr;        

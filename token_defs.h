@@ -109,6 +109,7 @@ enum misc {
    MSG_CTRL	=8,	/* use message as control string */
    MSG_NOSTDERR =16,	/* don't output message to stderr */
    MSG_PINPSTR  =32,	/* print inp_str along with message */
+   MSG_NO_EXTRA	=64,	/* Do not add anything extra to output error message */
 
    ED_MOS	=0x0001,	/* enable MOS syntax */
    ED_AMA	=0x0002,	/* enable automatic address mode */
