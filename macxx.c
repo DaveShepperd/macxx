@@ -40,7 +40,7 @@ FN_struct *current_fnd;     /* global current_fnd for error handlers */
 int current_outfile;        /* which entry in cmd_fnds[] which is the output file */
 int warning_enable=1;           /* set TRUE if warnings are enabled */
 int info_enable;                /* set TRUE if info messages are enabled */
-int error_count[5];             /* error counts */
+int error_count[MSG_FATAL+1];	/* error counts */
 int pass=0;                     /* pass indicator flag */
 static char *months[] =
 { "Jan","Feb","Mar","Apr","May","Jun",
@@ -89,7 +89,7 @@ void err_msg( int severity, const char *msg )
  *      msg - pointer to error message string
  */
 {
-    int spr=1,ctrl,serr,pinpstr, inlen=0, noExtra;
+    int spr=1,ctrl,serr,pinpstr, inlen=0, noExtra, noCount;
     static char sev_c[]="WSEIF";
     static char *sev_s[]= {"WARN","SUCCESS","ERROR","INFO","FATAL"};
     char *lemsg=NULL;
@@ -97,17 +97,28 @@ void err_msg( int severity, const char *msg )
 
  	if ( !pass && !gc_pass )	/* No errors during pass 0 */
 		return;
+#if 0
+	{
+		int mLen = msg?strlen(msg):0;
+		const char *eol="";
+		if ( mLen && msg[mLen-1] != '\n' )
+			eol = "\n";
+		printf("err_msg(): pass=%d, severity=0x%02X, ptr=%s%s", pass, severity, msg?msg:"<empty>\n", eol);
+	}
+#endif
     ctrl = severity & MSG_CTRL;
     serr = severity & MSG_NOSTDERR;
     pinpstr = severity & MSG_PINPSTR;
 	noExtra = severity & MSG_NO_EXTRA;
+	noCount = severity & MSG_DONT_COUNT;
     severity &= 7;
-    if (serr == 0 && severity <= MSG_FATAL)
+    if (!noCount && !serr && severity <= MSG_FATAL)
         ++error_count[severity];
     switch (severity)
     {
-    default:                  /* eat any unknown severity message */
-    case MSG_SUCCESS: return; /* success text is always eaten */
+    default:                 /* eat any unknown severity message */
+    case MSG_SUCCESS:		 /* success text is always eaten */
+		return;
     case MSG_WARN:          /* warning */
         if (!warning_enable)
             return;         /* because we're gonna eat warnings */
@@ -642,13 +653,13 @@ int main(int argc, char *argv[])
     }
     lap_timer("Image clean up"); /* display accumulated times */
     show_timer();                /* display all accumulated times and stuff */
-    info_enable = 1;             /* enable inforamtional message */
-    if ( (i=(error_count[4] | error_count[2] | error_count[0])) )
+    info_enable = 1;             /* enable informational message */
+    if ( (i=(error_count[MSG_FATAL] | error_count[MSG_ERROR] | error_count[MSG_WARN])) )
     {
         sprintf(emsg,"Completed with %d error(s) and %d warning(s)",
-                error_count[4]+error_count[2],error_count[0]);
+                error_count[MSG_FATAL]+error_count[MSG_ERROR],error_count[MSG_WARN]);
         err_msg(MSG_INFO,emsg);
-        if (error_count[4]+error_count[2] > 0 && 
+        if (error_count[MSG_FATAL]+error_count[MSG_ERROR] > 0 && 
             output_files[OUT_FN_OBJ].fn_present)
         {
             if (unlink(output_files[OUT_FN_OBJ].fn_buff) < 0)
@@ -663,9 +674,9 @@ int main(int argc, char *argv[])
     if (deb_fp) fclose(deb_fp);
     if (squeak) printf("A total of %ld statements were processed\n",record_count);
 #ifdef VMS
-    if (error_count[4]) return 0x10000004;
-    if (error_count[2]) return 0x10000002;
-    if (error_count[0]) return 0x10000000;
+    if (error_count[MSG_FATAL]) return 0x10000004;
+    if (error_count[MSG_ERROR]) return 0x10000002;
+    if (error_count[MSG_WARN]) return 0x10000000;
     return 0x10000001;
 #else
     if (i) exit(1);

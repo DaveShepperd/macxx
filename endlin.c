@@ -825,9 +825,10 @@ static void ide_trunc_err( long mask, long tv)
 	fm = MEM_alloc(tsiz);
 	if ( fm )
 	{
-		snprintf(fm,tsiz,"%s%d: %s\n",
+		snprintf(fm,tsiz,"%s:%d: %s: %s\n",
 				 current_fnd->fn_nam->relative_name,
 				 current_fnd->fn_line,
+				 sev == MSG_ERROR ? "error":"warn",
 				 lclTxt
 				 );
 		if (pass > 1)
@@ -859,7 +860,9 @@ void trunc_err( long mask, long tv)
     long toofar=0;
 
     if ( !pass )
+	{
         return;
+	}
 	if ( pass > 1 && options[QUAL_IDE_SYNTAX] )
 	{
 		ide_trunc_err(mask,tv);

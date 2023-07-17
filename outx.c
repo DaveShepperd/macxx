@@ -1145,18 +1145,18 @@ void outid(FILE *fp,int mode)
         }
     case OUTPUT_OL: {
             w = 0;
-            if (error_count[2] != 0) w |= 2;
-            if (error_count[0] != 0) w |= 1;
+            if (error_count[MSG_FATAL]+error_count[MSG_ERROR] != 0) w |= 2;
+            if (error_count[MSG_WARN] != 0) w |= 1;
             switch (w)
             {
             case 1:
-                sprintf(err_msgs," wrn=%d",error_count[0]);
+                sprintf(err_msgs," wrn=%d",error_count[MSG_WARN]);
                 break;
             case 2:
-                sprintf(err_msgs," err=%d",error_count[2]);
+                sprintf(err_msgs," err=%d",error_count[MSG_ERROR]+error_count[MSG_FATAL]);
                 break;
             case 3:
-                sprintf(err_msgs," err=%d, wrn=%d",error_count[2],error_count[0]);
+                sprintf(err_msgs," err=%d, wrn=%d",error_count[MSG_ERROR]+error_count[MSG_FATAL],error_count[MSG_WARN]);
                 break;
             default:
                 err_msgs[0] = 0;
@@ -1186,8 +1186,8 @@ void outid(FILE *fp,int mode)
             vldaid->vid_symsiz = sizeof(VLDA_sym);
             vldaid->vid_segsiz = sizeof(VLDA_seg);
             vldaid->vid_image = sizeof(VLDA_id);
-            vldaid->vid_errors = (error_count[2] < 256) ? error_count[2] : 255;
-            vldaid->vid_warns = (error_count[0] < 256) ? error_count[0] : 255;
+            vldaid->vid_errors = (error_count[MSG_ERROR] < 256) ? error_count[MSG_ERROR] : 255;
+            vldaid->vid_warns = (error_count[MSG_WARN] < 256) ? error_count[MSG_WARN] : 255;
 #if 0
             vldaid->vid_maxtoken = max_token;
 #endif

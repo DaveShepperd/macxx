@@ -692,8 +692,8 @@ static void show_bad_token_ide( const char *ptr, const char *msg, int sev )
 		snprintf(leadMsg, msgsiz + 1, " %s: %s\n", sev_s[sev], msg);
 	}
 	/* display error text */
-	err_msg(MSG_NO_EXTRA,leadMsg);
-	if (ptr != 0)
+	err_msg(MSG_DONT_COUNT|MSG_NO_EXTRA,leadMsg);
+	if (ptr)
 	{
 		char ch;
 
@@ -722,7 +722,7 @@ static void show_bad_token_ide( const char *ptr, const char *msg, int sev )
 			*s++ = '\n';
 		}
 		*s = 0;
-		err_msg(MSG_NO_EXTRA,leadMsg);
+		err_msg(sev|MSG_NO_EXTRA,leadMsg);
 	}
 	if (pass == 1)
 		lis_fp = tfp;
@@ -874,7 +874,7 @@ void show_bad_token( const char *ptr, const char *msg, int sev )
     if (pass == 1) lis_fp = tfp;
     if (tfp && line_errors_index < MAX_LINE_ERRORS)
     {
-        line_errors_sev[line_errors_index] = sev;
+        line_errors_sev[line_errors_index] = (sev&7);
         if (ptr != (char *)0)
         {
             sprintf(btmsg,
@@ -1382,24 +1382,20 @@ int f1_defg(int flag)
 					return 1;
 				}
 				/* and it has been previously defined in pass 1 */
-				if ( include_level > 0 )
+				if ( include_level || current_fnd != ptr->ss_fnd )
 				{
 					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-							"%s:%d: Label multiply defined; previously defined at %s:%d",
-							 current_fnd->fn_nam->full_name,
-							 current_fnd->fn_line,
+							"Label previously defined at %s:%d",
 							 ptr->ss_fnd->fn_nam->relative_name,
 							 ptr->ss_line);
 				}
 				else
 				{
 					snprintf(emsg,ERRMSG_SIZE,
-							"%s:%d: Label multiply defined; previously defined at line %d",
-							 current_fnd->fn_nam->relative_name,
-							 current_fnd->fn_line,
+							"Label previously defined at line %d",
 							 ptr->ss_line);
 				}
-				bad_token(tkn_ptr,emsg);
+				show_bad_token(tkn_ptr,emsg,MSG_ERROR);
 				return 0;
 			}
 			if (    ptr->flg_exprs
@@ -1775,7 +1771,20 @@ static void found_symbol( int gbl_flg, int tokt )
 		SS_struct *sym;
 		if ( (sym = sym_lookup(token_pool, SYM_DO_NOTHING)) && (sym->flg_defined) )
 		 {
-			 bad_token(tkn_ptr," Symbol cannot be redefined");
+			if ( current_fnd != sym->ss_fnd )
+			{
+				snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+						"Symbol previously defined at %s:%d",
+						 sym->ss_fnd->fn_nam->relative_name,
+						 sym->ss_line);
+			}
+			else
+			{
+				snprintf(emsg,ERRMSG_SIZE,
+						"Symbol previously defined at line %d",
+						 sym->ss_line);
+			}
+			 show_bad_token(tkn_ptr,emsg,MSG_ERROR);
 			 f1_eatit();
 			 return;
 		 }
