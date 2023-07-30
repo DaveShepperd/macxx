@@ -43,7 +43,9 @@ static char *help_msg[] = {
     "Where option is one of ([] implies optional text):\n",
     opt_delim,"[no]output", "[=name]	- name object file\n",
     opt_delim,"[no]list",   "[=name]	- select and name listing file\n",
-	opt_delim,"[no]ignore", "	        - Ignore the assembler directives not implemented in this version\n",
+	opt_delim,"[no]ide_error_syntax",
+                            "   - Output error messages in a syntax suitable for use by an IDE.\n",
+    opt_delim,"[no]ignore", "	        - Ignore the assembler directives not implemented in this version\n",
 #if !defined(MAC_PP)
     opt_delim,"[no]2_pass", "	        - select to assemble using two pass mode\n",
     opt_delim,"[no]debug",  "[=name]	- select and name temporary work file\n",
@@ -86,6 +88,7 @@ static char *help_msg[] = {
 #else
     opt_delim,"noline ",
 #endif
+    " ",opt_delim,"noide_error",
     "\nAnd the ",opt_delim,"out"," filename defaults to the same name as the first input\n",
     "file with a file type of ",UPC,DEF_OUT," and the ",opt_delim,"list"," filename defaults to the\n",
     "same name as the ",
