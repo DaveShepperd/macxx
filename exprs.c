@@ -1590,7 +1590,8 @@ int do_exprs( int flag, EXP_stk *eps )
                 continue;
             }
         }
-        --exprs_nest;
+/*		printf("Out of do_exprs(). exprs_nest: %d, eps->ptr: %d\n", exprs_nest, eps->ptr); */
+		--exprs_nest;
         return(eps->ptr);
     }
 }

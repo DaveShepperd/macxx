@@ -85,7 +85,11 @@ typedef enum {
 #else
     EXPR_MAXSTACKS =4,	/* max number of expression stacks */
 #endif
-    EXPR_MAXDEPTH  =48	/* max number of terms in expression */
+#if M_UNIX
+	EXPR_MAXDEPTH  =128	/* max number of terms in expression */
+#else
+	EXPR_MAXDEPTH  =48	/* max number of terms in expression */
+#endif
 } EXPR_codes;
 
 enum misc {
