@@ -206,9 +206,8 @@ static void do_branch(Opcode *opc)
 				{
 					toofar = -toofar-(max_dist+1);
 				}
-				sprintf(emsg,"Branch offset 0x%lX byte(s) out of range",toofar);
-				bad_token((char *)0,emsg);
-				exp_ptr->expr_value = -offset;
+				sprintf(emsg, "Branch offset 0x%lX byte(s) out of range", toofar);
+				badExpr = emsg;
 			}
 		}
 		else
@@ -216,7 +215,7 @@ static void do_branch(Opcode *opc)
 			EXP1.psuedo_value = 0;
 		}
 	}
-	else
+	if ( badExpr )
 	{
 		bad_token(NULL,badExpr);
 		EXP1.ptr = 1;
