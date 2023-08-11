@@ -1405,6 +1405,8 @@ the stack pointer on a named stack. Examples:
     <tr><td>SEQ</td><td>list</td><td>list/nlist the statement sequence number</td></tr>
     <tr><td>SRC</td><td>list</td><td>list/nlist the source code.</td></tr>
     <tr><td>SYM</td><td>list</td><td>list/nlist the symbol table at the end of the assembly listing.</td></tr>
+    <tr><td>TOC</td><td>list</td><td>list/nlist option ignored in macxx.</td></tr>
+    <tr><td>TTM</td><td>list</td><td>list/nlist option ignored in macxx.</td></tr>
    </table>
     <p>
   There is a special case in the use of MEB and MES which will cause the
@@ -2679,6 +2681,8 @@ the stack pointer on a named stack. Examples:
     opc Z,addr     ;base page (8 bit address)
     opc ZX,addr    ;base page indexed by X (8 bit address)
     opc rel        ;relative branch (8 bit signed offset)
+    opc S,abs      ;relative branch (8 bit signed offset; S means current PC, abs is an absolute signed offset)
+                   ;   this exists just for compatibilty. The better syntax would be opc .+/-abs.
     </pre>
     <p>
     NOTE: As a game programmer I was both using the assembler, coding it and adding
