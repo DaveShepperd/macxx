@@ -37,7 +37,6 @@ Change Log
 #include "psttkn65.h"
 #include "add_defs.h"
 #include "memmgt.h"
-#include <strings.h>
 
 #define DEFNAM(name,numb) {"name",name,numb},
 
