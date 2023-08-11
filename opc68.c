@@ -21,6 +21,10 @@
 /******************************************************************************
 Change Log
 
+    08/09/2023	- Added support for BR S,+n and BR S,-n syntax  - Tim Giddens
+		  All Branch instructions now support this syntax used in
+		  very old source code.
+
     12/10/2022	- Changed default LIST Flags  - Tim Giddens
 
     03/18/2022	- 6800 CPU support added by Tim Giddens
@@ -40,6 +44,7 @@ Change Log
 #include "psttkn68.h"
 #include "add_defs.h"
 #include "memmgt.h"
+#include <strings.h>
 
 #define DEFNAM(name,numb) {"name",name,numb},
 
@@ -133,61 +138,93 @@ static struct
 
 static void do_branch(Opcode *opc)
 {
+	int s_test;
     long offset;
     EXPR_struct *exp_ptr;
-
+	const char *badExpr=NULL;
+	
 /* Always 2 */
     offset = 2;
+	s_test = 0;  /* set FALSE */
 
     get_token();
+	if ( *inp_ptr == ',' && token_type == TOKEN_strng && token_value == 1 && toupper(token_pool[0]) == 'S' )
+	{
+		++inp_ptr;	/* eat the comma */
+		get_token();
+		s_test = 1;  /* set TRUE */
+	}
     if (exprs(1,&EXP1) < 1)
-    {    /* expression nfg or not present */
-        exp_ptr = EXP1.stack;
-        exp_ptr->expr_code = EXPR_VALUE; /* make it a 0 */
-        exp_ptr->expr_value = -offset;   /* make it a br . */
-        EXP1.ptr = 1;
+    {
+		badExpr = "Invalid or no branch target";    /* expression nfg or not present */
     }
     else
     {
-        exp_ptr = EXP1.stack + EXP1.ptr;
-        exp_ptr->expr_code = EXPR_SEG;
-        exp_ptr->expr_value = current_offset+offset;
-        (exp_ptr++)->expr_seg = current_section;
-        exp_ptr->expr_code = EXPR_OPER;
-        exp_ptr->expr_value = '-';
-        EXP1.ptr += 2;
+		if (s_test)   /* If s_test TRUE make it a br .+n or br .-n syntax */
+		{
+			EXP1.ptr = compress_expr(&EXP1);
+			exp_ptr = EXP1.stack;
+			if ( EXP1.ptr != 1 || exp_ptr->expr_code != EXPR_VALUE )
+				badExpr = "Branch target must resolve to an absolute value";
+			else
+			{
+				exp_ptr->expr_code = EXPR_SEG;
+				exp_ptr->expr_value += current_offset;
+				exp_ptr->expr_seg = current_section;
+			}
+		}
+		if ( !badExpr )
+		{
+			exp_ptr = EXP1.stack + EXP1.ptr;
+			exp_ptr->expr_code = EXPR_SEG;
+			exp_ptr->expr_value = current_offset + offset;
+			(exp_ptr++)->expr_seg = current_section;
+			exp_ptr->expr_code = EXPR_OPER;
+			exp_ptr->expr_value = '-';
+			EXP1.ptr += 2;
+		}
     }
-    EXP1.ptr = compress_expr(&EXP1);
-
-    exp_ptr = EXP1.stack;
-    if (EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE)
-    {
-        long max_dist;
-
-/* Always 127 */
-        max_dist = 127;
-
-        if (exp_ptr->expr_value < -(max_dist+1) || exp_ptr->expr_value > max_dist)
-        {
-            long toofar;
-            toofar = exp_ptr->expr_value;
-            if (toofar > 0)
-            {
-                toofar -= max_dist;
-            }
-            else
-            {
-                toofar = -toofar-(max_dist+1);
-            }
-            sprintf(emsg,"Branch offset 0x%lX byte(s) out of range",toofar);
-            bad_token((char *)0,emsg);
-            exp_ptr->expr_value = -offset;
-        }
-    }
-    else
-    {
-        EXP1.psuedo_value = 0;
-    }
+	if ( !badExpr )
+	{
+		EXP1.ptr = compress_expr(&EXP1);
+		exp_ptr = EXP1.stack;
+		if (EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE)
+		{
+			long max_dist;
+	
+	/* Always 127 */
+			max_dist = 127;
+	
+			if (exp_ptr->expr_value < -(max_dist+1) || exp_ptr->expr_value > max_dist)
+			{
+				long toofar;
+				toofar = exp_ptr->expr_value;
+				if (toofar > 0)
+				{
+					toofar -= max_dist;
+				}
+				else
+				{
+					toofar = -toofar-(max_dist+1);
+				}
+				sprintf(emsg,"Branch offset 0x%lX byte(s) out of range",toofar);
+				bad_token((char *)0,emsg);
+				exp_ptr->expr_value = -offset;
+			}
+		}
+		else
+		{
+			EXP1.psuedo_value = 0;
+		}
+	}
+	else
+	{
+		bad_token(NULL,badExpr);
+		EXP1.ptr = 1;
+		exp_ptr = EXP1.stack;
+		exp_ptr->expr_code = EXPR_VALUE; /* make it a 0 */
+		exp_ptr->expr_value = -offset;   /* make it a br . */
+	}
 
     return;
 }

@@ -19,6 +19,10 @@
 /******************************************************************************
 Change Log
 
+    08/09/2023	- Added support for BR S,+n and BR S,-n syntax  - Tim Giddens
+		  All Branch instructions now support this syntax used in
+		  very old source code.
+
     12/10/2022	- Changed default LIST Flags  - Tim Giddens
 
 ******************************************************************************/
@@ -33,6 +37,7 @@ Change Log
 #include "psttkn65.h"
 #include "add_defs.h"
 #include "memmgt.h"
+#include <strings.h>
 
 #define DEFNAM(name,numb) {"name",name,numb},
 
@@ -170,100 +175,135 @@ int ust_init(void)
 
 static void do_branch(Opcode *opc)
 {
+	int s_test;
 	long offset;
 	EXPR_struct *exp_ptr;
+	const char *badExpr=NULL;
+
 	offset = (opc->op_amode & RL) ? 3 : 2;
+	s_test = 0;  /* set FALSE */
 	get_token();
+	if ( *inp_ptr == ',' && token_type == TOKEN_strng && token_value == 1 && toupper(token_pool[0]) == 'S' )
+	{
+		++inp_ptr;	/* eat the comma */
+		get_token();
+		s_test = 1;  /* set TRUE */
+	}
 	if ( exprs(1, &EXP1) < 1 )
-	{    /* expression nfg or not present */
-		exp_ptr = EXP1.stack;
-		exp_ptr->expr_code = EXPR_VALUE; /* make it a 0 */
-		exp_ptr->expr_value = -offset;   /* make it a br . */
-		EXP1.ptr = 1;
+	{
+		badExpr = "Invalid or no branch target";    /* expression nfg or not present */
 	}
 	else
 	{
-		exp_ptr = EXP1.stack + EXP1.ptr;
-		exp_ptr->expr_code = EXPR_SEG;
-		exp_ptr->expr_value = current_offset + offset;
-		(exp_ptr++)->expr_seg = current_section;
-		exp_ptr->expr_code = EXPR_OPER;
-		exp_ptr->expr_value = '-';
-		EXP1.ptr += 2;
-	}
-	EXP1.ptr = compress_expr(&EXP1);
-	EXP1.tag = (opc->op_amode & RL) ? 'y' : 'z'; /* set branch type operand */
-	exp_ptr = EXP1.stack;
-	if ( EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE )
-	{
-		long max_dist;
-		max_dist = (opc->op_amode & RL) ? 32767 : 127;
-		if ( exp_ptr->expr_value < -(max_dist + 1) || exp_ptr->expr_value > max_dist )
+		if (s_test)   /* If s_test TRUE make it a br .+n or br .-n syntax */
 		{
-			long toofar;
-			toofar = exp_ptr->expr_value;
-			if ( toofar > 0 )
+			EXP1.ptr = compress_expr(&EXP1);
+			exp_ptr = EXP1.stack;
+			if ( EXP1.ptr != 1 || exp_ptr->expr_code != EXPR_VALUE )
 			{
-				toofar -= max_dist;
+				badExpr = "Branch target must resolve to an absolute value";
 			}
 			else
 			{
-				toofar = -toofar - (max_dist + 1);
+				exp_ptr->expr_code = EXPR_SEG;
+				exp_ptr->expr_value += current_offset;
+				exp_ptr->expr_seg = current_section;
 			}
-			sprintf(emsg, "Branch offset 0x%lX byte(s) out of range", toofar);
-			bad_token((char *)0, emsg);
-			exp_ptr->expr_value = -offset;
+		}
+		if ( !badExpr )
+		{
+			exp_ptr = EXP1.stack + EXP1.ptr;
+			exp_ptr->expr_code = EXPR_SEG;
+			exp_ptr->expr_value = current_offset + offset;
+			(exp_ptr++)->expr_seg = current_section;
+			exp_ptr->expr_code = EXPR_OPER;
+			exp_ptr->expr_value = '-';
+			EXP1.ptr += 2;
 		}
 	}
-	else
+	if ( !badExpr )
 	{
-		EXP1.psuedo_value = 0;
-	}
-	if ( options[QUAL_P816] )
-	{
-		if ( EXP1.ptr + 6 > EXPR_MAXDEPTH )
+		EXP1.ptr = compress_expr(&EXP1);
+		EXP1.tag = (opc->op_amode & RL) ? 'y' : 'z'; /* set branch type operand */
+		exp_ptr = EXP1.stack;
+		if ( EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE )
 		{
-			bad_token((char *)0, "Branch address expression too complex");
+			long max_dist;
+			max_dist = (opc->op_amode & RL) ? 32767 : 127;
+			if ( exp_ptr->expr_value < -(max_dist + 1) || exp_ptr->expr_value > max_dist )
+			{
+				long toofar;
+				toofar = exp_ptr->expr_value;
+				if ( toofar > 0 )
+				{
+					toofar -= max_dist;
+				}
+				else
+				{
+					toofar = -toofar - (max_dist + 1);
+				}
+				sprintf(emsg, "Branch offset 0x%lX byte(s) out of range", toofar);
+				badExpr = emsg;
+			}
 		}
 		else
 		{
-			exp_ptr = EXP2.stack;
-			if ( EXP1.ptr == 1 && EXP1.stack->expr_code == EXPR_VALUE )
+			EXP1.psuedo_value = 0;
+		}
+		if ( !badExpr && options[QUAL_P816] )
+		{
+			if ( EXP1.ptr + 6 > EXPR_MAXDEPTH )
 			{
-				exp_ptr->expr_code = EXPR_SEG;
-				exp_ptr->expr_value = EXP1.stack->expr_value + current_offset + offset;
-				(exp_ptr++)->expr_seg = current_section;
+				badExpr = "Branch address expression too complex";
 			}
 			else
 			{
-				memcpy(exp_ptr, EXP1.stack, EXP1.ptr * sizeof(EXPR_struct));
-				exp_ptr += EXP1.ptr;
-				exp_ptr->expr_code = EXPR_SEG;
-				exp_ptr->expr_value = current_offset + offset;
-				(exp_ptr++)->expr_seg = current_section;
+				exp_ptr = EXP2.stack;
+				if ( EXP1.ptr == 1 && EXP1.stack->expr_code == EXPR_VALUE )
+				{
+					exp_ptr->expr_code = EXPR_SEG;
+					exp_ptr->expr_value = EXP1.stack->expr_value + current_offset + offset;
+					(exp_ptr++)->expr_seg = current_section;
+				}
+				else
+				{
+					memcpy(exp_ptr, EXP1.stack, EXP1.ptr * sizeof(EXPR_struct));
+					exp_ptr += EXP1.ptr;
+					exp_ptr->expr_code = EXPR_SEG;
+					exp_ptr->expr_value = current_offset + offset;
+					(exp_ptr++)->expr_seg = current_section;
+					exp_ptr->expr_code = EXPR_OPER;
+					(exp_ptr++)->expr_value = '+';
+				}
+				exp_ptr->expr_code = EXPR_VALUE;
+				(exp_ptr++)->expr_value = 0x00FF0000;
 				exp_ptr->expr_code = EXPR_OPER;
-				(exp_ptr++)->expr_value = '+';
+				(exp_ptr++)->expr_value = '&';
+				exp_ptr->expr_code = EXPR_SEG;
+				exp_ptr->expr_value = 0;
+				(exp_ptr++)->expr_seg = current_section;
+				exp_ptr->expr_code = EXPR_VALUE;
+				(exp_ptr++)->expr_value = 0x00FF0000;
+				exp_ptr->expr_code = EXPR_OPER;
+				(exp_ptr++)->expr_value = '&';
+				exp_ptr->expr_code = EXPR_OPER;
+				(exp_ptr++)->expr_value = EXPROPER_TST | (EXPROPER_TST_NE << 8);
+				EXP2.ptr = exp_ptr - EXP2.stack;
+				snprintf(emsg, ERRMSG_SIZE, "%s:%d: Branch or jmp out of program bank",
+						 current_fnd->fn_buff,current_fnd->fn_line);
+				write_to_tmp(TMP_TEST, 0, &EXP2, 0);
+				write_to_tmp(TMP_ASTNG, strlen(emsg) + 1, emsg, 1);
+				EXP2.ptr = 0;          /* don't use this expression any more */
 			}
-			exp_ptr->expr_code = EXPR_VALUE;
-			(exp_ptr++)->expr_value = 0x00FF0000;
-			exp_ptr->expr_code = EXPR_OPER;
-			(exp_ptr++)->expr_value = '&';
-			exp_ptr->expr_code = EXPR_SEG;
-			exp_ptr->expr_value = 0;
-			(exp_ptr++)->expr_seg = current_section;
-			exp_ptr->expr_code = EXPR_VALUE;
-			(exp_ptr++)->expr_value = 0x00FF0000;
-			exp_ptr->expr_code = EXPR_OPER;
-			(exp_ptr++)->expr_value = '&';
-			exp_ptr->expr_code = EXPR_OPER;
-			(exp_ptr++)->expr_value = EXPROPER_TST | (EXPROPER_TST_NE << 8);
-			EXP2.ptr = exp_ptr - EXP2.stack;
-			snprintf(emsg, ERRMSG_SIZE, "%s:%d: Branch or jmp out of program bank",
-					 current_fnd->fn_buff,current_fnd->fn_line);
-			write_to_tmp(TMP_TEST, 0, &EXP2, 0);
-			write_to_tmp(TMP_ASTNG, strlen(emsg) + 1, emsg, 1);
-			EXP2.ptr = 0;          /* don't use this expression any more */
 		}
+	}
+	if ( badExpr )
+	{
+		bad_token(NULL,badExpr);
+		EXP1.ptr = 1;
+		exp_ptr = EXP1.stack;
+		exp_ptr->expr_code = EXPR_VALUE; /* make it a 0 */
+		exp_ptr->expr_value = -offset;   /* make it a br . */
 	}
 	return;
 }
