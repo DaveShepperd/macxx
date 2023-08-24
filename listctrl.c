@@ -455,7 +455,10 @@ static int op_list_common(int onoff)
 		if ( tt != 0 )
 		{
 			if ( !strcmp(token_pool,"TTM") )
+			{
+				comma_expected = 1;
 				continue;	/* For purposes of compatibility, just ignore this one */
+			}
 			bad_token(tkn_ptr, "Unknown listing directive");
 			f1_eatit();	/* Skip the rest of the line */
 			return 1;
