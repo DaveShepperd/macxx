@@ -1004,11 +1004,71 @@ int endlin( void )
     return 1;
 }   
 
+static void addByteMask(EXP_stk *eps)
+{
+	if ( (edmask & ED_TRUNC) )
+	{
+		if ( eps->ptr <= 1 && eps->stack[0].expr_code == EXPR_VALUE )
+		{
+			eps->stack[0].expr_value &= 0xFF;
+		}
+		else
+		{
+			EXPR_struct *expr_ptr;
+
+			if ( eps->ptr >= EXPR_MAXDEPTH )
+			{
+				bad_token(NULL, "Too many terms in expression");
+				return;
+			}
+			expr_ptr = eps->stack + eps->ptr; /* compute start place for eval */
+			expr_ptr->expr_code = EXPR_VALUE;
+			expr_ptr->expr_value  = 0xFF;
+			++expr_ptr;
+			expr_ptr->expr_code = EXPR_OPER;
+			expr_ptr->expr_value = EXPROPER_AND;
+			eps->ptr += 2;
+			compress_expr(&EXP0);
+		}
+	}
+}
+
+static void addWordMask(EXP_stk *eps)
+{
+	if ( (edmask & ED_TRUNC) )
+	{
+		if ( eps->ptr <= 1 && eps->stack[0].expr_code == EXPR_VALUE )
+		{
+			eps->stack[0].expr_value &= 0xFFFF;
+		}
+		else
+		{
+			EXPR_struct *expr_ptr;
+
+			if ( eps->ptr >= EXPR_MAXDEPTH )
+			{
+				bad_token(NULL, "Too many terms in expression");
+				return;
+			}
+			expr_ptr = eps->stack + eps->ptr; /* compute start place for eval */
+			expr_ptr->expr_code = EXPR_VALUE;
+			expr_ptr->expr_value  = 0xFFFF;
+			++expr_ptr;
+			expr_ptr->expr_code = EXPR_OPER;
+			expr_ptr->expr_value = EXPROPER_AND;
+			eps->ptr += 2;
+			compress_expr(&EXP0);
+		}
+	}
+}
+
 int p1o_any( EXP_stk *eps )
 {
     switch (eps->tag)
     {
-    case 'b':
+	case 'b':
+		addByteMask(eps);
+		/* Fall through to p1o_byte() */
     case 'c':
     case 's':
     case 'z':
@@ -1016,6 +1076,8 @@ int p1o_any( EXP_stk *eps )
         return(p1o_byte(eps));
     case 'w':
     case 'W':
+		addWordMask(eps);
+		/* Fall through to p1o_byte() */
     case 'i':
     case 'I':
     case 'u':

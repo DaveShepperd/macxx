@@ -1628,7 +1628,8 @@ int op_address(void)
 				break;
 			otp = tkn_ptr;     /* remember beginning of expression */
 			exprs(1, &EXP0);    /* pickup the expression */
-			make_pbr_ref(&EXP0);
+			if (options[QUAL_P816] )
+				make_bank_ref(&EXP0);
 			if ( *inp_ptr == ',' )
 			{ /* if the next item is a comma */
 				while ( c = *++inp_ptr,isspace(c) ); /* skip over white space */
