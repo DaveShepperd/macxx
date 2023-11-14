@@ -36,11 +36,19 @@ static char *out_indx = out_buf; /* pointer to next spot in out_buf */
 static int out_remaining;   /* # of bytes remaining in buffer */
 static short tmp_length;
 static TMP_struct rtmp;
-TMP_struct *tmp_next=0,*tmp_top=0,*tmp_pool=0,*tmp_ptr=0;
+TMP_struct *tmp_next=NULL,*tmp_top=NULL,*tmp_pool=NULL,*tmp_ptr=NULL;
 static int tmp_pool_size;
 long tmp_pool_used;
 EXPR_struct tmp_org;
 EXP_stk tmp_org_exp;
+
+void clear_outbuf(void)
+{
+	out_pc = 0;
+	out_seg = NULL;
+	out_indx = out_buf;
+	out_remaining = sizeof(out_buf);
+}
 
 #if defined(DEBUG)
 static struct

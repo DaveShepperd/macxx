@@ -411,6 +411,7 @@ int main(int argc, char *argv[])
 		autogen_lsb=65000;			/* autolabel for macro processing */
 		memset(&list_stats,0,sizeof(list_stats));
 		memset(&meb_stats,0,sizeof(meb_stats));
+		clear_outbuf();
 		list_source.srcPosition = LLIST_SIZE;
 		list_source.srcPositionQued = LLIST_SIZE;
 		get_text_assems = 0;

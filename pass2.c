@@ -404,7 +404,7 @@ int pass2( void )
         case TMP_ASTNG: {
                 if (noout_flag == 0) outbstr((char *)tmp_pool,(int)tmp_ptr->tf_length);
 #ifdef PC_DEBUG
-                fprintf(stderr,"%s:%d: TXT, %d bytes, pc = %08lX, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: TXT, %ld bytes, pc = %08lX, sec = {%s}\n",
 						current_fnd->fn_buff,
 						current_fnd->fn_line,
                         tmp_ptr->tf_length,    
@@ -441,7 +441,7 @@ int pass2( void )
                 noout_flag = seg_ptr->flg_noout;
                 if (noout_flag == 0) outorg(&EXP0);
 #ifdef PC_DEBUG
-                fprintf(stderr,"%s:%d: ORG at line %d, newpc = %08lX, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: ORG at newpc = %08lX, sec = {%s}\n",
 						current_fnd->fn_buff,
                         current_fnd->fn_line,
 						current_offset,

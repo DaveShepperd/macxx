@@ -255,6 +255,7 @@ extern SS_struct *do_symbol(SymInsertFlag_t flag);
 extern SS_struct *get_symbol_block(int flag);
 extern void outsym_def(SS_struct *sym_ptr,int mode);
 extern void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz);
+extern void clear_outbuf(void);
 extern int read_from_tmp( void );
 extern void puts_lis(const char *string, int lines );
 extern char *do_option(char *str);
