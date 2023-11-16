@@ -1289,6 +1289,8 @@ void f1_eol( void )
 #define DEFG_LOCAL  4
 #define DEFG_LABEL  8
 #define DEFG_STATIC 16
+#define DEFG_FIXED 32
+
 /*******************************************************************
  * Define local/global symbol
  */
@@ -1769,8 +1771,8 @@ static void found_symbol( int gbl_flg, int tokt )
 	if ( (gbl_flg&DEFG_FIXED) )
 	{
 		SS_struct *sym;
-		if ( (sym = sym_lookup(token_pool, SYM_DO_NOTHING)) && (sym->flg_defined) )
-		 {
+		if ( (sym = sym_lookup(token_pool, SYM_DO_NOTHING)) && sym->flg_defined && !sym->flg_pass0 )
+		{
 			if ( current_fnd != sym->ss_fnd )
 			{
 				snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
@@ -1787,8 +1789,8 @@ static void found_symbol( int gbl_flg, int tokt )
 			 show_bad_token(tkn_ptr,emsg,MSG_ERROR);
 			 f1_eatit();
 			 return;
-		 }
-		 gbl_flg &= ~DEFG_FIXED;
+		}
+		gbl_flg &= ~DEFG_FIXED;
 	}
 	no_white_space_allowed = options[QUAL_GRNHILL] ? 1 : 0;
     if (tokt == TOKEN_local)
