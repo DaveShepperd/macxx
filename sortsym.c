@@ -166,7 +166,7 @@ int sort_symbols(void)
             {
                 if (!st->flg_defined)
                 {
-					snprintf(emsg,ERRMSG_SIZE,"%s%d: Undefined symbol '%s'",
+					snprintf(emsg,ERRMSG_SIZE,"%s:%d: Undefined symbol '%s'",
 							 st->ss_fnd->fn_nam->relative_name, st->ss_line, st->ss_string);
                     err_msg(MSG_WARN,emsg);
                     st->flg_defined = 1;     /* define it as absolute */
