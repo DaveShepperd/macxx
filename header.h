@@ -118,6 +118,12 @@ extern unsigned long record_count;
 /* pass0 and pass1 specific variables and functions */
 extern int no_white_space_allowed;
 extern int expr_message_tag;
+#define DEFG_SYMBOL 1
+#define DEFG_GLOBAL 2
+#define DEFG_LOCAL  4
+#define DEFG_LABEL  8
+#define DEFG_STATIC 16
+#define DEFG_FIXED 32
 extern int f1_defg(int gbl_flg);
 #if defined(MAC68K) || defined(MAC682K)
 #define WST_LABEL    (0) /* no white space before labels */
@@ -128,12 +134,6 @@ extern int white_space_section;
 extern int dotwcontext;
 #endif /* M68k */
 extern unsigned long autogen_lsb; /* autolabel for macro processing */
-#define DEFG_SYMBOL 1
-#define DEFG_GLOBAL 2
-#define DEFG_LOCAL  4
-#define DEFG_LABEL  8
-#define DEFG_STATIC 16
-#define DEFG_FIXED	32
 extern int get_text_assems;
 extern void purge_data_stacks(const char *name);
 extern int squawk_syms;

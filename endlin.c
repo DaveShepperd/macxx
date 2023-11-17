@@ -48,6 +48,10 @@ void clear_outbuf(void)
 	out_seg = NULL;
 	out_indx = out_buf;
 	out_remaining = sizeof(out_buf);
+	tmp_org_exp.stack = &tmp_org;
+	tmp_org_exp.ptr = 1;
+	tmp_org.expr_code = EXPR_SEG;
+	tmp_org.expr_value = 0;
 }
 
 #if defined(DEBUG)

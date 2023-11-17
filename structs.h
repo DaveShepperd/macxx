@@ -115,6 +115,7 @@ typedef struct ss_struct {
    unsigned int flg_more:1;	/* there are more in this hash tree */
    unsigned int flg_static:1; /* A static (local) symbol */
    unsigned int flg_pass0:1;  /* Symbol defined during pass 0 */
+   unsigned int flg_fixed_addr:1;	/* Symbol cannot be re-defined */
    unsigned char ss_scope;	/* scope level */
    unsigned char ss_type;	/* symbol type (for source code debugging) */
 } SS_struct;

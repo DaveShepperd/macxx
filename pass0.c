@@ -178,7 +178,8 @@ void pass0( int file_cnt)
                 }
                 if (c == '=')
                 {
-                    gbl_flg &= ~DEFG_LABEL;  /* it's not a label */
+					gbl_flg |= DEFG_FIXED; /* is a := construct  */
+					gbl_flg &= ~DEFG_LABEL; /* it is not a label */
                     found_symbol(gbl_flg, tokt); /* a := construct? */
                     continue;
                 }

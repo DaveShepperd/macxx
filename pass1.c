@@ -1284,13 +1284,6 @@ void f1_eol( void )
     return;
 }
 
-#define DEFG_SYMBOL 1
-#define DEFG_GLOBAL 2
-#define DEFG_LOCAL  4
-#define DEFG_LABEL  8
-#define DEFG_STATIC 16
-#define DEFG_FIXED 32
-
 /*******************************************************************
  * Define local/global symbol
  */
@@ -1350,7 +1343,7 @@ int f1_defg(int flag)
     }
     if (ptr == 0)
     {
-        bad_token(tkn_ptr,"Unable to insert symbol into symbol table");
+        bad_token(token_pool,"Unable to insert symbol into symbol table");
         if ((flag & DEFG_LABEL) == 0) f1_eatit();
         return 0;
     }
@@ -1366,10 +1359,13 @@ int f1_defg(int flag)
 #endif
     if (find_segment(ptr->ss_string, seg_list, seg_list_index) != 0)
     {
-        show_bad_token(tkn_ptr, "Name already in use as a PSECT name", MSG_WARN);
+		snprintf(emsg,sizeof(emsg), "Name '%s' already in use as a PSECT name", ptr->ss_string);
+        show_bad_token(NULL, emsg , MSG_ERROR);
+		f1_eatit();
+		return 0;
     }
 #endif
-    if ((flag&DEFG_LABEL) != 0)
+    if ( (flag&DEFG_LABEL) != 0)
     {    /* if defining a label... */
 		if ( ptr->flg_defined )
         {       /* and it's already defined... */
@@ -1387,17 +1383,22 @@ int f1_defg(int flag)
 				if ( include_level || current_fnd != ptr->ss_fnd )
 				{
 					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-							"Label previously defined at %s:%d",
+							"Label '%s' previously defined %sat %s:%d",
+							 ptr->ss_string,
+							 ptr->flg_label ? "":"as symbol ",
 							 ptr->ss_fnd->fn_nam->relative_name,
 							 ptr->ss_line);
 				}
 				else
 				{
 					snprintf(emsg,ERRMSG_SIZE,
-							"Label previously defined at line %d",
+							"Label '%s' previously defined %sat line %d",
+							 ptr->ss_string,
+							 ptr->flg_label ? "":"as symbol ",
 							 ptr->ss_line);
 				}
-				show_bad_token(tkn_ptr,emsg,MSG_ERROR);
+				show_bad_token(NULL,emsg,MSG_ERROR);
+				f1_eatit();
 				return 0;
 			}
 			if (    ptr->flg_exprs
@@ -1405,28 +1406,35 @@ int f1_defg(int flag)
 				 || ptr->ss_seg != current_section
 				)
 			{
-				sprintf(emsg,
-						"Label defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1 at %s:%d",
-						ptr->ss_seg ? ptr->ss_seg->seg_string:"", ptr->ss_value, ptr->flg_exprs,
-						current_section->seg_string, current_pc,
-						ptr->ss_fnd->fn_nam->relative_name, ptr->ss_line);
-				bad_token(tkn_ptr,emsg);
+				snprintf(emsg,sizeof(emsg),"Label '%s' defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1 at %s:%d",
+						 ptr->ss_string,
+						ptr->ss_seg ? ptr->ss_seg->seg_string:"",
+						ptr->ss_value,
+						ptr->flg_exprs,
+						current_section->seg_string,
+						current_pc,
+						ptr->ss_fnd->fn_nam->relative_name,
+						ptr->ss_line);
+				bad_token(NULL,emsg);
+				f1_eatit();
 				return 0;
 			}
 
         }
-        ptr->flg_label = 1;   /* make it a label */
+        ptr->flg_label = 1;		/* make it a label */
+		ptr->flg_fixed_addr = 1;		/* cannot be re-defined */
     }
     else
-    {         /* if defining a symbol... */
-        if (ptr->flg_label)
+    {   /* if defining a symbol... */
+        if (ptr->flg_defined && ptr->flg_label)
         { /* and it's already a label... */
-            if (include_level > 0)
+            if (include_level || current_fnd != ptr->ss_fnd)
             {
                 snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-                        "%s:%d: Symbol multiply defined; previously defined in .INCLUDEd file %s:%d\n",
+                        "%s:%d: Symbol '%s' multiply defined; previously defined as label in %s:%d",
 						 current_fnd->fn_nam->relative_name,
 						 current_fnd->fn_line,
+						 ptr->ss_string,
 						 ptr->ss_fnd->fn_nam->relative_name,
 						 ptr->ss_line
 						 );
@@ -1434,37 +1442,35 @@ int f1_defg(int flag)
             else
             {
                 snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-                        "%s:%d: Symbol multiply defined; previously defined at line %d",
+                        "%s:%d: Symbol '%s' multiply defined; previously defined as label at line %d",
 						 current_fnd->fn_nam->relative_name,
 						 current_fnd->fn_line,
+						 ptr->ss_string,
                         ptr->ss_line);
             }
-            bad_token(tkn_ptr,emsg);
+            bad_token(NULL,emsg);
             f1_eatit();
             return 0;
         }
-        ptr->flg_label = 0;   /* else signal that it's a symbol */
     }
-    ptr->flg_defined = 1;    /* signal symbol or label is defined */
-	ptr->flg_pass0 = !pass;  /* and signal which pass it was defined in */
 #if 0				/* definition doesn't set reference bit */
     ptr->flg_ref = 1;        /* signal symbol is referenced */
 #endif
     ptr->flg_local = ((flag&DEFG_LOCAL) != 0);
     if (ptr->flg_local && (flag&DEFG_GLOBAL))
     {
-        bad_token(tkn_ptr,"Local symbol cannot be made global");
+		snprintf(emsg,sizeof(emsg),"Local symbol '%s' cannot be made global", ptr->ss_string);
+        bad_token(NULL,emsg);
         flag &= ~DEFG_GLOBAL;
     }
     if ( !ptr->flg_static )
         ptr->flg_global |= ((flag&DEFG_GLOBAL) != 0); /* sticky local/global flag */
-    ptr->ss_fnd = current_fnd;   /* record the file that defined it */
-    ptr->ss_line = current_fnd->fn_line; /* and the line # of same */
     if ((flag & DEFG_SYMBOL) != 0)
     { /* if symbol... */
         if (get_token() == EOL)
         {     /* pickup the next token */
             bad_token(tkn_ptr, "Didn't expect EOL here");
+			f1_eatit();
             return -1;
         }
 #if defined(MAC68K) || defined(MAC682K)
@@ -1474,11 +1480,95 @@ int f1_defg(int flag)
             no_white_space_allowed = 1;
         }
 #endif
-        if (exprs(1,&EXP0) < 1)
+        if (exprs(1,&EXP0) < 1) /* get a global expression */
 		{
-			return(-1); /* get a global expression */
+			f1_eatit();
+			return -1;			/* Ooops. nfg */
 		}
-        i = EXP0.ptr;
+		i = EXP0.ptr;
+#if 0
+		fprintf(stderr,"Pass %d: Checking %s: flg_pass0=%d, flg_fixed_addr=%d, flg_defined=%d, flag=0x%X, (flag&DEFG_FIXED)=%d, i=%d\n",
+				pass, ptr->ss_string, ptr->flg_pass0, ptr->flg_fixed_addr, ptr->flg_defined, flag, (flag&DEFG_FIXED) ? 1:0, i);
+#endif
+		if ( ((flag&DEFG_FIXED) || ptr->flg_fixed_addr) && ptr->flg_defined )
+		{
+			int nfg = !ptr->flg_pass0;
+			if ( nfg  )	/* If first defined in pass0, then check if assigning the same value */
+			{
+				/* Need to check if a re-define */
+				if (   ptr->flg_register != EXP0.register_reference
+					|| ptr->flg_regmask  != EXP0.register_mask
+				   )
+				{
+					nfg = 1;
+				}
+				if ( !nfg && ptr->flg_exprs )
+				{
+					int jj;
+					EXP_stk *estk;
+					EXPR_struct *oldPtr,*newPtr;
+					estk = ptr->ss_exprs;
+					oldPtr = estk->stack;
+					newPtr = EXP0SP;
+					compress_expr(estk);	/* Compress old symbol's expression */
+					if ( i != estk->ptr )
+						nfg = 1;
+					else
+					{
+						for (jj=0; jj < i; ++jj, ++oldPtr, ++newPtr)
+						{
+							if (   oldPtr->expr_code != newPtr->expr_code
+								|| oldPtr->expr_flags != newPtr->expr_flags
+								|| oldPtr->expr_value != newPtr->expr_value
+							   )
+							{
+								nfg = 1;
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					if (   (EXP0SP->expr_code == EXPR_VALUE && !ptr->flg_abs)
+						|| (EXP0SP->expr_code != EXPR_VALUE && ptr->flg_abs)
+						|| (EXP0SP->expr_code == EXPR_SEG && ptr->ss_seg != EXP0SP->expr_seg)
+						|| (EXP0SP->expr_value != ptr->ss_value)
+						)
+					{
+						nfg = 1;
+					}
+				}
+			}
+			if ( nfg )
+			{
+				if (include_level || current_fnd != ptr->ss_fnd)
+				{
+					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+							"%s:%d: Symbol '%s' multiply defined; previously defined %sin %s:%d",
+							 current_fnd->fn_nam->relative_name,
+							 current_fnd->fn_line,
+							 ptr->ss_string,
+							 ptr->flg_label ? "as label ":"",
+							 ptr->ss_fnd->fn_nam->relative_name,
+							 ptr->ss_line
+							 );
+				}
+				else
+				{
+					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+							"%s:%d: Symbol '%s' multiply defined; previously defined %sat line %d",
+							 current_fnd->fn_nam->relative_name,
+							 current_fnd->fn_line,
+							 ptr->ss_string,
+							 ptr->flg_label ? "as label ":"",
+							 ptr->ss_line);
+				}
+				bad_token(NULL,emsg);
+				f1_eatit();
+				return 0;
+			}
+		}
         ptr->flg_register = EXP0.register_reference;
         ptr->flg_regmask = EXP0.register_mask;
         if (i == 1)
@@ -1489,7 +1579,7 @@ int f1_defg(int flag)
                 ptr->flg_abs = 1;
                 ptr->flg_exprs = 0;
                 ptr->ss_seg = 0;    /* no expression involved */
-                i =0;
+                i = 0;
             }
             if (EXP0SP->expr_code == EXPR_SEG)
             {
@@ -1501,7 +1591,7 @@ int f1_defg(int flag)
                     ptr->ss_seg = 0;
                     ptr->flg_abs = 1;
                 }
-                i =0;
+                i = 0;
             }
         }
         if (i > 0)
@@ -1519,7 +1609,6 @@ int f1_defg(int flag)
             dst = (char *)exp_ptr->stack;  /* point to area to load expression */
             src = (char *)EXP0SP;      /* point to source expression */
             memcpy(dst,src,cnt);       /* copy all the data */
-            return 1;          /* and quit */
         }
     }
     else
@@ -1529,6 +1618,11 @@ int f1_defg(int flag)
         ptr->flg_exprs = 0;
         current_section->flg_reference = 1; /* signal that segment referenced */
     }
+	ptr->ss_fnd = current_fnd;   /* record the file that defined it */
+	ptr->ss_line = current_fnd->fn_line; /* and the line # of same */
+	ptr->flg_defined = 1;    /* signal symbol or label is defined */
+	ptr->flg_pass0 = !pass;  /* and signal which pass it was defined in */
+	ptr->flg_fixed_addr = (flag & DEFG_FIXED) ? 1 : 0;
     return 1;
 }
 
@@ -1768,6 +1862,7 @@ static void found_symbol( int gbl_flg, int tokt )
         ++inp_ptr;       /* eat the second = */
         gbl_flg |= DEFG_GLOBAL;  /* and set the global bit */
     }
+#if 0
 	if ( (gbl_flg&DEFG_FIXED) )
 	{
 		SS_struct *sym;
@@ -1792,6 +1887,7 @@ static void found_symbol( int gbl_flg, int tokt )
 		}
 		gbl_flg &= ~DEFG_FIXED;
 	}
+#endif
 	no_white_space_allowed = options[QUAL_GRNHILL] ? 1 : 0;
     if (tokt == TOKEN_local)
         gbl_flg |= DEFG_LOCAL;
@@ -2020,6 +2116,7 @@ void pass1( int file_cnt)
                 if (c == '=')
                 {
                     gbl_flg |= DEFG_FIXED; /* is a := construct  */
+					gbl_flg &= ~DEFG_LABEL; /* it is not a label */
                     found_symbol(gbl_flg, tokt);
                     continue;
                 }
