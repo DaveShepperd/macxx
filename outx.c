@@ -336,9 +336,18 @@ static char *do_outexp_ol(EXP_stk *eps,char *s)
                 *s = 0;     /* move the null */
                 continue;
             }
-        case EXPR_LINK: {  /* link to another expression */
-                s = do_outexp_ol(exp->expr_expr,s);
-                *s = 0;
+        case EXPR_LINK:
+			{  /* link to another expression */
+				EXP_stk *new_eps = exp->expr_expr;
+				if ( new_eps != eps )
+				{
+					s = do_outexp_ol(new_eps, s);
+				}
+				else
+				{
+					/* Prevent infinite recursion */
+				}
+				*s = 0;
                 continue;
             }
         default: {

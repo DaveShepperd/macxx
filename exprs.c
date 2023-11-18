@@ -345,7 +345,8 @@ int compress_expr( EXP_stk *exptr )
     int terms,i,j;
 
     terms = exptr->ptr;
-    if (terms <= 0) return(terms);       /* empty */
+    if (terms <= 0)
+		return(terms);       /* empty */
     src = dst = exptr->stack;    /* start at bottom of stack */
     j = 0;
     for (i=0; i < terms ; ++src,++i)
@@ -367,38 +368,42 @@ int compress_expr( EXP_stk *exptr )
                 EXP_stk *nxt_exp;
                 nxt_exp = src->expr_expr;
                 op1 = nxt_exp->stack;
-                k = compress_expr(nxt_exp);
-                nxt_exp->ptr = k;
-                if (k <= 0) return k;
-                exptr->base_page_reference |= nxt_exp->base_page_reference;
-                exptr->register_reference |= nxt_exp->register_reference;
-                exptr->forward_reference |= nxt_exp->forward_reference;
-                if (k == 1)
-                {
-                    if (op1->expr_code == EXPR_VALUE)
-                    {
-                        dst->expr_code = EXPR_VALUE;
-                        dst->expr_value = op1->expr_value;
+				if ( nxt_exp != exptr )
+				{
+					k = compress_expr(nxt_exp);
+					nxt_exp->ptr = k;
+					if (k <= 0)
+						return k;
+					exptr->base_page_reference |= nxt_exp->base_page_reference;
+					exptr->register_reference |= nxt_exp->register_reference;
+					exptr->forward_reference |= nxt_exp->forward_reference;
+					if (k == 1)
+					{
+						if (op1->expr_code == EXPR_VALUE)
+						{
+							dst->expr_code = EXPR_VALUE;
+							dst->expr_value = op1->expr_value;
 #if EXPR_C
-                        dst->expr_flags = op1->expr_flags;
+							dst->expr_flags = op1->expr_flags;
 #endif
-                        ++dst;
-                        ++j;
-                        continue;
-                    }
-                    else if (op1->expr_code == EXPR_SYM || op1->expr_code == EXPR_SEG)
-                    {
-                        src->expr_code = op1->expr_code;
-                        src->expr_sym = op1->expr_sym;
-                        src->expr_value = op1->expr_value;
+							++dst;
+							++j;
+							continue;
+						}
+						else if (op1->expr_code == EXPR_SYM || op1->expr_code == EXPR_SEG)
+						{
+							src->expr_code = op1->expr_code;
+							src->expr_sym = op1->expr_sym;
+							src->expr_value = op1->expr_value;
 #if EXPR_C
-                        src->expr_flags = op1->expr_flags;
+							src->expr_flags = op1->expr_flags;
 #endif
-                        --src;
-                        --i;
-                        continue;
-                    }
-                }
+							--src;
+							--i;
+							continue;
+						}
+					}
+				}
                 dst->expr_code = EXPR_LINK;
                 dst->expr_expr = nxt_exp;
                 ++dst;
