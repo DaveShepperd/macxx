@@ -628,7 +628,8 @@ int main(int argc, char *argv[])
     current_fnd = &output_files[OUT_FN_OBJ];
     inp_len = 0;                 /* tell everybody there's no input */
     pass = 2;                    /* signal doing pass 2 */
-    pass2();                     /* do output processing */
+	if ( !error_count[MSG_FATAL] && !error_count[MSG_ERROR] )
+		 pass2();                /* do output processing only if no errors */
 #if 0
     if (deb_fp) dbg_add_local_syms();
 #endif

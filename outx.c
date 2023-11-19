@@ -110,7 +110,66 @@ static char *get_symid(SS_struct *sym_ptr,char *s)
 
 static short rsize;
 
-static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len)
+static void showBadExpression(const EXP_stk *topLevel)
+{
+	/* We should never get here. But if we do, show something went wrong and prevent a segfault */
+	EXPR_struct *top_exp;
+	SS_struct *sym_ptr;
+	int ii, len;
+
+	top_exp = topLevel->stack;
+	len = snprintf(emsg,sizeof(emsg),"Expression loop. %d terms: ", topLevel->ptr);
+	for (ii=0; ii < topLevel->ptr; ++ii, ++top_exp)
+	{
+		long val = top_exp->expr_value;
+		switch(top_exp->expr_code)
+		{
+		case EXPR_B:
+			len += snprintf(emsg+len,sizeof(emsg)-len," B");
+			break;
+		case EXPR_L:
+			len += snprintf(emsg+len,sizeof(emsg)-len," L");
+			break;
+		case EXPR_SEG:
+			val += top_exp->expr_seg->rel_offset;
+			if (val != 0)
+				len += snprintf(emsg+len,sizeof(emsg)-len, " %%%d %ld +", top_exp->expr_seg->seg_ident, val);
+			else
+				len += snprintf(emsg+len, sizeof(emsg)-len," %%%d", top_exp->expr_seg->seg_ident);
+			break;
+		case EXPR_SYM:
+			sym_ptr = top_exp->expr_sym;
+			if (!sym_ptr->flg_defined || sym_ptr->flg_exprs)
+			{
+				char tIdent[32], *ts;
+				ts = get_symid(sym_ptr,tIdent);
+				*ts = 0;
+				len += snprintf(emsg+len,sizeof(emsg)-len," %s", tIdent);
+				break;
+			}
+			val = sym_ptr->ss_value;
+			/* Fall through to EXPR_VALUE */
+		case EXPR_VALUE:
+			len += snprintf(emsg+len,sizeof(emsg)-len," %ld", val);
+			break;
+		case EXPR_OPER:
+			len += snprintf(emsg+len,sizeof(emsg)-len," %c", (char)(val&0xFF));
+			if ((val&255) == EXPROPER_TST)
+				len += snprintf(emsg+len,sizeof(emsg)-len,"%c", (char)((val >> 8)&0xFF));
+			break;
+		case EXPR_LINK:
+			len += snprintf(emsg+len, sizeof(emsg)-len," <link to self>");
+			break;
+		default:
+			len += snprintf(emsg+len, sizeof(emsg)-len," <undefined code %d>", top_exp->expr_code);
+			break;
+		}
+	}
+	len += snprintf(emsg + len, sizeof(emsg) - len, ": Expression ignored");
+	err_msg(MSG_ERROR,emsg);
+}
+
+static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len,const EXP_stk *topLevel)
 {
     int k;
     SS_struct *sym_ptr;
@@ -229,13 +288,24 @@ static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len)
                 }
                 continue;
             }
-        case EXPR_LINK: {  /* link to another expression */
+        case EXPR_LINK:
+		{  /* link to another expression */
                 EXP_stk *ep;
                 int ll;
                 ep = exp->expr_expr;
-                ll = ep->ptr;
-                ve.vexp_chp = do_outexp_vlda(ep,ve.vexp_chp,&ll);
-                *len += ll-1;   /* account for new items, but take out link */
+				if ( ep != eps )
+				{
+					ll = ep->ptr;
+					ve.vexp_chp = do_outexp_vlda(ep,ve.vexp_chp,&ll,topLevel);
+					*len += ll-1;   /* account for new items, but take out link */
+				}
+				else
+				{
+					/* We should never get here. But if we do, show something went wrong and prevent a segfault */
+					showBadExpression(topLevel);
+					*ve.vexp_type++ = VLDA_EXPR_VALUE;
+					*ve.vexp_long++ = 0;
+				}
                 continue;
             }
         default: {
@@ -276,7 +346,7 @@ static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len)
     return(ve.vexp_chp); /* exit */
 }
 
-static char *do_outexp_ol(EXP_stk *eps,char *s)
+static char *do_outexp_ol(EXP_stk *eps,char *s, const EXP_stk *topLevel)
 {
     int k;
     SS_struct *sym_ptr;
@@ -341,11 +411,13 @@ static char *do_outexp_ol(EXP_stk *eps,char *s)
 				EXP_stk *new_eps = exp->expr_expr;
 				if ( new_eps != eps )
 				{
-					s = do_outexp_ol(new_eps, s);
+					s = do_outexp_ol(new_eps, s, topLevel);
 				}
 				else
 				{
-					/* Prevent infinite recursion */
+					/* We should never get here. But if we do, show something went wrong and prevent a segfault */
+					showBadExpression(topLevel);
+					*s++ = '0';
 				}
 				*s = 0;
                 continue;
@@ -388,7 +460,7 @@ char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp )
         adj_len.vexp_chp = ve.vexp_chp = s;   /* point to output array */
         ++ve.vexp_len;                /* skip the length field */
         len = eps->ptr;
-        ve.vexp_chp = do_outexp_vlda(eps,ve.vexp_chp,&len);
+        ve.vexp_chp = do_outexp_vlda(eps,ve.vexp_chp,&len,eps);
         *adj_len.vexp_len = len + ((eps->tag != 0)?1:0); /* expression size (in items) */
         if (wrt==0) return(ve.vexp_chp);     /* exit */
         rsize = ve.vexp_chp-wrt;
@@ -405,7 +477,7 @@ char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp )
     {         /* --vlda */
         *s = 0;           /* null terminate the dst string */
         len = eps->ptr;
-        s = do_outexp_ol(eps,s);
+        s = do_outexp_ol(eps,s,eps);
         if (wrt)
         {
             *s++ = '\n';
