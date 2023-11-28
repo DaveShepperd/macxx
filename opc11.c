@@ -135,6 +135,7 @@ int ust_init( void )
         ptr->flg_local = 0;       /* not local */
         ptr->flg_global = 0;      /* not global */
         ptr->flg_label = 1;       /* can't redefine it */
+		ptr->flg_fixed_addr = 1;
         ptr->ss_fnd = 0;          /* no associated file */
         ptr->flg_register = 1;        /* it's a register */
         ptr->flg_abs = 1;         /* it's not relocatible */

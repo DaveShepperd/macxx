@@ -122,7 +122,7 @@ static int get_indxea(int amflg, int treg, EA *amp )
 	if ( treg == REG_PC )
 	{
 	    tmps->ptr = compress_expr(tmps);
-	    if ( tmps->ptr != 1 || exp->expr_code != EXPR_VALUE )
+		if ( tmps->ptr != 1 || exp->expr_code != EXPR_VALUE )
 	    {
 	        exp = tmps->stack + tmps->ptr;
 	        exp->expr_code = EXPR_SEG;
@@ -136,7 +136,7 @@ static int get_indxea(int amflg, int treg, EA *amp )
 	        if (list_bin) compress_expr_psuedo(tmps);
 	    }
 	}
-        if (tmps->ptr == 1 && exp->expr_code == EXPR_VALUE)
+	if ( tmps->ptr == 1 && exp->expr_code == EXPR_VALUE )
         {
             if (exp->expr_value < -128 || exp->expr_value > 127)
             {

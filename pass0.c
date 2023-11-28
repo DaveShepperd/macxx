@@ -110,13 +110,9 @@ void pass0( int file_cnt)
         current_section->flg_based = 1;
         current_section->seg_salign = macxx_abs_salign;
         current_section->seg_dalign = macxx_abs_dalign;
-        sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
-        sym_ptr->flg_global = 1;
         current_section = get_seg_mem(&sym_ptr, ".REL.");
         current_section->seg_salign = macxx_rel_salign;
         current_section->seg_dalign = macxx_rel_dalign;
-        sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
-        sym_ptr->flg_global = 1;
         opcinit();            /* seed the opcode table */
     }
     expr_message_tag = 1;    /* signal not to display messages */
@@ -381,4 +377,6 @@ void pass0( int file_cnt)
         continue;
     }
 }
+
 #endif	/* !defined(MAC_PP) */
+

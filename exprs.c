@@ -94,6 +94,7 @@ int compress_expr_psuedo( EXP_stk *ep )
     }
     src = ep->stack;
     op1 = texpbase;      /* point to dst array */
+	op1->expr_flags = 0;	/* make sure this starts at 0 */
     for (dst_terms=0;src_terms > 0; --src_terms,++src)
     {
         switch (src->expr_code)
@@ -342,14 +343,21 @@ int compress_expr( EXP_stk *exptr )
  */
 {
     EXPR_struct *src, *dst, *op1, *op2=NULL;
-    int terms,i,j;
+    int oldTerms,termCount,newTerms;
 
-    terms = exptr->ptr;
-    if (terms <= 0)
-		return(terms);       /* empty */
-    src = dst = exptr->stack;    /* start at bottom of stack */
-    j = 0;
-    for (i=0; i < terms ; ++src,++i)
+    oldTerms = exptr->ptr;
+    if (oldTerms <= 0)
+		return oldTerms;       /* empty */
+	src = dst = exptr->stack;    /* start at bottom of stack */
+    newTerms = 0;
+#if 0
+	if ( squeak )
+	{
+		printf("compress_expr(%p): Pass %d: Before:\n",(void *)exptr,pass);
+		dump_expr(exptr);
+	}
+#endif
+	for ( termCount = 0; termCount < oldTerms; ++src, ++termCount )
     {
         switch (src->expr_code)
         {
@@ -359,35 +367,41 @@ int compress_expr( EXP_stk *exptr )
 #if EXPR_C
                 dst->expr_flags = src->expr_flags;
 #endif
-                ++dst;
-                ++j;
+				++dst;
+                ++newTerms;
                 continue;
             }
         case EXPR_LINK: {
-                int k;
                 EXP_stk *nxt_exp;
                 nxt_exp = src->expr_expr;
                 op1 = nxt_exp->stack;
 				if ( nxt_exp != exptr )
 				{
-					k = compress_expr(nxt_exp);
-					nxt_exp->ptr = k;
-					if (k <= 0)
-						return k;
+					nxt_exp->ptr = compress_expr(nxt_exp);
+					if (nxt_exp->ptr <= 0)
+					{
+						show_bad_token(NULL,"compress_expr(): Returned 0 or negative. Internal assembly error\n",MSG_FATAL);
+						return 0;
+					}
 					exptr->base_page_reference |= nxt_exp->base_page_reference;
 					exptr->register_reference |= nxt_exp->register_reference;
 					exptr->forward_reference |= nxt_exp->forward_reference;
-					if (k == 1)
+					if (nxt_exp->ptr == 1)
 					{
-						if (op1->expr_code == EXPR_VALUE)
+						if ( op1->expr_code == EXPR_VALUE )
 						{
 							dst->expr_code = EXPR_VALUE;
 							dst->expr_value = op1->expr_value;
 #if EXPR_C
 							dst->expr_flags = op1->expr_flags;
 #endif
+#if 0
+							if ( squeak )
+								printf("compress_expr(%p) pass %d: Collapsed a link in %p to 1 EXPR_VALUE term. fwd_ref=%d\n",
+									   (void *)src, pass, (void *)nxt_exp, dst->expr_fwdReference);
+#endif
 							++dst;
-							++j;
+							++newTerms;
 							continue;
 						}
 						else if (op1->expr_code == EXPR_SYM || op1->expr_code == EXPR_SEG)
@@ -399,7 +413,7 @@ int compress_expr( EXP_stk *exptr )
 							src->expr_flags = op1->expr_flags;
 #endif
 							--src;
-							--i;
+							--termCount;
 							continue;
 						}
 					}
@@ -407,35 +421,19 @@ int compress_expr( EXP_stk *exptr )
                 dst->expr_code = EXPR_LINK;
                 dst->expr_expr = nxt_exp;
                 ++dst;
-                ++j;
+                ++newTerms;
                 continue;
             }
-        case EXPR_SYM: {
+        case EXPR_SYM: 
+			{
                 SS_struct *sym_ptr;
                 sym_ptr = src->expr_sym;
-#if 0
-				if ( squeak )
-				{
-					printf("compress_expr(): EXPR_SYM: '%s', exprs=%d, val=%08lX, base=%d, fwd=%d, def=%d, reg=%d, abs=%d, lab=%d\n",
-						   sym_ptr->ss_string,
-						   sym_ptr->flg_exprs,
-						   sym_ptr->ss_value,
-						   sym_ptr->flg_base,
-						   sym_ptr->flg_fwd,
-						   sym_ptr->flg_defined,
-						   sym_ptr->flg_register,
-						   sym_ptr->flg_abs,
-						   sym_ptr->flg_label
-						   );
-				}
-#endif
 				exptr->base_page_reference |= sym_ptr->flg_base;
-                exptr->forward_reference |= sym_ptr->flg_fwd;
                 exptr->register_reference |= sym_ptr->flg_register;
 #if defined(MAC68K)
                 exptr->register_mask |= sym_ptr->flg_regmask;
 #endif
-                if (sym_ptr->flg_defined)
+                if ( sym_ptr->flg_defined )
                 {
                     if (sym_ptr->flg_abs)
                     {
@@ -445,15 +443,16 @@ int compress_expr( EXP_stk *exptr )
                         if (sym_ptr->flg_regmask) dst->expr_flags = EXPR_FLG_REGMASK;
                         else if (sym_ptr->flg_register) dst->expr_flags = EXPR_FLG_REG;
 #endif
-                        ++dst;
-                        ++j;
+						++dst;
+                        ++newTerms;
                         continue;
                     }
                     if (sym_ptr->flg_exprs)
                     {
+						exptr->forward_reference |= sym_ptr->flg_fwdReference;	/* Persist this through if present */
                         src->expr_code = EXPR_LINK;
                         src->expr_expr = sym_ptr->ss_exprs;
-                        --i;
+                        --termCount;
                         --src;
                     }
                     else
@@ -479,34 +478,35 @@ int compress_expr( EXP_stk *exptr )
 								exptr->base_page_reference |= sp->flg_zero;
 							}
 							++dst;
-							++j;
+							++newTerms;
 						}
 						else
 						{
 							sym_ptr->flg_defined = 0;	/* undefine the symbol for future */
-							bad_token(NULL,"Fatal internal error. Possible circular symbol assignment.");
+							show_bad_token(NULL,"Fatal internal error. Possible circular symbol assignment.",MSG_FATAL);
 							dst->expr_code = EXPR_VALUE;
 							dst->expr_value = 0;
 							++dst;
-							++j;
+							++newTerms;
 						}
                     }
                     continue;
                 }
+				exptr->forward_reference = 1;	/* Reference to a non-defined symbol*/
                 dst->expr_code = EXPR_SYM;
                 dst->expr_value = 0;
                 dst->expr_sym = sym_ptr;
                 ++dst;
-                ++j;
+                ++newTerms;
                 continue;
             }
         case EXPR_OPER: {
                 int oper,k;
                 oper = src->expr_value;
                 op1 = dst -1;       /* point to first argument */
-                if (j < 1)
+                if (newTerms < 1)
                 {        /* always has to be 1 term */
-                    j = -1;          /* else underflow */
+                    newTerms = -1;          /* else underflow */
                     break;
                 }
                 k = (op1->expr_code == EXPR_VALUE) +
@@ -516,9 +516,9 @@ int compress_expr( EXP_stk *exptr )
                     oper != EXPROPER_SWAP &&
                     oper != (EXPROPER_TST | (EXPROPER_TST_NOT<<8)))
                 {
-                    if (j < 2)
+                    if (newTerms < 2)
                     {     /* some things need 2 terms */
-                        j = -1;
+                        newTerms = -1;
                         break;
                     }
                     op2 = dst -2;        /* point to second argument (if any) */
@@ -546,7 +546,7 @@ int compress_expr( EXP_stk *exptr )
                             op2->expr_flags |= op1->expr_flags;
 #endif
                             --dst;
-                            --j;
+                            --newTerms;
                             continue;
                         }
                         if (k == 9)
@@ -556,7 +556,7 @@ int compress_expr( EXP_stk *exptr )
                             op2->expr_flags |= op1->expr_flags;
 #endif
                             --dst;
-                            --j;
+                            --newTerms;
                             continue;
                         }
                         if (k == 10)
@@ -586,7 +586,7 @@ int compress_expr( EXP_stk *exptr )
                             op2->expr_flags |= op1->expr_flags;
 #endif
                             --dst;
-                            --j;
+                            --newTerms;
                             continue;
                         }
                         if (k == 10)
@@ -599,7 +599,7 @@ int compress_expr( EXP_stk *exptr )
                             { /* if same sec... */
                                 op2->expr_code = EXPR_VALUE;    /* then folds to cnst */
                                 --dst;
-                                --j;
+                                --newTerms;
                                 continue;
                             }
                             op1->expr_value = 0;
@@ -611,7 +611,7 @@ int compress_expr( EXP_stk *exptr )
                     dst->expr_code = EXPR_OPER;  /* else just pass the oper */
                     dst->expr_value = oper;
                     ++dst;
-                    ++j;
+                    ++newTerms;
                     continue;
                 }
                 switch (oper&255)
@@ -630,7 +630,7 @@ int compress_expr( EXP_stk *exptr )
                                 op1->expr_value = 0;
                             }
                             ++dst;     /* compensate for following -- */
-                            ++j;
+                            ++newTerms;
                             break;
                         }
                         if (oper == EXPROPER_TST_OR || oper == EXPROPER_TST_AND)
@@ -855,25 +855,25 @@ int compress_expr( EXP_stk *exptr )
                         hi = (op1->expr_value >> 8) & 255;
                         op1->expr_value = hi | (lo << 8);
                         ++dst;        /* compensate for following -- */
-                        ++j;
+                        ++newTerms;
                         break;
                     }
                 case EXPROPER_NEG: {
                         op1->expr_value = -op1->expr_value;
                         ++dst;        /* compensate for following -- */
-                        ++j;
+                        ++newTerms;
                         break;
                     }
                 case EXPROPER_COM: {
                         op1->expr_value = ~op1->expr_value;
                         ++dst;        /* compensate for following -- */
-                        ++j;
+                        ++newTerms;
                         break;
                     }
                 case EXPROPER_PICK: {
                         EXPR_struct *pck;
                         int pick;
-                        pick = j-2;       /* maximum that can be picked */
+                        pick = newTerms-2;       /* maximum that can be picked */
                         if (op1->expr_value > pick)
                         {
                             sprintf(emsg,"Tried to PICK %ld'th item from an expr stack of %d items",
@@ -899,7 +899,7 @@ int compress_expr( EXP_stk *exptr )
                             }
                         }
                         ++dst;        /* compensate for following -- */
-                        ++j;
+                        ++newTerms;
                         break;
                     }
                 case EXPROPER_XCHG: {
@@ -923,7 +923,7 @@ int compress_expr( EXP_stk *exptr )
                             op1->expr_count = tcnt;
                         }
                         ++dst;        /* compensate for following -- */
-                        ++j;
+                        ++newTerms;
                         break;
                     }
                 default: {
@@ -931,12 +931,12 @@ int compress_expr( EXP_stk *exptr )
                         dst->expr_value = src->expr_value;
                         dst->expr_sym = src->expr_sym;
                         ++dst;
-                        ++j;
+                        ++newTerms;
                         continue;
                     }
                 }
                 --dst;
-                --j;
+                --newTerms;
                 continue;
             }
         case EXPR_SEG: {
@@ -953,7 +953,7 @@ int compress_expr( EXP_stk *exptr )
                 }
                 dst->expr_value = src->expr_value;
                 ++dst;
-                ++j;
+                ++newTerms;
                 continue;
             }
         default: {
@@ -963,9 +963,9 @@ int compress_expr( EXP_stk *exptr )
                 break;
             }
         }
-        if (j < 0)
+        if (newTerms < 0)
         {
-            if (j == -1)
+            if (newTerms == -1)
             {
                 err_msg(MSG_WARN,"Expression stack underflow.");
             }
@@ -977,7 +977,15 @@ int compress_expr( EXP_stk *exptr )
             return 0;
         }
     }
-    return(j);
+	exptr->ptr = newTerms;
+#if 0
+	if ( squeak )
+	{
+		printf("compress_expr(%p): pass %d: After (%d elements):\n",(void *)exptr, pass, newTerms);
+		dump_expr(exptr);
+	}
+#endif
+    return newTerms;
 }
 
 static int do_unary(int *sexptr, EXP_stk *eps )
@@ -1133,9 +1141,9 @@ int do_exprs( int flag, EXP_stk *eps )
                     {  /* process symbol name */
                         return (eps->ptr = -1);
                     }
-					if ( sym_ptr->flg_fwd )
+					if ( sym_ptr->flg_fwdReference )
 						eps->forward_reference = 1;
-                    if (sym_ptr->flg_defined)
+                    if ( sym_ptr->flg_defined )
                     {
 #if EXPR_C
                         if (sym_ptr->flg_register)
@@ -1186,19 +1194,13 @@ int do_exprs( int flag, EXP_stk *eps )
                     }
                     else
                     {
+						/* Symbol not defined */
+						sym_ptr->flg_fwdReference = 1;	/* Signal this symbol has a forward reference */
+						sym_ptr->flg_ref = 1;			/* signal symbol referenced */
                         expr_ptr->expr_code = EXPR_SYM;
                         expr_ptr->expr_sym = sym_ptr;
                         expr_ptr->expr_value = 0;
-                        sym_ptr->flg_ref = 1;     /* signal symbol referenced */
-						if ( !pass )
-						{
-							/* in pass 0, if symbol not defined, then this is a forward reference */
-							if ( !sym_ptr->flg_defined )
-							{
-								sym_ptr->flg_fwd = 1;
-								eps->forward_reference = 1;	/* signal this expression contains a forward reference */
-							}
-						}
+						eps->forward_reference = 1;     /* signal this expression contains a forward reference */
 #if defined(MAC68K) || defined(MAC682K)
                         if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
                              && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )
@@ -1655,59 +1657,98 @@ int exprs( int relative, EXP_stk *eps )
     }
     if (eps->ptr == 0) return 0;
     eps->ptr = compress_expr(eps); /* squoosh it */
-    if (list_bin) compress_expr_psuedo(eps);
-    if (relative) return(eps->ptr);
+    if (list_bin)
+		compress_expr_psuedo(eps);
+#if 0
+	if ( squeak )
+		dumpSymbolTable(0);
+#endif
+	if ( relative )
+		return(eps->ptr);
     if (eps->ptr == 1 && eps->stack->expr_code == EXPR_VALUE)
-    {
         return(1);
-    }
     bad_token(stp,"Expression must resolve to an absolute value");
     return(-1);
 }
 
-void dump_expr(int elem)
+void dump_expr(EXP_stk *eps)
 {
     int i,j;
-    EXP_stk *eps;
     EXPR_struct *eptr;
-    eps = &exprs_stack[elem];
     eptr = eps->stack;
     j = eps->ptr;
-    fprintf(stderr,"\tExpression stack %d:\n",j);
-    fprintf(stderr,"\t\tfwd = %d\n\t\tbase = %d\n\t\treg = %d\n",
+    printf("\tExpression stack ptr %d:\n",j);
+    printf("\t\tfwd_reference = %d\n\t\tbase_page = %d\n\t\tregister_reference = %d\n",
             eps->forward_reference,eps->base_page_reference,
             eps->register_reference);
 #ifdef MAC68K
-    fprintf(stderr,"\t\tshort = %d\n\t\tlong = %d\n",eps->force_short,
+    printf("\t\tforce_short = %d\n\t\tforce_long = %d\n",eps->force_short,
             eps->force_long);
 #endif
-    fprintf(stderr,"\t\tpsuedo_value = %08lX\n\t\tExpression: ",eps->psuedo_value);
+    printf("\t\tpsuedo_value = %08lX\n\t\tExpression: ",eps->psuedo_value);
     for (i=0;i<j;++i,++eptr)
     {
         switch (eptr->expr_code)
         {
         case EXPR_SYM:
-            fprintf(stderr,"{%s} ",eptr->expr_sym->ss_string);
+            printf("{%s} ",eptr->expr_sym->ss_string);
             break;
         case EXPR_VALUE:
-            fprintf(stderr,"%ld ",eptr->expr_value);
+            printf("0x%lX ",eptr->expr_value);
             break;
         case EXPR_OPER:
             if ((eptr->expr_value&255) == EXPROPER_TST)
             {
-                fprintf(stderr,"%c%c ",
-                        (int)eptr->expr_value,(int)eptr->expr_value>>8);
+                printf("%c%c ", (int)eptr->expr_value,(int)eptr->expr_value>>8);
             }
             else
             {
-                fprintf(stderr,"%c ",(int)eptr->expr_value);
+                printf("%c ",(int)eptr->expr_value);
             }
             break;
+		case EXPR_LINK:
+			printf("<link to expr %p> ", (void *)eptr->expr_expr);
+			break;
         default:
-            fprintf(stderr,"\n\t\tUndefined expr code: %d\n\t\t",eptr->expr_code);
+            printf("\n\t\tUndefined expr code: 0x%02X\n\t\t",eptr->expr_code);
+			break;
         }
         continue;
     }
-    if (eps->tag != 0) fprintf(stderr,":%c %d\n",eps->tag,eps->tag_len);
+    if (eps->tag != 0)
+		printf(":%c %d",eps->tag,eps->tag_len);
+	printf("\n");
     return;
+}
+
+void dumpSymbolTable(int flag)
+{
+	long ii;
+	SS_struct *st;
+
+	for (ii=0;ii<HASH_TABLE_SIZE;++ii)
+	{
+		for (st=hash[(short)ii] ; st != 0 ; st=st->ss_next)
+		{
+			EXP_stk *eps;
+			printf("Symbol '%s'. flags:\n\tdefined: %d\n\texprs: %d\n\tabs: %d\n\tfwdRef: %d\n\tlabel: %d\n\treferenced: %d\n",
+				    st->ss_string
+				   ,st->flg_defined
+				   ,st->flg_exprs
+				   ,st->flg_abs
+				   ,st->flg_fwdReference
+				   ,st->flg_local
+				   ,st->flg_ref
+				   );
+			if ( st->flg_defined )
+			{
+				if ( st->flg_exprs && (eps=st->ss_exprs) )
+					dump_expr(eps);
+			}
+			else if ( st->flg_abs )
+				printf("\tValue (abs): 0x%08lX\n", st->ss_value);
+			else
+				printf("\tValue (undef): 0x%08lX\n", st->ss_value);
+		}
+	}
 }

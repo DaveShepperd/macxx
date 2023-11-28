@@ -1127,7 +1127,8 @@ int p1o_byte( EXP_stk *eps )
     if ( j == 1 && exp_ptr->expr_code == EXPR_VALUE && eps->tag_len <= 1)
     {
         tv = exp_ptr->expr_value;
-        if ((tv > 255) || (tv < -128)) trunc_err(255L,tv);
+        if (!(edmask&ED_TRUNC) && ((tv > 255) || (tv < -128)))
+			trunc_err(255L,tv);
         if (out_remaining <= 0) FLUSH_OUTBUF;
         --out_remaining;
         *out_indx++ = (unsigned char)tv;
@@ -1187,7 +1188,8 @@ int p1o_word( EXP_stk *eps )
     if ( j == 1 && eps->stack->expr_code == EXPR_VALUE && eps->tag_len <= 1)
     {
         tv = exp_ptr->expr_value;
-        if ((tv > 65535) || (tv < -65536)) trunc_err(65535L,tv);
+        if ( !(edmask&ED_TRUNC) && ((tv > 65535) || (tv < -65536)))
+			trunc_err(65535L,tv);
         if (swapem)
         {
             tv = ((tv&255)<<8) | ((tv>>8)&255);
@@ -1391,7 +1393,7 @@ int p1o_var( EXP_stk *eps )
                tv > uBits/2,
                tv < -(uBits/2+1));
 #endif
-        if ( tv > uBits/2 || tv < -(uBits/2+1) )
+        if ( !(edmask&ED_TRUNC) && (tv > uBits/2 || tv < -(uBits/2+1)) )
 			trunc_err(uBits,tv);
         tv &= bits;
         if (out_remaining < bytes) FLUSH_OUTBUF;

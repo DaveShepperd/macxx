@@ -97,27 +97,26 @@ typedef struct ss_struct {
       struct exp_stk *ssp_expr; /* pointer to expression definition area */
    } ssp_up;
    long ss_value;		/* symbol value or offset from segment */
-   unsigned short ss_ident;	/* symbol indentifier */
-   unsigned short ss_line;	/* source line that defined the file */
-   unsigned int flg_defined:1;	/* symbol defined */
-   unsigned int flg_local:1;	/* symbol is a local label */
+   unsigned short ss_ident;		/* symbol indentifier */
+   unsigned short ss_line;		/* source line that defined the file */
+   unsigned char ss_scope;		/* scope level */
+   unsigned char ss_type;		/* symbol type (for source code debugging) */
+   unsigned int flg_defined:1;	/* label/symbol is defined */
+   unsigned int flg_fwdReference:1;	/* symbol was used in an expression before being defined */
+   unsigned int flg_fixed_addr:1;	/* Symbol cannot be re-defined */
+   unsigned int flg_local:1;	/* local label */
+   unsigned int flg_static:1;	/* static (local) symbol */
    unsigned int flg_label:1;	/* symbol is a label */
-   unsigned int flg_global:1;	/* symbol is global */
+   unsigned int flg_global:1;	/* symbol/label is global */
    unsigned int flg_exprs:1;	/* symbol definition is expression */
-   unsigned int flg_abs:1;	/* symbol is defined as absolute */
+   unsigned int flg_abs:1;		/* symbol is defined as absolute */
    unsigned int flg_segment:1;	/* struct belongs to a segment */
    unsigned int flg_ident:1;	/* identifier declared for this symbol */
-   unsigned int flg_base:1;	/* base page variable */
-   unsigned int flg_fwd:1;	/* forward reference */
-   unsigned int flg_ref:1;	/* symbol referenced in an expression */
+   unsigned int flg_base:1;		/* zero or dpage variable */
+   unsigned int flg_ref:1;		/* symbol referenced in an expression */
    unsigned int flg_register:1;	/* symbol is a register type */
    unsigned int flg_regmask:1;	/* symbol is a register mask type */
-   unsigned int flg_more:1;	/* there are more in this hash tree */
-   unsigned int flg_static:1; /* A static (local) symbol */
-   unsigned int flg_pass0:1;  /* Symbol defined during pass 0 */
-   unsigned int flg_fixed_addr:1;	/* Symbol cannot be re-defined */
-   unsigned char ss_scope;	/* scope level */
-   unsigned char ss_type;	/* symbol type (for source code debugging) */
+   unsigned int flg_more:1;		/* there are more in this hash tree */
 } SS_struct;
 
 #define ss_exprs ssp_up.ssp_expr
@@ -132,9 +131,6 @@ extern OFN_struct *out_files;
 
 typedef struct expr_struct {
    EXPR_codes expr_code;	/* expression code */
-   unsigned char expr_flags;
-#define EXPR_FLG_REG	  1
-#define EXPR_FLG_REGMASK  2
    long expr_value;	
    union {
       struct ss_struct *expt_sym;
@@ -142,6 +138,10 @@ typedef struct expr_struct {
       struct exp_stk *expt_expr;
       unsigned long expt_count;
    } expt;
+#define EXPR_FLG_REG	  		1
+#define EXPR_FLG_REGMASK  		2
+   unsigned char expr_flags;
+   unsigned char expr_fwdReference;
 } EXPR_struct;
 
 #define expr_sym expt.expt_sym

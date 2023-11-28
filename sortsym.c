@@ -141,7 +141,8 @@ int sort_symbols(void)
                 do
                 {
                     if (st->flg_segment) continue;  /* ignore segments */
-                    if (st->flg_local && st->flg_defined) continue;
+                    if (st->flg_local && st->flg_defined)
+						continue;
                     if (st->ss_scope != 0) continue; /* don't sort nested syms */
                     if (ret < j) *ls++ = st;        /* record the pointer */
                     ++ret;
@@ -164,7 +165,7 @@ int sort_symbols(void)
         {
             if (!st->flg_global)
             {
-                if (!st->flg_defined)
+                if ( !st->flg_defined )
                 {
 					snprintf(emsg,ERRMSG_SIZE,"%s:%d: Undefined symbol '%s'",
 							 st->ss_fnd->fn_nam->relative_name, st->ss_line, st->ss_string);
@@ -307,7 +308,12 @@ int sort_symbols(void)
                     seg_ptr->flg_zero?'b':' ',seg_ptr->seg_string);
             puts_lis(emsg,1);
         }
-    }
+		if ( options[QUAL_2_PASS] )
+		{
+			snprintf(emsg,sizeof(emsg),"Total instruction tags used: %d\n", totalTagsUsed);
+			puts_lis(emsg,1);
+		}
+	}
     return 0;
 }
 

@@ -113,6 +113,7 @@ int output_mode;        /* output mode */
 
 DEFTYP(def_lis,".lis")
 DEFTYP(def_mac,".mac")
+DEFTYP(def_MAC,".MAC")
 #if !defined(MAC_PP)
 DEFTYP(def_ol, ".ol")
 DEFTYP(def_ob,".ob")
@@ -155,8 +156,8 @@ static struct
 #endif
 };
 
-char *def_inp_ptr[] = {def_mac,0};
-static char *def_out_ptr[] = {0,0};
+char *def_inp_ptr[] = {def_mac,def_MAC,NULL};
+static char *def_out_ptr[] = {NULL,NULL};
 
 /* The filenames are stored in free memory called fn_pool. The pool is */
 /* managed by the fn_init routine by way of the following two variables */

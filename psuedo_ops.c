@@ -1454,7 +1454,7 @@ static int if_dfndf_exprs(DFNDF_sense sense, int flag)
 static unsigned long if_dfndf(DFNDF_sense sense)
 {
 	int val;
-	val = if_dfndf_exprs(sense, 1);
+	val = if_dfndf_exprs(sense, (edmask&ED_SIMPLE)?0:1);
 	return (val ? 0l : 0x80000000L);
 }
 
@@ -1873,6 +1873,7 @@ static struct
 	{ "PC_RELATIVE", ED_PCREL },
 	{ "DOT_LOCAL", ED_DOTLCL },
 	{ "CR", ED_CR },
+	{ "SIMPLE", ED_SIMPLE },
 	{ 0, 0 }
 };
 
@@ -2447,9 +2448,13 @@ static int op_segcomm(int type, int new_one, SEG_struct *new_seg,
 			}
 			else
 			{
+				/* All ABS sections are always based at 0 and overlaid by LLF */
 				new_seg->flg_abs = 1;
-				if ( (flags & (PS_CON | PS_OVR)) == 0 )
-					flags |= PS_OVR;
+				new_seg->flg_based = 1;
+				new_seg->flg_ovr = 1;
+				if ( (flags&PS_CON) )
+					bad_token((char *)0, "ABS sections are always OVR. They cannot be made CON");
+				flags &= ~(PS_OVR|PS_CON);
 			}
 		}
 		if ( (flags & PS_REL) != 0 )
@@ -2652,7 +2657,7 @@ static SEG_struct* get_segname(char *alt_name, int *new)
 	if ( new_seg == 0 )
 	{
 		sym_ptr = sym_lookup(token_pool, SYM_DO_NOTHING);
-		if ( sym_ptr != 0 && sym_ptr->flg_defined )
+		if ( sym_ptr != 0 )
 		{
 			show_bad_token(tkn_ptr, "Name already in use as a symbol/label name",
 						   MSG_WARN);
@@ -4287,5 +4292,18 @@ int op_copy(void)
 
 }
 
+int op_sqon(void)
+{
+	squeak = 1;
+	f1_eatit();
+	return 0;
+}
+
+int op_sqoff(void)
+{
+	squeak = 0;
+	f1_eatit();
+	return 0;
+}
 #endif	/* defined(MAC_PP) */
 

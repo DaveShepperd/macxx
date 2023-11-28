@@ -673,18 +673,16 @@ int op_push(void)
 									 EXP0SP->expr_code);
 							show_bad_token(NULL,emsg,MSG_WARN);
 #endif
-							if ( symPtr->flg_fwd )
+							if ( symPtr->flg_fwdReference )
 							{
 								/* In two pass mode (the only way to get forward references), don't allow one to save forward referenced "things" */
-								show_bad_token((inp_ptr), "Cannot push a symbol having a forward reference", MSG_ERROR);
+								show_bad_token((inp_ptr), "Cannot push a forward referenced symbol", MSG_ERROR);
 								f1_eatit();
 								return 1;
 							}
 							if ( !symPtr->flg_defined )
 							{
 								/* symbol not yet defined, so define it */
-								if ( !pass )
-									symPtr->flg_pass0 = 1;
 								symPtr->flg_abs = 1;
 								symPtr->flg_defined = 1;
 								symPtr->ss_fnd = current_fnd;
@@ -930,7 +928,8 @@ int op_pop(void)
 						f1_eatit();
 						return 1;
 					}
-					if ( userSymPtr->flg_fwd )
+#if 1
+					if ( userSymPtr->flg_fwdReference )
 					{
 						list_stats.pf_value = data;
 						list_stats.f2_flag = 1;
@@ -939,6 +938,7 @@ int op_pop(void)
 						f1_eatit();
 						return 1;
 					}
+#endif
 					if ( userSymPtr->flg_exprs )
 					{
 						/* Toss any existing expression this symbol might have to avoid memory leaks */
@@ -947,6 +947,7 @@ int op_pop(void)
 					}
 					/* The symbol gets all the normal stuff */
 					userSymPtr->flg_defined = 1;
+					userSymPtr->flg_fwdReference = 0;
 					userSymPtr->ss_value = data;
 					userSymPtr->ss_fnd = current_fnd;
 					userSymPtr->ss_line = current_fnd->fn_line;
@@ -1059,7 +1060,7 @@ int op_getpointer(void)
 			snprintf(emsg,sizeof(emsg),".getpointer(). Found '%s' at %p. Current value=0x%lX", sym_ptr->ss_string, (void *)sym_ptr, sym_ptr->ss_value);
 			show_bad_token(NULL,emsg,MSG_WARN);
 #endif
-			if ( sym_ptr->flg_fwd || sym_ptr->flg_label || (sym_ptr->flg_defined && !sym_ptr->flg_abs) )
+			if ( sym_ptr->flg_fwdReference || sym_ptr->flg_label || (sym_ptr->flg_defined && !sym_ptr->flg_abs) )
 			{
 				bad_token(tkn_ptr, "Cannot assign to symbol forward referenced or previously defined either as a label or with a complex expression");
 				f1_eatit();

@@ -478,6 +478,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
     {      /* on Unix, check filename "as is" first */
         if ((err=stat(src_nam,&file_stat)) >= 0)
         {
+			/* Found file as is */
             if (!S_ISDIR(file_stat.st_mode))
             {
                 *retptr = fill_in_file(src_nam,our_cwd[0]);    /* not a directory, use name as supplied */
@@ -500,7 +501,8 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
 #endif
             }
             s = add_ext(src_nam,default_types,default_paths);
-            if (io != ADD_DEFS_INPUT) break;
+            if (io != ADD_DEFS_INPUT)
+				break;
             if ((err=stat(s,&file_stat)) < 0)
             {
                 if (io == ADD_DEFS_EACCESS)
@@ -509,7 +511,8 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
                     return EACCES;
                 }
                 errno = err = ENOENT;
-                if (s != src_nam) continue; /* changed something, try the next */
+                if (s != src_nam)
+					continue; /* changed something, try the next */
             }
             break;
         } while (default_types && *++default_types);

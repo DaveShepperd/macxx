@@ -274,6 +274,7 @@ int ust_init( void ) {        /* User defined symbol table initialization */
             ptr->flg_local = 0;        /* not local */
             ptr->flg_global = 0;       /* not global */
             ptr->flg_label = 1;        /* can't redefine it */
+			ptr->flg_fixed_addr = 1;
             ptr->ss_fnd = 0;           /* no associated file */
             ptr->flg_register = 1;     /* it's a register */
             ptr->flg_abs = 1;          /* it's not relocatible */
@@ -554,9 +555,10 @@ static int get_operir(AM_details *amd) {
     {
         ep = amd->ep;
         exp = ep->stack;
-        if (ep->ptr == 1 &&
-            exp->expr_code == EXPR_VALUE &&
-            exp->expr_value == 0)
+        if (   ep->ptr == 1
+			&& exp->expr_code == EXPR_VALUE
+			&& exp->expr_value == 0
+		   )
         {
             exp->expr_value = (amode==OPR_IIREG14) ? 14 : 15;
             amode = OPR_IREG;      /* convert opcode to simple indirect */

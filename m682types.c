@@ -91,7 +91,7 @@ static int get_term(EA *amp, int type, EXP_stk *eps, char *msg )
     }
     if (type == 0) return i;     /* anything is legal */
     if (i == 0) return i;        /* null expression is legal */
-    if (i != 1 || eps->stack->expr_code != EXPR_VALUE)
+    if ( i != 1 || eps->stack->expr_code != EXPR_VALUE || eps->forward_reference )
     {
         if (msg) bad_token(tkn_ptr,msg);
         eps->ptr = 1;
@@ -241,7 +241,7 @@ void fixup_ea(EA *amp, int amflg, unsigned long valid, int pcoff)
         }
         if ((amp->parts&EAPARTS_BASER) == 0) amp->extension |= EXT_BASESUPRESS;
         tv =  exp->expr_value;
-        ecv = eps->ptr == 1 && exp->expr_code == EXPR_VALUE;
+        ecv = (eps->ptr == 1 && exp->expr_code == EXPR_VALUE && !eps->forward_reference);
         if ((valid&(E_NDX|E_PCN)) == 0 || !eps->force_long || (ecv && tv > -32768 && tv < 32768))
         {
             if (amp->base_reg == REG_PC)
@@ -295,7 +295,7 @@ void fixup_ea(EA *amp, int amflg, unsigned long valid, int pcoff)
         if ((amp->parts&EAPARTS_BASED) != 0)
         {
             tv =  exp->expr_value;
-            ecv = eps->ptr == 1 && exp->expr_code == EXPR_VALUE;
+            ecv = (eps->ptr == 1 && exp->expr_code == EXPR_VALUE && !eps->forward_reference);
         }
         else
         {
@@ -358,7 +358,7 @@ void fixup_ea(EA *amp, int amflg, unsigned long valid, int pcoff)
                 amp->eamode = Ea_PCN;
             }
             tv =  exp->expr_value;
-            ecv = eps->ptr == 1 && exp->expr_code == EXPR_VALUE;
+            ecv = (eps->ptr == 1 && exp->expr_code == EXPR_VALUE && !eps->forward_reference);
             if ((amp->parts&EAPARTS_BASED) == 0)
             {
                 ecv = 1;
@@ -392,7 +392,7 @@ void fixup_ea(EA *amp, int amflg, unsigned long valid, int pcoff)
         if ((amp->parts&EAPARTS_INDXD) != 0)
         {
             tv =  exp->expr_value;
-            ecv = eps->ptr == 1 && exp->expr_code == EXPR_VALUE;
+            ecv = (eps->ptr == 1 && exp->expr_code == EXPR_VALUE && eps->forward_reference);
         }
         else
         {
@@ -501,7 +501,7 @@ int get_oneea( EA *amp, int bwl, unsigned long valid, int pcoff)
     }
     if (eps->register_reference && eps->paren_cnt == 0)
     { /* if first term a simple register */
-        if (eps->ptr != 1 || exp->expr_code != EXPR_VALUE)
+        if ( eps->ptr != 1 || exp->expr_code != EXPR_VALUE || eps->forward_reference )
         {
             bad_token(cp,"Register expression must resolve to an absolute value");
             eps->ptr = 0;
@@ -639,10 +639,14 @@ int get_oneea( EA *amp, int bwl, unsigned long valid, int pcoff)
                 else
                 {
                     amp->mode = E_ABS;
-                    if (!eps->force_long && (eps->force_short || (eps->ptr == 1 &&
-                                                                  exp->expr_code == EXPR_VALUE &&
-                                                                  exp->expr_value >= -32678 &&
-                                                                  exp->expr_value < 32768)))
+                    if (!eps->force_long && (eps->force_short || (   eps->ptr == 1
+                                                                  && exp->expr_code == EXPR_VALUE
+                                                                  && !eps->forward_reference
+                                                                  && exp->expr_value >= -32678
+                                                                  && exp->expr_value < 32768
+                                                                 )
+                                             )
+                        )
                     {
                         eps->tag = 'I';
                         amp->eamode = Ea_ABSW;
@@ -996,8 +1000,12 @@ int type1( int inst, int bwl)
     {        /* generic add/sub */
         if ((source.mode&E_IMM) != 0)
         { /* immediate mode? */
-            if (!(eps->force_short|eps->force_long) && eps->ptr == 1 && eptr->expr_code == EXPR_VALUE &&
-                (eptr->expr_value > 0 && eptr->expr_value <= 8))
+            if (   !(eps->force_short|eps->force_long)
+                && eps->ptr == 1
+                && eptr->expr_code == EXPR_VALUE
+                && !eps->forward_reference
+                && (eptr->expr_value > 0 && eptr->expr_value <= 8)
+               )
             {
                 inst |= 3;      /* switch to addQ/subQ */
             }
@@ -1327,7 +1335,7 @@ int type4( int inst, int bwl)
     eps->ptr = compress_expr(eps);
     if (list_bin) compress_expr_psuedo(eps);
     expr = eps->stack;
-    if (eps->ptr == 1 && expr->expr_code == EXPR_VALUE)
+    if ( eps->ptr == 1 && expr->expr_code == EXPR_VALUE && !eps->forward_reference )
     {
         int cndb=0,cndw;
         tv = expr->expr_value;
@@ -1700,7 +1708,7 @@ int type9( int inst, int bwl)
     fix_pcr(&dest,2);
     eps->tag = 'I';
     expr = eps->stack;
-    if (eps->ptr == 1 && expr->expr_code == EXPR_VALUE)
+    if ( eps->ptr == 1 && expr->expr_code == EXPR_VALUE && !eps->forward_reference )
     {
         if (expr->expr_value < -32768 || expr->expr_value > 32767)
         {
@@ -2080,8 +2088,12 @@ int type15( int inst, int bwl)
         EXPR_struct *exp;
         eps = source.exp[0];
         exp = eps->stack;
-        if (!(eps->force_short|eps->force_long) && eps->ptr == 1 && exp->expr_code == EXPR_VALUE &&
-            (exp->expr_value >= -128 && exp->expr_value < 128))
+        if (   !(eps->force_short|eps->force_long)
+            && eps->ptr == 1
+            && exp->expr_code == EXPR_VALUE
+            && !eps->forward_reference
+            && (exp->expr_value >= -128 && exp->expr_value < 128)
+           )
         {
             EXP0SP->expr_value = 0x7000 | (dest.base_reg<<9) | (exp->expr_value&255);
             eps->ptr = 0;
@@ -2274,7 +2286,7 @@ int type19( int inst, int bwl)
     }
     eps = source.exp[0];
     exp = eps->stack;
-    if (eps->ptr == 1 && exp->expr_code == EXPR_VALUE)
+    if ( eps->ptr == 1 && exp->expr_code == EXPR_VALUE && !eps->forward_reference )
     {
         if ((unsigned long)exp->expr_value > 15)
         {
@@ -2821,7 +2833,7 @@ int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea)
     int tptr;
     eps = tsea->exp[0];
     exp = eps->stack;
-    if (eps->ptr == 1 && exp->expr_code == EXPR_VALUE)
+    if ( eps->ptr == 1 && exp->expr_code == EXPR_VALUE && !eps->forward_reference )
     {
         if (exp->expr_value < 1 || exp->expr_value > 8)
         {
@@ -2885,8 +2897,7 @@ int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea)
     return 1;
 }
 
-int op_ntype(opc)
-Opcode *opc;
+int op_ntype(Opcode *opc)
 {
     f1_eatit();
     return 0;

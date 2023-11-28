@@ -87,6 +87,71 @@ void *memcpy(char *dst, char *src, int siz)
 }
 #endif
 #ifndef MAC_PP
+
+typedef struct AMA_Tags_t
+{
+	struct AMA_Tags_t *next;
+	const FN_struct *fnd;
+	int line;
+	int tag;
+} AMA_Tags_t;
+static AMA_Tags_t *tagArrayFirst, *tagArrayLast;
+static AMA_Tags_t *tagPool;
+static int tagPoolQty, tagPoolUsed;
+int totalTagsUsed;
+
+/******************************************************************
+ * Create and keep a list of locations where the AMA instructions
+ * were chosen due to expression results. This is only used if
+ * the assembler is running in two pass mode.
+ */
+int getAMATag(const FN_struct *fnd, int line)
+/* At entry:
+ *  fnd - pointer to file to look for
+ *  line - line number in file to look for
+ * At exit:
+ *  returns tag if there is on else -1.
+ */
+{
+	AMA_Tags_t *ptr = tagArrayFirst;
+	while ( ptr )
+	{
+		if ( ptr->fnd == fnd && ptr->line == line )
+			return ptr->tag;
+		ptr = ptr->next;
+	}
+	return -1;
+}
+
+void setAMATag(const FN_struct *fnd, int line, int tag)
+{
+	AMA_Tags_t *ptr;
+	if ( tagPoolUsed >= tagPoolQty )
+	{
+		int amt;
+		amt = 256;
+		ptr = (AMA_Tags_t *)MEM_alloc( amt*sizeof(AMA_Tags_t));
+		if ( !ptr )
+			return;
+		tagPoolQty = amt;
+		tagPoolUsed = 0;
+		tagPool = ptr;
+	}
+	ptr = tagPool+tagPoolUsed;
+	++tagPoolUsed;
+	++totalTagsUsed;
+	ptr->fnd = fnd;
+	ptr->line = line;
+	ptr->tag = tag;
+	ptr->next = NULL;
+	if ( !tagArrayFirst )
+		tagArrayFirst = ptr;
+	if ( tagArrayLast )
+		tagArrayLast->next = ptr;
+	tagArrayLast = ptr;
+	return;
+}
+
 /******************************************************************
  * Pick up memory for special segment block storage
  */
@@ -1361,77 +1426,86 @@ int f1_defg(int flag)
     {
 		snprintf(emsg,sizeof(emsg), "Name '%s' already in use as a PSECT name", ptr->ss_string);
         show_bad_token(NULL, emsg , MSG_ERROR);
-		f1_eatit();
+		if ( !(flag & DEFG_LABEL) )
+			f1_eatit();
 		return 0;
     }
 #endif
     if ( (flag&DEFG_LABEL) != 0)
     {    /* if defining a label... */
 		if ( ptr->flg_defined )
-        {       /* and it's already defined... */
-			if ( !ptr->flg_pass0 )
+        {
+			/* but it's been defined in pass0 or earlier in this pass ... */
+			int errCode = MSG_ERROR;
+			emsg[0] = 0;
+			if ( squeak )
+				printf("Pass %d: f1_defg(): re-defining label '%s'. flg_forward=%d\n", pass, ptr->ss_string, ptr->flg_fwdReference);
+			if ( ptr->flg_label )
 			{
-				if (    !ptr->flg_exprs
-					 && ptr->ss_value == current_pc
-					 && ptr->ss_seg == current_section
-					)
+				/* Previously defined as a label */
+				if ( ptr->ss_value == current_pc && ptr->ss_seg == current_section )
 				{
-					/* Assigning a label to the same location so that's okay */
+					/* Defining a label to the same location so that's okay */
+					if ( squeak )
+						printf("Pass %d: f1_defg(): Assigned label '%s' to same location as last pass. It's okay.\n", pass, ptr->ss_string);
 					return 1;
 				}
-				/* and it has been previously defined in pass 1 */
-				if ( include_level || current_fnd != ptr->ss_fnd )
+				else if ( ptr->ss_fnd == current_fnd && ptr->ss_line  == current_fnd->fn_line )
 				{
-					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-							"Label '%s' previously defined %sat %s:%d",
+					snprintf(emsg,ERRMSG_SIZE,"Assembler failure. Attempting to define '%s' to %s:0x%04lX. Previously defined as %s:0x%04lX",
 							 ptr->ss_string,
-							 ptr->flg_label ? "":"as symbol ",
-							 ptr->ss_fnd->fn_nam->relative_name,
-							 ptr->ss_line);
+							 current_section->seg_string, current_section->seg_pc,
+							 ptr->ss_seg->seg_string,
+							 ptr->ss_value);
+					errCode = MSG_FATAL;
 				}
 				else
 				{
-					snprintf(emsg,ERRMSG_SIZE,
-							"Label '%s' previously defined %sat line %d",
+					snprintf(emsg,sizeof(emsg),"Attempted to re-define label '%s' with value %s:%04lX. Previously defined at %s:%d to %s:%04lX",
 							 ptr->ss_string,
-							 ptr->flg_label ? "":"as symbol ",
-							 ptr->ss_line);
+							 current_section->seg_string,
+							 current_pc,
+							 ptr->ss_fnd->fn_nam->relative_name,
+							 ptr->ss_line,
+							 ptr->ss_seg ? ptr->ss_seg->seg_string:"",
+							 ptr->ss_value
+							 );
 				}
-				show_bad_token(NULL,emsg,MSG_ERROR);
-				f1_eatit();
+				show_bad_token(NULL,emsg,errCode);
 				return 0;
 			}
-			if (    ptr->flg_exprs
-				 || ptr->ss_value != current_pc
-				 || ptr->ss_seg != current_section
-				)
+			/* Attempting to define a label to a previously defined symbol. */
+			if ( include_level || current_fnd != ptr->ss_fnd )
 			{
-				snprintf(emsg,sizeof(emsg),"Label '%s' defined with value %s:%04lX (exprs=%d) in pass 0 and %s:%04lX in pass 1 at %s:%d",
+				snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
+						"Attempting to %sdefine label '%s' previously defined as symbol at %s:%d",
+						 ptr->flg_label ? "re-":"",
 						 ptr->ss_string,
-						ptr->ss_seg ? ptr->ss_seg->seg_string:"",
-						ptr->ss_value,
-						ptr->flg_exprs,
-						current_section->seg_string,
-						current_pc,
-						ptr->ss_fnd->fn_nam->relative_name,
-						ptr->ss_line);
-				bad_token(NULL,emsg);
-				f1_eatit();
-				return 0;
+						 ptr->ss_fnd->fn_nam->relative_name,
+						 ptr->ss_line);
 			}
-
+			else
+			{
+				snprintf(emsg,ERRMSG_SIZE,
+						"Attempting to %sdefine label '%s' previously defined as symbol at line %d",
+						 ptr->flg_label ? "re-":"",
+						 ptr->ss_string,
+						 ptr->ss_line);
+			}
+			show_bad_token(NULL,emsg,MSG_ERROR);
+			return 0;
         }
         ptr->flg_label = 1;		/* make it a label */
 		ptr->flg_fixed_addr = 1;		/* cannot be re-defined */
     }
     else
     {   /* if defining a symbol... */
-        if (ptr->flg_defined && ptr->flg_label)
+        if ( ptr->flg_defined && ptr->flg_label)
         { /* and it's already a label... */
             if (include_level || current_fnd != ptr->ss_fnd)
             {
                 snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-                        "%s:%d: Symbol '%s' multiply defined; previously defined as label in %s:%d",
+                        "%s:%d: Symbol '%s' previously defined as label in %s:%d",
 						 current_fnd->fn_nam->relative_name,
 						 current_fnd->fn_line,
 						 ptr->ss_string,
@@ -1442,14 +1516,14 @@ int f1_defg(int flag)
             else
             {
                 snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-                        "%s:%d: Symbol '%s' multiply defined; previously defined as label at line %d",
+                        "%s:%d: Symbol '%s' previously defined as label at line %d",
 						 current_fnd->fn_nam->relative_name,
 						 current_fnd->fn_line,
 						 ptr->ss_string,
                         ptr->ss_line);
             }
             bad_token(NULL,emsg);
-            f1_eatit();
+			f1_eatit();				/* Eat the whole rest of line on symbol assignment */
             return 0;
         }
     }
@@ -1466,7 +1540,7 @@ int f1_defg(int flag)
     if ( !ptr->flg_static )
         ptr->flg_global |= ((flag&DEFG_GLOBAL) != 0); /* sticky local/global flag */
     if ((flag & DEFG_SYMBOL) != 0)
-    { /* if symbol... */
+    { /* if defining a symbol... */
         if (get_token() == EOL)
         {     /* pickup the next token */
             bad_token(tkn_ptr, "Didn't expect EOL here");
@@ -1492,52 +1566,49 @@ int f1_defg(int flag)
 #endif
 		if ( ((flag&DEFG_FIXED) || ptr->flg_fixed_addr) && ptr->flg_defined )
 		{
-			int nfg = !ptr->flg_pass0;
-			if ( nfg  )	/* If first defined in pass0, then check if assigning the same value */
+			int nfg=0;
+			/* Check if assigning the same value */
+			if (   ptr->flg_register != EXP0.register_reference
+				|| ptr->flg_regmask  != EXP0.register_mask
+			   )
 			{
-				/* Need to check if a re-define */
-				if (   ptr->flg_register != EXP0.register_reference
-					|| ptr->flg_regmask  != EXP0.register_mask
-				   )
-				{
+				nfg = 1;
+			}
+			if ( !nfg && ptr->flg_exprs )
+			{
+				int jj;
+				EXP_stk *estk;
+				EXPR_struct *oldPtr,*newPtr;
+				estk = ptr->ss_exprs;
+				oldPtr = estk->stack;
+				newPtr = EXP0SP;
+				compress_expr(estk);	/* Compress old symbol's expression */
+				if ( i != estk->ptr )
 					nfg = 1;
-				}
-				if ( !nfg && ptr->flg_exprs )
+				else
 				{
-					int jj;
-					EXP_stk *estk;
-					EXPR_struct *oldPtr,*newPtr;
-					estk = ptr->ss_exprs;
-					oldPtr = estk->stack;
-					newPtr = EXP0SP;
-					compress_expr(estk);	/* Compress old symbol's expression */
-					if ( i != estk->ptr )
-						nfg = 1;
-					else
+					for (jj=0; jj < i; ++jj, ++oldPtr, ++newPtr)
 					{
-						for (jj=0; jj < i; ++jj, ++oldPtr, ++newPtr)
+						if (   oldPtr->expr_code != newPtr->expr_code
+							|| oldPtr->expr_flags != newPtr->expr_flags
+							|| oldPtr->expr_value != newPtr->expr_value
+						   )
 						{
-							if (   oldPtr->expr_code != newPtr->expr_code
-								|| oldPtr->expr_flags != newPtr->expr_flags
-								|| oldPtr->expr_value != newPtr->expr_value
-							   )
-							{
-								nfg = 1;
-								break;
-							}
+							nfg = 1;
+							break;
 						}
 					}
 				}
-				else
+			}
+			else
+			{
+				if (   (EXP0SP->expr_code == EXPR_VALUE && !ptr->flg_abs)
+					|| (EXP0SP->expr_code != EXPR_VALUE && ptr->flg_abs)
+					|| (EXP0SP->expr_code == EXPR_SEG && ptr->ss_seg != EXP0SP->expr_seg)
+					|| (EXP0SP->expr_value != ptr->ss_value)
+					)
 				{
-					if (   (EXP0SP->expr_code == EXPR_VALUE && !ptr->flg_abs)
-						|| (EXP0SP->expr_code != EXPR_VALUE && ptr->flg_abs)
-						|| (EXP0SP->expr_code == EXPR_SEG && ptr->ss_seg != EXP0SP->expr_seg)
-						|| (EXP0SP->expr_value != ptr->ss_value)
-						)
-					{
-						nfg = 1;
-					}
+					nfg = 1;
 				}
 			}
 			if ( nfg )
@@ -1545,11 +1616,10 @@ int f1_defg(int flag)
 				if (include_level || current_fnd != ptr->ss_fnd)
 				{
 					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-							"%s:%d: Symbol '%s' multiply defined; previously defined %sin %s:%d",
+							"%s:%d: Fixed symbol '%s' previously defined in %s:%d",
 							 current_fnd->fn_nam->relative_name,
 							 current_fnd->fn_line,
 							 ptr->ss_string,
-							 ptr->flg_label ? "as label ":"",
 							 ptr->ss_fnd->fn_nam->relative_name,
 							 ptr->ss_line
 							 );
@@ -1557,11 +1627,10 @@ int f1_defg(int flag)
 				else
 				{
 					snprintf(emsg,ERRMSG_SIZE,       /* then it's nfg */
-							"%s:%d: Symbol '%s' multiply defined; previously defined %sat line %d",
+							"%s:%d: Fixed symbol '%s' previously defined at line %d",
 							 current_fnd->fn_nam->relative_name,
 							 current_fnd->fn_line,
 							 ptr->ss_string,
-							 ptr->flg_label ? "as label ":"",
 							 ptr->ss_line);
 				}
 				bad_token(NULL,emsg);
@@ -1571,6 +1640,8 @@ int f1_defg(int flag)
 		}
         ptr->flg_register = EXP0.register_reference;
         ptr->flg_regmask = EXP0.register_mask;
+/*		ptr->flg_fwdReference |= EXP0.forward_reference;*/ /* Preserve forward references */
+		ptr->flg_fwdReference = EXP0.forward_reference;	/* Pass through any forward references */
         if (i == 1)
         {     /* if only 1 term... */
             if (EXP0SP->expr_code == EXPR_VALUE)
@@ -1620,9 +1691,10 @@ int f1_defg(int flag)
     }
 	ptr->ss_fnd = current_fnd;   /* record the file that defined it */
 	ptr->ss_line = current_fnd->fn_line; /* and the line # of same */
-	ptr->flg_defined = 1;    /* signal symbol or label is defined */
-	ptr->flg_pass0 = !pass;  /* and signal which pass it was defined in */
+	ptr->flg_defined = 1;    /* signal symbol or label is defined now */
 	ptr->flg_fixed_addr = (flag & DEFG_FIXED) ? 1 : 0;
+	if ( squeak )
+		printf("Pass %d: f1_defg(): Defined '%s'. label=%d, fwd=%d, fixed=%d\n", pass, ptr->ss_string, ptr->flg_label, ptr->flg_fwdReference, ptr->flg_fixed_addr);
     return 1;
 }
 
@@ -1784,20 +1856,20 @@ SS_struct *do_symbol(SymInsertFlag_t flag)
         sym_ptr->flg_global = 0;       /* Incase this was previously set */
     }
 #if !defined(MAC_PP)
-					if ( squawk_syms )
-					{
-						snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, defined=%d, exprs=%d, segment=%d, more=%d, value=0x%lX, segPtr=%p",
-								 sym_ptr->ss_string,
-								 (void *)sym_ptr,
-								 (void *)sym_ptr->ss_next,
-								 sym_ptr->flg_defined,
-								 sym_ptr->flg_exprs,
-								 sym_ptr->flg_segment,
-								 sym_ptr->flg_more,
-								 sym_ptr->ss_value,
-								 (void *)sym_ptr->ss_seg);
-						show_bad_token(NULL,emsg, MSG_WARN);
-					}
+	if ( squawk_syms )
+	{
+		snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, flg_defined=%d, flg_exprs=%d, flg_segment=%d, flg_more=%d, value=0x%lX, segPtr=%p",
+				 sym_ptr->ss_string,
+				 (void *)sym_ptr,
+				 (void *)sym_ptr->ss_next,
+				 sym_ptr->flg_defined,
+				 sym_ptr->flg_exprs,
+				 sym_ptr->flg_segment,
+				 sym_ptr->flg_more,
+				 sym_ptr->ss_value,
+				 (void *)sym_ptr->ss_seg);
+		show_bad_token(NULL,emsg, MSG_WARN);
+	}
 #endif
     return sym_ptr;
 }
@@ -1961,13 +2033,9 @@ void pass1( int file_cnt)
 			current_section->flg_based = 1;
 			current_section->seg_salign = macxx_abs_salign;
 			current_section->seg_dalign = macxx_abs_dalign;
-			sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
-			sym_ptr->flg_global = 1;
 			current_section = get_seg_mem(&sym_ptr, ".REL.");
 			current_section->seg_salign = macxx_rel_salign;
 			current_section->seg_dalign = macxx_rel_dalign;
-			sym_ptr = sym_lookup(current_section->seg_string, SYM_INSERT_IF_NOT_FOUND);
-			sym_ptr->flg_global = 1;
 		}
 		else
 		{

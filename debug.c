@@ -84,7 +84,7 @@ static OD_line *get_odline( int qty )
     OD_line *linp;
     OD_elem *ep;
     ep = od_line.curr;
-    if (ep->avail < qty)
+    if (!ep || ep->avail < qty)
     {
         ep = get_elem_mem(&od_line,sizeof(OD_line),qty,0);
     }

@@ -153,7 +153,7 @@ int macro_to_mem( Macargs *ma, char *name)
     char *src;
     unsigned char *dst;
     list_stats.include_level = include_level;
-    while (1)
+	while ( 1 )
     {          /* until .ENDM/.ENDR found */
         int mpsize;
         if (get_text() == EOF) return EOF;
@@ -229,8 +229,8 @@ int macro_to_mem( Macargs *ma, char *name)
                     while (cttbl[c = *src]&(CT_ALP|CT_NUM))
                     {
                         ++src;        /* yep, pass remaining ALP|NUM's */
-                        *dst++ = c;
-                        *tpp++ = _toupper(c);
+						*dst++ = c;
+						*tpp++ = _toupper(c);
                     }
                 }
                 *tpp = *dst = 0;        /* terminate the strings */
@@ -379,7 +379,7 @@ int op_macro( void )      /* define a macro */
         f1_eatit();
         return 0;
     }
-    *(token_pool+max_opcode_length) = 0;
+	*(token_pool + max_opcode_length) = 0;
     mac = opcode_lookup(token_pool,2);
     if (mac == 0)
     {

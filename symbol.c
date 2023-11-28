@@ -330,8 +330,9 @@ void do_xref_symbol(SS_struct *sym_ptr,int defined)
         continue;
     }
     *fnp_ptr = current_fnd;  /* cross reference the symbol */
-#endif
-#endif
+#endif	/* MACXX */
+#endif	/* lint */
     return;
 }
-#endif
+#endif	/* NO_XREF */
+

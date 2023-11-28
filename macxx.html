@@ -948,6 +948,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;BYTE</td><td>Undefined opcodes are assumed to be arguments to a .BYTE directive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
@@ -961,7 +962,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>MAC65 is to use zero page addressing if possible.</td></tr>
   </table>
     <p>
-    The defaults for all options is DISABLed except for M68 which is ENABLed on MAC68k and MAC682k.
+    The defaults for all options is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed and <b><u>M68</u></b> which is ENABLed on MAC68k and MAC682k.
     </p>
   </p>
   <p>
@@ -1826,7 +1827,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>RW</td><td>Section is read-write</td></tr>
     <tr><td>DATA=n</td><td><b>n</b> specifies the data alignment within section</td></tr>
     <tr><td>SEGMENT=n</td><td><b>n</b> specifies the alignment LLF should use to place the section</td></tr>
-    <tr><td>NAX_LENGTH=n</td><td><b>n</b> specifies the maximum size the section may be</td></tr>
+    <tr><td>MAX_LENGTH=n</td><td><b>n</b> specifies the maximum size the section may be</td></tr>
   </table>  
     <p>
   Absolute and relocatable are terms that describe how the section is 
@@ -2229,7 +2230,10 @@ the stack pointer on a named stack. Examples:
   used in the opcode field of an assembler statement. The <u>dummy_argument_list</u>
   is a list of zero or more legal assembler text symbols separated with white space
   or commas which may appear anywhere in the macro_body. The <u>macro_body</u>
-  is any number of assembler statements.
+  is any number of assembler statements. NOTE: There is no specific limit on
+      the length of the dummy_argument text. In other words, there is no relation
+      to the max symbol or opcode length's assigned at startup. However, the length
+      of the macro's name is contrained by the opcode_length specified at startup.
   </p>
     <p>
   Macro names replace whatever is in the opcode symbol table, so one can
@@ -2257,7 +2261,7 @@ the stack pointer on a named stack. Examples:
     <p>
   Macro definitions may be nested. That is to say a macro may be created 
   to create other macros which may create other macros etc. to any depth.
-  The inner macros, however, won't be defined until the outer macros are
+  The inner macros, however, won't actually be defined until the outer macros are
   called.
   </p>
   <h3 id="gen_macro_syntax">Macro definition argument syntax</h3>
@@ -2559,6 +2563,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
     <tr><td>GREENHILLS</td><td>No</td><td>MAC68K and MAC682K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
     <tr><td>IDE_SYNTAX</td><td>No</td><td>Sets output format of any error messages such that they may be interpreted by an Integrated Development Environment.</td></tr>
+    <tr><td>IGNORE</td><td>No</td><td>Ignore errors on lines having unsupported assembler directives.</td></tr>
     <tr><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
     <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
     <tr><td>LIST</td><td>No</td><td>Create a listing output file</td></tr>

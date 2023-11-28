@@ -59,6 +59,7 @@ extern int max_opcode_length;
 
 extern char DEF_OUT[];
 extern char def_mac[];
+extern char def_MAC[];
 extern char def_lis[];
 extern char opt_delim[];
 extern FILE_name *image_name;
@@ -285,12 +286,16 @@ extern int display_help(void);
 extern int getcommand(void);
 extern void pass0( int file_cnt);
 extern void pass1( int file_cnt);
+extern SS_struct *hash[HASH_TABLE_SIZE];
 extern int dump_subsects(void);
 extern int sort_symbols(void);
 extern int pass2( void );
 extern void display_mem(void);
 extern void show_timer( void );
-void qksort (SS_struct *array[],unsigned int num_elements);
+extern void qksort (SS_struct *array[],unsigned int num_elements);
+extern int getAMATag(const FN_struct *fnd, int line);
+extern void setAMATag(const FN_struct *fnd, int line, int tag);
+extern int totalTagsUsed;
 
 #ifndef n_elts
 #define n_elts(x) (int)(sizeof(x)/sizeof((x)[0]))

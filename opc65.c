@@ -733,8 +733,11 @@ static int check_4_dpage(EXP_stk *estk)
 		tp->expr_value = '-';
 		testk->ptr += dexp->ptr + 1;
 		i = compress_expr(testk);
-		if ( i == 1 && (texpr->expr_code == EXPR_VALUE && (texpr->expr_value & -256) == 0) &&
-			 testk->forward_reference == 0 )
+		if (    i == 1
+			 && texpr->expr_code == EXPR_VALUE
+			 && !(texpr->expr_value & -256)
+		     && !testk->forward_reference
+			)
 		{
 			return 1;
 		}
@@ -781,7 +784,7 @@ static int check_4_abs(EXP_stk *estk)
 		testk->ptr += bexp->ptr + 1;
 		i = compress_expr(testk);
 		if ( i == 1 && (texpr->expr_code == EXPR_VALUE && (texpr->expr_value & -65536L) == 0) &&
-			 testk->forward_reference == 0 )
+			 !testk->forward_reference )
 		{
 			return 1;
 		}
@@ -933,21 +936,31 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 	{
 		if ( amdcd == 0 )
 		{     /* if no address mode specified */
+			int maybeZPage=(opc->op_amode & Z);	/* If Z page is even legal */
+			int ama=10;
+			if ( maybeZPage && options[QUAL_2_PASS] && pass )
+			{
+				/* We're running in 2 pass mode and this is pass 1 */
+				if ( (ama=getAMATag(current_fnd,current_fnd->fn_line)) >= 0 )
+					maybeZPage = 0;
+			}
 			if ( squeak )
 			{
-				printf("check_am(): pass=%d, Checking for Z vs. A mode. EXP1.ptr=%d, EXP1.fwd=%d, exp->code=%d, exp->value=%08lX\n",
+				printf("check_am(): pass=%d, Checking for Z vs. A mode. maybeZPage=%d, ama=%d, EXP1.ptr=%d, EXP1.fwd=%d, exp->code=%d, exp->value=%08lX\n",
 					   pass,
+					   maybeZPage,
+					   ama,
 					   EXP1.ptr,
 					   EXP1.forward_reference,
 					   exp_ptr->expr_code,
 					   exp_ptr->expr_value
 					   );
 			}
-			if (    (opc->op_amode & Z)         /* if Z mode is legal */
+			if (    maybeZPage         /* if can set Z mode */
 				 && (
 					 (
-					      (edmask & ED_AMA) == 0)   /* and not AMA mode */
-					   || (EXP1.base_page_reference != 0) /* base page expression */
+					      (edmask & ED_AMA) == 0)   /* not AMA mode (forced Z page) */
+					   || (EXP1.base_page_reference != 0) /* expression base page (forced Z page) */
 					   || (
 						       (EXP1.ptr == 1)        /* or expression is < 256 */
 						    && (exp_ptr->expr_code == EXPR_VALUE)
@@ -972,6 +985,8 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 					amdcd = A;       /* else force it absolute */
 					amdcdnum = A_NUM;
 				}
+				if ( options[QUAL_2_PASS] && !pass && EXP1.forward_reference)
+					setAMATag(current_fnd,current_fnd->fn_line,1);	/* Say we chose a word for this instruction because of fwd reference */
 			}
 		}
 		else

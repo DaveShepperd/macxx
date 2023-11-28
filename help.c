@@ -76,6 +76,7 @@ static char *help_msg[] = {
     "Options may be abbreviated to 1 or more characters and are case insensitive\n",
     "Defaults are ",opt_delim,"out ",opt_delim,"nolist ",opt_delim,"sym=",
     (char *)&help_symbol_length," ",opt_delim,"opc=",(char *)&help_opcode_length," ",
+	opt_delim,"noignore ",
 #if !defined(MAC_PP)
     opt_delim,"notemp ",
 #if !defined(VMS)

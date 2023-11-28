@@ -215,8 +215,9 @@ void do_opcode(Opcode *opc)
         }
         EXP1.tag = 'O';     /* flag as branch offset */
         exp1 = EXP1SP;
-        if ( (EXP1.ptr == 1)
-             && (exp1->expr_code == EXPR_VALUE) )
+        if (    (EXP1.ptr == 1)
+             && (exp1->expr_code == EXPR_VALUE)
+           )
         {
             /* absolute difference, check range */
             if (exp1->expr_value < MIN_DISP ||
@@ -498,8 +499,10 @@ static void get_ea(unsigned short size)
         } /* end register expression */
         EXP1.tag = 'R';         /* let common code know */
     } /* end register reference */
-    else if ((EXP1.ptr == 1)&&(exp1->expr_code == EXPR_VALUE)
-             &&(exp1->expr_value==0))
+	else if (    (EXP1.ptr == 1)
+			  && (exp1->expr_code == EXPR_VALUE)
+		      && !exp1->expr_value
+		    )
     {
         /* constant 0 is accepted as %0 */
         EXP1.tag = 'R';     /* let common code know */
@@ -645,8 +648,10 @@ static void get_s1( void )
         }
         EXP1.tag = 'R';     /* let common code know */
     }
-    else if ((EXP1.ptr == 1)&&(exp1->expr_code == EXPR_VALUE)
-             &&(exp1->expr_value==0))
+	else if ((EXP1.ptr == 1)
+			 && exp1->expr_code == EXPR_VALUE
+             && !exp1->expr_value
+		    )
     {
         /* constant 0 is accepted as %0 */
         EXP1.tag = 'R';     /* let common code know */
@@ -750,8 +755,10 @@ static void get_dst( void )
         }
         EXP3.tag = 'R';     /* let common code know */
     }
-    else if ((EXP3.ptr == 1)&&(exp3->expr_code == EXPR_VALUE)
-             &&(exp3->expr_value==0))
+    else if (  EXP3.ptr == 1
+			 && exp3->expr_code == EXPR_VALUE
+             && !exp3->expr_value
+			 )
     {
         /* constant 0 is accepted as %0 */
         EXP3.tag = 'R';     /* let common code know */

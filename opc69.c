@@ -4,8 +4,6 @@
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
 
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -199,9 +197,9 @@ static int check_4_dzpage(EXP_stk *estk)
 {
 	DPage *dp;
 	EXPR_struct *expr;
+	
 	expr = estk->stack;
 	dp = *(dpage + dpage_stack);
-
 	if ( dp == 0 )
 	{
 		if ( (estk->ptr == 1) &&           /* or expression is < 256 */
@@ -373,7 +371,7 @@ static void do_branch(Opcode *opc)
 
 	/*  in file pass2.c  tag values */
 	/*  lower case 'y' causes low byte then high byte  Upper case 'Y' is high byte then low byte */
-	EXP1.tag = (opc->op_amode & SPL) ? 'Y' : 'z'; /* set branch type operand */
+	EXP1.tag = (opc->op_amode & SPL) ? ((edmask&ED_M68)?'Y':'y') : 'z'; /* set branch type operand */
 	exp_ptr = EXP1.stack;
 	if ( EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE )
 	{

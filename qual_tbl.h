@@ -24,7 +24,7 @@
 #if !defined(MAC_PP)
 #if !defined(NO_XREF)
 QTBL(1, 0, 0, 0, 0, 1, QUAL_CROSS,	"CROSS_REFERENCE", 0),	/* cross reference */
-#endif
+#endif	/* NO_XREF */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_2_PASS,	"2_PASS", 0),		/* make a full two pass assembler */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_BINARY,	"BINARY", 0),		/* output binary files */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_CMOS,	"CMOS", 0),		/* 65C02 */
@@ -33,7 +33,7 @@ QTBL(1, 0, 0, 0, 0, 1, QUAL_JERRY,	"JERRY", 0),		/* Jaguar DSP */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_MISER,	"MISER", 0),		/* memory miser mode */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_BOFF,	"BOFF", 0),		/* MACAS global branch offset test */
 QTBL(0, 1, 1, 0, 0, 1, QUAL_TEMP,	"TEMPFILE", 0),		/* use temp files */
-#endif
+#endif /* MAC_PP */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_IDE_SYNTAX,	"IDE_ERROR_SYNTAX", 0),		/* output error messages in IDE syntax */
 QTBL(0, 1, 0, 1, 0, 1, QUAL_OUTPUT,	"OUTPUT", OUT_FN_OBJ),	/* object file description */
 QTBL(0, 1, 0, 1, 0, 1, QUAL_LIST,	"LIST", OUT_FN_LIS),	/* list file description */
@@ -47,7 +47,7 @@ QTBL(1, 0, 0, 0, 0, 1, QUAL_RELATIVE,	"RELATIVE", 0),		/* relative assembly */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_LINE,	"LINE", 0),		/* place # line info in output */
 #endif
 QTBL(0, 0, 0, 0, 1, 0, QUAL_ASSEM,	"ASSEM", 0),		/* insert text in assem stream */
-QTBL(0, 0, 0, 0, 0, 0, QUAL_INCLUDE,	"INCLUDE", 0),		/* include file path description */
+QTBL(0, 0, 0, 0, 0, 0, QUAL_INCLUDE, "INCLUDE", 0),		/* include file path description */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_GRNHILL, "GREENHILLS", 0),
 QTBL(1, 0, 0, 0, 0, 1, QUAL_ABBREV, "ABBREVIATE", 0), /* Abbreviate error messages */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_IGNORE, "IGNORE", 0) /* Ignore some old undefined psuedo-ops */
