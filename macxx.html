@@ -937,31 +937,34 @@ the stack pointer on a named stack. Examples:
   <table style="width: 50%">
     <tr><th>Keyword</th><th>Function</th></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;ABS</td><td>Obsolete. Has no effect.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;LC</td><td>Obsolete. Has no effect.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
-      to be computed using unsigned arithmetic (UnSigned Divide).</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared
-      global. Use with care. </td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;WORD</td><td>Undefined opcodes are assumed to be arguments to a .WORD directive.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;.WORD</td><td>Same as WORD above.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>See <a href="#AMA_ED_opt">HERE</a>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;BYTE</td><td>Undefined opcodes are assumed to be arguments to a .BYTE directive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared
+      global. Use with care. </td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;LC</td><td>Obsolete. Has no effect.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>See <a href="#MOS_ED_opt">HERE</a>.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;SIMPLE</td><td>Enable this to neuter the complex expression handler in .ifdf/.ifndf directives (makes it compatible with RT11 macxx).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;SQUEAK</td><td>Enables internal assembler debug messages<font color="red">WARNING:</font>Enabling this function will produce lots of meaningless output.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
+      to be computed using unsigned arithmetic (UnSigned Divide).</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;WORD</td><td>Undefined opcodes are assumed to be arguments to a .WORD directive.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;.WORD</td><td>Same as WORD above.</td></tr>
     </table>
-    <p>
+    <p id="MOS_ED_opt">
   The following keyword is specific just to MAC65 and 6502.
     </p>
   <table style="width: 50%">
     <tr><th>Keyword</th><th>Function</th></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>MOS TECHNOLOGY 6502 opcode and address mode syntax. <a href="#M65_Addressing">DETAILS</a></td></tr>
   </table>
-    <p>
+    <p id="AMA_ED_opt">
   The following keyword is specific to MAC65, MAC68 and MAC69 for the 6502, 6800 and 6809 processors respectively.
     </p>
   <table style="width: 50%">
