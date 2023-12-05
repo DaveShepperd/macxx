@@ -199,7 +199,8 @@ int ust_init( void )
         }
         ptr->flg_defined = 1;     /* defined */
         ptr->flg_ref = 1;         /* referenced */
-        ptr->flg_local = 0;       /* not local */
+        ptr->flg_macLocal = 0;       /* not local */
+		ptr->flg_gasLocal = 0;
         ptr->flg_global = 0;      /* not global */
         ptr->flg_label = 1;       /* can't redefine it */
 		ptr->flg_fixed_addr = 1;
@@ -251,12 +252,16 @@ void do_opcode(Opcode *opc)
     assert( EXPR_MAXSTACKS >= 7 );
     for (ii=0; ii < EXPR_MAXSTACKS;++ii,++eptr)
     {
-        eptr->ptr = 0;
+        EXPR_struct *exp;
+		exp = eptr->stack;
+#if 0	/* The EXP_stk struct is cleared in exprs() */
+		memset(eptr,0,sizeof(EXP_stk));
+		eptr->stack = exp;
+#endif
         eptr->tag = 'W';
         eptr->tag_len = 1;
-        eptr->stack->expr_code = EXPR_VALUE;
-        eptr->stack->expr_value = 0;
-/*        printf("Stack %d (%p) ptr=%d\n", ii, (void *)eptr, eptr->ptr ); */
+        exp->expr_code = EXPR_VALUE;
+        exp->expr_value = 0;
     }
     if ( options[QUAL_GRNHILL] )
         no_white_space_allowed = 1;
@@ -266,11 +271,12 @@ void do_opcode(Opcode *opc)
     memset(&source,0,sizeof(source));
     memset(&dest,0,sizeof(dest));
     source.exp = eptr++;
-    source.tmps[0] = eptr++;
-    source.tmps[1] = eptr++;
-    dest.exp = eptr++;
-    dest.tmps[0] = eptr++;
-    dest.tmps[1] = eptr++;
+	dest.exp = eptr++;
+	for (ii=0; ii < NUM_EA_TMPSTACKS; ++ii)
+	{
+		source.tmps[ii] = eptr++;
+		dest.tmps[ii] = eptr++;
+	}
     dotwcontext = 1;
     if ((current_offset&1) != 0)
     {

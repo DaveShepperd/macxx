@@ -88,67 +88,83 @@ void *memcpy(char *dst, char *src, int siz)
 #endif
 #ifndef MAC_PP
 
-typedef struct AMA_Tags_t
-{
-	struct AMA_Tags_t *next;
-	const FN_struct *fnd;
-	int line;
-	int tag;
-} AMA_Tags_t;
-static AMA_Tags_t *tagArrayFirst, *tagArrayLast;
+#define AMA_TAG_HASH_SIZE (128)
+#define AMA_POOL_INCREMENT (256)
 static AMA_Tags_t *tagPool;
 static int tagPoolQty, tagPoolUsed;
-int totalTagsUsed;
+int totalTagsChecked,totalTagsUsed;
 
 /******************************************************************
  * Create and keep a list of locations where the AMA instructions
  * were chosen due to expression results. This is only used if
  * the assembler is running in two pass mode.
  */
-int getAMATag(const FN_struct *fnd, int line)
+int getAMATag(const FN_struct *fnd)
 /* At entry:
  *  fnd - pointer to file to look for
- *  line - line number in file to look for
  * At exit:
  *  returns tag if there is on else -1.
  */
 {
-	AMA_Tags_t *ptr = tagArrayFirst;
-	while ( ptr )
+	++totalTagsChecked;
+	if ( fnd->tagHashTable )
 	{
-		if ( ptr->fnd == fnd && ptr->line == line )
-			return ptr->tag;
-		ptr = ptr->next;
+		AMA_Tags_t *ptr;
+		int idx = fnd->fn_line%AMA_TAG_HASH_SIZE;
+		ptr = fnd->tagHashTable[idx];
+		while ( ptr )
+		{
+			if ( ptr->line == fnd->fn_line )
+				return ptr->tag;
+			if ( ptr->line > fnd->fn_line )
+				break;
+			ptr = ptr->next;
+		}
 	}
 	return -1;
 }
 
-void setAMATag(const FN_struct *fnd, int line, int tag)
+void setAMATag(FN_struct *fnd, unsigned short tag)
 {
-	AMA_Tags_t *ptr;
+	AMA_Tags_t *ptr, **last;
+	int idx;
+	if ( !fnd->tagHashTable )
+	{
+		fnd->tagHashTable = (AMA_Tags_t **)MEM_calloc( AMA_TAG_HASH_SIZE*sizeof(AMA_Tags_t *));
+		if ( !fnd->tagHashTable )
+			return;
+	}
 	if ( tagPoolUsed >= tagPoolQty )
 	{
 		int amt;
-		amt = 256;
-		ptr = (AMA_Tags_t *)MEM_alloc( amt*sizeof(AMA_Tags_t));
+		amt = AMA_POOL_INCREMENT;
+		ptr = (AMA_Tags_t *)MEM_calloc( amt*sizeof(AMA_Tags_t));
 		if ( !ptr )
 			return;
 		tagPoolQty = amt;
 		tagPoolUsed = 0;
 		tagPool = ptr;
 	}
+	idx = fnd->fn_line%AMA_TAG_HASH_SIZE;
+	last = fnd->tagHashTable+idx;
+	while ( (ptr = *last) )
+	{
+		if ( ptr->line == fnd->fn_line )
+		{
+			/* Found existing one. Replace what's already there */
+			ptr->tag = tag;
+			return;
+		}
+		/* source lines always only increase, so a new one always gets tacked on the end */
+		last = &ptr->next;
+	}
 	ptr = tagPool+tagPoolUsed;
-	++tagPoolUsed;
-	++totalTagsUsed;
-	ptr->fnd = fnd;
-	ptr->line = line;
+	ptr->line = fnd->fn_line;
 	ptr->tag = tag;
 	ptr->next = NULL;
-	if ( !tagArrayFirst )
-		tagArrayFirst = ptr;
-	if ( tagArrayLast )
-		tagArrayLast->next = ptr;
-	tagArrayLast = ptr;
+	*last = ptr;
+	++tagPoolUsed;
+	++totalTagsUsed;
 	return;
 }
 
@@ -1224,7 +1240,7 @@ int get_token( void )
                 token_value = tmp;      /* we got the number */
                 break;          /* out of switch */
             }          /* -- case num */
-        case CC_ALP:       /* alpha-numeric */
+		case CC_ALP:       /* alpha-numeric */
             if ((edmask&ED_DOTLCL) != 0)
             {  /* special local symbols? */
                 if (*inp_ptr == '.')
@@ -1240,6 +1256,7 @@ int get_token( void )
                     break;    /* done */
                 }
             }
+			/* Fall through to default */
         default: {     /* everything else is a string */
                 register char *rs = token_pool;
                 char *tpend = token_pool+token_pool_size;
@@ -1530,8 +1547,8 @@ int f1_defg(int flag)
 #if 0				/* definition doesn't set reference bit */
     ptr->flg_ref = 1;        /* signal symbol is referenced */
 #endif
-    ptr->flg_local = ((flag&DEFG_LOCAL) != 0);
-    if (ptr->flg_local && (flag&DEFG_GLOBAL))
+    ptr->flg_macLocal = ((flag&DEFG_LOCAL) != 0);
+    if (ptr->flg_macLocal && (flag&DEFG_GLOBAL))
     {
 		snprintf(emsg,sizeof(emsg),"Local symbol '%s' cannot be made global", ptr->ss_string);
         bad_token(NULL,emsg);
@@ -1831,7 +1848,7 @@ SS_struct *do_symbol(SymInsertFlag_t flag)
             }
 			sym_ptr->ss_scope = current_scope;
             if (token_type == TOKEN_local)
-                sym_ptr->flg_local = 1;
+                sym_ptr->flg_macLocal = 1;
             sym_ptr->ss_line = current_fnd->fn_line;   /* and the line # of same */
         }
 		/* FALL through to no symbol case */
@@ -1932,7 +1949,10 @@ static void found_symbol( int gbl_flg, int tokt )
     if (c == '=')
     {
         ++inp_ptr;       /* eat the second = */
-        gbl_flg |= DEFG_GLOBAL;  /* and set the global bit */
+		if ( tokt == TOKEN_local )
+			show_bad_token(NULL,"Local symbols cannot be made global\n",MSG_WARN);
+		else
+			gbl_flg |= DEFG_GLOBAL;  /* and set the global bit */
     }
 #if 0
 	if ( (gbl_flg&DEFG_FIXED) )
@@ -2175,8 +2195,11 @@ void pass1( int file_cnt)
                     c = *inp_ptr;       /* get the next char */
                     if (c == ':')
                     {
-                        ++inp_ptr;       /* eat the second : */
-                        gbl_flg |= DEFG_GLOBAL;  /* and set the global bit */
+						if ( tokt == TOKEN_local )
+							show_bad_token(NULL,"Local labels cannot be made global\n", MSG_WARN);
+						else
+							gbl_flg |= DEFG_GLOBAL;  /* and set the global bit */
+						++inp_ptr;       /* eat the second : */
                     }
                     c = *inp_ptr;       /* get the next char */
                 }

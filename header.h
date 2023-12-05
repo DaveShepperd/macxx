@@ -223,6 +223,8 @@ extern unsigned short cttbl[];
 extern char char_toupper[];
 extern char hexdig[];
 
+extern int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp;
+
 extern char **cmd_assems;
 extern char **cmd_includes;
 extern char **cmd_outputs;
@@ -293,9 +295,10 @@ extern int pass2( void );
 extern void display_mem(void);
 extern void show_timer( void );
 extern void qksort (SS_struct *array[],unsigned int num_elements);
-extern int getAMATag(const FN_struct *fnd, int line);
-extern void setAMATag(const FN_struct *fnd, int line, int tag);
+extern int getAMATag(const FN_struct *fnd);
+extern void setAMATag(FN_struct *fnd, unsigned short tag);
 extern int totalTagsUsed;
+extern int totalTagsChecked;
 
 #ifndef n_elts
 #define n_elts(x) (int)(sizeof(x)/sizeof((x)[0]))

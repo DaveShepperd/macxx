@@ -25,12 +25,12 @@ ALLO3 = $(COREO)
 
 ALLO65 = exprs65.o char_tbl65.o opc65.o pass0.o pass1.o pst65.o debug.o help.o
 ALLO68 = exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
-ALLOAS = exprs.o char_table.o opcas.o pass0.o pass1.o pstas.o debug.o help.o
-ALLOTJ = exprs.o char_table.o opctj.o pass0.o pass1.o psttj.o debug.o help.o
-ALLO68K = exprs68k.o char_table.o opc68k.o pass068k.o pass168k.o pst68k.o m68types.o debug.o help.o
-ALLO682K = exprs682k.o char_table.o opc682k.o pass068k.o pass168k.o pst682k.o m682types.o debug.o help.o
-ALLO69 = stack_ops.o exprs69.o char_tbl65.o opc69.o pass0.o pass1.o pst69.o debug.o help.o
-ALLO11 = exprs.o char_table.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
+ALLO69 = exprs69.o char_tbl65.o opc69.o pass0.o pass1.o pst69.o debug.o help.o
+ALLOAS = exprs.o char_table.o opcas.o pass1.o pstas.o debug.o help.o dummy_pass0.o
+ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o dummy_pass0.o
+ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o dummy_pass0.o #pass068k.o 
+#ALLO682K = exprs682k.o char_table.o opc682k.o pass168k.o pst682k.o m682types.o debug.o help.o dummy_pass0.o
+ALLO11 = exprs.o char_table.o opc11.o pass1.o pst11.o m11types.o debug.o help.o dummy_pass0.o
 
 ALLOPP0 = macxx_pp.o pass1_pp.o lstctlpp.o opcode_pp.o
 ALLOPP1 = gc_tblpp.o gc_pp.o exprs_pp.o macros_pp.o
@@ -40,8 +40,8 @@ ALLOPP3 = help_pp.o $(COREO)
 ALLH = structs.h header.h ct.h token_defs.h token.h 
 
 MODE = -m32
-OPT = -O -DNDEBUG
-DBG = #-g 
+OPT = #-O -DNDEBUG
+DBG = -g 
 
 # For Generic Unix/x86
 DEFINES = -DEXTERNAL_PACKED_STRUCTS -DM_UNIX -DINCLUDE_FLOAT -DNO_XREF -DGCC -DHAS_STRERROR -D_ISOC99_SOURCE #-DPC_DEBUG #-DMAX_LINE_ERRORS=12 #-DDEBUG_TXT_INP
@@ -76,7 +76,7 @@ ECHO = /bin/echo -e
 	$(ECHO) "\tCompiling $< to $@ ..."
 	$(CC) $(CFLAGS) -E $< > $@
 
-all : macas mac65 mac68 mac68k mac682k mac69 macpp mactj mac11
+all : macas mac65 mac68 mac68k mac69 macpp mactj mac11 #mac682k 
 	echo Done
 
 define link_it
@@ -99,8 +99,8 @@ mac68:  Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68)
 mac68k : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68K) 
 	$(link_it)
 
-mac682k : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO682K) 
-	$(link_it)
+#mac682k : Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO682K) 
+#	$(link_it)
 
 mac69:  Makefile $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO69)
 	$(link_it)
@@ -193,10 +193,10 @@ exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h
 	$(ECHO) "\tCompiling $<..."
 	$C -DMAC_PP -o $@ $<
 
-pass068k.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
-	$(ECHO) "\tCompiling $<..."
-	$C -DMAC68K -o $@ $<
+#pass068k.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+#  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
+#	$(ECHO) "\tCompiling $<..."
+#	$C -DMAC68K -o $@ $<
 
 pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
@@ -216,7 +216,8 @@ debug.o : debug.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct
 dmpgdb.o : dmpgdb.c symseg.h 
 dmpod.o : dmpod.c debug.h stab.h stab.def segdef.h 
 dumdir.o : dumdir.c 
-dummy.o : dummy.c 
+dummy.o : dummy.c
+dummy_pass0.o : dummy_pass0.c
 edits.o : edits.c 
 endlin.o : endlin.c header.h outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   listctrl.h lstcnsts.h exproper.h vlda_structs.h pragma.h pragma1.h segdef.h
@@ -252,8 +253,8 @@ opc65.o : opc65.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn65.h opcommon.h 
 opc68.o : opc68.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn68.h opcommon.h 
-opc682k.o : opc682k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m682k.h opcommon.h 
+#opc682k.o : opc682k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
+#  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m682k.h opcommon.h 
 opc68k.o : opc68k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m68k.h opcommon.h 
 opc69.o : opc69.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
@@ -269,6 +270,8 @@ opctj.o : opctj.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct
 outx.o : outx.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   vlda_structs.h pragma1.h segdef.h \
   pragma.h exproper.h 
+pass0.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 pass1.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 pass2.o : pass2.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
@@ -276,10 +279,10 @@ pass2.o : pass2.c outx.h token.h token_defs.h structs.h add_defs.h header.h memm
 pst11.o : pst11.c pst_tokens.h pst_structs.h pdp11.h opcs11.h dirdefs.h 
 pst65.o : pst65.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
 pst68.o : pst68.c pst_tokens.h pst_structs.h psttkn68.h dirdefs.h 
-pst682k.o : pst682k.c pst_tokens.h pst_structs.h dirdefs.h opcs682k.h 
+#pst682k.o : pst682k.c pst_tokens.h pst_structs.h dirdefs.h opcs682k.h 
 pst68k.o : pst68k.c pst_tokens.h pst_structs.h dirdefs.h opcs68k.h 
 pst69.o : pst69.c pst_tokens.h pst_structs.h psttkn69.h dirdefs.h
-pst816.o : pst816.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
+#pst816.o : pst816.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
 pstas.o : pstas.c pst_tokens.h pst_structs.h dirdefs.h asap_ops.h op_class.h 
 pstpp.o : pstpp.c pst_tokens.h pst_structs.h dirdefs.h 
 psttj.o : psttj.c pst_tokens.h pst_structs.h dirdefs.h tjop_class.h tj_ops.h 

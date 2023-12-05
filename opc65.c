@@ -941,7 +941,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 			if ( maybeZPage && options[QUAL_2_PASS] && pass )
 			{
 				/* We're running in 2 pass mode and this is pass 1 */
-				if ( (ama=getAMATag(current_fnd,current_fnd->fn_line)) >= 0 )
+				if ( (ama=getAMATag(current_fnd)) >= 0 )
 					maybeZPage = 0;
 			}
 			if ( squeak )
@@ -986,7 +986,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 					amdcdnum = A_NUM;
 				}
 				if ( options[QUAL_2_PASS] && !pass && EXP1.forward_reference)
-					setAMATag(current_fnd,current_fnd->fn_line,1);	/* Say we chose a word for this instruction because of fwd reference */
+					setAMATag(current_fnd,1);	/* Say we chose a word for this instruction because of fwd reference */
 			}
 		}
 		else

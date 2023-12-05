@@ -271,7 +271,8 @@ int ust_init( void ) {        /* User defined symbol table initialization */
             }
             ptr->flg_defined = 1;      /* defined */
             ptr->flg_ref = 1;          /* referenced */
-            ptr->flg_local = 0;        /* not local */
+            ptr->flg_macLocal = 0;        /* not local */
+			ptr->flg_gasLocal = 0;
             ptr->flg_global = 0;       /* not global */
             ptr->flg_label = 1;        /* can't redefine it */
 			ptr->flg_fixed_addr = 1;

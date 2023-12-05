@@ -257,6 +257,7 @@ char **gc_argv;
 #endif
 #define DOPEN_ARGS  "wb"
 
+int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp;
 /************************************************************************
  * MACXX main entry.
  */
@@ -274,6 +275,7 @@ int main(int argc, char *argv[])
     long timed_out,*link_time,systime[2];
 #endif
     struct tm *our_time;                 /* current time (for sym/sec and map files */
+	char c,*s,*d;
 
     lap_timer((char *)0);                /* mark start of image */
     edmask = macxx_edm_default;          /* set default edmask */   
@@ -292,44 +294,63 @@ int main(int argc, char *argv[])
         if (islower(macxx_name[i])) macxx_name[i] = toupper(macxx_name[i]);
     }
 #endif
-    { 
-        char c,*s,*d;
-        s = emsg;
-        d = token_pool;
-        while ((c = *s++) != 0)
-        {
-            if (c == 1)
-            {
-                strcpy(d,macxx_name);
-                d += strlen(macxx_name);
-            }
-            else if (c == 2)
-            {
-                strcpy(d,macxx_version);
-                d += strlen(macxx_version);
-            }
-            else if ( c == 3 )
-            {
-                strcpy(d,macxx_descrip);
-                d += strlen(macxx_descrip);
-            }
-            else
-            {
-                *d++ = c;
-            }
-        }
-        *d = 0;
+	s = emsg;
+	d = token_pool;
+	while ((c = *s++) != 0)
+	{
+		if (c == 1)
+		{
+			strcpy(d,macxx_name);
+			d += strlen(macxx_name);
+		}
+		else if (c == 2)
+		{
+			strcpy(d,macxx_version);
+			d += strlen(macxx_version);
+		}
+		else if ( c == 3 )
+		{
+			strcpy(d,macxx_descrip);
+			d += strlen(macxx_descrip);
+		}
+		else
+		{
+			*d++ = c;
+		}
+	}
+	*d = 0;
+	if (macxx_name[3] == '6')
+	{
+		if ( macxx_name[4] == '5')
+			were_mac65 = 1;
+		else if (macxx_name[4] == '9')
+			were_mac69 = 1;
+		else if (macxx_name[4] == '8')
+		{
+			if ( macxx_name[5] == 'k')
+				were_mac68k = 1;
+			else if (macxx_name[5] == '2' && macxx_name[6] == 'k')
+				were_mac682k = 1;
+			else
+				were_mac68 = 1;
+		}
+	}
+	else if (macxx_name[3] == 't' && macxx_name[4] == 'j')
+		were_mactj = 1;
+	else if (macxx_name[3] == '1' && macxx_name[4] == '1')
+		were_mac11 = 1;
+	else if (macxx_name[3] == 'a' && macxx_name[4] == 's')
+		were_macas = 1;
 #if defined(MS_DOS) 
-        fprintf(stderr,"%s\n",token_pool);
+	fprintf(stderr,"%s\n",token_pool);
 #endif
-        if (argc < 2)
-        {
+	if (argc < 2)
+	{
 #if !defined(MS_DOS) 
-            fprintf(stderr,"%s\n",token_pool);
+		fprintf(stderr,"%s\n",token_pool);
 #endif
-            return display_help();
-        }
-    }
+		return display_help();
+	}
     if (!getcommand())
     {         /* process input command options */
         EXIT_FALSE;
@@ -346,6 +367,11 @@ int main(int argc, char *argv[])
 	{
 		int ii;
 		
+		if ( !were_mac65 && !were_mac68 && !were_mac69 )
+		{
+			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
+			EXIT_FALSE;
+		}
 		pass = 0;
 		for (file_cnt=0;;file_cnt++)
 		{

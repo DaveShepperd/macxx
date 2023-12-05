@@ -18,6 +18,12 @@
 /******************************************************************************
 Change Log
 
+	11/30/2023	- Fixed errors when using -2 pass option	T.G.
+			  MACxx being a single pass assembler with a 2 pass
+			  option both must create the same obj files.  This
+			  will defeat some of the optimization capabilities
+			  of the 2 pass option.
+
 	12/27/2022	- Fixed dpage problem that was causing LLF Truncation
 			  warnings for dpage offsets.
 			  Added some Error checking		Tim Giddens
@@ -870,8 +876,10 @@ static int do_operand(Opcode *opc)
 
 						con_offset  = EXP2SP->expr_value;
 
-						if ( (EXP2SP->expr_code != EXPR_VALUE) || (EXP2.ptr > 1) )
-						{  /* if unknown value - treat as 8bit or 16bit mode */
+						if ( (EXP2SP->expr_code != EXPR_VALUE) || (EXP2.ptr > 1) ||
+							( ( (getAMATag(current_fnd)) >= 0) && (pass !=0) ) )
+						{  /* if unknown value in pass 0 then pass 1 must treat it as unknown */
+						   /* if unknown value - treat as 8bit or 16bit mode */
 
 							z_page = 0x1 & (EXP2.base_page_reference);	/* check for base page */
 							if ( z_page )
@@ -897,7 +905,10 @@ static int do_operand(Opcode *opc)
 								{
 									temp = 0x89;
 								}
-
+							}
+							if ( !pass) /* Tell pass 1 that pass 0 chose an unknown for this instruction*/
+							{
+								setAMATag(current_fnd,1);
 							}
 
 						}

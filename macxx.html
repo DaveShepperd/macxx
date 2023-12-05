@@ -90,17 +90,17 @@
   assembler. The current C version is a 1.5 pass assembler meaning it makes one pass through the source code producing both a listing and
   an intermediate internally maintained binary object "file". Once all the souce has been parsed, it makes another pass through its internally
   maintained object "file" resolving all expressions it is able to and producing the actual binary or ASCII object file. As of version 11.??
-  a new command line -option of -2_PASS can be used to force the assembler to run in a full 2 pass mode.
+  a new command line -option of -2_PASS can be used to force the assembler to run in a full 2 pass mode. But that option is only available for mac65,
+  mac68 and mac69.
   </p>
   <p> The macxx sources produce a unique macro assembler for the following processors:
   </p>
   <pre>
   <b>macpp</b>    - A macro pre-processor; no CPU; it works similar to the C language's CPP.
   <b>mac65</b>    - For the MOS Technology 6502, 65C02 and 65816 CPU's
-  <b>mac68</b>    - For the Motorol 6800 CPU
-  <b>mac69</b>    - For the Motorol 6809 CPU
+  <b>mac68</b>    - For the Motorola 6800 CPU
+  <b>mac69</b>    - For the Motorola 6809 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
-  <b>mac682k</b>  - For the Motorola 68020 CPU
   <b>mac11</b>    - For the PDP11 CPU
   <b>macas</b>    - For the custom Atari Simplified Architecure Processor (ASAP) CPU
   <b>mactj</b>    - For the Atari custom Tom and Jerry DSP's
@@ -952,17 +952,24 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;SQUEAK</td><td>Enables internal assembler debug messages<font color="red">WARNING:</font>Enabling this function will produce lots of meaningless output.</td></tr>
     </table>
     <p>
-  The following keywords are specific to MAC65 and the 6502 processor.
+  The following keyword is specific just to MAC65 and 6502.
     </p>
   <table style="width: 50%">
     <tr><th>Keyword</th><th>Function</th></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>MOS TECHNOLOGY 6502 opcode and address mode syntax. <a href="#M65_Addressing">DETAILS</a></td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>MAC65 is to use zero page addressing if possible.</td></tr>
   </table>
     <p>
-    The defaults for all options is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed and <b><u>M68</u></b> which is ENABLed on MAC68k and MAC682k.
+  The following keyword is specific to MAC65, MAC68 and MAC69 for the 6502, 6800 and 6809 processors respectively.
+    </p>
+  <table style="width: 50%">
+    <tr><th>Keyword</th><th>Function</th></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>Use the smallest operand address possible (8 bit vs. 16 bit where known at assembly time).</td></tr>
+  </table>
+    <p>
+    The defaults for all options is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed and <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k.
     </p>
   </p>
   <p>
@@ -2636,17 +2643,23 @@ the stack pointer on a named stack. Examples:
       macpp -out=new.mac -lis old.mac
   </pre>
 <h2>Appendex</h2>
-    <h3 id="mac65_specials">MAC65 special psuedo-ops, operations and address modes</h3>
+    <h3 id="macxx_specials">
     <p>
-    <em>NOTE: If you find yourself wanting to use this macxx to build old Atari coin-op games, at least those
-    that included HLL65F.MAC in their sources, you will find it does not assemble without error in the default
+    <em>NOTE: If you find yourself wanting to use mac65, mac68 or mac69 to build old Atari coin-op games, at least those
+    that included HLL6xF.MAC in their sources, you will find the source does not assemble without error in the default
     1.5 pass mode. Instead you will need to either use the -2_PASS command line option (the simplest method but
-    only available with macxx version 11.xx or later) or replace the HLL65F.mac in your source kit with the hll65f.mac
-    file included in the sources with macxx AND set the variable CMAC65=1 somewhere. I.e. add the command line:
-    <b>-assem=CMAC65=1</b> or just edit hll65f.mac and set it to 1 permanently.<br>
+    only available with macxx version 11.xx or later) or replace the HLL6xF.mac in your source kit with the example hll65f.mac
+    file included in the sources with the macxx kit AND, in the specific case of HLL65F.MAC, set the variable CMAC65=1 somewhere.
+    I.e. add the command line: <b>-assem=CMAC65=1</b> or just edit hll65f.mac and set it to 1 permanently.<br>
     And pay attention to filename case. On *nix systems there will be trouble with the automatic add of
-    lowercase .mac to files <b>.INCLUDE</b>d in game sources. Symlinks might be a quick and easy workaround.
-    </em></p>
+    lowercase .mac to files <b>.INCLUDE</b>d in game sources.<br>
+    </p>
+    <p>NOTE: Also note the assembler will first try to open a .mac file and
+      if that doesn't work, it will try to open a .MAC file.
+    </em>
+    </p>
+    </h3>
+    <h3 id="mac65_specials">MAC65 special psuedo-ops, operations and address modes</h3>
     <p>
     MAC65 has a bit of history at Atari. See more details in the <a href="#history">HISTORY</a>
     section about this if one cares.
@@ -2945,7 +2958,7 @@ the stack pointer on a named stack. Examples:
     the linker LLF). The C version of MACXX did not include all the same psuedo-ops (nobody was using
     them) and since we stopped using the 6800 by then and never did any development for the Intel processors,
     I didn't port over the 6800, 6809, 8080 or Z80. We had by then switched from using the 6800 to the
-    68000 family, so I added modules to assemble for the 68000, 68010 and 68020. And making a version
+    68000 family, so I added modules to assemble for the 68000 and 68010. And making a version
     what was simply a pre-processor was suggested and I thought that a great idea so MACPP was born too.
     Later once coin-op designed its own custom processor, the ASAP, I added a MACAS and consumer had a custom
     DSP chipset (Tom&Jerry) that we used in at least one of our coin-op games, so I added modules to

@@ -49,6 +49,7 @@ Change Log
 #include "exproper.h"
 #include "listctrl.h"
 #include "memmgt.h"
+#include <stdlib.h>
 
 int exprs_nest;
 EXP_stk exprs_stack[EXPR_MAXSTACKS];
@@ -61,6 +62,7 @@ extern int dotwcontext;
 #endif
 
 int quoted_ascii_strings = 0;
+static int do_exprs( int flag, EXP_stk *eps );
 
 void init_exprs( void )
 {
@@ -1080,7 +1082,7 @@ static int do_unary(int *sexptr, EXP_stk *eps )
 /*******************************************************************
  * Expression evaluator
  */
-int do_exprs( int flag, EXP_stk *eps )
+static int do_exprs( int flag, EXP_stk *eps )
 /*
  * At entry:
  *	token_pool has current token, inp_ptr points to next item
@@ -1205,7 +1207,10 @@ int do_exprs( int flag, EXP_stk *eps )
                         if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
                              && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )
                         {
-                            sym_ptr->flg_local = 1; /* make .Lxxx local symbols */
+							char *endp=NULL;
+							strtol(sym_ptr->ss_string+2,&endp,0);
+							if ( endp && !*endp )
+								sym_ptr->flg_gasLocal = 1; /* make .Lnnn GNU assembler "local" symbols */
                         }
 #endif
                     }
@@ -1622,25 +1627,19 @@ int exprs( int relative, EXP_stk *eps )
  */
 {
     char *stp = tkn_ptr;
+	EXPR_struct *sSave;
+	unsigned short tagSave;
+	unsigned short tagLenSave;
+	
     exprs_nest = 0;      /* start with no nesting */
-    eps->ptr = 0;
-    eps->forward_reference = 0;  /* assume no forward ref */
-    eps->base_page_reference = 0; /* no base page reference */
-    eps->register_reference = 0; /* and no register reference */
-#if defined(MAC68K)
-    eps->force_short = 0;    /* neither short */
-    eps->force_long = 0;     /* nor long */
-    eps->register_mask = 0;  /* not a register mask */
-#if defined(MAC682K)
-    eps->force_byte = 0;
-    eps->register_scale = 0;
-    eps->paren = 0;
-    eps->autodec = 0;
-    eps->autoinc = 0;
-    eps->paren_cnt = 0;
-#endif
-#endif
-    eps->psuedo_value = 0;   
+	sSave = eps->stack;
+	tagSave = eps->tag;
+	tagLenSave = eps->tag_len;
+    /* Ensure the entire struct is zero'd before we do anything */
+	memset(eps,0,sizeof(EXP_stk));
+	eps->stack = sSave; /* Except for these three things */
+	eps->tag = tagSave;
+	eps->tag_len = tagLenSave;
     if (do_exprs(1,eps) <0)
     {    /* call expression evaluator */
         eps->ptr = 0;     /* bad expression */
@@ -1731,13 +1730,15 @@ void dumpSymbolTable(int flag)
 		for (st=hash[(short)ii] ; st != 0 ; st=st->ss_next)
 		{
 			EXP_stk *eps;
-			printf("Symbol '%s'. flags:\n\tdefined: %d\n\texprs: %d\n\tabs: %d\n\tfwdRef: %d\n\tlabel: %d\n\treferenced: %d\n",
+			printf("Symbol '%s'. flags:\n\tdefined: %d\n\texprs: %d\n\tabs: %d\n\tfwdRef: %d\n\tlabel: %d\n\tmacLocal: %d\n\tgasLocal: %d\n\treferenced: %d\n",
 				    st->ss_string
 				   ,st->flg_defined
 				   ,st->flg_exprs
 				   ,st->flg_abs
 				   ,st->flg_fwdReference
-				   ,st->flg_local
+				   ,st->flg_label
+				   ,st->flg_macLocal
+				   ,st->flg_gasLocal
 				   ,st->flg_ref
 				   );
 			if ( st->flg_defined )

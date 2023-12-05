@@ -51,7 +51,7 @@
 #define EXPROPER_ELSE	'"'	/* if condit false, do until endif */
 
 extern void init_exprs( void );
-extern int do_exprs( int flag, EXP_stk *eps );
+/* extern int do_exprs( int flag, EXP_stk *eps ); */
 extern int compress_expr_psuedo( EXP_stk *ep );
 extern int compress_expr( EXP_stk *exptr );
 extern int exprs( int relative, EXP_stk *eps );

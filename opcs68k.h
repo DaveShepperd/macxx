@@ -236,6 +236,7 @@ OPDEF("JVS",		20,14,1	)
 
 OPDEF("JMP",		7,2,0	)
 OPDEF("JSR",		7,3,0	)
+
 OPDEF("LEA",		13,1,2	)
 OPDEF("LEA.L",		13,1,2	)
 OPDEF("LINK",		14,1,2	)

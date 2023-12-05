@@ -265,6 +265,7 @@
 			<F N="debug.c"/>
 			<F N="dumdir.c"/>
 			<F N="dummy.c"/>
+			<F N="dummy_pass0.c"/>
 			<F N="endlin.c"/>
 			<F N="err2str.c"/>
 			<F N="exprs.c"/>

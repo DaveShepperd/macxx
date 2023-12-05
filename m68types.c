@@ -59,7 +59,7 @@ static int get_indxea(int amflg, int treg, EA *amp )
     tmps = amp->tmps[0];
     exp = tmps->stack;
     tmps->ptr = 0;
-    /* All syntaxes end with ,x) or ,x:size) */
+    /* All syntaxes end with ',x)' or ',x:size)' */
     get_token();                /* Prime the pump */
     ireg = exprs(0,tmps);       /* Get index register */
     if ( ireg >= 0 )
@@ -119,31 +119,31 @@ static int get_indxea(int amflg, int treg, EA *amp )
     }
     else
     {
-	if ( treg == REG_PC )
-	{
-	    tmps->ptr = compress_expr(tmps);
+		if ( treg == REG_PC )
+		{
+			tmps->ptr = compress_expr(tmps);
 		if ( tmps->ptr != 1 || exp->expr_code != EXPR_VALUE )
-	    {
-	        exp = tmps->stack + tmps->ptr;
-	        exp->expr_code = EXPR_SEG;
-	        exp->expr_value = current_offset+2;
-/*			printf("In get_indexea(). current_offset=0x%08lX\n", current_offset ); */
-	        (exp++)->expr_seg = current_section;
-	        exp->expr_code = EXPR_OPER;
-	        exp->expr_value = '-';
-	        tmps->ptr += 2;
-	        tmps->ptr = compress_expr(tmps);
-	        if (list_bin) compress_expr_psuedo(tmps);
-	    }
-	}
-	if ( tmps->ptr == 1 && exp->expr_code == EXPR_VALUE )
-        {
-            if (exp->expr_value < -128 || exp->expr_value > 127)
-            {
-                bad_token((char *)0,"Displacement offset s/b -128 <= disp <= 127");
-                exp->expr_value = 0;
-            }
-        }
+			{
+				exp = tmps->stack + tmps->ptr;
+				exp->expr_code = EXPR_SEG;
+				exp->expr_value = current_offset+2;
+	/*			printf("In get_indexea(). current_offset=0x%08lX\n", current_offset ); */
+				(exp++)->expr_seg = current_section;
+				exp->expr_code = EXPR_OPER;
+				exp->expr_value = '-';
+				tmps->ptr += 2;
+				tmps->ptr = compress_expr(tmps);
+				if (list_bin) compress_expr_psuedo(tmps);
+			}
+		}
+		if ( tmps->ptr == 1 && exp->expr_code == EXPR_VALUE )
+		{
+			if (exp->expr_value < -128 || exp->expr_value > 127)
+			{
+				bad_token((char *)0,"Displacement offset s/b -128 <= disp <= 127");
+				exp->expr_value = 0;
+			}
+		}
     }
     M68DBG(("Exit from get_indexea() with ONEEA_RET_SUCC (%d)\n", ONEEA_RET_SUCC));
     return ONEEA_RET_SUCC;
@@ -243,7 +243,7 @@ static int get_mitsyntax( int areg, EA *amp )
         amp->eamode = Ea_DSP;
         amp->reg1 = areg&7;
     }
-    eps->tag = epsTag;     /* displacements are either signed words or signed bytes */
+	eps->tag = epsTag;     /* displacements are either signed words or signed bytes */
     return ONEEA_RET_SUCC;
 }
 
@@ -506,8 +506,8 @@ int get_oneea( EA *amp, int bwl )
     eps->register_mask = 0;
     eps->psuedo_value = 0;
     exp = eps->stack;
-    amp->tmps[0]->ptr = 0;  /* make sure these are empty too */
-    amp->tmps[1]->ptr = 0;
+	for (amflg=0; amflg < NUM_EA_TMPSTACKS; ++amflg)
+		amp->tmps[amflg]->ptr = 0;  /* make sure these are empty too */
     amflg = 0;          /* no special flags present */
     if (*inp_ptr == '#')
     {  /* immediate? */
@@ -626,7 +626,7 @@ int get_oneea( EA *amp, int bwl )
                                                       exp->expr_code == EXPR_VALUE &&
                                                       exp->expr_value >= -32678 &&
                                                       exp->expr_value < 32768)))
-        {
+		{
             eps->tag = 'I';
             amp->eamode = Ea_ABSW;
         }
@@ -657,7 +657,7 @@ static int get_twoea(int bwl)
 				{
 					M68DBG(("After second call to get_oneea() returned %d. Dest reg=%d, eamode=%d, mode=%d. inp_ptr=%s\n",
 							sts, dest.reg1, dest.eamode, dest.mode, inp_ptr ));
-                    return 1;
+					return 1;
 				}
             }
             else
@@ -1072,13 +1072,13 @@ int type3( int inst, int bwl )
             EXP0SP->expr_value = optabl3m[(int)inst] | source.eamode | source.reg1;
         }
         EXP0.ptr = 1;
-        return 1;
+		return 1;
     }               /* -- one operand mode */
     if ((dest.mode&E_Dn) == 0) bad_destam();    /* dest must be Dn */
     if ((source.mode&E_IMM) != 0)
     { /* source immediate? */
         typeF(optabl3r[(int)inst],&source,bwl,&dest);   /* do 'quick' format */
-        return 1;
+		return 1;
     }
     if ((source.mode&E_Dn) == 0) bad_sourceam(); /* else source must be Dn */
     EXP0SP->expr_value = optabl3r[(int)inst] | (source.reg1<<9) | (bwl<<6) |
@@ -2139,7 +2139,7 @@ int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea)
 static int type20_jmp( int inst )
 {
     /* Opposite sense branches */
-    static unsigned short optab20_inv[] =
+    static const unsigned short optab20_inv[] =
     {   0,              /*  0 Not defined */
         0x6500,         /*  1 BCS BLO (BCC BHS) */
         0x6400,         /*  2 BCC BHS (BCS BLO)*/
@@ -2187,7 +2187,7 @@ int type20(int inst, int bwl)
     EXP_stk *eps, tps;
     EXPR_struct *expr;
 
-    static unsigned short optab20[] = 
+    static const unsigned short optab20[] = 
     {   0,              /*  0 Not defined */
         0x6400,         /*  1 BCC BHS */
         0x6500,         /*  2 BCS BLO */
@@ -2277,7 +2277,7 @@ int type20(int inst, int bwl)
     {
         SS_struct *sym;
         sym = expr->expr_sym;
-        if ( sym->flg_local )
+        if ( sym->flg_gasLocal || sym->flg_macLocal )
         {
             /* Use a word offset */
             EXP0.ptr = 1;

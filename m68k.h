@@ -26,7 +26,7 @@
 #endif
 #define NULL 0
 
-#define NUM_EA_TMPSTACKS (2)
+#define NUM_EA_TMPSTACKS (1)
 
 /*effective address structure */
 typedef struct ea {

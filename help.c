@@ -33,7 +33,7 @@ typedef struct
 } Help_Value;
 static Help_Value help_symbol_length = {"%d",&max_symbol_length};
 static Help_Value help_opcode_length = {"%d",&max_opcode_length};
-static char help_uppercase_mark[1],help_cmos_mark[1],help_cmos_default[1], help_jerry_mark[1];
+static char help_uppercase_mark[1],help_cmos_mark[1],help_2_pass_mark[1],help_cmos_default[1], help_jerry_mark[1], help_2_pass_default[1];
 static char help_grnhill_mark[1];
 
 #define UPC help_uppercase_mark
@@ -47,6 +47,7 @@ static char *help_msg[] = {
                             "   - Output error messages in a syntax suitable for use by an IDE.\n",
     opt_delim,"[no]ignore", "	        - Ignore the assembler directives not implemented in this version\n",
 #if !defined(MAC_PP)
+	help_2_pass_mark,
     opt_delim,"[no]2_pass", "	        - select to assemble using two pass mode\n",
     opt_delim,"[no]debug",  "[=name]	- select and name temporary work file\n",
 #if 0
@@ -84,8 +85,11 @@ static char *help_msg[] = {
 #else
     opt_delim,"binary ",
 #endif
-    help_cmos_default,opt_delim,"nocmos ",
+	help_cmos_default,opt_delim,"nocmos ",
     help_cmos_default,opt_delim,"no816 ",
+	help_2_pass_default,opt_delim,"no2_pass ",
+#if defined(MAC_65) || defined(MAC_68) || defined(MAC_69) 
+#endif
 #else
     opt_delim,"noline ",
 #endif
@@ -103,35 +107,7 @@ static char *help_msg[] = {
 
 int display_help(void)
 {
-    int i, upc = 0, were_mac65=0, were_mac68=0, were_mac69=0, were_tj=0, were_mac68k=0;
-#if 0
-    int were_816=0;
-#endif
-    if (image_name != 0)
-    {
-        char *s;
-        s = strchr(image_name->name_only,'8');
-        if (s != 0 && s[1] == '1' && s[2] == '6')
-	{
-#if 0
-            were_816 = 1;
-#endif
-	}
-        else
-        {
-            s = strchr(image_name->name_only,'6');
-            if (s != 0 && s[1] == '5')
-                were_mac65 = 1;
-        }
-    }
-    else
-    {
-		if (macxx_name[3] == '6' && macxx_name[4] == '5') were_mac65 = 1;
-        else if (macxx_name[3] == '6' && macxx_name[4] == '8' && macxx_name[5]) were_mac68k = 1;
-		else if (macxx_name[3] == '6' && macxx_name[4] == '8' ) were_mac68 = 1;
-		else if (macxx_name[3] == '6' && macxx_name[4] == '9') were_mac69 = 1;
-        else if (macxx_name[3] == 't' && macxx_name[4] == 'j') were_tj = 1;
-    }
+    int i, upc = 0;
     for (i=0;help_msg[i] && i < sizeof(help_msg)/sizeof(char *);++i)
     {
         char *s;
@@ -157,7 +133,7 @@ int display_help(void)
         }
         if (help_msg[i] == help_grnhill_mark)
         {
-            if (!were_mac68k && !were_mac68 && !were_mac69)
+            if (! (were_mac68k || were_mac682k) )
             {
                 i += 3;     /* skip the delim, option name and text */
             }
@@ -165,7 +141,7 @@ int display_help(void)
         }
         if (help_msg[i] == help_jerry_mark)
         {
-            if (!were_tj)
+            if (!were_mactj)
             {    /* If not mactj, */
                 i += 3;     /* skip the delim, option name and text */
             }
@@ -179,6 +155,12 @@ int display_help(void)
             }
             continue;
         }
+		if (help_msg[i] == help_2_pass_mark)
+		{
+			if ( !(were_mac65 || were_mac68 || were_mac69) )
+				i += 3;     /* skip the delim, option name and text */
+			continue;
+		}
         if (help_msg[i] == help_cmos_default)
         {
             if (!were_mac65)
@@ -187,7 +169,13 @@ int display_help(void)
             }
             continue;
         }
-        if (!upc)
+		if ( help_msg[i] == help_2_pass_default )
+		{
+			if ( !(were_mac65 || were_mac68 || were_mac69) )
+				i += 2;		/* skip the delim and option name */
+			continue;
+		}
+		if ( !upc )
         {
             fputs(help_msg[i],stderr);
         }

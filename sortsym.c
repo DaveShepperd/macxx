@@ -29,7 +29,7 @@ static void show_undef_local(SS_struct *st)
 {
     char *sn;
     sn = st->ss_string;
-    if (st->flg_local)
+    if (st->flg_macLocal)
     {
         while (*sn)
         {
@@ -41,7 +41,7 @@ static void show_undef_local(SS_struct *st)
             ++sn;
         }
     }
-	snprintf(emsg, ERRMSG_SIZE, "%s:%d: Undefined local symbol: '%s'", st->ss_fnd->fn_nam->relative_name, st->ss_line, sn);
+	snprintf(emsg, ERRMSG_SIZE, "%s:%d: Undefined local symbol: '%s' (%s)", st->ss_fnd->fn_nam->relative_name, st->ss_line, sn, st->ss_string);
     err_msg(MSG_ERROR,emsg);
     st->flg_defined = 1;     /* define it as absolute */
     st->flg_abs = 1;
@@ -70,11 +70,11 @@ int sort_symbols(void)
         for (st=hash[(short)i] ; st != 0 ; st=st->ss_next)
         {
 #if 0
-            fprintf(stderr, "Looking at symbol {%s}, seg=%d, def=%d, gbl=%d, ref=%d, lcl=%d\n",
-                    st->ss_string, st->flg_segment, st->flg_defined, st->flg_global, st->flg_ref, st->flg_local);
+            fprintf(stderr, "Looking at symbol {%s}, seg=%d, def=%d, gbl=%d, ref=%d, macLcl=%d, gasLcl=%d\n",
+                    st->ss_string, st->flg_segment, st->flg_defined, st->flg_global, st->flg_ref, st->flg_macLocal, st->flg_gasLocal);
 #endif
             if (st->flg_segment) continue;  /* ignore segments */
-            if (!st->flg_defined && !st->flg_local)
+            if (!st->flg_defined && !st->flg_macLocal)
             {
                 if ((edmask&ED_GBL) != 0) st->flg_global = 1;
                 if (st->flg_ref && find_segment(st->ss_string, seg_list, seg_list_index) != 0) st->flg_global = 1;
@@ -106,19 +106,22 @@ int sort_symbols(void)
                 }
                 if (debug)
                 {
-                    if (*st->ss_string != '.' && 
-                        (st->flg_local ||
-                         (st->flg_label && !st->flg_global && !st->flg_register)) &&
-                        (output_mode == OUTPUT_OBJ || output_mode == OUTPUT_OL) )
+                    if (    (    st->flg_gasLocal
+						     || (st->flg_label && !st->flg_global && !st->flg_register)
+					        )
+						 &&
+                            (output_mode == OUTPUT_OBJ || output_mode == OUTPUT_OL)
+					   )
                     {
                         outsym_def(st,output_mode);    /* write to obj file */
                     }
                 }
-                if (st->flg_local) continue;    /* don't count local symbols */
+                if (st->flg_macLocal)
+					continue;    /* don't count local symbols */
             }
             else
             {
-                if (st->flg_local || st->ss_scope)
+                if (st->flg_macLocal || st->ss_scope)
                 {
                     show_undef_local(st);
                     continue;
@@ -141,7 +144,7 @@ int sort_symbols(void)
                 do
                 {
                     if (st->flg_segment) continue;  /* ignore segments */
-                    if (st->flg_local && st->flg_defined)
+                    if (st->flg_macLocal && st->flg_defined)
 						continue;
                     if (st->ss_scope != 0) continue; /* don't sort nested syms */
                     if (ret < j) *ls++ = st;        /* record the pointer */
@@ -310,7 +313,7 @@ int sort_symbols(void)
         }
 		if ( options[QUAL_2_PASS] )
 		{
-			snprintf(emsg,sizeof(emsg),"Total instruction tags used: %d\n", totalTagsUsed);
+			snprintf(emsg,sizeof(emsg),"Total instruction tags used: %d, total checks: %d\n", totalTagsUsed,totalTagsChecked);
 			puts_lis(emsg,1);
 		}
 	}

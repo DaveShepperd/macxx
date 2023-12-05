@@ -43,6 +43,13 @@ typedef struct my_desc {	/* define a descriptor structure cuz	*/
    	string };
 #endif
 
+typedef struct AMA_Tags_t
+{
+	struct AMA_Tags_t *next;
+	unsigned short line;
+	unsigned short tag;
+} AMA_Tags_t;
+
 typedef struct fn_struct {
 #ifdef VMS
    unsigned short d_length;	/* length of s_buff			*/
@@ -57,6 +64,7 @@ typedef struct fn_struct {
    struct file_name *fn_nam;	/* pointer to nam_struct 		*/
    char *fn_version;		/* file version number (for debug)	*/
    int macro_level;		/* saved macro level			*/
+   AMA_Tags_t **tagHashTable;
    unsigned short fn_line;	/* current line number of input file    */
    unsigned char fn_filenum;	/* file number				*/
    unsigned fn_present:1;	/* this file is present (T/F)		*/
@@ -104,7 +112,8 @@ typedef struct ss_struct {
    unsigned int flg_defined:1;	/* label/symbol is defined */
    unsigned int flg_fwdReference:1;	/* symbol was used in an expression before being defined */
    unsigned int flg_fixed_addr:1;	/* Symbol cannot be re-defined */
-   unsigned int flg_local:1;	/* local label */
+   unsigned int flg_macLocal:1;	/* macxx local label */
+   unsigned int flg_gasLocal:1;	/* GNU assembler local label */
    unsigned int flg_static:1;	/* static (local) symbol */
    unsigned int flg_label:1;	/* symbol is a label */
    unsigned int flg_global:1;	/* symbol/label is global */
