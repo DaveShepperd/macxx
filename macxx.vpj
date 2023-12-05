@@ -376,9 +376,11 @@
 				N="Makefile"
 				Type="Makefile"/>
 			<F
-				N="makefile"
+				N="Makefile.mingw32"
 				Type="Makefile"/>
 			<F N="stab.def"/>
 		</Folder>
 	</Files>
+	<List Name="RTE">
+	</List>
 </Project>
