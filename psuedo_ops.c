@@ -2252,22 +2252,14 @@ int op_length(void)
 }
 #endif
 
-int op_include(void)
+static FN_struct *procFileName(void)
 {
 	int rms_err;
 	FN_struct *tfnd;
-
-	if ( include_level >= 8 )
-	{
-		tkn_ptr = inp_ptr;
-		bad_token((char *)0, "Include nest level too deep");
-		f1_eatit();
-		return 0;
-	}
 	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) != 0 )
 	{
 		bad_token((char *)0, "No filename argument present");
-		return 0;
+		return NULL;
 	}
 	tfnd = get_fn_struct();
 	rms_err = 0;
@@ -2314,35 +2306,49 @@ int op_include(void)
 		if ( tfnd->fn_file != 0 )
 			fclose(tfnd->fn_file);
 	}
-	else
+	return tfnd;
+}
+
+int op_include(void)
+{
+	FN_struct *tfnd;
+
+	if ( include_level >= 8 )
 	{
-		tfnd->fn_next = current_fnd;
-		current_fnd->macro_level = macro_level;
-		macro_level = 0;
-		current_fnd = tfnd;
-		if ( squeak )
-			printf("Processing file %s\n", current_fnd->fn_buff);
-#if !defined(MAC_PP)
-		if ( obj_fp != 0 )
-			write_to_tmp(TMP_FILE, 1, &current_fnd, sizeof(FN_struct *));
-		tfnd->fn_buff = tfnd->fn_nam->full_name;
-		if ( options[QUAL_DEBUG] )
-		{
-			struct stat file_stat;
-			if ( fn_pool_size < 26 )
-				(void)get_fn_pool();
-			fstat(fileno(current_fnd->fn_file), &file_stat);
-			strcpy((char *)fn_pool, ctime(&file_stat.st_mtime));
-			current_fnd->fn_version = fn_pool;
-			*(fn_pool + 24) = 0;
-			fn_pool_size -= 25;
-			fn_pool += 25;
-			dbg_flush(1);
-			add_dbg_file(current_fnd->fn_buff, current_fnd->fn_version, (int *)0);
-		}
-#endif
-		++include_level;
+		tkn_ptr = inp_ptr;
+		bad_token((char *)0, "Include nest level too deep");
+		f1_eatit();
+		return 0;
 	}
+	tfnd = procFileName();
+	if ( !tfnd )
+		return 0;
+	tfnd->fn_next = current_fnd;
+	current_fnd->macro_level = macro_level;
+	macro_level = 0;
+	current_fnd = tfnd;
+	if ( squeak )
+		printf("Processing file %s\n", current_fnd->fn_buff);
+#if !defined(MAC_PP)
+	if ( obj_fp != 0 )
+		write_to_tmp(TMP_FILE, 1, &current_fnd, sizeof(FN_struct *));
+	tfnd->fn_buff = tfnd->fn_nam->full_name;
+	if ( options[QUAL_DEBUG] )
+	{
+		struct stat file_stat;
+		if ( fn_pool_size < 26 )
+			(void)get_fn_pool();
+		fstat(fileno(current_fnd->fn_file), &file_stat);
+		strcpy((char *)fn_pool, ctime(&file_stat.st_mtime));
+		current_fnd->fn_version = fn_pool;
+		*(fn_pool + 24) = 0;
+		fn_pool_size -= 25;
+		fn_pool += 25;
+		dbg_flush(1);
+		add_dbg_file(current_fnd->fn_buff, current_fnd->fn_version, (int *)0);
+	}
+#endif
+	++include_level;
 	return 0;
 }
 
@@ -4232,9 +4238,7 @@ int op_print(void)
  *******************************************************************/
 int op_copy(void)
 {
-	int tt;
 	char buff[256];
-	FILE *file_cpy;
 
 	/* If no List file - do nothing just return */
 	if ( lis_fp == 0 )
@@ -4246,50 +4250,32 @@ int op_copy(void)
 	/* is .LIST turned on ? */
 	if ( show_line > 0 )
 	{
-		tt = get_token();
-		if ( tt == TOKEN_strng )
+		FN_struct *tfnd;
+		tfnd = procFileName();
+		if ( !tfnd )
+			return 0;
+		line_to_listing();
+		show_line = 0;      /* Don't show the .copy line again */
+		buff[sizeof(buff) - 1] = 0;
+		while ( fgets(buff, sizeof(buff) - 2, tfnd->fn_file) )
 		{
-			/* open the file */
-			file_cpy = fopen(token_pool, "rt");
-			if ( !file_cpy )
+			int len = strlen(buff);
+			if ( len )
 			{
-				sprintf(emsg, " Unable to open file \"%s\" - file not found!", token_pool);
-				show_bad_token(tkn_ptr, emsg, MSG_ERROR);
-				f1_eatit(); /* eat rest of line */
-				return -1;
-			}
-			line_to_listing();
-			show_line = 0;      /* Don't show the .copy line again */
-			buff[sizeof(buff) - 1] = 0;
-			while ( fgets(buff, sizeof(buff) - 2, file_cpy) )
-			{
-				int len = strlen(buff);
-				if ( len )
+				/* only print non-null lines */
+				if ( len >= (int)sizeof(buff) - 2 || buff[len - 1] != '\n' )
 				{
-					/* only print non-null lines */
-					if ( len >= (int)sizeof(buff) - 2 || buff[len - 1] != '\n' )
-					{
-						/* make sure all lines end in a newline */
-						buff[len++] = '\n';
-						buff[len] = 0;
-					}
-					puts_lis(buff, 1);
+					/* make sure all lines end in a newline */
+					buff[len++] = '\n';
+					buff[len] = 0;
 				}
+				puts_lis(buff, 1);
 			}
-			fclose(file_cpy);
 		}
-		else
-		{
-			sprintf(emsg, " Missing file name ");
-			show_bad_token(tkn_ptr, emsg, MSG_ERROR);
-			f1_eatit(); /* eat rest of line */
-			return -1;
-
-		}
+		fclose(tfnd->fn_file);
 	}
 	f1_eatit();     /* eat rest of line */
 	return 0;
-
 }
 
 int op_sqon(void)

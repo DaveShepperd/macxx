@@ -44,7 +44,7 @@ int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea);
 #define ONEEA_RET_FAIL (0)
 #define ONEEA_RET_SUCC (1)
 #if 0
-#define M68DBG(x) printf x
+#define M68DBG(x) do { if ( squeak ) printf x; } while(0)
 #else
 #define M68DBG(x) do { ; } while (0)
 #endif

@@ -172,10 +172,12 @@
     <tr><td><a href="#dir_save">.SAVE</a></td><td>Save the current location counter</td>
     <tr><td><a href="#dir_sbttl">.SBTTL</a></td><td>Set a subtitle</td>
     <tr><td><a href="#dir_setpointer">.SETPOINTER</a></td><td>Set the user stack's pointer</td>
-    <tr><td><a href="#dir_sbttl">.SUBTITLE</a></td><td>Set a subtitle</td>
+    <tr><td><a href="#dir_sqoff">.SQOFF</a></td><td>Turn squeak off (used for macxx internal debugging)</td>
+    <tr><td><a href="#dir_sqon">.SQON</a></td><td>Turn squeak on (used for macxx internal debugging)</td>
     <tr><td><a href="#dir_stabx">.STABx</a></td><td>Pass stab debug directives through to object file</td>
     <tr><td><a href="#dir_ascix">.STRING</a></td><td>Put constants in memory</td>
     <tr><td><a href="#dir_globl">.STATIC</a></td><td>Assign symbol(s) as being static in scope</td>
+    <tr><td><a href="#dir_sbttl">.SUBTITLE</a></td><td>Set a subtitle (same as .SBTTL)</td>
     <tr><td><a href="#dir_test">.TEST</a></td><td>Perform a test on an expression</td>
     <tr><td><a href="#dir_title">.TITLE</a></td><td>Set the title for the pages in the listings</td>
     <tr><td><a href="#dir_triplet">.TRIPLET</a></td><td>MAC65 only; Put 24 bit variables in memory</td>
@@ -950,7 +952,6 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>See <a href="#MOS_ED_opt">HERE</a>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;SIMPLE</td><td>Enable this to neuter the complex expression handler in .ifdf/.ifndf directives (makes it compatible with RT11 macxx).</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;SQUEAK</td><td>Enables internal assembler debug messages<font color="red">WARNING:</font>Enabling this function will produce lots of meaningless output.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
       to be computed using unsigned arithmetic (UnSigned Divide).</td></tr>
@@ -2097,6 +2098,20 @@ the stack pointer on a named stack. Examples:
   and is not used by the assembler. This directive is ignored if no
   listing file is being created.
   </p>  
+  <h3 id="dir_sqoff">.SQOFF</h3>
+      <pre>
+      .SQOFF
+      </pre>
+  <p>
+      Turn off debugging prints to stdout.
+  </p>
+  <h3 id="dir_sqon">.SQON</h3>
+      <pre>
+      .SQON
+      </pre>
+  <p>
+      Turn on debugging prints to stdout.
+  </p>
   <h3 id="dir_test">.TEST</h3>
   <pre>
       .TEST expression  ;message to be reported if expression is true

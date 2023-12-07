@@ -595,7 +595,10 @@ int macro_call(Opcode *opc)
     condit_polarity = 0;
     args = (char *)(keywrd+ma->mac_numargs); /* point to argument area */
     args_area = argptr = (char **)MEM_alloc(argcnt*(int)sizeof(char *));
-	argMask = (CT_EOL|CT_SMC);
+/* Why did this get changed? What was I thinking? It broke macro calls where the first argument is left blank */
+/* So put it back the way it was. */
+/*	argMask = (CT_EOL|CT_SMC); */
+    argMask = (CT_EOL|CT_COM|CT_SMC);
     for (argcnt = 0; argcnt < ma->mac_numargs; ++argcnt)
     {
         int c,beg,end;
@@ -609,7 +612,7 @@ int macro_call(Opcode *opc)
             if (c == ',') ++inp_ptr; /* eat the comma */
             goto term_arg;     /* go terminate the argument */
         }
-		argMask = (CT_EOL|CT_COM|CT_SMC);
+/*		argMask = (CT_EOL|CT_COM|CT_SMC); */
         *argptr = args;       /* point to argument */
         if (c == macro_arg_genval)
         {  /* special value to ascii? */
@@ -693,7 +696,7 @@ int macro_call(Opcode *opc)
                     if (nest < 0)
                     {  /* end of term? */
                         ++inp_ptr;    /* yep, eat the terminator character */
-                        break;    /* and terminate the argument */
+                        goto term_arg;    /* and terminate the argument */
                     }
                 }
                 else if (c == beg)
@@ -713,7 +716,7 @@ int macro_call(Opcode *opc)
             {        /* copy string */
                 c = *inp_ptr;   /* pickup next char */
                 if ((cttbl[c]&(CT_EOL|CT_WS|CT_COM|CT_SMC)) != 0)
-					break;
+					goto term_arg;
                 *tpp++ = _toupper(c);   /* upcase the keyword */
                 if (not_kw && c == '=')
                 {   /* asking for keyword parameter? */

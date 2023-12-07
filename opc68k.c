@@ -254,10 +254,7 @@ void do_opcode(Opcode *opc)
     {
         EXPR_struct *exp;
 		exp = eptr->stack;
-#if 0	/* The EXP_stk struct is cleared in exprs() */
-		memset(eptr,0,sizeof(EXP_stk));
-		eptr->stack = exp;
-#endif
+		eptr->ptr = 0;
         eptr->tag = 'W';
         eptr->tag_len = 1;
         exp->expr_code = EXPR_VALUE;
