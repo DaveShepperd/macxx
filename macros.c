@@ -547,7 +547,7 @@ int macro_call(Opcode *opc)
     char **keywrd,**defalt,**argptr,*args;
     unsigned char *gensym;
     Mcall_struct *mac_pool;
-    int argcnt,arglen,argMask;       /* assume no args */
+    int argcnt,arglen;       /* assume no args */
     char **args_area;
 
     if ((ma = opc->op_margs) == 0)
@@ -595,24 +595,19 @@ int macro_call(Opcode *opc)
     condit_polarity = 0;
     args = (char *)(keywrd+ma->mac_numargs); /* point to argument area */
     args_area = argptr = (char **)MEM_alloc(argcnt*(int)sizeof(char *));
-/* Why did this get changed? What was I thinking? It broke macro calls where the first argument is left blank */
-/* So put it back the way it was. */
-/*	argMask = (CT_EOL|CT_SMC); */
-    argMask = (CT_EOL|CT_COM|CT_SMC);
     for (argcnt = 0; argcnt < ma->mac_numargs; ++argcnt)
     {
         int c,beg,end;
         beg = macro_arg_open;
         end = macro_arg_close;
         *argptr = 0;      /* assume no argument */
-        while (isspace((int)*inp_ptr)) ++inp_ptr; /* skip over white space */
+        while (isspace((int)*inp_ptr))
+			++inp_ptr; /* skip over white space */
         c = *inp_ptr;     /* pick up character */
-        if ((cttbl[c]&argMask) != 0)
+        if ((cttbl[c]&(CT_EOL|CT_COM|CT_SMC)) != 0)
         {
-            if (c == ',') ++inp_ptr; /* eat the comma */
-            goto term_arg;     /* go terminate the argument */
+            goto term_arg;     /* go terminate the argument (eats the comma if there is one) */
         }
-/*		argMask = (CT_EOL|CT_COM|CT_SMC); */
         *argptr = args;       /* point to argument */
         if (c == macro_arg_genval)
         {  /* special value to ascii? */
@@ -742,9 +737,12 @@ int macro_call(Opcode *opc)
 term_arg:
         *args++ = 0;      /* null terminate the string */
         ++argptr;         /* skip to next arg */
-        while ((cttbl[c = *inp_ptr]&CT_WS) != 0) ++inp_ptr; /* skip over trailing white space */
-        if (c == ',') ++inp_ptr;  /* eat trailing comma */
-        if ((cttbl[c]&CT_EOL) != 0) break;
+        while ((cttbl[c = *inp_ptr]&CT_WS) != 0)
+			++inp_ptr; /* skip over trailing white space */
+        if (c == ',')
+			++inp_ptr;  /* eat trailing comma */
+        if ((cttbl[c]&CT_EOL) != 0)
+			break;
     }
     argptr = args_area;      /* backup to beginning of dummy arg area */
     keywrd = (char **)(marg_head+1); /* point to start of keyword args */
@@ -836,28 +834,6 @@ int op_irp( void )            /* .IRP macro */
     strcpy((char *)mac_pool,token_pool);     /* copy in dummy argument name */
     mac_pool += token_value+1;       /* move pointer */
     marg->marg_args = key_pool;      /* pointer to array of ptrs to args */
-
-#if 0
-    tt = size*(1+            /* room for arguments */
-               sizeof(char *))+       /* room for ptrs to arguments */
-         2*sizeof(char *)+      /* room for 2 extra pointers */
-         sizeof(Mcall_struct)+      /* room for mcall struct */
-         sizeof(Macargs)+       /* room for dummy macargs struct */
-         token_value+12;        /* room for error message */
-    mac_pool = MEM_alloc(tt);        /* pickup some memory */
-    marg = (Mcall_struct *)mac_pool; /* point to argument area */
-    ma = (Macargs *)(marg+1);    /* pointer to dummy macargs */
-    key_pool = (char **)(ma+1);      /* get space for arg ptrs */
-    macro_name = (char *)(key_pool+size+1); /* point to area for macro name */
-    sprintf(macro_name,".IRP %s,<...>",token_pool);  /* create macro name */
-    mac_pool = macro_name+12+token_value; /* move pointer */
-    ma->mac_keywrd = key_pool;       /* pointer to pointer to dummy arg */
-    *key_pool++ = mac_pool;      /* pointer to dummy argument */
-    strcpy(mac_pool,token_pool);     /* copy in dummy argument name */
-    mac_pool += token_value+1;       /* move pointer */
-    marg->marg_args = key_pool;      /* pointer to array of ptrs to args */
-    ma->mac_numargs = 1;         /* .IRP has only 1 replaceable argument */
-#endif
 
     while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
     if (*inp_ptr != ',')
@@ -1049,29 +1025,6 @@ int op_irpc( void )           /* .IRPC macro */
     strcpy((char *)mac_pool,token_pool);     /* copy in dummy argument name */
     mac_pool += token_value+1;       /* move pointer */
     marg->marg_args = key_pool;      /* pointer to array of ptrs to args */
-
-#if 0
-    tt =  size+              /* room for arg string */
-          2*sizeof(char *)+      /* room for 2 ptrs to strings */
-          sizeof(char *)+        /* room for 1 extra 0 pointer */
-          sizeof(Mcall_struct)+  /* room for mcall struct */
-          sizeof(Macargs)+   /* room for dummy macargs struct */
-          token_value+1+         /* room for the dummy argument */
-          token_value+13;        /* room for macro name */
-    mac_pool = MEM_alloc(tt);        /* pickup some memory */
-    marg = (Mcall_struct *)mac_pool; /* point to argument area */
-    ma = (Macargs *)(marg+1);    /* pointer to dummy macargs */
-    key_pool = (char **)(ma+1);      /* get space for arg ptrs */
-    macro_name = (char *)(key_pool+3);   /* point to area for macro name */
-    sprintf(macro_name,".IRPC %s,<...>",token_pool); /* create macro name */
-    mac_pool = macro_name+14+token_value; /* move pointer */
-    ma->mac_keywrd = key_pool;       /* pointer to pointer to dummy arg */
-    *key_pool++ = mac_pool;      /* pointer to dummy argument */
-    strcpy(mac_pool,token_pool);     /* copy in dummy argument name */
-    mac_pool += token_value+1;       /* move pointer */
-    marg->marg_args = key_pool;      /* pointer to array of ptrs to args */
-    ma->mac_numargs = 1;         /* .IRPC has only 1 replaceable argument */
-#endif
 
     while (isspace(*inp_ptr))
 		++inp_ptr; /* skip over white space */
@@ -1272,7 +1225,7 @@ int op_rept( void )           /* .REPT macro */
 
 void mexit_common( int depth)
 {
-    if (depth == 0 && marg_head->marg_flag != 0)
+	if ( depth == 0 && marg_head->marg_flag != 0 )
     { /* .irp or .rept block */
         marg_head->marg_ptr = marg_head->marg_end;
     }
@@ -1354,17 +1307,19 @@ int op_rexit( void )
 {
     if (macro_level <= 0)
     {
-        bad_token((char *)0,"Not inside a rept block");
+        bad_token((char *)0,"Not inside a rept block or macro");
     }
     else
     {
         if (marg_head->marg_flag != 0)
         {
-            mexit_common(0);
+			/* An .REXIT in a repeat block, always exit the block */
+            mexit_common(1);
         }
         else
         {
-            mexit_common(1);
+			/*  An .REXIT inside a ordinary macro, just exit the macro*/
+            mexit_common(0);
         }
     }
     return 0;

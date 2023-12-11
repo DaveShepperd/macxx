@@ -18,11 +18,16 @@
 /******************************************************************************
 Change Log
 
+	12/07/2023	- Bug fix, improper use of check for DPAGE	T.G.
+			  resulting in DPAGE address mode instead of extended
+			  address mode when not in DPAGE address range.
+
+	12/06/2023	- Bug fix, allow true 16 bit offsets for	T.G.
+			  LEAr instructions
+
 	11/30/2023	- Fixed errors when using -2 pass option	T.G.
 			  MACxx being a single pass assembler with a 2 pass
-			  option both must create the same obj files.  This
-			  will defeat some of the optimization capabilities
-			  of the 2 pass option.
+			  option both must create the same obj files.
 
 	12/27/2022	- Fixed dpage problem that was causing LLF Truncation
 			  warnings for dpage offsets.
@@ -130,55 +135,6 @@ enum amflag
 	GOTSTK = OPENBKT << 1
 };
 
-#if 0
-static struct
-{
-	char *name;
-	AModes am_num;
-}
-forced_am[] =
-{
-	{"I",      I_NUM
-	},
-	{
-		"D",      D_NUM
-	},
-	{
-		"X",      X_NUM
-	},
-	{
-		"E",      E_NUM
-	},
-	{
-		"S",      S_NUM
-	},
-	{
-		"SPC",  SPC_NUM
-	},
-	{
-		"SPD",  SPD_NUM
-	},
-	{
-		"OPC10",  OPC10_NUM
-	},
-	{
-		"OPC11",  OPC11_NUM
-	},
-	{
-		"SPL",  SPL_NUM
-	},
-	{
-		"ACC",  ACC_NUM
-	},
-	{
-		"IMP",  IMP_NUM
-	},
-	{
-		0,0
-	}
-};
-#endif
-
 
 typedef struct
 {
@@ -199,7 +155,7 @@ int ust_init(void)
 	return 0;            /* would fill a user symbol table */
 }
 
-static int check_4_dzpage(EXP_stk *estk)
+static int check_4_dpage(EXP_stk *estk)
 {
 	DPage *dp;
 	EXPR_struct *expr;
@@ -940,8 +896,9 @@ static int do_operand(Opcode *opc)
 									temp = 0x88;
 								}
 							}
-							else if ( (con_offset  > -32769) && (con_offset  < 32768) )
-							{ /* -32769 >< +32768 */
+							else if ( (con_offset > -32769) && (con_offset < 65536) )
+							{ /* -32769 >< +32768 or Load Effective Address instruction - Note: In 16 bit math any number
+								between 0xFFFF -> 0x8000 is -1 -> -32768 so must be allowed +32768 + 0x8000 = 65536 */
 								indexed_mode = indexed_mode | flg_16bit;
 								if ( indexed_mode & flg_indirect )
 								{
@@ -954,7 +911,7 @@ static int do_operand(Opcode *opc)
 							}
 							else
 							{
-								sprintf(emsg, "only values less than 16 bits allowed - constant offset = %lX Hex", con_offset);
+								sprintf(emsg, "Only signed 16 bit values allowed - constant offset = %lX Hex", con_offset);
 								bad_token((char *)0, emsg);
 								f1_eatit();	/* eat rest of line */
 								return -1;
@@ -1336,7 +1293,7 @@ static int do_operand(Opcode *opc)
 				}
 
 				if ( strcmp(token_pool, "I") == 0 )
-				{
+				{  /* mode "I"  Immediate addressing */
 					++inp_ptr;	/* eat the comma */
 					get_token();	/* get the next token */
 					if ( exprs(1, &EXP1) < 1 )
@@ -1352,19 +1309,26 @@ static int do_operand(Opcode *opc)
 
 				}
 				else if ( strcmp(token_pool, "D") == 0 )
-				{
-					amdcdnum = D;
+				{  /* mode "D"  Direct page addressing */
 					EXP0SP->expr_value = opc->op_value + 0x10;
-
+					++inp_ptr;	/* eat the comma */
+					get_token();	/* get the next token */
+					if ( exprs(1, &EXP1) < 1 )
+						break;	/* quit if expr nfg */
+					return D_NUM;
 				}
 				else if ( strcmp(token_pool, "E") == 0 )
-				{
-					amdcdnum = E;
+				{  /* mode "E"  Extended addressing */
 					EXP0SP->expr_value = (opc->op_value + 0x30);
+					++inp_ptr;	/* eat the comma */
+					get_token();	/* get the next token */
+					if ( exprs(1, &EXP1) < 1 )
+						break;	/* quit if expr nfg */
 					EXP1.tag = (edmask & ED_M68) ? 'W' : 'w';
+					return E_NUM;
 				}
 				else if ( strcmp(token_pool, "NE") == 0 )
-				{  /* mode "NE"   */
+				{  /* mode "NE"  Indirect Extended addressing */
 					EXP0SP->expr_value = (opc->op_value + 0x20);
 					++inp_ptr;		/* eat the comma */
 					get_token();		/* get the next token */
@@ -1402,13 +1366,13 @@ static int do_operand(Opcode *opc)
 
 				exp_ptr = EXP1.stack;
 
-				if ( (opc->op_amode & D) &&			/* if Direct (Absolute Zero Page) mode is legal */
-					(((edmask & ED_AMA) == 0) ||		/* and not AMA mode */
-					(EXP1.base_page_reference != 0) ||	/* or base page expression */
-					((EXP1.ptr == 1) &&			/* or expression is < 256 */
-					(exp_ptr->expr_code == EXPR_VALUE) &&
-					((exp_ptr->expr_value & -256) == 0) &&
-					(EXP1.forward_reference == 0))) )
+				if ( (opc->op_amode & D) &&			/* ( if Direct (Absolute Zero Page) mode is legal and */
+					( ((edmask & ED_AMA) == 0) ||		/* ( not AMA mode or*/
+					(EXP1.base_page_reference != 0) ||	/* base page expression or*/
+					( (EXP1.ptr == 1) &&			/* ( expression and */
+					(exp_ptr->expr_code == EXPR_VALUE) &&	/* expression is a number and */
+					check_4_dpage(&EXP1) &&			/* it's a DPAGE and */
+					(EXP1.forward_reference == 0) ) ) )	/* it's not an unknown size) ) ) */
 				{
 					/* If no AM option - Default Direct (Absolute Zero Page) */
 					if ( ((opc->op_amode) == (SHFTAM)) || (opc->op_amode & SPDP) )
@@ -1419,7 +1383,7 @@ static int do_operand(Opcode *opc)
 					{
 						EXP0SP->expr_value = (opc->op_value + 0x10);
 					}
-					make_dpage_ref(&EXP1);
+					make_dpage_ref(&EXP1); /* Make a DPAGE reference so MAC69 won't complain about Truncation errors*/
 					EXP1.tag = 'c';
 				}
 				else
@@ -1427,7 +1391,7 @@ static int do_operand(Opcode *opc)
 					if ( opc->op_amode & D )
 					{  /* If no AM option - Check for dpage  */
 
-						if ( check_4_dzpage(&EXP1) )
+						if ( check_4_dpage(&EXP1) )
 						{
 							if ( opc->op_amode & SPDP )
 							{
@@ -1442,7 +1406,6 @@ static int do_operand(Opcode *opc)
 							EXP1SP->expr_code = EXPR_VALUE;		/* set expression component is an absolute value */
 							EXP1.tag = 'b';
 							EXP1.ptr = 1;				/* second stack has operand (1 element) */
-
 						}
 						else if ( opc->op_amode & E )
 						{  /* If no AM option - Default  Extended (Absolute) */

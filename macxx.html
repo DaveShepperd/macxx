@@ -168,7 +168,7 @@
     <tr><td><a href="#dir_radix">.RADIX</a></td><td>Set number interpreter radix</td>
     <tr><td><a href="#dir_restore">.RESTORE</a></td><td>Restore location counter from a previous .SAVE</td>
     <tr><td><a href="#dir_rept">.REPT</a></td><td>Repeat block</td>
-    <tr><td><a href="#dir_rexit">.REXIT</a></td><td>Repeat block exit</td>
+    <tr><td><a href="#dir_mexit">.REXIT</a></td><td>Repeat block exit</td>
     <tr><td><a href="#dir_save">.SAVE</a></td><td>Save the current location counter</td>
     <tr><td><a href="#dir_sbttl">.SBTTL</a></td><td>Set a subtitle</td>
     <tr><td><a href="#dir_setpointer">.SETPOINTER</a></td><td>Set the user stack's pointer</td>
@@ -1325,11 +1325,8 @@ the stack pointer on a named stack. Examples:
       CALL DO_IT &lt;FRED,FOOBAR,FUBAR&gt;
     </pre>
   <p>
-  A .MEXIT or .REXIT directive causes the macro expansion to skip to the
-  end of the repeat block. If additional arguments remain in the list, the
-  repeat block is called with the next argument in line. See also <b>.IRPC</b>,
-  .MEXIT, .REXIT and .MACRO <a href="#gen_macros">HERE</a>.
-    </p>
+  See also <b>.IRPC</b>, <b>.REPT</b>, <b>.MEXIT</b>, <b>.REXIT</b> and <b>.MACRO</b> <a href="#gen_macros">HERE</a>.
+  </p>
   <h3 id="dir_irpc">.IRPC</h3>
   <p>
   Identical to the <a href="#dir_irp">.IRP</a> except the dummy argument is successively 
@@ -1358,7 +1355,7 @@ the stack pointer on a named stack. Examples:
   .byte '3
   </pre>
   <p>
-     See also .IRP, .MEXIT, .REXIT and .MACRO <a href="#gen_macros">HERE</a>.
+     See also .REPT, .IRP, .MEXIT, .REXIT and .MACRO <a href="#gen_macros">HERE</a>.
   </p>
   <h3 id="dir_length">.LENGTH</h3>
     <pre>
@@ -1510,50 +1507,33 @@ the stack pointer on a named stack. Examples:
       .REXIT
     </pre>
   <p>
-  The .MEXIT and .REXIT directives are an implementation of an alternate exit from a
-  macro or repeat block. Upon encountering a .MEXIT directive during a
-  macro expansion (not during a macro definition), the macro or repeat block after being called is
-  immediately terminated as though it were an .ENDM or .ENDR. This is particularly
-  useful in complex conditional structures in that it is a functional
-  equivalent to a "goto end_of_macro". The <u>expression></u>
-  is optional but, if present, must resolve to an absolute
-  value and it indicates how many macro levels to exit. The effect of the 
-  .MEXIT or .REXIT is different between ordinary macros and repeat blocks. If the 
-  expression argument is blank then the behavior is according to the 
-  following truth table:
+  The .MEXIT and .REXIT directives provide an exit from a
+  macro or repeat block. Upon encountering a .MEXIT or .REXIT directive during a
+  macro expansion (not during a macro definition), the macro or repeat block after being called
+  may be immediately terminated as though it were an .ENDM or .ENDR. This is particularly
+  useful in complex conditional structures in that the .MEXIT with an expression is a functional
+  equivalent to various language's 'break' and 'continue'.
   </p>
-  <table style="width: 100%">
-    <tr><th>Macro Type</th><th>Action</th></tr>
-    <tr><td>Ordinary</td><td>macro is exited</td></tr>
-    <tr><td>repeat block</td><td>block is exited and the repeat count is 
-        decremented or the next argument selected;
-        block will be re-executed if the repeat
-        count remains greater than 0 or argument
-        list has not been exhausted.</td></tr>
+  The <u>expression</u>
+  is optional on .MEXIT but, if present, must resolve to an absolute positive or negative
+  value and it indicates how many macro levels to exit. A blank expression on .MEXIT
+  is assumed to mean 0.
+  <p>
+  The .MEXIT directive behaves according to the following:
+  </p>
+  <table style="width: 75%">
+    <tr><th>Macro Type</th><th style="text-align: center">Expression</th><th>Action</th></tr>
+    <tr><td>Ordinary</td><td style="text-align: center">&lt; 0</td><td>directive is ignored </td></tr>
+    <tr><td>Ordinary</td><td style="text-align: center">= 0</td><td>macro is exited</td></tr>
+    <tr><td>Ordinary</td><td style="text-align: center">&gt; 0</td><td>macro is exited along with 'n' higher level called macros</td></tr>
+    <tr><td>Repeat block</td><td style="text-align: center">&lt; 0</td><td>directive is ignored</td></tr> 
+    <tr><td>Repeat block</td><td style="text-align: center">= 0</td><td>The .REPT block count is decremented or the next argument is selected from an .IRPx block and loop repeated if appropriate</td></tr> 
+    <tr><td>Repeat block</td><td style="text-align: center">&ge; 1</td><td>The repeat block is terminated</td></tr> 
   </table>
-    <p>
-  If the expression is present and it resolves to a value less than 0 then
-  the .MEXIT or .REXIT is ignored. If the expression resolves to a value greater than 0,
-  then that value is used as a count of the number of macro levels to exit.
-  A repeat block is considered 1 macro level regardless of its count or
-  argument list size. Therefore, a ".MEXIT 1" or ".REXIT 1" in a repeat block will exit
-  the block and terminate it as though the count reached 0 or the argument
-  list had become exhausted. 
+  <p>
+  An .REXIT directive inside a .REPT or .IRPx block is exactly equivalent to a <b>.MEXIT 1</b>. An .REXIT directive inside an ordinary macro is exactly the same as a <b>.MEXIT 0</b>.
   </p>
-    <p>
-  If the expression resolves to a value of 0 then the exit behaves according
-  to the following truth table:
-  </p>
-  <table style="width: 100%">
-    <tr><th>Macro Type</th><th>Action</th></tr>
-    <tr><td>Ordinary</td><td>.MEXIT or .REXIT is ignored</td></tr>
-    <tr><td>repeat block</td><td>block is exited and the repeat count is 
-        reduced or the next argument selected;
-        block will be re-executed if the repeat
-        count remains greater than 0 or argument
-        list has not been exhausted.</td></tr>
-  </table>
-    <p>
+  <p>
   The current condition levels (as created by .IF/.ENDC directives)
   are saved and reset to 0 when each macro is called. They are restored
   when the macro exits. The condition levels will be restored correctly
@@ -2023,14 +2003,8 @@ the stack pointer on a named stack. Examples:
   .REXIT
   </pre>
     <p>
-  The .REXIT directive is an implementation of an alternate exit from a
-  repeat block (.IRP, .IRPC or .REPT). Upon encountering a .REXIT
-  directive during a repeat block expansion (not during a definition), the
-  repeat block is immediately terminated as though it were an .ENDR. This
-  is particularly useful in complex conditional structures in that it is a
-  functional equivalent to a "goto end_of_repeat_block". This directive is
-  ignored outside a macro or repeat block.
-  </p>
+      See details under the <a href="#dir_mexit">.MEXIT</a> directive.
+      </p>
   <h3 id="dir_save">.SAVE</h3>
   <pre>    
   .SAVE
