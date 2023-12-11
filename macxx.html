@@ -1760,15 +1760,15 @@ the stack pointer on a named stack. Examples:
     num = 40
     rad = 10
     lz = 1
-    .PRINT number_data(txt'->',num,len,rad,lz) ; Displays a number 12 in decimal in 3 positions with leading zeros starting at column 43
-                                               ;   It also deposits the text <b>-></b> at columns 40 and 41
+    .PRINT number_data(txt'->',num,len,rad,lz) ; Displays a 3 column decimal number 12 with a leading zero starting at column 40
+                                               ;   It also deposits the text <b>-></b> at columns 43 and 44
     number_data = 23
     txt = 46
-    .PRINT number_data(num,len,rad,lz,txt'<-') ; Displays a number 23 in decimal in 3 positions with leading zeros starting at column 43
+    .PRINT number_data(num,len,rad,lz,txt'<-') ; Displays a 3 column decimal number 23 with leading zeros starting at column 40
                                                ;   It also deposits the text <b><-</b> at columns 46 and 47
     number_data = 34
     num = 44
-    .PRINT number_data(num,/,len)              ; Displays a number 34 in decimal in 2 positions without leading zeros starting at column 44
+    .PRINT number_data(num,/,len)              ; Displays a 3 column number 34 in current radix without leading zeros starting at column 44
                                                ;   It also flushes the line to the listing file.
     </pre>
   <p id="dir_print_examples">
