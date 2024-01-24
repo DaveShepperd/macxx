@@ -18,11 +18,15 @@
 /******************************************************************************
 Change Log
 
-	12/07/2023	- Bug fix, improper use of check for DPAGE	T.G.
+
+	12/26/2023	- Bug Fix, Failing to check all symbols of an	T.G.
+			  expression for base page
+
+	12/07/2023	- Bug Fix, improper use of check for DPAGE	T.G.
 			  resulting in DPAGE address mode instead of extended
 			  address mode when not in DPAGE address range.
 
-	12/06/2023	- Bug fix, allow true 16 bit offsets for	T.G.
+	12/06/2023	- Bug Fix, allow true 16 bit offsets for	T.G.
 			  LEAr instructions
 
 	11/30/2023	- Fixed errors when using -2 pass option	T.G.
@@ -837,7 +841,26 @@ static int do_operand(Opcode *opc)
 						{  /* if unknown value in pass 0 then pass 1 must treat it as unknown */
 						   /* if unknown value - treat as 8bit or 16bit mode */
 
-							z_page = 0x1 & (EXP2.base_page_reference);	/* check for base page */
+							/* check all symbols of an expression for base page */
+							z_page = 0x1;	/* set z_page true */
+							temp = 0;	/* set ABS component to byte */
+
+							for(j=0; j<EXP2.ptr; j++)
+							{ /* Search through the expression for symbols and ABS values */
+
+								if((EXP2SP[j].expr_code) == EXPR_SYM)
+								{  /* if any symbol not base page set z_page false */
+									z_page = z_page & (EXP2SP[j].expr_sym->flg_base);
+								}
+
+								if((EXP2SP[j].expr_code) == EXPR_VALUE)
+								{  /* if ABS component goes over 255 set z_page false */
+									temp = temp + EXP2SP[j].expr_value;
+									if (temp > 0xFF) z_page = 0;	/* set 16 bit mode */
+								}
+							}
+							z_page = z_page & (EXP2.base_page_reference);	/* check for base page */
+
 							if ( z_page )
 							{
 								indexed_mode = indexed_mode | flg_8bit;    /* Really seven bit with negative flag */
