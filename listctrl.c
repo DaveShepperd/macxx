@@ -868,7 +868,7 @@ void n_to_list(int nibbles, long value, int tag)
 			tv >>= 3;
 		} while ( --nyb > 1 );
 		if ( nyb )
-			*--lpr = '0' + (tv & 1);
+			*--lpr = '0' + (tv & 3);
 	}
 	return;
 }
