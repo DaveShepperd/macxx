@@ -32,6 +32,7 @@
 /* Class 9 = src is register, dst is branch addr (SOB) */
 /* Class 10 = dst only, can only be number from 0-255 */
 /* Class 11 = src is register only, dest is expression (XOR) */
+/* Class 12 = same as class 1 except dst could be an immediate */
 OPDEF("HALT",   0, 0000000, 0 )
 OPDEF("WAIT",   0, 0000001, 0 )
 OPDEF("RTI",    0, 0000002, 0 )
@@ -76,7 +77,7 @@ OPDEF("ASR",    1, 0006200, 0 )
 OPDEF("ASL",    1, 0006300, 0 )
 OPDEF("MARK",   4, 0006400, 0 )
 OPDEF("MFPI",   1, 0006500, 0 )
-OPDEF("MTPI",   1, 0006600, 0 )
+OPDEF("MTPI",  12, 0006600, 0 )
 OPDEF("SXT",    1, 0006700, 0 )
 OPDEF("MOV",    7, 0010000, 0 )
 OPDEF("CMP",    7, 0020000, 0 )
@@ -118,8 +119,10 @@ OPDEF("RORB",   1, 0106000, 0 )
 OPDEF("ROLB",   1, 0106100, 0 )
 OPDEF("ASRB",   1, 0106200, 0 )
 OPDEF("ASLB",   1, 0106300, 0 )
+OPDEF("MTPS",  12, 0106400, 0 )
 OPDEF("MFPD",   1, 0106500, 0 )
-OPDEF("MTPD",   1, 0106600, 0 )
+OPDEF("MTPD",  12, 0106600, 0 )
+OPDEF("MFPS",   1, 0106700, 0 )
 OPDEF("MOVB",   7, 0110000, 0 )
 OPDEF("CMPB",   7, 0120000, 0 )
 OPDEF("BITB",   7, 0130000, 0 )

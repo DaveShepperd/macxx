@@ -77,7 +77,10 @@ DIRDEF(".DEFSTACK", op_defstack,	0)
 DIRDEF(".DPAGE",    op_dpage,	0)
 #endif
 DIRDEF(".DSABL",    op_dsabl,	0)
+DIRDEF(".DSABLE",    op_dsabl,	0)
+DIRDEF(".DISABLE",    op_dsabl,	0)
 DIRDEF(".ECREF",    op_ecref,	0)
+DIRDEF(".ENABLE",    op_enabl,	0)
 DIRDEF(".ENABL",    op_enabl,	0)
 DIRDEF(".END",	op_end,		DFLCND|DFLMAC|DFLEND|DFLMEND)
 #endif

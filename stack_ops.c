@@ -897,6 +897,7 @@ int op_pop(void)
 						}
 						if ( stkSymPtr->flg_segment )
 						{
+#if 0	/* probably no need to warn about this */
 							if ( stkSymPtr->ss_seg != current_section )
 							{
 								snprintf(emsg, sizeof(emsg), "WARNING: Popped PC from section '%s' to section '%s'",
@@ -904,6 +905,7 @@ int op_pop(void)
 										 stkSymPtr->ss_seg->seg_string);
 								show_bad_token(NULL,emsg,MSG_WARN);
 							}
+#endif
 							current_section = stkSymPtr->ss_seg;
 						}
 					}

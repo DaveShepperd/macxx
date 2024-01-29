@@ -629,7 +629,7 @@ int get_oneea( EA *amp, int bwl, unsigned long valid, int pcoff)
             if (eps->paren_cnt == 0)
             { /* and there were no imbalanced parens, then we have the whole am */
                 eps->tag_len = 1;
-                if ((edmask&ED_PCREL) != 0)
+                if (!(edmask&ED_AMA))
                 {
                     fix_pcr(amp,pcoff);
                     amp->mode = E_PCR;
@@ -1295,7 +1295,7 @@ int type3( int inst, int bwl)
 /*ARGSUSED*/
 int type4( int inst, int bwl)
 {
-    int t,opcr;
+    int t,edmaskSave;
     EXP_stk *eps;
     EXPR_struct *expr;
     long tv;
@@ -1305,10 +1305,10 @@ int type4( int inst, int bwl)
         0x6d00,0x6b00,0x6600,0x6a00,
         0x6800,0x6900,0x6000,0x6100};
 
-    opcr = edmask&ED_PCREL;
-    edmask &= ~ED_PCREL;        /* default to ABS on branch */
+    edmaskSave = edmask;
+    edmask |= ED_AMA;        /* default to ABS on branch */
     t=get_oneea(&source,bwl,E_ANY,2);
-    edmask |= opcr;
+    edmask = edmaskSave;
     if (t == 0 || (source.mode&E_ABS) == 0)
     {
         if (t == 0)

@@ -28,10 +28,11 @@
 #define AMFLG_DISPL     (4) /* found displacement */
 #define AMFLG_TRAILPLUS (8) /* found a trailing + */
 #define AMFLG_RESTART   (16) /* reset tkn_ptr for rescan */
+#define AMFLG_IMMEDIATE	(32) /* Found # */
 
-/* Expect a (reg) or (reg)+ syntax */
+/* Expect a (reg) or (reg)+ syntax or if justReg non-zero, expect just a register expression */
 
-static int get_regea(int amflg, EA *amp)
+static int get_regea(int amflg, EA *amp, int justReg)
 {
     char *tmp;
     int treg;
@@ -52,7 +53,13 @@ static int get_regea(int amflg, EA *amp)
         bad_token(tkn_ptr,"Register value can only be 0 - 7");
         treg = 0;
     }
-    if (*inp_ptr != ')')
+	if ( justReg )
+	{
+		EXP3.ptr = 0;   /* clear residual from EXP3 */
+		amp->eamode |= treg;
+		return 1;
+	}
+	if ( *inp_ptr != ')' )
     {
         bad_token(inp_ptr,"Expected a ')' here");
     }
@@ -114,7 +121,21 @@ static int get_regea(int amflg, EA *amp)
     return 1;       /* done */
 }
 
-static int get_oneea( EA *amp, int pc_offset )
+static int chkOpenParen(void)
+{
+	while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
+		++inp_ptr; 
+	if (*inp_ptr == '(')
+	{
+		++inp_ptr;      /* eat the opening paren and skip following whitespace */
+		while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
+			++inp_ptr; 
+		return 1;
+	}
+	return 0;
+}
+
+static int get_oneea( EA *amp, int pc_offset, int commaExpected )
 {
     EXP_stk *eps;
     EXPR_struct *exp;
@@ -124,7 +145,7 @@ static int get_oneea( EA *amp, int pc_offset )
     amp->mode = E_NUL;      /* assume no mode found */
     amp->eamode = 0;
     eps = amp->exp;
-    eps->tag = 'I';     /* assume word mode extra bytes */
+    eps->tag = 'w';     /* assume word mode extra bytes */
     eps->tag_len = 1;    
     eps->forward_reference = 0;
     eps->register_reference = 0;
@@ -134,8 +155,23 @@ static int get_oneea( EA *amp, int pc_offset )
     while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
         ++inp_ptr; 
     if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0)
+	{
         return 0;
-    amflg = 0;          /* no special flags present */
+	}
+	if ( commaExpected )
+	{
+		if (*inp_ptr == ',')
+		{
+			++inp_ptr;
+			while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
+				++inp_ptr; 
+			if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0)
+				return 0;
+		}
+		else
+			show_bad_token(inp_ptr,"Expected a comma here, one assumed",MSG_WARN);
+	}
+	amflg = 0;          /* no special flags present */
     if ( *inp_ptr == '@' )  /* Indirect? */
     {
         ++inp_ptr;      /* yep, eat it */
@@ -144,7 +180,8 @@ static int get_oneea( EA *amp, int pc_offset )
     if (*inp_ptr == '#')
     {  /* immediate? */
         ++inp_ptr;      /* yep, eat the char */
-        get_token();        /* prime the pump */
+		amflg |= AMFLG_IMMEDIATE;
+	    get_token();        /* prime the pump */
         cp = inp_ptr;
         exprs(1,eps);       /* pickup the expression */
         if ( eps->register_reference )
@@ -152,7 +189,7 @@ static int get_oneea( EA *amp, int pc_offset )
             bad_token(cp,"No such thing as immediate register");
             amflg = 0;
         }
-        if ( amflg == AMFLG_INDIRECT )
+        if ( (amflg&AMFLG_INDIRECT) )
         {
             amp->mode = E_ABS;
             amp->eamode = Ea_ABS;
@@ -162,7 +199,7 @@ static int get_oneea( EA *amp, int pc_offset )
             amp->mode = E_IMM;
             amp->eamode = Ea_IMM;
         }
-        eps->tag = 'I';
+        eps->tag = 'i';
         return 1;
     }
     while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
@@ -177,19 +214,17 @@ static int get_oneea( EA *amp, int pc_offset )
         ++inp_ptr; 
     do
     {
-        if (*inp_ptr == '(')
+		if ( chkOpenParen() )
         {
-            ++inp_ptr;      /* eat the opening paren */
-            while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
-                ++inp_ptr; 
             if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC|CT_COM)) != 0)
             {
                 bad_token(inp_ptr,"Expected a register expression here, found EOL");
                 return 0;
             }
-            if ( get_regea(amflg,amp) )
+            if ( get_regea(amflg,amp,0) )
                 break;
         }
+		/* It wasn't a register expression so start over */
         amflg &= ~AMFLG_LEADMINUS;  /* This doesn't count anymore */
         inp_ptr = cp;       /* nope, move pointer back */
         if (get_token() == EOL)
@@ -208,7 +243,7 @@ static int get_oneea( EA *amp, int pc_offset )
             amflg |= AMFLG_DISPL;
             ++inp_ptr;      /* eat the '(' */
             cp = inp_ptr;
-            if (get_regea(amflg,amp) == 0)  /* get index register */
+            if (get_regea(amflg,amp,0) == 0)  /* get index register */
             {
                 bad_token(cp,"Expected register expression here");
             }
@@ -233,8 +268,8 @@ static int get_oneea( EA *amp, int pc_offset )
             break;
         }
         eps->tag_len = 1;
-        eps->tag = 'I';  /* displacements are signed words */
-        if ((edmask&ED_PCREL) != 0)
+        eps->tag = 'i';  /* displacements are signed words */
+        if (!(edmask&ED_AMA))
         {
             if ( (amflg&AMFLG_INDIRECT) )
             {
@@ -262,38 +297,6 @@ static int get_oneea( EA *amp, int pc_offset )
 }
 
 #if 0
-static int get_twoea(int bwl)
-{
-    if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
-    {
-        int offs;
-        offs = current_offset + 4;
-        if ( get_oneea(&source, offs ) )
-        {
-            if ( (source.eamode&070) == 060 || (source.eamode&070) == 070 
-                 || source.eamode == 027 || source.eamode == 037 )
-                offs += 2;
-            if (*inp_ptr == ',')
-            {
-                ++inp_ptr;
-                if ( get_oneea(&dest, offs) )
-                    return 1;
-            }
-            else
-            {
-                if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
-                {
-                    show_bad_token(inp_ptr,"Expected a comma here, one assumed",MSG_WARN);
-                    if ( get_oneea(&dest, offs) )
-                        return 1;
-                }
-            }
-        }
-    }
-    bad_token(inp_ptr,"Instruction requires two operands");
-    return 0;
-}
-
 static void bad_sourceam(void)
 {
     bad_token((char *)0,"Invalid address mode for first operand");
@@ -304,7 +307,7 @@ static void bad_sourceam(void)
     source.exp->stack->expr_value = 0;
     return;
 }
-
+#endif
 static void bad_destam(void)
 {
     bad_token((char *)0,"Invalid address mode for second operand");
@@ -315,17 +318,17 @@ static void bad_destam(void)
     dest.exp->stack->expr_value = 0;
     return;
 }
-#endif
 
 static int validatePCR( int dstmode, int regok, int immok )
 {
-#if 0
-    if ( (immok && (dstmode == 017 || dstmode == 027)) || 
-         dstmode == 047 || dstmode == 057 )
-        show_bad_token(NULL,"Instruction may behave differently on various processor types",MSG_WARN);
-    if ( !regok && !(dstmode&070) )
-        bad_destam();
-#endif
+	if ( (edmask&ED_CPU) )
+	{
+		if ( (!immok && (dstmode == 017 || dstmode == 027)) ||
+			 dstmode == 047 || dstmode == 057 )
+			show_bad_token(NULL,"Instruction may behave differently on various processor types",MSG_WARN);
+		if ( !regok && !(dstmode&070) )
+			bad_destam();
+	}
     return 0;
 }
 
@@ -338,10 +341,10 @@ int type0( int baseval, int amode )
 
 /* Class 1 = dst only, can be expression */
 /* JMP,SWAB,CLR,CLRB,COM,COMB,INC,INCB,DEC,DECB,NEG,NEGB,ADC,ADCB,SBC,SBCB,TST,TSTB,
- * ROR,RORB,ROL,ROLB,ASR,ASRB,ASL,ASLB,MFPI,MTPI,MFPD,MTPD,SXT */
+ * ROR,RORB,ROL,ROLB,ASR,ASRB,ASL,ASLB,MFPI,MTPI,MFPD,MTPD,SXT,MTPS,MFPS */
 int type1( int baseval, int amode )
 {
-    if ( get_oneea(&dest, current_offset+4 ) )
+    if ( get_oneea(&dest, current_offset+4, 0 ) )
     {
         validatePCR(dest.eamode, baseval != 0100, 0 );
     }
@@ -492,47 +495,69 @@ int type5( int baseval, int amode )
         (exp2++)->expr_value = 0;
         exp2->expr_code = EXPR_OPER;
         (exp2++)->expr_value = EXPROPER_PICK;
+		/* Leaves stack: [0]=disp, [1]=disp */
+		exp2->expr_code = EXPR_VALUE;
+		(exp2++)->expr_value = 1;
+		exp2->expr_code = EXPR_OPER;
+		(exp2++)->expr_value = EXPROPER_AND;
+		/* Leaves stack: [0]=disp, [1]=(disp & 1) */
+		exp2->expr_code = EXPR_OPER;
+		(exp2++)->expr_value = EXPROPER_XCHG;
+		/* Leaves stack: [0]=(disp&1), [1]=disp */
+		/* Dup the branch displacement (top item on stack) */
+		exp2->expr_code = EXPR_VALUE;
+		(exp2++)->expr_value = 0;
+		exp2->expr_code = EXPR_OPER;
+		(exp2++)->expr_value = EXPROPER_PICK;
+		/* Leaves stack: [0]=(disp&1), [1]=disp, [2]=disp */
         /* Check it against -512 (leaves a 0 or 1 on stack) */
         exp2->expr_code = EXPR_VALUE;
-        (exp2++)->expr_value = -512;
+        (exp2++)->expr_value = -256;
         exp2->expr_code = EXPR_OPER;
-        (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_LE<<8);
-        /* Swap the result with the branch displacement */
-        exp2->expr_code = EXPR_OPER;
-        (exp2++)->expr_value = EXPROPER_XCHG;
-        /* Dup the branch displacement (top item on stack) */
-        exp2->expr_code = EXPR_VALUE;
-        (exp2++)->expr_value = 0;
-        exp2->expr_code = EXPR_OPER;
-        (exp2++)->expr_value = EXPROPER_PICK;
-        /* Check it against 512 (leaves a 0 or 1 on stack) */
-        exp2->expr_code = EXPR_VALUE;
-        (exp2++)->expr_value = 512;
-        exp2->expr_code = EXPR_OPER;
-        /* Swap the result with the branch displacement */
-        exp2->expr_code = EXPR_OPER;
-        (exp2++)->expr_value = EXPROPER_XCHG;
-        /* Check it against 1 (leaves a 0 or 1 on stack) */
-        exp2->expr_code = EXPR_VALUE;
-        (exp2++)->expr_value = 1;
-        exp2->expr_code = EXPR_OPER;
-        (exp2++)->expr_value = EXPROPER_AND;
-        /* Merge the even/odd test with the check against +512 */
+        (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_LT<<8);
+		/* Leaves stack: [0]=(disp&1), [1]=disp, [2]=(disp < -256) */
+		exp2->expr_code = EXPR_OPER;
+		(exp2++)->expr_value = EXPROPER_XCHG;
+		/* Leaves stack: [0]=(disp&1), [1]=(disp < -256), [2]=disp */
+		exp2->expr_code = EXPR_VALUE;
+		(exp2++)->expr_value = 254;
+		exp2->expr_code = EXPR_OPER;
+		(exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_GT<<8);
+		/* Leaves stack: [0]=(disp&1), [1]=(disp < -256), [2]=(disp > 254) */
         exp2->expr_code = EXPR_OPER;
         (exp2++)->expr_value = EXPROPER_OR;
-        /* Merge that result with the check against -512 */
-        exp2->expr_code = EXPR_OPER;
-        (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_OR<<8);
-        ep2->ptr = exp2 - ep2->stack;
-        sprintf(emsg,"Branch displacement is to odd address or out of range on line %d in %s",
-                current_fnd->fn_line,current_fnd->fn_name_only);
+		/* Leaves stack: [0]=(disp&1), [1]=(disp < -256) | (disp > 254) */
+		exp2->expr_code = EXPR_OPER;
+		(exp2++)->expr_value = EXPROPER_OR;
+		/* Leaves stack: [0]=(disp&1) | (disp < -256) | (disp > 254) */
+		ep2->ptr = exp2-ep2->stack;
         ep2->tag = 0;
-        write_to_tmp(TMP_TEST,0,ep2,0);
+		sprintf(emsg,"%s:%d", current_fnd->fn_name_only,current_fnd->fn_line);
+        write_to_tmp(TMP_BOFF,0,ep2,0);
         write_to_tmp(TMP_ASTNG,strlen(emsg)+1,emsg,1);
         ep2->ptr = 0;       /* don't use this expression any more */
     }
-
-    exp = eps->stack + eps->ptr;
+	else
+	{
+		/* we're here because: */
+		/* eps->ptr == 1 and eps->stack->expr_code == EXPR_VALUE */
+		long value = eps->stack[0].expr_value;
+		if ( (value&1) || value > 254 || value < -256 )
+		{
+			char err[128];
+			char *sign="";
+			long absValue = value;
+			if ( value < 0 )
+			{
+				absValue = -value;
+				sign = "-";
+			}
+			snprintf(err,sizeof(err),"Branch offset of %ld. (%s0%lo) is odd or out of range. Must be -256. <= x <= 254. (-0400 <= x <= 0376)", value, sign, absValue&0xFFFF);
+			show_bad_token(NULL,err,MSG_WARN);
+			eps->stack[0].expr_value = -2;
+		}
+	}
+	exp = eps->stack + eps->ptr;
     exp->expr_code = EXPR_VALUE;
     (exp++)->expr_value = 1;
     exp->expr_code = EXPR_OPER;
@@ -557,27 +582,14 @@ int type6( int baseval, int amode )
     {
         int offs;
         offs = current_offset + 4;
-        if ( get_oneea(&source, offs ) )
+        if ( get_oneea(&source, offs, 0 ) )
         {
             if ( !(source.eamode&070) && source.exp->ptr == 0 )
             {
                 if ( source.eamode == 076 )
                     show_bad_token(NULL,"Instruction may behave differently on various processors",MSG_WARN);
-                if (*inp_ptr == ',')
-                {
-                    ++inp_ptr;
-                    if ( get_oneea(&dest, offs) )
-                        return validatePCR(dest.eamode, 0, 0 );
-                }
-                else
-                {
-                    if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
-                    {
-                        show_bad_token(inp_ptr,"Expected a comma here, one assumed",MSG_WARN);
-                        if ( get_oneea(&dest, offs) )
-                            return validatePCR(dest.eamode, 0, 0 );
-                    }
-                }
+				if ( get_oneea(&dest, offs, 1) )
+					return validatePCR(dest.eamode, 0, 0 );
             }
             else                            /* source is not register type */
             {
@@ -602,33 +614,17 @@ int type7( int baseval, int amode )
     {
         int offs;
         offs = current_offset + 4;
-        if ( get_oneea(&source, offs ) )
+        if ( get_oneea(&source, offs, 0 ) )
         {
             int seam = source.eamode;
             if ( (seam&070) == 060 || (seam&070) == 070 
                  || seam == 027 || seam == 037 )
                 offs += 2;
-            if (*inp_ptr == ',')
-            {
-                ++inp_ptr;
-                if ( get_oneea(&dest, offs) )
-                {
-                    validatePCR(seam, 1, 1 );
-                    return validatePCR(dest.eamode, 1, 1 );
-                }
-            }
-            else
-            {
-                if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
-                {
-                    show_bad_token(inp_ptr,"Expected a comma here, one assumed",MSG_WARN);
-                    if ( get_oneea(&dest, offs) )
-                    {
-                        validatePCR(source.eamode, 1, 0 );
-                        return validatePCR(dest.eamode, 1, 0 );
-                    }
-                }
-            }
+			if ( get_oneea(&dest, offs, 1) )
+			{
+				validatePCR(seam, 1, 1 );
+				return validatePCR(dest.eamode, 1, 0 );
+			}
         }
     }
     bad_token(inp_ptr,"Instruction requires two operands");
@@ -643,23 +639,10 @@ int type8( int baseval, int amode )
     {
         int offs, chk=0;
         offs = current_offset + 4;
-        if ( get_oneea(&source, offs ) )
+        if ( get_oneea(&source, offs, 0 ) )
         {
-            if (*inp_ptr == ',')
-            {
-                ++inp_ptr;
-                if ( get_oneea(&dest, offs) )
-                    chk = 1;
-            }
-            else
-            {
-                if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
-                {
-                    show_bad_token(inp_ptr,"Expected a comma here, one assumed",MSG_WARN);
-                    if ( get_oneea(&dest, offs) )
-                        chk = 1;
-                }
-            }
+			if ( get_oneea(&dest, offs, 1) )
+				chk = 1;
             if ( chk )
             {
                 int sav;
@@ -687,65 +670,133 @@ int type8( int baseval, int amode )
 /* SOB */
 int type9( int baseval, int amode )
 {
-    EA *amp;
-    EXP_stk *eps;
-    EXPR_struct *exp;
-
-    amp = &dest;
-    amp->mode = 0;
-    amp->eamode = 0;
-    eps = exprs_stack;      /* Use stack 0 for branch displacement */
-    eps->forward_reference = 0;
-    eps->register_reference = 0;
-    exp = eps->stack;
-    if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0)
-    {
-        bad_token(NULL,"Expected an operand");
-        return 0;
-    }
-    get_token();
-    exprs(1,eps);
-    if ( eps->ptr != 1 || !eps->register_reference
-         || eps->stack->expr_code != EXPR_VALUE || (eps->stack->expr_value&~7) )
-    {
-        bad_token(NULL,"Expected first operand to be register");
-        return 0;
-    }
-    source.eamode = eps->stack->expr_value;
-    eps->ptr = 0;
-    if ( *inp_ptr != ',' )
-        ++inp_ptr;
-    else
-        bad_token(inp_ptr,"Expected a comma here. Assumed one.");
-    if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0)
-    {
-        bad_token(inp_ptr,"Expected an operand here");
-        return 0;
-    }
-    get_token();
-    exprs(1,eps);
-    exp = eps->stack + eps->ptr;
-    exp->expr_code = EXPR_SEG;
-    exp->expr_value = current_offset+2;
-    (exp++)->expr_seg = current_section;
-    exp->expr_code = EXPR_OPER;
-    (exp++)->expr_value = '-';
-    exp->expr_code = EXPR_OPER;
-    (exp++)->expr_value = EXPROPER_NEG;
-    eps->ptr += 3;
-    eps->ptr = compress_expr(eps);
-
-    if ( eps->ptr != 1 || eps->stack->expr_code != EXPR_VALUE
-         || (eps->stack->expr_value&~126) )
-    {
-        bad_token(NULL,"Branch offset is odd or out of range");
-        eps->ptr = 1;
-        eps->stack->expr_value = 1;
-        eps->stack->expr_code = EXPR_VALUE;
-        return 0;
-    }
-    eps->ptr = 0;
-    amp->eamode = eps->stack->expr_value>>1;
+	EA *amp;
+	EXP_stk *eps, *ep2;
+	EXPR_struct *exp, *exp2;
+	if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
+	{
+		amp = &source;
+		amp->mode = 0;
+		amp->eamode = 0;
+		if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) != 0)
+		{
+			bad_token(NULL,"Expected an operand");
+			return 0;
+		}
+		if ( get_regea(0, amp, 1) )
+		{
+			amp = &dest;
+			amp->mode = 0;
+			amp->eamode = 0;
+			eps = exprs_stack;      /* Use stack 0 for branch displacement */
+			eps->forward_reference = 0;
+			eps->register_reference = 0;
+			exp = eps->stack;
+			comma_expected = 1;
+			get_token();
+			exprs(1,eps);
+			exp = eps->stack + eps->ptr;
+			exp->expr_code = EXPR_SEG;
+			exp->expr_value = current_offset+2;
+			(exp++)->expr_seg = current_section;
+			exp->expr_code = EXPR_OPER;
+			(exp++)->expr_value = '-';
+			eps->ptr += 2;
+			eps->ptr = compress_expr(eps);
+			if ( eps->ptr != 1 || eps->stack->expr_code != EXPR_VALUE )
+			{
+				ep2 = source.exp;
+				exp2 = ep2->stack;
+				memcpy(exp2,eps->stack,eps->ptr*sizeof(EXPR_struct));
+				exp2 = ep2->stack + eps->ptr;
+				/* Dup the branch displacement (top item on stack) */
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = 0;
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_PICK;
+				/* Leaves stack: [0]=disp, [1]=disp */
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = 1;
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_AND;
+				/* Leaves stack: [0]=disp, [1]=(disp & 1) */
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_XCHG;
+				/* Leaves stack: [0]=(disp&1), [1]=disp */
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = 0;
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_PICK;
+				/* Leaves stack: [0]=(disp&1), [1]=disp, [2]=disp */
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = -256;
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_LT<<8);
+				/* Leaves stack: [0]=(disp&1), [1]=disp, [2]=(disp < -256) */
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_XCHG;
+				/* Leaves stack: [0]=(disp&1), [1]=(disp < -256), [2]=disp */
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = -2;
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_GT<<8);
+				/* Leaves stack: [0]=(disp&1), [1]=(disp < -256), [2]=(disp > -2) */
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_OR;
+				/* Leaves stack: [0]=(disp&1), [1]=(disp < -256) | (disp > -2) */
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_OR;
+				/* Leaves stack: [0]=(disp&1) | (disp < -256) | (disp > -2) */
+				ep2->ptr = exp2-ep2->stack;
+				ep2->tag = 0;
+				sprintf(emsg,"%s:%d",
+						current_fnd->fn_name_only,current_fnd->fn_line);
+				write_to_tmp(TMP_BOFF,0,ep2,0);
+				write_to_tmp(TMP_ASTNG,strlen(emsg)+1,emsg,1);
+				ep2->ptr = 0;       /* don't use this expression any more */
+			}
+			else
+			{
+				/* we're here because: */
+				/* eps->ptr == 1 and eps->stack->expr_code == EXPR_VALUE */
+				long value = eps->stack[0].expr_value;
+				if ( (value&1) || value > -2 || value < -256 )
+				{
+					char err[128];
+					const char *sign="";
+					long absValue;
+					if ( (absValue=value) < 0 )
+					{
+						absValue = -value;
+						sign = "-";
+					}
+					snprintf(err, sizeof(err), "Branch offset of %ld. (%s0%lo) is odd or out of range. Must be even and -256. <= x <= -2. (-0400 <= x <= -02)", value, sign, absValue);
+					show_bad_token(NULL,err,MSG_WARN);
+					eps->stack[0].expr_value = -2;
+				}
+			}
+			exp = eps->stack + eps->ptr;
+			exp->expr_code = EXPR_OPER;
+			(exp++)->expr_value = EXPROPER_NEG;
+			exp->expr_code = EXPR_VALUE;
+			(exp++)->expr_value = 1;
+			exp->expr_code = EXPR_OPER;
+			(exp++)->expr_value = EXPROPER_SHR;
+			exp->expr_code = EXPR_VALUE;
+			(exp++)->expr_value = 63;
+			exp->expr_code = EXPR_OPER;
+			(exp++)->expr_value = EXPROPER_AND;
+			exp->expr_code = EXPR_VALUE;
+			(exp++)->expr_value = baseval|(source.eamode<<6);
+			exp->expr_code = EXPR_OPER;
+			(exp++)->expr_value = EXPROPER_OR;
+			eps->ptr += 7;
+			dest.eamode = 0;
+			eps->ptr = compress_expr(eps);
+		}
+		return 0;
+	}
+	bad_token(inp_ptr,"Instruction requires two operands");
     return 0;
 }
 
@@ -790,7 +841,7 @@ int type11( int baseval, int amode )
     {
         int offs;
         offs = current_offset + 4;
-        if ( get_oneea(&source, offs ) )
+        if ( get_oneea(&source, offs, 0 ) )
         {
             if ( (source.eamode&070) || source.exp->ptr || !source.exp->register_reference )
             {
@@ -799,27 +850,24 @@ int type11( int baseval, int amode )
                 source.mode = 0;
                 source.exp->ptr = 0;
             }
-            if (*inp_ptr == ',')
-            {
-                ++inp_ptr;
-                if ( get_oneea(&dest, offs) )
-                {
-                    return validatePCR(dest.eamode, 1, 1 );
-                }
-            }
-            else
-            {
-                if ((cttbl[(int)*inp_ptr]&(CT_EOL|CT_SMC)) == 0)
-                {
-                    show_bad_token(inp_ptr,"Expected a comma here, one assumed",MSG_WARN);
-                    if ( get_oneea(&dest, offs) )
-                        return validatePCR(dest.eamode, 1, 1 );
-                }
-            }
+			if ( get_oneea(&dest, offs, 1) )
+			{
+				return validatePCR(dest.eamode, 1, 0 );
+			}
         }
     }
     bad_token(inp_ptr,"Instruction requires two operands");
     return 0;
 }
 
+/* Class 12 = dst only, can be expression; could be immediate */
+/* MTPI,MTPD,MTPS */
+int type12( int baseval, int amode )
+{
+    if ( get_oneea(&dest, current_offset+4, 0 ) )
+    {
+        validatePCR(dest.eamode, 1, 1 );
+    }
+    return 0;
+}
 

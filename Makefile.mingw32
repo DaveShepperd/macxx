@@ -30,7 +30,7 @@ ALLOAS = exprs.o char_table.o opcas.o pass1.o pstas.o debug.o help.o dummy_pass0
 ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o dummy_pass0.o
 ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o dummy_pass0.o #pass068k.o 
 #ALLO682K = exprs682k.o char_table.o opc682k.o pass168k.o pst682k.o m682types.o debug.o help.o dummy_pass0.o
-ALLO11 = exprs.o char_table.o opc11.o pass1.o pst11.o m11types.o debug.o help.o dummy_pass0.o
+ALLO11 = exprs11.o char_tbl65.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
 
 ALLOPP0 = macxx_pp.o pass1_pp.o lstctlpp.o opcode_pp.o
 ALLOPP1 = gc_tblpp.o gc_pp.o exprs_pp.o macros_pp.o
@@ -154,6 +154,12 @@ exprs65.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h 
   exproper.h listctrl.h lstcnsts.h
 	$(ECHO) "    Compiling $<..."
 	$C -DMAC_65 -o $@ $<
+
+exprs11.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  exproper.h listctrl.h lstcnsts.h
+	$(ECHO) "    Compiling $<..."
+	$C -DMAC_11 -o $@ $<
+
 
 exprs68.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h

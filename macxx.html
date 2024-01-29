@@ -101,7 +101,7 @@
   <b>mac68</b>    - For the Motorola 6800 CPU
   <b>mac69</b>    - For the Motorola 6809 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
-  <b>mac11</b>    - For the PDP11 CPU
+  <b>mac11</b>    - For the PDP11 CPU (specifically the T11 used by Atari)
   <b>macas</b>    - For the custom Atari Simplified Architecure Processor (ASAP) CPU
   <b>mactj</b>    - For the Atari custom Tom and Jerry DSP's
   </pre>
@@ -523,10 +523,10 @@
   single term) and binary operators (apply to two terms). Unlike most
   other languages, all operators have equal precedence and are evaluated
   from left to right. The order of evaluation can be changed by the use of
-  the parenthesis. (In MAC65, the parenthesis must be substituted with the
+  the parenthesis. (In MAC65, MAC68, MAC69 and MAC11, the parenthesis must be substituted with the
   expression brackets "<" and ">"). All terms in an expression and the
   result of the expression itself are 32 bits (signed). The relational
-  operators (not available in MAC65) return either a 0 for false or 1 for
+  operators (not available in MAC65, MAC68, MAC69 and MAC11) return either a 0 for false or 1 for
   true. 
   </p>
   <table style="width: 30%">
@@ -539,7 +539,7 @@
     <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</td><td>A|B</td><td>A logically or'ed with B</td></tr>
   </table>
   <p>    
-  The following are <u><b>NOT</b></u> available in MAC65 but are available in all the others:
+  The following are <u><b>NOT</b></u> available in MAC65, MAC68, MAC69 and MAC11 but are available in the others:
   </p>
   <table style="width: 30%"> 
     <tr><th>Binary operators</th><th>Examples</th><th>Meaning</th></tr>
@@ -554,7 +554,7 @@
     <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;=</td><td>A&lt;=B</td><td>returns	1 if A less than or equal to B</td></tr>
   </table>
   <p>
-  The following are available <u><b>ONLY</b></u> in MAC65 (this was chosen to keep compatible with the syntax of the very old PDP11 version of MAC65):
+  The following are available <u><b>ONLY</b></u> in MAC65, MAC68, MAC69 and MAC11 (this was chosen to keep compatible with the syntax of the very old RT11 version of MACxx):
   </p>
   <table style="width: 30%">
     <tr><th>Binary operators</th><th>Examples</th><th>Meaning</th></tr>
@@ -584,11 +584,11 @@
   </table>  
     <p>
   Any term of an expression may be enclosed in a pair of expression
-  brackets ('&lt;' and '&gt;' in MAC65 or '(' and ')' in all other assemblers)
+  brackets ('&lt;' and '&gt;' in MAC65, MAC68, MAC69 and MAC11 or '(' and ')' in the other assemblers)
   and itself be a collection of one or more terms. For example: 
   </p>
     <pre>
-      A+&lt;&lt;B*C/D+6&gt;*100&gt;/4?^V&lt;FRED*10&gt;+^H&lt;0FFF+ABC+1234&gt; ;MAC65
+      A+&lt;&lt;B*C/D+6&gt;*100&gt;/4?^V&lt;FRED*10&gt;+^H&lt;0FFF+ABC+1234&gt; ;MAC6x and MAC11
       A+((B*C/D+6)*100)/4^^V(FRED*10)+^H(0FFF+ABC+1234) ;others
     </pre>
   <p>
@@ -942,6 +942,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>See <a href="#AMA_ED_opt">HERE</a>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;BYTE</td><td>Undefined opcodes are assumed to be arguments to a .BYTE directive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;CPU_CHECK</td><td>Enables checks for behavior on different PDP11 CPU's. Specific to MAC11 only.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared
@@ -966,7 +967,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>MOS TECHNOLOGY 6502 opcode and address mode syntax. <a href="#M65_Addressing">DETAILS</a></td></tr>
   </table>
     <p id="AMA_ED_opt">
-  The following keyword is specific to MAC65, MAC68 and MAC69 for the 6502, 6800 and 6809 processors respectively.
+  The following is specific to MAC65, MAC68 and MAC69 for the 6502, 6800 and 6809 processors respectively.
     </p>
   <table style="width: 50%">
     <tr><th>Keyword</th><th>Function</th></tr>
@@ -974,6 +975,17 @@ the stack pointer on a named stack. Examples:
   </table>
     <p>
     The defaults for all options is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed and <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k.
+    </p>
+  </p>
+  <p>
+  The following is specific to MAC11.
+    </p>
+  <table style="width: 50%">
+    <tr><th>Keyword</th><th>Function</th></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>Absolute Mode Addressing. Use address mode 37 instead of pc relative 67 everywhere.</td></tr>
+  </table>
+    <p>
+    The default for mac11 is DISABLed.
     </p>
   </p>
   <p>

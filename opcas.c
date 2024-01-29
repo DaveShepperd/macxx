@@ -43,10 +43,15 @@ char macxx_name[] = "macas";
 char *macxx_target = "ASAP";
 char *macxx_descrip = "Cross assembler for the ASAP.";
 
+#if 0
 unsigned short macxx_rel_salign = 2; /* default alignment for rel segments */
 unsigned short macxx_rel_dalign = 2; /* def algnmnt for data in rel segments */
 unsigned short macxx_abs_salign = 2; /* default alignment for abs segments */
 unsigned short macxx_abs_dalign = 2; /* def algnmnt for data in abs segments */
+#else
+unsigned short macxx_salign = 2;    /* default alignment segments by LLF */
+unsigned short macxx_dalign = 2;    /* default alignment data within segment */
+#endif
 unsigned short macxx_min_dalign = 2;
 
 char macxx_mau = 8;         /* # of bits/minimum addressable unit */
@@ -959,8 +964,8 @@ int op_using( Opcode *opc )
         {
             segp = get_seg_mem(&sym, sym->ss_string);
             segp->flg_literal = 1;
-            segp->seg_salign = macxx_rel_salign;
-            segp->seg_dalign = macxx_rel_dalign;
+            segp->seg_salign = macxx_salign;
+            segp->seg_dalign = macxx_dalign;
             segp->seg_maxlen = 256*1024-(32*4);
         }
         literal_pool_sym = sym;

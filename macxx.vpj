@@ -371,6 +371,7 @@
 			GUID="{0D4A941C-8098-42E8-B5A1-9AEC1513BD63}">
 			<F N="change_log.txt"/>
 			<F N="i.mac"/>
+			<F N="m1.mac."/>
 			<F N="macxx.doc"/>
 			<F
 				N="Makefile"

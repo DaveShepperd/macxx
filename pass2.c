@@ -508,8 +508,8 @@ int pass2( void )
                 }
                 else if (eps->ptr <= 0)
                 {
-                    sprintf(emsg,"Expression error while processing .TEST, .BOFF or .OOR: %s\n",
-                            (char *)tmp_pool);
+                    sprintf(emsg,"Expression error while processing .TEST, .BOFF or .OOR (eps->ptr=%d): %s\n",
+                            eps->ptr, (char *)tmp_pool);
                     err_msg(MSG_CONT,emsg);
                 }
                 else

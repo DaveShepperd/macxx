@@ -157,7 +157,7 @@ int display_help(void)
         }
 		if (help_msg[i] == help_2_pass_mark)
 		{
-			if ( !(were_mac65 || were_mac68 || were_mac69) )
+			if ( !(were_mac65 || were_mac68 || were_mac69 || were_mac11) )
 				i += 3;     /* skip the delim, option name and text */
 			continue;
 		}

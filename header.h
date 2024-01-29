@@ -38,10 +38,15 @@ extern char macxx_nibbles_word;
 extern char macxx_nibbles_long;
 extern unsigned long macxx_lm_default;
 extern unsigned long macxx_edm_default;
+#if 0
 extern unsigned short macxx_rel_dalign;
 extern unsigned short macxx_rel_salign;
 extern unsigned short macxx_abs_dalign;
 extern unsigned short macxx_abs_salign;
+#else
+extern unsigned short macxx_dalign;
+extern unsigned short macxx_salign;
+#endif
 extern unsigned short macxx_min_dalign;
 
 extern int max_symbol_length;

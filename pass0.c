@@ -88,7 +88,7 @@ static void found_symbol( int gbl_flg, int tokt )
 /*******************************************************************
  * Main entry for PASS0 processing
  */
-void pass0( int file_cnt)
+void pass0( int fileNumber)
 /*
  * At entry:
  *	no requirements
@@ -102,17 +102,17 @@ void pass0( int file_cnt)
     Opcode *opc;
     SS_struct *sym_ptr;
 
-    if (file_cnt == 0)
+    if (fileNumber == 0)
     {
         current_section = get_seg_mem(&sym_ptr, ".ABS.");
         current_section->flg_abs = 1;
         current_section->flg_ovr = 1;
         current_section->flg_based = 1;
-        current_section->seg_salign = macxx_abs_salign;
-        current_section->seg_dalign = macxx_abs_dalign;
+        current_section->seg_salign = macxx_salign;
+        current_section->seg_dalign = macxx_dalign;
         current_section = get_seg_mem(&sym_ptr, ".REL.");
-        current_section->seg_salign = macxx_rel_salign;
-        current_section->seg_dalign = macxx_rel_dalign;
+        current_section->seg_salign = macxx_salign;
+        current_section->seg_dalign = macxx_dalign;
         opcinit();            /* seed the opcode table */
     }
     expr_message_tag = 1;    /* signal not to display messages */

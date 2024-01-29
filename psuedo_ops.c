@@ -1426,7 +1426,7 @@ static int if_dfndf_exprs(DFNDF_sense sense, int flag)
 		}
 		else
 		{
-			bad_token(tkn_ptr, "Unvalid expression syntax");
+			bad_token(tkn_ptr, "Invalid expression syntax");
 			f1_eatit();
 			return 0;
 		}
@@ -1853,7 +1853,7 @@ int op_iftf(void)
 static struct
 {
 	char *string;
-	unsigned short flag;
+	unsigned int flag;
 } edstuff[] = {
 	{ "MOS", ED_MOS },
 	{ "AMA", ED_AMA },
@@ -1870,10 +1870,10 @@ static struct
 	{ "BYTE", ED_BYT },
 	{ ".BYTE", ED_BYT },
 	{ "DOLLAR_HEX", ED_DOL },
-	{ "PC_RELATIVE", ED_PCREL },
 	{ "DOT_LOCAL", ED_DOTLCL },
 	{ "CR", ED_CR },
 	{ "SIMPLE", ED_SIMPLE },
+	{ "CPU_CHECK", ED_CPU },
 	{ 0, 0 }
 };
 
@@ -2676,7 +2676,8 @@ static SEG_struct* get_segname(char *alt_name, int *new)
 
 int op_psect(void)
 {
-	int new_one, flags = 0, salign = 0, dalign = 0;
+	int new_one, flags = 0;
+	int salign = macxx_salign, dalign = macxx_dalign;
 	unsigned long maxlen = 0;
 	SEG_struct *new_seg;
 
@@ -2743,6 +2744,10 @@ int op_psect(void)
 								if ( (segdat & PS_MAXLN) != 0 )
 									maxlen = EXP0SP->expr_value;
 							}
+						}
+						else
+						{
+							
 						}
 						flags |= segdat;
 						break;

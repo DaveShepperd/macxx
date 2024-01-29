@@ -2026,7 +2026,7 @@ static void found_symbol( int gbl_flg, int tokt )
 /*******************************************************************
  * Main entry for PASS1 processing
  */
-void pass1( int file_cnt)
+void pass1( int fileNumber)
 /*
  * At entry:
  *	no requirements
@@ -2042,7 +2042,7 @@ void pass1( int file_cnt)
     SS_struct *sym_ptr;
 #endif
 
-    if (file_cnt == 0)
+    if (fileNumber == 0)
     {
 #ifndef MAC_PP
 		if ( !options[QUAL_2_PASS] )
@@ -2051,11 +2051,11 @@ void pass1( int file_cnt)
 			current_section->flg_abs = 1;
 			current_section->flg_ovr = 1;
 			current_section->flg_based = 1;
-			current_section->seg_salign = macxx_abs_salign;
-			current_section->seg_dalign = macxx_abs_dalign;
+			current_section->seg_salign = macxx_salign;
+			current_section->seg_dalign = macxx_dalign;
 			current_section = get_seg_mem(&sym_ptr, ".REL.");
-			current_section->seg_salign = macxx_rel_salign;
-			current_section->seg_dalign = macxx_rel_dalign;
+			current_section->seg_salign = macxx_salign;
+			current_section->seg_dalign = macxx_dalign;
 		}
 		else
 		{

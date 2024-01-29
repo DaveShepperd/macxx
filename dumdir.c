@@ -34,6 +34,7 @@ Change Log
 #include "token.h"
 
 #define DIRDEF(name,func,flags) int func() { /* printf("Found %s\n","name"); */ no_such_opcode(); return 0; }
+#define DIRDEFI(name,func,flags) int func() { ignore_opcode(); return 0; }
 
 static int no_such_opcode(void)
 {
@@ -43,10 +44,16 @@ static int no_such_opcode(void)
 	return 0;
 }
 
+static int ignore_opcode(void)
+{
+	f1_eatit();         /* eat the line */
+	return 0;
+}
+
 DIRDEF(.CROSS,  op_cross,   0)
 DIRDEF(.DCREF,  op_dcref,   0)
 DIRDEF(.ECREF,  op_ecref,   0)
-DIRDEF(.IDENT,  op_ident,   0)
+DIRDEFI(.IDENT,  op_ident,   0)
 DIRDEF(.LIMIT,  op_limit,   DFLGEV)
 DIRDEF(.MACLI,  op_maclib,  0)
 DIRDEF(.MCALL,  op_mcall,   DFLSMC)

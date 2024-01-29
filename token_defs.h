@@ -116,22 +116,22 @@ enum misc {
    MSG_NO_EXTRA	=64,	/* Do not add anything extra to output error message */
    MSG_DONT_COUNT = 128, /* Do not count the error */
 	
-   ED_MOS	=0x0001,	/* enable MOS syntax */
-   ED_AMA	=0x0002,	/* enable automatic address mode */
-   ED_ABS	=0x0004,	/* enable absolute output */
-   ED_LSB	=0x0008,	/* enable local symbol block */
-   ED_USD	=0x0010,	/* enable unsigned divide */
-   ED_M68	=0x0020,	/* enable 68000 word mode */
-   ED_GBL  	=0x0040,	/* enable all undefines to be global */
-   ED_WRD  	=0x0080,	/* enable undefined opcodes to .word */
-   ED_LC	=0x0100,	/* enable lowercase symbols */
-   ED_DOL	=0x0200,	/* enable leading dollar hex constants */
-   ED_PCREL	=0x0400,	/* enable default pc relative addressing (68k) */
-   ED_DOTLCL=0x0800,	/* enable symbols starting with '.' to be local */
-   ED_BYT  	=0x1000,	/* enable undefined opcodes to .byte */
-   ED_CR  	=0x2000,	/* enable carriage returns in source */
-   ED_TRUNC	=0x4000, 	/* enable truncation check in .byte and .word */
-   ED_SIMPLE=0x8000		/* enable simple .ifdf/.ifndf expression (technically disables the complex test for def/ndef symbols). */
+   ED_MOS	=0x00001,	/* enable MOS syntax */
+   ED_AMA	=0x00002,	/* enable absolute address mode */
+   ED_ABS	=0x00004,	/* enable absolute output */
+   ED_LSB	=0x00008,	/* enable local symbol block */
+   ED_USD	=0x00010,	/* enable unsigned divide */
+   ED_M68	=0x00020,	/* enable 68000 word mode (big endian) */
+   ED_GBL  	=0x00040,	/* enable all undefines to be global */
+   ED_WRD  	=0x00080,	/* enable undefined opcodes to .word */
+   ED_LC	=0x00100,	/* enable lowercase symbols */
+   ED_DOL	=0x00200,	/* enable leading dollar hex constants */
+   ED_DOTLCL=0x00400,	/* enable symbols starting with '.' to be local */
+   ED_BYT  	=0x00800,	/* enable undefined opcodes to .byte */
+   ED_CR  	=0x01000,	/* enable carriage returns in source */
+   ED_TRUNC	=0x02000, 	/* enable truncation check in .byte and .word */
+   ED_SIMPLE=0x04000,	/* enable simple .ifdf/.ifndf expression (technically disables the complex test for def/ndef symbols). */
+   ED_CPU   =0x08000	/* enable reporting checks for different behavior on different model CPU's (mac11) */
 };
 
 #endif /* _TOKEN_DEFS_H_ */

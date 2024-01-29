@@ -45,8 +45,8 @@ void opcinit( void )          /* preloads the opcode table */
     sym_ptr->flg_global = 1;
     literal_pool_ptr = segp = (SEG_struct *)get_seg_mem(&sym_ptr, sym_ptr->ss_string);
     segp->flg_literal = 1;
-    segp->seg_salign = macxx_rel_salign;
-    segp->seg_dalign = macxx_rel_dalign;
+    segp->seg_salign = macxx_salign;
+    segp->seg_dalign = macxx_dalign;
     segp->seg_maxlen = 256*1024-(32*4);
 #endif
 #if defined(MAC_TJ)
@@ -119,7 +119,13 @@ void opcinit( void )          /* preloads the opcode table */
             op->op_func  = dir->func;
             op->op_class = dir->flags;
         }
-        ++dir;
+		else if ( op->op_func != dir->func )
+		{
+			char err[256];
+			snprintf(err, sizeof(err), "Duplicate PST entry while adding '%s'. Already have '%s'", token_pool, op->op_name);
+			show_bad_token(NULL, err, MSG_FATAL);
+		}
+		++dir;
     }
     ust_init();
     return;

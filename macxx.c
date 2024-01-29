@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
  *      Else Returns SUCCESS
  */
 {
-    int i,file_cnt;
+    int i,fileNumber;
 #ifdef TIME_LIMIT
     long timed_out,*link_time,systime[2];
 #endif
@@ -357,7 +357,13 @@ int main(int argc, char *argv[])
     }
     list_source.srcPosition = LLIST_SIZE;
     list_source.srcPositionQued = LLIST_SIZE;
-    init_exprs();
+#if 0
+	if ( (were_mac65 || were_mac68 || were_mac69 || were_mac11) && options[QUAL_C_EXPR] )
+	{
+		/* change the expression handler characters here */
+	}
+#endif
+	init_exprs();
 #if !defined(MAC_PP)
     outx_init();
 #endif
@@ -367,13 +373,13 @@ int main(int argc, char *argv[])
 	{
 		int ii;
 		
-		if ( !were_mac65 && !were_mac68 && !were_mac69 )
+		if ( !were_mac65 && !were_mac68 && !were_mac69 && !were_mac11 )
 		{
 			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
 			EXIT_FALSE;
 		}
 		pass = 0;
-		for (file_cnt=0;;file_cnt++)
+		for (fileNumber=0;;fileNumber++)
 		{
 			if (current_fnd->fn_file == 0)
 			{
@@ -403,14 +409,14 @@ int main(int argc, char *argv[])
 				token_pool += 25;
 			}
 #ifdef TIME_LIMIT
-			if (timed_out && (file_cnt&3 != login_time[0]))
+			if (timed_out && (fileNumber&3 != login_time[0]))
 			{
 				EXIT_TRUE;
 			}
 #endif
 			if (squeak)
 				printf("Processing file %s\n", current_fnd->fn_nam->relative_name);
-			pass0(file_cnt); /* else do .MAC file input */
+			pass0(fileNumber); /* else do .MAC file input */
 			if (fclose(current_fnd->fn_file) != 0)
 			{
 				sprintf(emsg,"Unable to close file: %s",
@@ -556,7 +562,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 	pass = 1;
-    for (file_cnt=0;;file_cnt++)
+    for (fileNumber=0;;fileNumber++)
     {
         if (current_fnd->fn_file == 0)
         {
@@ -594,7 +600,7 @@ int main(int argc, char *argv[])
 #endif
         }
 #ifdef TIME_LIMIT
-        if (timed_out && (file_cnt&3 != login_time[0]))
+        if (timed_out && (fileNumber&3 != login_time[0]))
         {
             EXIT_TRUE;
         }
@@ -606,7 +612,7 @@ int main(int argc, char *argv[])
 #if !defined(MAC_PP)
         if (obj_fp != 0) write_to_tmp(TMP_FILE,1,&current_fnd,sizeof(FN_struct *));
 #endif
-        pass1(file_cnt); /* else do .MAC file input */
+        pass1(fileNumber); /* else do .MAC file input */
         if (current_fnd->fn_stdin == 0 && fclose(current_fnd->fn_file) != 0)
         {
             sprintf(emsg,"Unable to close file: %s",

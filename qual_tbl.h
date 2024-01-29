@@ -27,6 +27,9 @@ QTBL(1, 0, 0, 0, 0, 1, QUAL_CROSS,	"CROSS_REFERENCE", 0),	/* cross reference */
 #endif	/* NO_XREF */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_2_PASS,	"2_PASS", 0),		/* make a full two pass assembler */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_BINARY,	"BINARY", 0),		/* output binary files */
+#if 0 /* Someday I'll add this option */
+QTBL(1, 0, 0, 0, 0, 1, QUAL_C_EXPR, "C_SYNTAX", 0), /* Use C's syntax in expressions (default for all except mac65,mac68,mac69 and mac11) */
+#endif
 QTBL(1, 0, 0, 0, 0, 1, QUAL_CMOS,	"CMOS", 0),		/* 65C02 */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_P816,	"816", 0),		/* 65816 */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_JERRY,	"JERRY", 0),		/* Jaguar DSP */
@@ -51,5 +54,4 @@ QTBL(0, 0, 0, 0, 0, 0, QUAL_INCLUDE, "INCLUDE", 0),		/* include file path descri
 QTBL(1, 0, 0, 0, 0, 1, QUAL_GRNHILL, "GREENHILLS", 0),
 QTBL(1, 0, 0, 0, 0, 1, QUAL_ABBREV, "ABBREVIATE", 0), /* Abbreviate error messages */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_IGNORE, "IGNORE", 0) /* Ignore some old undefined psuedo-ops */
-
 

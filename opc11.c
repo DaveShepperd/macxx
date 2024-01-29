@@ -31,10 +31,15 @@ char macxx_name[] = "mac11";
 char *macxx_target = "pdp11";
 char *macxx_descrip = "Cross assembler for the PDP11.";
 
+#if 0
 unsigned short macxx_rel_salign = 1;    /* default alignment for .REL. segment */
 unsigned short macxx_rel_dalign = 1;    /* default alignment for data in .REL. segment */
 unsigned short macxx_abs_salign = 1;    /* default alignments for .ABS. segment */
 unsigned short macxx_abs_dalign = 1;    /* default alignments for .ABS. segment */
+#else
+unsigned short macxx_salign = 1;    /* default alignment segments by LLF */
+unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+#endif
 unsigned short macxx_min_dalign = 0;    /* alignment required by the hardware */
 char macxx_mau = 8;             /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -45,12 +50,12 @@ char macxx_nibbles_byte = 3;        /* For the listing output routines */
 char macxx_nibbles_word = 6;
 char macxx_nibbles_long = 11;
 
-unsigned long macxx_edm_default = ED_AMA|ED_LC|ED_GBL;  /* default edmask */
+unsigned long macxx_edm_default = ED_LC|ED_GBL;  /* default edmask */
 unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD); /* default list mask */
 
 int current_radix = 8;      /* default the radix to octal */
-char expr_open = '(';       /* char that opens an expression */
-char expr_close = ')';      /* char that closes an expression */
+char expr_open = '<';       /* char that opens an expression */
+char expr_close = '>';      /* char that closes an expression */
 char expr_escape = '^';     /* char that escapes an expression term */
 char macro_arg_open = '<';  /* char that opens a macro argument */
 char macro_arg_close = '>'; /* char that closes a macro argument */
@@ -145,8 +150,7 @@ int ust_init( void )
         ptr->ss_value = ri->value;    /* value */
         ri += 1;              /* next */
     }
-    current_section->seg_dalign = 1; /* make default data in code section word aligned */
-    quoted_ascii_strings = TRUE;
+    quoted_ascii_strings = FALSE;
     reset_list_params = mac11_reset_list;
     mac11_reset_list(1);
     return 0;
@@ -165,9 +169,11 @@ extern int type7(int inst, int bwl);
 extern int type8(int inst, int bwl);
 extern int type9(int inst, int bwl);
 extern int type10(int inst, int bwl);
+extern int type11(int inst, int bwl);
+extern int type12(int inst, int bwl);
 
 static int (*opctbl[])() = { type0,type1,type2,type3,type4,type5,type6,type7,
-    type8,type9,type10};
+    type8,type9,type10,type11,type12};
 
 void do_opcode(Opcode *opc)
 {
@@ -177,7 +183,7 @@ void do_opcode(Opcode *opc)
     ep = exprs_stack;
     for (i=0;i<EXPR_MAXSTACKS;++i,++ep)
     {
-        ep->tag = 'W';          /* select default size */
+        ep->tag = 'w';          /* select default size */
         ep->tag_len = 1;        /* and 1 element */
         ep->forward_reference = 0;
         ep->register_reference = 0;

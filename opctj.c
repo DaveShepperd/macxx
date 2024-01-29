@@ -42,10 +42,15 @@ char macxx_name[] = "mactj";
 char *macxx_target = "TOM"; /* "1357785-001"; */
 char *macxx_descrip = "Cross assembler for the Tom and Jerry.";
 
+#if 0
 unsigned short macxx_rel_salign = 3; /* default alignment for rel segments */
 unsigned short macxx_rel_dalign = 1; /* def algnmnt for data in rel segments */
 unsigned short macxx_abs_salign = 3; /* default alignment for abs segments */
 unsigned short macxx_abs_dalign = 1; /* def algnmnt for data in abs segments */
+#else
+unsigned short macxx_salign = 3;    /* default alignment segments by LLF */
+unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+#endif
 unsigned short macxx_min_dalign = 1;
 
 char macxx_mau = 8;         /* # of bits/minimum addressable unit */

@@ -36,7 +36,7 @@ Change Log
     #define EXPR_C 0
 #endif
 */
-#if defined(MAC_65) || defined(MAC_68) || defined(MAC_69)
+#if defined(MAC_65) || defined(MAC_68) || defined(MAC_69) 
     #define EXPR_C 0
 #endif
 /*********************************************etg*/
@@ -1270,7 +1270,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                             break;
                         }
                     }
-#if EXPR_C
+#if EXPR_C && !MAC_11
                     if (c == '~' || c == '!')
                     {  /* 1's compliment or negate? */
                         if (c == '!' && *inp_ptr == '=')
@@ -1436,7 +1436,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                         bad_token(tkn_ptr,"Can't start expression with binary operator");
                     }
                 }
-#if EXPR_C
+#if EXPR_C && !MAC_11
                 if (c == '>')
                 {
                     if (*inp_ptr == '>')
@@ -1509,7 +1509,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                     return(eps->ptr);
                 }
                 oper_save = token_value;    /* save this operator */
-#if !EXPR_C
+#if !EXPR_C || MAC_11
                 if (oper_save == '!') oper_save = EXPROPER_OR;
                 if (oper_save == '?') oper_save = EXPROPER_XOR;
                 if (oper_save == '{') oper_save = EXPROPER_SHL;

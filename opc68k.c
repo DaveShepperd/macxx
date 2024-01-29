@@ -29,10 +29,15 @@ char macxx_name[] = "mac68k";
 char *macxx_target = "68000";
 char *macxx_descrip = "Cross assembler for the 68000.";
 
+#if 0
 unsigned short macxx_rel_salign = 1;    /* default alignment for .REL. segment */
 unsigned short macxx_rel_dalign = 1;    /* default alignment for data in .REL. segment */
 unsigned short macxx_abs_salign = 1;    /* default alignments for .ABS. segment */
 unsigned short macxx_abs_dalign = 1;
+#else
+unsigned short macxx_salign = 1;    /* default alignment segments by LLF */
+unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+#endif
 unsigned short macxx_min_dalign = 1;
 char macxx_mau = 8;         /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */

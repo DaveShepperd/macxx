@@ -862,13 +862,14 @@ void n_to_list(int nibbles, long value, int tag)
 	}
 	else
 	{
+		int mask = (nyb == 3 || nyb == 11) ? 3:1;
 		do
 		{
 			*--lpr = '0' + (tv & 7);
 			tv >>= 3;
 		} while ( --nyb > 1 );
 		if ( nyb )
-			*--lpr = '0' + (tv & 3);
+			*--lpr = '0' + (tv & mask);
 	}
 	return;
 }
