@@ -62,7 +62,7 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_LC|ED_GBL|ED_M68|ED_DOL; /* default edmask */
+unsigned long macxx_edm_default = ED_LC|ED_GBL|ED_M68|ED_DOL|ED_TRUNC; /* default edmask */
 /* default list mask */
 unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD);
 int current_radix = 10;     /* default the radix to decimal */

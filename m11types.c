@@ -199,7 +199,7 @@ static int get_oneea( EA *amp, int pc_offset, int commaExpected )
             amp->mode = E_IMM;
             amp->eamode = Ea_IMM;
         }
-        eps->tag = 'i';
+        eps->tag = 'w';
         return 1;
     }
     while ((cttbl[(int)*inp_ptr]&CT_WS) != 0)
@@ -268,7 +268,7 @@ static int get_oneea( EA *amp, int pc_offset, int commaExpected )
             break;
         }
         eps->tag_len = 1;
-        eps->tag = 'i';  /* displacements are signed words */
+        eps->tag = 'w';  /* displacements are signed words, but ignore that for now */
         if (!(edmask&ED_AMA))
         {
             if ( (amflg&AMFLG_INDIRECT) )

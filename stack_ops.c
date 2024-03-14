@@ -906,7 +906,8 @@ int op_pop(void)
 								show_bad_token(NULL,emsg,MSG_WARN);
 							}
 #endif
-							current_section = stkSymPtr->ss_seg;
+/*							current_section = stkSymPtr->ss_seg; */
+							change_section(stkSymPtr->ss_seg);
 						}
 					}
 					current_offset = data;

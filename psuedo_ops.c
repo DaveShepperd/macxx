@@ -857,7 +857,7 @@ static void ascii_common(int arg)
 					{
 						int epv;
 						epv = EXP0SP->expr_value;
-						if ( epv > 255 || epv < -256 )
+						if ( (edmask&ED_TRUNC) && (epv > 255 || epv < -256) )
 						{
 							snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08X, stored: %02X",
 									 epv, epv & 255);
@@ -1039,7 +1039,7 @@ static int op_dcb_with_mask(int inpMask)
 		}
 		if ( EXP0.ptr <= 1 && EXP0SP->expr_code == EXPR_VALUE )
 		{
-			if ( !inpMask )
+			if ( inpMask )
 			{
 				if ( epv > 255 || epv < -256 )
 				{
@@ -1050,7 +1050,7 @@ static int op_dcb_with_mask(int inpMask)
 			}
 			EXP0SP->expr_value = epv & 0xFF;
 		}
-		else if ( !inpMask )
+		else if ( inpMask )
 		{
 			EXP_stk *eps = &EXP0;
 			EXPR_struct *expr_ptr;
@@ -1150,7 +1150,7 @@ static int op_byte_with_mask(int inpMask)
 		}
 		if ( EXP0.ptr <= 1 && EXP0SP->expr_code == EXPR_VALUE )
 		{
-			if ( !inpMask )
+			if ( inpMask )
 			{
 				if ( epv > 255 || epv < -256 )
 				{
@@ -1187,7 +1187,7 @@ static int op_byte_with_mask(int inpMask)
 
 int op_byte(void)
 {
-	return op_byte_with_mask((edmask & ED_TRUNC) ? 0 : 1);
+	return op_byte_with_mask((edmask & ED_TRUNC));
 }
 
 static int op_word_with_mask(int inpMask)
@@ -1237,14 +1237,13 @@ static int op_word_with_mask(int inpMask)
 			}
 			if ( EXP0.ptr <= 1 && EXP0SP->expr_code == EXPR_VALUE )
 			{
-				if ( !inpMask )
+				if ( inpMask )
 				{
 					if ( epv > 65535l || epv < -65536l )
 					{
 						snprintf(emsg, ERRMSG_SIZE, "Word truncation error. Desired: %08lX, stored: %04lX",
 								 epv, epv & 65535);
 						show_bad_token(otp, emsg, MSG_WARN);
-						EXP0SP->expr_value &= 0xFFFF;
 					}
 				}
 				EXP0SP->expr_value = epv & 0xFFFF;
@@ -1276,7 +1275,7 @@ static int op_word_with_mask(int inpMask)
 
 int op_word(void)
 {
-	return op_word_with_mask((edmask & ED_TRUNC) ? 0 : 1);
+	return op_word_with_mask((edmask & ED_TRUNC));
 }
 
 int op_long(void)
@@ -1874,6 +1873,7 @@ static struct
 	{ "CR", ED_CR },
 	{ "SIMPLE", ED_SIMPLE },
 	{ "CPU_CHECK", ED_CPU },
+	{ "TRUNCATE_CHECK", ED_TRUNC },
 	{ 0, 0 }
 };
 
@@ -1923,17 +1923,6 @@ static int op_edcommon(int onoff)
 					}
 					continue;
 				}
-				else if ( strncmp(token_pool,"TRUNC",flg) == 0 )
-				{
-					/* NOTE: The sense of ED_TRUNC is opposite enable/disable */
-					/* I.e. (edmask&ED_TRUNC) == 0 means check for truncation errors.
-					 * (edmask&ED_TRUNC) != 0 means don't check for truncation errors.
-					 */
-					if ( onoff < 0 )
-						edmask |= ED_TRUNC;	
-					else
-						edmask &= ~ED_TRUNC;
-				}
 				else
 				{
 					bad_token(tkn_ptr, "Unknown enabl/dsabl argument");
@@ -1943,13 +1932,9 @@ static int op_edcommon(int onoff)
 			if ( flg == 0 )
 				continue;
 			if ( onoff < 0 )
-			{
 				edmask &= ~flg;
-			}
 			else
-			{
 				edmask |= flg;
-			}
 			if ( edstuff[i].flag & ED_LSB )
 			{  /* if messing with an LSB, */
 				current_lsb = next_lsb++;   /* set it up */
@@ -2098,9 +2083,9 @@ int op_blk8m(void)
 int op_mau(void)
 {
 	if ( macxx_mau == 8 )
-		return op_byte_with_mask((edmask & ED_TRUNC) ? 0 : 1);
+		return op_byte_with_mask((edmask & ED_TRUNC));
 	if ( macxx_mau == 16 )
-		return op_word_with_mask((edmask & ED_TRUNC) ? 0 : 1);
+		return op_word_with_mask((edmask & ED_TRUNC));
 	return op_long();
 }
 
@@ -2116,7 +2101,7 @@ int op_maum(void)
 int op_2mau(void)
 {
 	if ( macxx_mau == 8 )
-		return op_word_with_mask((edmask & ED_TRUNC) ? 0 : 1);
+		return op_word_with_mask((edmask & ED_TRUNC));
 	if ( macxx_mau == 16 )
 		return op_long();
 	return bad_mau();
@@ -2321,7 +2306,7 @@ int op_include(void)
 		return 0;
 	}
 	tfnd = procFileName();
-	if ( !tfnd )
+	if ( !tfnd || !tfnd->fn_file )
 		return 0;
 	tfnd->fn_next = current_fnd;
 	current_fnd->macro_level = macro_level;
@@ -2388,7 +2373,7 @@ static struct
 	{ 0, 0 }
 };
 
-static void change_section(SEG_struct *new_seg)
+void change_section(SEG_struct *new_seg)
 {
 	if ( current_section->seg_pc > current_section->seg_len )
 	{

@@ -65,7 +65,9 @@ int sort_symbols(void)
     SS_struct **ls,*st;
     extern SEG_struct *find_segment();
 
-    for (j=i=0;i<HASH_TABLE_SIZE;i++)
+	if ( reset_list_params )
+		reset_list_params(1);
+	for (j=i=0;i<HASH_TABLE_SIZE;i++)
     {
         for (st=hash[(short)i] ; st != 0 ; st=st->ss_next)
         {
@@ -229,10 +231,13 @@ int sort_symbols(void)
                         d = map_page + lc*132 + i*26; /* point to destination */
                         if ((st = *ls) != 0)
                         {
+							int symLen,seg_num = 0;
+							char symChr;
+							symLen = strlen(st->ss_string);
+							symChr = symLen <= 13 ? ' ':'+';
                             if (st->flg_defined)
                             {
                                 SEG_struct **spp;
-                                int seg_num = 0;
                                 if (st->ss_seg != 0)
                                 {
                                     spp = seg_list;
@@ -243,41 +248,46 @@ int sort_symbols(void)
                                     }
                                     seg_num = spp - seg_list;
                                 }
-                                if ( list_radix == 16 )
+                                if ( list_radix == 8 )
                                 {
-                                    if (seg_num > 0)
-                                    {
-                                        sprintf(d,"%-13.13s %08lX %02X \n",
-                                                st->ss_string,st->ss_value,seg_num);
-                                    }
-                                    else
-                                    {
-                                        sprintf(d,"%-13.13s %08lX%c   \n",
-                                                st->ss_string,st->ss_value,
-                                                st->flg_register ? '%' : ' ');
-                                    }
+									if (seg_num > 0)
+									{
+										sprintf(d,"%-13.13s%c%06lo %03o  \n",
+												st->ss_string,
+												symChr,
+												st->ss_value&0xFFFF,
+												seg_num);
+									}
+									else
+									{
+										sprintf(d,"%-13.13s%c%06lo%c     \n",
+												st->ss_string,
+												symChr,
+												st->ss_value&0xFFFF,
+												st->flg_register ? '%' : ' ');
+									}
                                 }
                                 else
                                 {
-                                    if (seg_num > 0)
-                                    {
-                                        sprintf(d,"%-13.13s %06lo %03o  \n",
-                                                st->ss_string,st->ss_value&0xFFFF,seg_num);
-                                    }
-                                    else
-                                    {
-                                        sprintf(d,"%-13.13s %06lo%c     \n",
-                                                st->ss_string,st->ss_value&0xFFFF,
-                                                st->flg_register ? '%' : ' ');
-                                    }
+									if (seg_num > 0)
+									{
+										sprintf(d,"%-13.13s%c%08lX %02X \n",
+												st->ss_string,symChr,st->ss_value,seg_num);
+									}
+									else
+									{
+										sprintf(d,"%-13.13s%c%08lX%c   \n",
+												st->ss_string,symChr,st->ss_value,
+												st->flg_register ? '%' : ' ');
+									}
                                 }
                             }
                             else
                             {
                                 if ( list_radix == 16 )
-                                    sprintf(d,"%-13.13s xxxxxxxx    \n",st->ss_string);
+                                    sprintf(d,"%-13.13s%cxxxxxxxx    \n",st->ss_string,symChr);
                                 else
-                                    sprintf(d,"%-13.13s xxxxxx      \n",st->ss_string);
+									sprintf(d, "%-13.13s%cxxxxxx      \n", st->ss_string, symChr);
                             }
                             --tot_gbl; /* take from total */
                             ls++;
@@ -298,19 +308,42 @@ int sort_symbols(void)
         int seg_num;
         SEG_struct **spp,*seg_ptr;
         strncpy(lis_subtitle,"Segment summary",sizeof(lis_subtitle));
-        puts_lis("\nSegment summary:\nNum  Length   Maxlen  Salign  Dalign c/o base name\n-------------------------------------------------------------------------\n",4);
-        seg_num = 0;
-        spp = seg_list;
-        for (;seg_num<seg_list_index;++seg_num)
-        {
-            seg_ptr = *spp++;
-            sprintf(emsg," %02X %08lX %08lX  %04X    %04X  %s    %c  %s\n",
-                    seg_num,seg_ptr->seg_len,seg_ptr->seg_maxlen,
-                    seg_ptr->seg_salign,seg_ptr->seg_dalign,
-                    seg_ptr->flg_ovr?"OVR":"CON",
-                    seg_ptr->flg_zero?'b':' ',seg_ptr->seg_string);
-            puts_lis(emsg,1);
-        }
+		if ( list_radix == 8 )
+		{
+			puts_lis("\nSegment summary:\n"
+					 "Num  Length   Maxlen  Salign Dalign  c/o base name\n"
+					 "--- -------- -------- ------ ------  --- ---- ------------------------------\n", 4);
+			seg_num = 0;
+			spp = seg_list;
+			for (;seg_num<seg_list_index;++seg_num)
+			{
+				seg_ptr = *spp++;
+				sprintf(emsg," %02o %08lo %08lo   %03o    %03o   %s  %c   %s\n",
+						seg_num,seg_ptr->seg_len,seg_ptr->seg_maxlen,
+						seg_ptr->seg_salign,seg_ptr->seg_dalign,
+						seg_ptr->flg_ovr?"OVR":"CON",
+						seg_ptr->flg_zero?'b':' ',seg_ptr->seg_string);
+				puts_lis(emsg,1);
+			}
+		}
+		else
+		{
+			puts_lis("\nSegment summary:\n"
+					 "Num  Length   Maxlen  Salign Dalign c/o base name\n"
+					 "--- -------- -------- ------ ------ --- ---- -----------------------------------\n", 4);
+			seg_num = 0;
+			spp = seg_list;
+			for (;seg_num<seg_list_index;++seg_num)
+			{
+				seg_ptr = *spp++;
+				sprintf(emsg," %02X %08lX %08lX  %04X   %04X  %s   %c  %s\n",
+						seg_num,seg_ptr->seg_len,seg_ptr->seg_maxlen,
+						seg_ptr->seg_salign,seg_ptr->seg_dalign,
+						seg_ptr->flg_ovr?"OVR":"CON",
+						seg_ptr->flg_zero?'b':' ',seg_ptr->seg_string);
+				puts_lis(emsg,1);
+			}
+		}
 		if ( options[QUAL_2_PASS] )
 		{
 			snprintf(emsg,sizeof(emsg),"Total instruction tags used: %d, total checks: %d\n", totalTagsUsed,totalTagsChecked);

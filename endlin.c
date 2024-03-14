@@ -1018,8 +1018,9 @@ int endlin( void )
 
 static void addByteMask(EXP_stk *eps)
 {
-	if ( (edmask & ED_TRUNC) )
+	if ( !(edmask & ED_TRUNC) )
 	{
+		/* Don't check for or report truncation errors */
 		if ( eps->ptr <= 1 && eps->stack[0].expr_code == EXPR_VALUE )
 		{
 			eps->stack[0].expr_value &= 0xFF;
@@ -1047,8 +1048,9 @@ static void addByteMask(EXP_stk *eps)
 
 static void addWordMask(EXP_stk *eps)
 {
-	if ( (edmask & ED_TRUNC) )
+	if ( !(edmask & ED_TRUNC) )
 	{
+		/* Don't check for or report truncation errors */
 		if ( eps->ptr <= 1 && eps->stack[0].expr_code == EXPR_VALUE )
 		{
 			eps->stack[0].expr_value &= 0xFFFF;
@@ -1127,7 +1129,7 @@ int p1o_byte( EXP_stk *eps )
     if ( j == 1 && exp_ptr->expr_code == EXPR_VALUE && eps->tag_len <= 1)
     {
         tv = exp_ptr->expr_value;
-        if (!(edmask&ED_TRUNC) && ((tv > 255) || (tv < -128)))
+        if ((edmask&ED_TRUNC) && ((tv > 255) || (tv < -128)))
 			trunc_err(255L,tv);
         if (out_remaining <= 0) FLUSH_OUTBUF;
         --out_remaining;
@@ -1188,7 +1190,7 @@ int p1o_word( EXP_stk *eps )
     if ( j == 1 && eps->stack->expr_code == EXPR_VALUE && eps->tag_len <= 1)
     {
         tv = exp_ptr->expr_value;
-        if ( !(edmask&ED_TRUNC) && ((tv > 65535) || (tv < -65536)))
+        if ( (edmask&ED_TRUNC) && ((tv > 65535) || (tv < -65536)))
 			trunc_err(65535L,tv);
         if (swapem)
         {
@@ -1393,7 +1395,7 @@ int p1o_var( EXP_stk *eps )
                tv > uBits/2,
                tv < -(uBits/2+1));
 #endif
-        if ( !(edmask&ED_TRUNC) && (tv > uBits/2 || tv < -(uBits/2+1)) )
+        if ( (edmask&ED_TRUNC) && (tv > uBits/2 || tv < -(uBits/2+1)) )
 			trunc_err(uBits,tv);
         tv &= bits;
         if (out_remaining < bytes) FLUSH_OUTBUF;

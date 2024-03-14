@@ -84,6 +84,7 @@ static int cmd_includes_index;
     #define rel_desc	qual_tbl[QUAL_RELATIVE]
     #define boff_desc	qual_tbl[QUAL_BOFF]
     #define green_desc  qual_tbl[QUAL_GRNHILL]
+	#define predef_desc qual_tbl[QUAL_PREDEFINE]
 #endif
 #define ide_desc	qual_tbl[QUAL_IDE_SYNTAX]
 #define obj_desc	qual_tbl[QUAL_OUTPUT]
@@ -504,6 +505,8 @@ int getcommand(void)
     if (!miser_desc.present)
 		options[QUAL_MISER] = 1;    /* default to miser mode */
 #endif
+	if ( !predef_desc.present || (predef_desc.present && !predef_desc.negated) )
+		options[QUAL_PREDEFINE] = 1;
 #endif	/* !defined(MAC_PP) */
 #if 0
 	if ( !ide_desc.present )
@@ -512,9 +515,25 @@ int getcommand(void)
 		options[QUAL_ABBREV] = 0;		/* Cannot have both ABBREV and IDE */
 #endif
 	if ( syml_desc.present )
-        if ((int)syml_desc.value > 6) max_symbol_length = (int)syml_desc.value;
+	{
+		if ( (int)syml_desc.value < 6 || (int)syml_desc.value > 16 )
+		{
+			sprintf(emsg, "Value on -symbol_length has to be 6 <= n <= 16. Value of %d ignored.", (int)syml_desc.value);
+			err_msg(MSG_WARN, emsg);
+			++gc_err;
+		}
+		max_symbol_length = (int)syml_desc.value;
+	}
     if (opcl_desc.present)
-        if ((int)opcl_desc.value > 6) max_opcode_length = (int)opcl_desc.value;
+	{
+		if ( (int)opcl_desc.value < 6 || (int)opcl_desc.value > 16 )
+		{
+			sprintf(emsg, "Value on -opcode_length has to be 6 <= n <= 16. Value of %d ignored.", (int)opcl_desc.value);
+			err_msg(MSG_WARN, emsg);
+			++gc_err;
+		}
+        max_opcode_length = (int)opcl_desc.value;
+	}
     while (fnd != 0)
     {
         int err;

@@ -53,5 +53,6 @@ QTBL(0, 0, 0, 0, 1, 0, QUAL_ASSEM,	"ASSEM", 0),		/* insert text in assem stream 
 QTBL(0, 0, 0, 0, 0, 0, QUAL_INCLUDE, "INCLUDE", 0),		/* include file path description */
 QTBL(1, 0, 0, 0, 0, 1, QUAL_GRNHILL, "GREENHILLS", 0),
 QTBL(1, 0, 0, 0, 0, 1, QUAL_ABBREV, "ABBREVIATE", 0), /* Abbreviate error messages */
-QTBL(1, 0, 0, 0, 0, 1, QUAL_IGNORE, "IGNORE", 0) /* Ignore some old undefined psuedo-ops */
+QTBL(1, 0, 0, 0, 0, 1, QUAL_IGNORE, "IGNORE", 0), /* Ignore some old undefined psuedo-ops */
+QTBL(1, 0, 0, 0, 0, 1, QUAL_PREDEFINE, "PREDEFINE", 0) /* Predefine some symbols */
 

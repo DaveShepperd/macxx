@@ -50,7 +50,7 @@ char macxx_nibbles_byte = 3;        /* For the listing output routines */
 char macxx_nibbles_word = 6;
 char macxx_nibbles_long = 11;
 
-unsigned long macxx_edm_default = ED_LC|ED_GBL;  /* default edmask */
+unsigned long macxx_edm_default = ED_TRUNC; /* |ED_LC|ED_GBL; */  /* default edmask */
 unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD); /* default list mask */
 
 int current_radix = 8;      /* default the radix to octal */
@@ -86,6 +86,7 @@ static struct rinit reginit[] = {
     { "R7",7},
     { "SP",6},
     { "PC",7},
+#if 0
     { "r0",0},
     { "r1",1},
     { "r2",2},
@@ -96,6 +97,7 @@ static struct rinit reginit[] = {
     { "r7",7},
     { "sp",6},
     { "pc",7},
+#endif
     { 0,0}
 };
 
@@ -123,32 +125,35 @@ static void mac11_reset_list(int onoff)
 
 int ust_init( void )
 {
-    SS_struct *ptr;
-    struct rinit *ri = reginit;
-
-    while (ri->name != 0)
+    if ( options[QUAL_PREDEFINE] )
     {
-        if ((ptr = sym_lookup(ri->name,SYM_INSERT_IF_NOT_FOUND)) == 0)
+        SS_struct *ptr;
+        struct rinit *ri = reginit;
+
+        while ( ri->name != 0 )
         {
-            sprintf(emsg,"Unable to insert symbol %s into symbol table",
-                    ri->name);
-            bad_token((char *)0,emsg);
-            continue;
+            if ((ptr = sym_lookup(ri->name,SYM_INSERT_IF_NOT_FOUND)) == 0)
+            {
+                sprintf(emsg,"Unable to insert symbol %s into symbol table",
+                        ri->name);
+                bad_token((char *)0,emsg);
+                continue;
+            }
+            ptr->flg_defined = 1;     /* defined */
+            ptr->flg_ref = 1;         /* referenced */
+            ptr->flg_macLocal = 0;       /* not local */
+            ptr->flg_gasLocal = 0;
+            ptr->flg_global = 0;      /* not global */
+            ptr->flg_label = 0;       /* can redefine it */
+            ptr->flg_fixed_addr = 1;
+            ptr->ss_fnd = 0;          /* no associated file */
+            ptr->flg_register = 1;        /* it's a register */
+            ptr->flg_abs = 1;         /* it's not relocatible */
+            ptr->flg_exprs = 0;       /* no expression with it */
+            ptr->ss_seg = 0;          /* not an offset from a segment */
+            ptr->ss_value = ri->value;    /* value */
+            ri += 1;              /* next */
         }
-        ptr->flg_defined = 1;     /* defined */
-        ptr->flg_ref = 1;         /* referenced */
-        ptr->flg_macLocal = 0;       /* not local */
-		ptr->flg_gasLocal = 0;
-        ptr->flg_global = 0;      /* not global */
-        ptr->flg_label = 1;       /* can't redefine it */
-		ptr->flg_fixed_addr = 1;
-        ptr->ss_fnd = 0;          /* no associated file */
-        ptr->flg_register = 1;        /* it's a register */
-        ptr->flg_abs = 1;         /* it's not relocatible */
-        ptr->flg_exprs = 0;       /* no expression with it */
-        ptr->ss_seg = 0;          /* not an offset from a segment */
-        ptr->ss_value = ri->value;    /* value */
-        ri += 1;              /* next */
     }
     quoted_ascii_strings = FALSE;
     reset_list_params = mac11_reset_list;

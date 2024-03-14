@@ -1482,7 +1482,7 @@ int f1_defg(int flag)
 							 ptr->ss_string,
 							 current_section->seg_string,
 							 current_pc,
-							 ptr->ss_fnd->fn_nam->relative_name,
+							 ptr->ss_fnd ? ptr->ss_fnd->fn_nam->relative_name : "<predefined>",
 							 ptr->ss_line,
 							 ptr->ss_seg ? ptr->ss_seg->seg_string:"",
 							 ptr->ss_value
@@ -1498,7 +1498,7 @@ int f1_defg(int flag)
 						"Attempting to %sdefine label '%s' previously defined as symbol at %s:%d",
 						 ptr->flg_label ? "re-":"",
 						 ptr->ss_string,
-						 ptr->ss_fnd->fn_nam->relative_name,
+						 ptr->ss_fnd ? ptr->ss_fnd->fn_nam->relative_name:"<predefined>",
 						 ptr->ss_line);
 			}
 			else
@@ -1526,7 +1526,7 @@ int f1_defg(int flag)
 						 current_fnd->fn_nam->relative_name,
 						 current_fnd->fn_line,
 						 ptr->ss_string,
-						 ptr->ss_fnd->fn_nam->relative_name,
+						 ptr->ss_fnd ? ptr->ss_fnd->fn_nam->relative_name:"<predefined>",
 						 ptr->ss_line
 						 );
             }
@@ -1637,7 +1637,7 @@ int f1_defg(int flag)
 							 current_fnd->fn_nam->relative_name,
 							 current_fnd->fn_line,
 							 ptr->ss_string,
-							 ptr->ss_fnd->fn_nam->relative_name,
+							 ptr->ss_fnd ? ptr->ss_fnd->fn_nam->relative_name:"<predefined>",
 							 ptr->ss_line
 							 );
 				}

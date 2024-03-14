@@ -70,7 +70,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             mask = (1<<taglen) -1; /* compute mask */   
             if (tv&~mask)
             {
-                if ( !(edmask&ED_TRUNC) )
+                if ( (edmask&ED_TRUNC) )
 					trunc_err(mask,tv);
                 tv &= mask;
             }
@@ -147,7 +147,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             flip = 1;      /* signal to flip it */
         }             /* fall thru to 'w' */
     case WORD_LBF: {   
-            if ( !(edmask&ED_TRUNC) && (tv > 65535 || tv < -65536) )
+            if ( (edmask&ED_TRUNC) && (tv > 65535 || tv < -65536) )
 				trunc_err(65535L,tv);
             goto common_word;  /* jump to common word processing */
         }
@@ -155,7 +155,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             flip = 1;
         }
     case SIGN_LBF: {
-            if ( !(edmask&ED_TRUNC) && (tv > 32767 || tv < -32768))
+            if ( (edmask&ED_TRUNC) && (tv > 32767 || tv < -32768))
 				trunc_err(65535L,tv);
             goto common_word;
         }
@@ -163,7 +163,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             flip = 1;
         }
     case USIGN_LBF: {
-            if ( !(edmask&ED_TRUNC) && (tv &0xFFFF0000L))
+            if ( (edmask&ED_TRUNC) && (tv &0xFFFF0000L))
 				trunc_err(65535L,tv);
         }
         common_word:
@@ -211,19 +211,19 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
         return sizeof(short);
 #endif
     case 'b': {
-            if ( !(edmask&ED_TRUNC) && (tv > 255 || tv < -128))
+            if ( (edmask&ED_TRUNC) && (tv > 255 || tv < -128))
 				trunc_err(255L,tv);
             *value = tv;
             return sizeof(char);
         }
     case 's': {
-            if ( !(edmask&ED_TRUNC) && (tv > 127 || tv < -128))
+            if ( (edmask&ED_TRUNC) && (tv > 127 || tv < -128))
 				trunc_err(255L,tv);
             *value = tv;
             return sizeof(char);
         }
     case 'c': {
-            if ( !(edmask&ED_TRUNC) && (tv & 0xFFFFFF00))
+            if ( (edmask&ED_TRUNC) && (tv & 0xFFFFFF00))
 				trunc_err(255L,tv);
             *value = tv;
             return sizeof(char);
@@ -231,7 +231,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
     case 'y': {
             if ( tv > 32767L || tv < -32768L )
             {
-                if (!(edmask&ED_TRUNC))
+                if ((edmask&ED_TRUNC))
 					trunc_err(65534L,tv);
                 tv = -3;
             }
@@ -242,7 +242,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
     case 'Y': {
             if ( tv > 32767L || tv < -32768L )
             {
-				if ( !(edmask&ED_TRUNC) )
+				if ( (edmask&ED_TRUNC) )
 					trunc_err(65534L,tv);
                 tv = -3;
             }
@@ -260,7 +260,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
 */
             if (tv > 127 || tv < -128)
             {
-				if ( !(edmask&ED_TRUNC) )
+				if ( (edmask&ED_TRUNC) )
 					trunc_err(254L, tv);
                 tv = -2;
             }

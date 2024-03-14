@@ -34,7 +34,7 @@ typedef struct
 static Help_Value help_symbol_length = {"%d",&max_symbol_length};
 static Help_Value help_opcode_length = {"%d",&max_opcode_length};
 static char help_uppercase_mark[1],help_cmos_mark[1],help_2_pass_mark[1],help_cmos_default[1], help_jerry_mark[1], help_2_pass_default[1];
-static char help_grnhill_mark[1];
+static char help_grnhill_mark[1], help_predef_mark[1];
 
 #define UPC help_uppercase_mark
 
@@ -63,6 +63,8 @@ static char *help_msg[] = {
     opt_delim,"[no]jerry",  "		- use Jaguar's Jerry opcode set\n",
     help_grnhill_mark,
     opt_delim,"[no]greenhills","         - use Green Hills assembler syntax\n",
+	help_predef_mark,
+	opt_delim,"[no]predefine", "          - Predefine register symbols R0-R7, PC and SP (default)\n",
     opt_delim,"[no]abbreviate","         - Abbreviate error messages\n",
 #else
     opt_delim,"[no]line",  "		- place # line info in output file\n",
@@ -72,8 +74,8 @@ static char *help_msg[] = {
     "			   Any number of ",opt_delim,"assem"," options may be used.\n",
     opt_delim,"include","=path		- sets path to use with .INCLUDE directives. Any number\n",
     "			  of ",opt_delim,"include"," options may be specified.\n",
-    opt_delim,"symbol","=length		- set length of symbols\n",
-    opt_delim,"opcode","=length		- set length of opcodes/macros\n",
+    opt_delim,"symbol","=length		- set maximum length of symbols (6 <= n <= 16)\n",
+    opt_delim,"opcode","=length		- set maximum length of opcodes/macros (6 <= n <= 16)\n",
     "Options may be abbreviated to 1 or more characters and are case insensitive\n",
     "Defaults are ",opt_delim,"out ",opt_delim,"nolist ",opt_delim,"sym=",
     (char *)&help_symbol_length," ",opt_delim,"opc=",(char *)&help_opcode_length," ",
@@ -139,6 +141,14 @@ int display_help(void)
             }
             continue;
         }
+		if (help_msg[i] == help_predef_mark)
+		{
+			if ( !were_mac11 )
+			{
+				i += 3;     /* skip the delim, option name and text */
+			}
+			continue;
+		}
         if (help_msg[i] == help_jerry_mark)
         {
             if (!were_mactj)

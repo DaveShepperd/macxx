@@ -304,6 +304,7 @@ extern int getAMATag(const FN_struct *fnd);
 extern void setAMATag(FN_struct *fnd, unsigned short tag);
 extern int totalTagsUsed;
 extern int totalTagsChecked;
+extern void change_section(SEG_struct *new_seg);
 
 #ifndef n_elts
 #define n_elts(x) (int)(sizeof(x)/sizeof((x)[0]))
