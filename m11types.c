@@ -269,7 +269,7 @@ static int get_oneea( EA *amp, int pc_offset, int commaExpected )
         }
         eps->tag_len = 1;
         eps->tag = 'w';  /* displacements are signed words, but ignore that for now */
-        if (!(edmask&ED_AMA))
+        if (!(edmask&ED_AMA) || (amflg&AMFLG_INDIRECT) )
         {
             if ( (amflg&AMFLG_INDIRECT) )
             {
@@ -290,8 +290,8 @@ static int get_oneea( EA *amp, int pc_offset, int commaExpected )
             eps->ptr += 2;
             break;
         }
-        amp->mode = E_ABS;
-        amp->eamode = Ea_ABS;
+		amp->mode = E_ABS;
+		amp->eamode = Ea_ABS;
     } while ( 0 );
     return 1;
 }
