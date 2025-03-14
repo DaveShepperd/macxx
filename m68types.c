@@ -1174,7 +1174,7 @@ int type4(int inst, int bwl)
         }
         else
         {        /* -- byte offset */
-            abs_br_byte_mode:
+abs_br_byte_mode:
             eps->psuedo_value = expr->expr_value = optabl4[(int)inst] | (expr->expr_value&0xFF);
             eps->tag = 'W'; /* set word mode */
             EXP0.ptr = 0;
@@ -1188,6 +1188,57 @@ int type4(int inst, int bwl)
             EXP0.psuedo_value = EXP0SP->expr_value = optabl4[(int)inst]>>8;
             EXP0.tag = 'b';
             eps->tag = 'z'; /* branch offset type */
+			{
+				struct exp_stk *ep2;
+				EXPR_struct *exp2;
+				
+				/* Use dest expression for test expression */
+				ep2 = dest.exp;
+				exp2 = ep2->stack;
+				/* Copy the branch offset expression */
+				memcpy(exp2,eps->stack,eps->ptr*sizeof(EXPR_struct));
+				exp2 = ep2->stack + eps->ptr;
+				/* Leaves stack: [0]=disp */
+
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = 0;
+				/* Leaves stack: [0]=disp, [1]=0, */
+				
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_PICK;
+				/* Leaves stack: [0]=disp, [1]=disp */
+
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = 1;
+				/* Leaves stack: [0]=disp, [1]=disp, [2]=1 */
+
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_AND;
+				/* Leaves stack: [0]=disp, [1]=(disp & 1) */
+
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_XCHG;
+				/* Leaves stack: [0]=(disp&1), [1]=disp */
+
+				exp2->expr_code = EXPR_VALUE;
+				(exp2++)->expr_value = 0;
+				/* Leaves stack: [0]=(disp&1), [1]=disp, [2]=0, */
+
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_EQ<<8);
+				/* Leaves stack: [0]=(disp&1), [1]=(disp == 0) */
+
+				exp2->expr_code = EXPR_OPER;
+				(exp2++)->expr_value = EXPROPER_OR;
+				/* Leaves stack: [0]=(disp&1) | (disp==0) */
+
+				ep2->ptr = exp2-ep2->stack;
+				ep2->tag = 0;
+				sprintf(emsg,"%s:%d", current_fnd->fn_name_only,current_fnd->fn_line);
+				write_to_tmp(TMP_BOFF,0,ep2,0);
+				write_to_tmp(TMP_ASTNG,strlen(emsg)+1,emsg,1);
+				ep2->ptr = 0;       /* don't use this expression any more */
+			}
         }
         else
         {

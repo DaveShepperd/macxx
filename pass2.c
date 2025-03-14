@@ -250,14 +250,14 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             *value++ = tv;
             return sizeof(short);
         }
-    case 'z': {
-/*
-     if ((tv == 0 || tv == -1) && macxx_name[3] == '6' && macxx_name[4] == '8') {
-        sprintf(emsg,"Branch offset of 0 or -1 is illegal on line %d in file %s",
-                current_fnd->fn_line,current_fnd->fn_name_only);
-        err_msg(MSG_ERROR,emsg);
-     }
-*/
+    case 'z':
+		{
+			if ((tv == 0 || (tv&1)) && macxx_name[3] == '6' && macxx_name[4] == '8' && macxx_name[5] == 'k') {
+				sprintf(emsg,"Branch offset of 0 or -1 is illegal on line %d in file %s",
+						current_fnd->fn_line,current_fnd->fn_name_only);
+				err_msg(MSG_ERROR,emsg);
+				tv = -2;
+			}
             if (tv > 127 || tv < -128)
             {
 				if ( (edmask&ED_TRUNC) )
@@ -361,19 +361,22 @@ int pass2( void )
                     else
                     {
                         register char tag;
-                        flushobj();
+						union vexp ve;
+
+						ve.vexp_chp = eline;
+						*ve.vexp_type++ = VLDA_EXPR;
+						flushobj();
                         tag = EXP0.tag;
                         if (tag == 'y')
 							EXP0.tag = tag = 'w';
 						if (tag == 'Y')
 							EXP0.tag = tag = 'W';
                         if (tag == 'z')
-							EXP0.tag = tag = 's';
+						{
+							/* do nothing. Let LLF handle it directly */
+						}
                         if (options[QUAL_BINARY])
                         {
-                            union vexp ve;
-                            ve.vexp_chp = eline;
-                            *ve.vexp_type++ = VLDA_EXPR;
                             outexp(&EXP0,ve.vexp_chp,eline,obj_fp);
                         }
                         else
