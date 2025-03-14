@@ -253,7 +253,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
     case 'z':
 		{
 			if ((tv == 0 || (tv&1)) && macxx_name[3] == '6' && macxx_name[4] == '8' && macxx_name[5] == 'k') {
-				sprintf(emsg,"Branch offset of 0 or -1 is illegal on line %d in file %s",
+				sprintf(emsg,"Branch offset of 0 or odd is illegal on line %d in file %s",
 						current_fnd->fn_line,current_fnd->fn_name_only);
 				err_msg(MSG_ERROR,emsg);
 				tv = -2;
