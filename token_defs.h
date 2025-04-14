@@ -140,7 +140,9 @@ enum misc {
    ED_TRUNC	=0x02000, 	/* enable truncation check in .byte and .word */
    ED_SIMPLE=0x04000,	/* enable simple .ifdf/.ifndf expression (technically disables the complex test for def/ndef symbols). */
    ED_CPU   =0x08000,	/* enable reporting checks for different behavior on different model CPU's (mac11) */
-   ED_HEXLCL=0x10000	/* allow local symbols to be hexidecimal */
+   ED_HEXLCL=0x10000,	/* enable local symbols to be hexidecimal */
+   ED_H_HEX =0x20000,	/* enable trailing 'h' or 'H' to indicate hex constants */
+   ED_DOL_PC=0x40000	/* enable single symbol '$' to indicate pc (same as '.') */
 };
 
 #endif /* _TOKEN_DEFS_H_ */

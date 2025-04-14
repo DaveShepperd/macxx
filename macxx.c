@@ -265,7 +265,7 @@ char **gc_argv;
 #endif
 #define DOPEN_ARGS  "wb"
 
-int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp;
+int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp, were_mac8080;
 /************************************************************************
  * MACXX main entry.
  */
@@ -349,7 +349,9 @@ int main(int argc, char *argv[])
 		were_mac11 = 1;
 	else if (macxx_name[3] == 'a' && macxx_name[4] == 's')
 		were_macas = 1;
-#if defined(MS_DOS) 
+	else if ( !strcmp(macxx_name+3,"8080") )
+		were_mac8080 = 1;
+#if defined(MS_DOS)
 	fprintf(stderr,"%s\n",token_pool);
 #endif
 	if (argc < 2)
@@ -380,8 +382,9 @@ int main(int argc, char *argv[])
 	if ( options[QUAL_2_PASS] )
 	{
 		int ii;
+		int savedRadix = current_radix;
 		
-		if ( !were_mac65 && !were_mac68 && !were_mac69 && !were_mac11 )
+		if ( !were_mac65 && !were_mac68 && !were_mac69 && !were_mac11 && !were_mac8080 )
 		{
 			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
 			EXIT_FALSE;
@@ -475,6 +478,7 @@ int main(int argc, char *argv[])
 		op_purgedefines(string_macros);
 		purge_data_stacks(NULL);
 		string_macros = NULL;
+		current_radix = savedRadix;
 	}
 #endif
     if (output_files[OUT_FN_LIS].fn_present)

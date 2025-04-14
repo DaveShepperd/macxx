@@ -1991,6 +1991,8 @@ static struct
 	{ "CPU_CHECK", ED_CPU },
 	{ "TRUNCATE_CHECK", ED_TRUNC },
 	{ "HEX_LOCAL", ED_HEXLCL },
+	{ "DOLLAR_PC", ED_DOL_PC },
+	{ "H_HEX", ED_H_HEX },
 	{ 0, 0 }
 };
 
@@ -2914,6 +2916,23 @@ int op_asect(void)
 	if ( new_seg == 0 )
 		return 1;
 	return make_absseg(new_one, new_seg);
+}
+
+int op_org(void)
+{
+	if ( !current_section->flg_abs )
+	{
+		bad_token(NULL,"Have to be in an asect to use this");
+		return 0;
+	}
+	get_token();
+	if ( exprs(0, &EXP0) < 1 || EXP0.ptr != 1 || EXP0SP->expr_code != EXPR_VALUE )
+	{
+		bad_token(NULL,"Expression has to resolve to absolute value");
+		return 0;
+	}
+	current_section->seg_pc = EXP0SP->expr_value;
+	return 1;
 }
 
 int op_csect(void)

@@ -28,6 +28,7 @@ ALLO68 = exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
 ALLO69 = exprs69.o char_tbl65.o opc69.o pass0.o pass1.o pst69.o debug.o help.o
 ALLOAS = exprs.o char_table.o opcas.o pass1.o pstas.o debug.o help.o dummy_pass0.o
 ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o dummy_pass0.o
+ALLO8080 = exprs.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o
 ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o dummy_pass0.o #pass068k.o 
 #ALLO682K = exprs682k.o char_table.o opc682k.o pass168k.o pst682k.o m682types.o debug.o help.o dummy_pass0.o
 ALLO11 = exprs11.o char_tbl65.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
@@ -89,7 +90,7 @@ endif
 	$(ECHO) $(DELIM)    Compiling $< to $@ ...$(DELIM)
 	$(CC) $(CFLAGS) -E $< > $@
 
-all : macas$(EXE) mac65$(EXE) mac68$(EXE) mac68k$(EXE) mac69$(EXE) macpp$(EXE) mactj$(EXE) mac11$(EXE) #mac682k$(EXE)
+all : macas$(EXE) mac65$(EXE) mac68$(EXE) mac68k$(EXE) mac69$(EXE) macpp$(EXE) mactj$(EXE) mac11$(EXE) mac8080$(EXE) #mac682k$(EXE)
 	$(ECHO) $(DELIM)    Done$(DELIM)
 
 define link_it
@@ -101,6 +102,9 @@ macpp$(EXE) : $(MAKEFILE) $(ALLOPP0) $(ALLOPP1) $(ALLOPP2) $(ALLOPP3)
 	$(link_it)
 
 mactj$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOTJ) 
+	$(link_it)
+
+mac8080$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO8080) 
 	$(link_it)
 
 mac65$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO65) 
@@ -123,7 +127,7 @@ macas$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOAS)
 
 mac11$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO11)
 	$(link_it)
-	
+
 dmpod$(EXE) : dmpod.o
 	$(link_it)
 
@@ -220,6 +224,11 @@ pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC68K -o $@ $<
+
+pass18080.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
+	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
+	$C -DMAC_8080 -o $@ $<
 
 .PHONY: clean
 

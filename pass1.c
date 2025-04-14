@@ -1213,17 +1213,20 @@ int get_token( void )
                 int tmp_radix = current_radix; /* copy of local radix */
                 int min_radix = 0;      /* copy of minimum radix rqd */
                 int i;
+				int gotPrefix=0;
 
                 token_type = TOKEN_numb;    /* signal we've got a number */
                 if (c == '0' && (*inp_ptr == 'x' || *inp_ptr == 'X'))
                 {
                     tkn_ptr += 2;        /* skip over the 0x */
                     tmp_radix = 16;      /* switch to hexidecimal */
+					gotPrefix = 1;
                 }
-                else if (c == '$')
+                else if ( c == '$' )
                 {
                     ++tkn_ptr;       /* eat the dollar */
                     tmp_radix = 16;      /* switch to hex */
+					gotPrefix = 1;
                 }
                 for (i=0;i<2;++i)
                 {
@@ -1249,16 +1252,21 @@ int get_token( void )
                         }
                         c -= '0';     /* de-ascify the char */
                         if (c > min_radix) min_radix = c;
-#if 0
-                        if (c >= tmp_radix)
-                        { /* too big to eat? */
-                            break;     /* no point to continue */
-                        }
-#endif
                         tmp *= tmp_radix;
                         tmp += c;
                     }
-                    if (c == '.' || c == '$')
+					if ( (edmask&ED_H_HEX) && !gotPrefix && (c == 'h' || c == 'H') )
+					{
+						++inp_ptr;	/* eat the char */
+						/* if not already in hex */
+						if ( tmp_radix != 16 )
+						{
+							/* set the radix to 16 and rescan */
+							tmp_radix = 16;
+							continue;
+						}
+					}
+					if ( c == '.' || c == '$' )
                     {
                         if (c == '$')
                         {
@@ -1471,7 +1479,9 @@ int f1_defg(int flag)
     int i;
     SS_struct *ptr;
 #ifndef MAC_PP
-    if (token_value == 1 && *token_pool == '.')
+    if (token_value == 1
+		&& (*token_pool == '.' || ((edmask&ED_DOL_PC) && *token_pool == '$'))
+	   )
     {
         if ((flag&~DEFG_SYMBOL) != 0)
         {

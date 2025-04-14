@@ -101,6 +101,7 @@
   <b>mac68</b>    - For the Motorola 6800 CPU
   <b>mac69</b>    - For the Motorola 6809 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
+  <b>mac8080</b>  - For the Intel 8080 CPU
   <b>mac11</b>    - For the PDP11 CPU (specifically the T11 used by Atari)
   <b>macas</b>    - For the custom Atari Simplified Architecure Processor (ASAP) CPU
   <b>mactj</b>    - For the Atari custom Tom and Jerry DSP's
@@ -357,8 +358,12 @@
   defined symbols are internal unless explicitly declared otherwise.
   </p>
   <p>
-  <b>MAC68K</b> and <b>MACAS</b> have predefined user symbols representing the standard 
-  register names found in those processors. See the appendix for specifics.
+  <a href="#mac11_specials">MAC11</a>,
+    <a href="#mac68k_specials">MAC68K</a>,
+    <a href="#mac8080_specials">MAC8080</a>
+    and <a href="#macas_specials">MACAS</a>
+    have predefined user symbols representing the standard 
+  register names found in those processors. See the links appendix for specifics.
   </p>
   <h4 id="gen_localSymbols">Local symbols</h4>
   <p>
@@ -462,7 +467,7 @@
   defined in inner blocks. The outer most level is 0 and is the level 
   used by normal symbols and labels. There are a maximum of 8192 blocks 
   available in a single assembly module. This block is delimited between
-        the psuedo ops .PROC and .ENDP. For example:
+        the pseudo ops .PROC and .ENDP. For example:
   </p>
         <pre>
           .PROC        ;This opens a local symbol block
@@ -651,7 +656,7 @@
   
   <h4>Register symbols and expressions</h4>
   <p>
-  Some assemblers (such as MAC11, MACAS, MAC68K, MAC682K) may have opcodes that allow
+  Some assemblers (such as MAC11, MACAS, MAC68K, MAC8080) may have opcodes that allow
   or require registers as operands. They may, in fact, sense the type of
   operand and output object data differently based on whether there is a
   register referenced in the operand. Any valid expression term with a
@@ -668,8 +673,8 @@
       GR11 == %11.  ;global general register 11
     </pre>
   <p>
-  Register symbols can be global and can even be defined in other modules.
-  Global register symbols used but not defined in a given module must be
+  Except in mac8080, register symbols can be global and can even be defined
+  in other modules. Global register symbols used but not defined in a given module must be
   declared with the .GLOBR pseudo-op. The register attribute of a symbol
   is only significant during the operand processing of an opcode. The
   register attribute of a symbol is not significant in any other assembler
@@ -945,9 +950,10 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;CPU_CHECK</td><td>Enables checks for behavior on different PDP11 CPU's. Specific to MAC11 only.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>Allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared
-      global. Use with care. </td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;HEX_LOCAL</td><td>Allows local symbols to be hexidecimal.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_PC</td><td>Allows single dollar sign '$' to represent current location counter (same as '.')</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared global. Use with care. </td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;H_HEX</td><td>Allows hexidecimal constants to be expressed Intel style (?h or ?H=&gt;0x?).</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;HEX_LOCAL</td><td>Allows local symbols to be expressed in hexidecimal instead of decimal.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LC</td><td>Obsolete. Has no effect.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
@@ -1958,7 +1964,7 @@ the stack pointer on a named stack. Examples:
   </pre>
   <p>
   Numbers expressed in the assembly source are assumed to be hexadecimal by default.
-  The global radix can, however, be changed using the .RADIX psuedo-op.
+  The global radix can, however, be changed using the .RADIX pseudo-op.
   The <u>expression</u> operand resolves to an absolute value of one of 2, 8, 10 or 16
   for binary, octal, decimal or hexadecimal respectively. The radix is
   temporarily changed to decimal before the expression is evaluated. If
@@ -2664,7 +2670,7 @@ the stack pointer on a named stack. Examples:
     </em>
     </p>
     </h3>
-    <h3 id="mac65_specials">MAC65 special psuedo-ops, operations and address modes</h3>
+    <h3 id="mac65_specials">MAC65 special pseudo-ops, operations and address modes</h3>
     <p>
     MAC65 has a bit of history at Atari. See more details in the <a href="#history">HISTORY</a>
     section about this if one cares.
@@ -2767,7 +2773,7 @@ the stack pointer on a named stack. Examples:
     The SYMBOL_LENGTH and OPCODE_LENGTH command line options both default to 6 in mac65.
     </p>
     <p></p>
-    <h3 id="macpp_specials">MACPP special psuedo-ops and operations</h3>
+    <h3 id="macpp_specials">MACPP special pseudo-ops and operations</h3>
     <p>
     The MACPP assembler is unique in that it doesn't actually assemble anything or
     produce an object file. Instead it just uses all the macro and conditionals
@@ -2777,7 +2783,7 @@ the stack pointer on a named stack. Examples:
     conditional states and variables and produce both a configuration file that could
     be later used by either macxx, a C compiler or some other language we happened
     to be using at the time. I.e. one common configuration for all applications. The
-    PP in MACPP stand for Pre-Processor. Macpp has some unique psuedo-ops and
+    PP in MACPP stand for Pre-Processor. Macpp has some unique pseudo-ops and
     command line options:
     </p>
   <table style="width: 50%">
@@ -2811,7 +2817,7 @@ the stack pointer on a named stack. Examples:
     ...
     </pre>
     <p></p>
-    <h3 id="mac68k_specials">MAC68K and MAC682K special psuedo-ops and operations</h3>
+    <h3 id="mac68k_specials">MAC68K and MAC682K special pseudo-ops and operations</h3>
     <p>
     The mac68k and mac682k assemblers accept one of two syntaxes. The default syntax matches what the
     GNU 68k assembler uses and, in fact, is what we used at Atari to assemble the output
@@ -2822,7 +2828,7 @@ the stack pointer on a named stack. Examples:
     </p>
     <p>
     </p>
-    <h3 id="macas_specials">MACAS special psuedo-ops and operations</h3>
+    <h3 id="macas_specials">MACAS special pseudo-ops and operations</h3>
     <p>
     The ASAP CPU is a custom designed 32 bit processor designed by Atari coin-op. The acronym stands for Atari
     Simplified Architecture Processor. It was coincidently similar to the MIPS R3k processor but without
@@ -2862,7 +2868,7 @@ the stack pointer on a named stack. Examples:
     </p>
     <p>
     </p>
-    <h3 id="mac11_specials">MAC11 special psuedo-ops and operations</h3>
+    <h3 id="mac11_specials">MAC11 special pseudo-ops and operations</h3>
     <p>
     The syntax of this assembler matches that of the default DEC PDP11 MACRO-11 assembler. We shipped some coin-op games
     using the T-11 processor on our SystemII platform. The games were coded using BLISS-16 cross compiled on VAX/VMS with its
@@ -2890,7 +2896,7 @@ the stack pointer on a named stack. Examples:
     </pre>
     <p>
     </p>
-    <h3 id="mactj_specials">MACTJ special psuedo-ops and operations</h3>
+    <h3 id="mactj_specials">MACTJ special pseudo-ops and operations</h3>
     <p>
     Sorry, I don't know anything about the Tom and Jerry DSP. It was a chipset used in one of the early consumer products
     and I can't even tell you what consumer product that was. I believe we in coin-op shipped only one game
@@ -2902,8 +2908,48 @@ the stack pointer on a named stack. Examples:
     The only unique thing about <b>mactj</b>, is it defaults to assembling code for the TOM chip instruction set. One must use
     the command line option <b>JERRY</b> to include/revert to the JERRY chip instruction set. Otherwise they are the same.
     </p>
-  <p>
+    <p>
     </p>
+    <h3 id="mac8080_specials">MAC8080 special pseudo-ops and operations</h3>
+    <p>
+        The syntax accepted by mac8080 is very nearly that of other Intel 8080 assemblers. The differences will be in any
+        pseudo-ops and macros. If mac8080 is to be used to assemble older 8080 code the microprocessor sources will have to
+        be changed and recoded in macxx syntax. The most notable pseudo-ops will be with Intel's 'db' and 'ds' directives
+        which may need to be recoded to fit in macxx's <b>.byte, .ascii</b> and/or <b>.blkb/.blkw</b> directives. Also either shim the
+        Intel equ directive or use a <u><b>.define equ =</b></u> to shim it and the Intel org directive can be changed
+        to <u><b>.=</b></u> or <u><b>$=</b></u> whichever one prefers.
+    </p>
+    <p>
+    The mac8080 assembler starts with a radix preset to 10 (decimal) and the H_HEX and DOLLAR_PC settings enabled. It
+    uses macxx's 'variable is a register' flags and predefines the following registers:
+    </p>
+    <pre>
+    B - preset to 0
+    C - preset to 1
+    D - preset to 2
+    E - preset to 3
+    H - preset to 4
+    L - preset to 5
+    M - preset to 6
+    A - preset to 7
+    BC - preset to 8
+    BD - preset to 9
+    HL - preset to 10
+    SP - preset to 11
+    PSW - preset to 12
+    </pre>
+    <p>
+    All that means is one is free to:
+    </p>
+    <pre>
+        foo = b     ;Give a meaningful name to what's in B
+        bar = c     ;Ditto for what's in C
+        tmp = a
+        mov tmp,bar ;Just an example
+        add foo
+    </pre>
+  <p>
+  </p>
   <h2 id="history">A Little History</h2>
     <!-- <div style="border: 2px solid black;margin:4px;padding: 4px"> -->
     <div>
@@ -2960,7 +3006,7 @@ the stack pointer on a named stack. Examples:
     I patched a version of RT11 that would run as a task on the VAX and we continued using the RT11
     LINKM and MACXX tools on it. Sometime in the early 1980's, DEC offered a version of the C compiler
     for the VAX and we got it. I took the opportunity to re-write both MACXX and LINKM in C (I called
-    the linker LLF). The C version of MACXX did not include all the same psuedo-ops (nobody was using
+    the linker LLF). The C version of MACXX did not include all the same pseudo-ops (nobody was using
     them) and since we stopped using the 6800 by then and never did any development for the Intel processors,
     I didn't port over the 6800, 6809, 8080 or Z80. We had by then switched from using the 6800 to the
     68000 family, so I added modules to assemble for the 68000 and 68010. And making a version

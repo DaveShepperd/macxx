@@ -236,7 +236,7 @@ extern unsigned short cttbl[];
 extern char char_toupper[];
 extern char hexdig[];
 
-extern int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp;
+extern int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp, were_mac8080;
 
 extern char **cmd_assems;
 extern char **cmd_includes;

@@ -17,6 +17,12 @@
 */
 
 #ifndef MAC_PP
+#if defined(MAC_8080)
+DIRDEF("DB", op_byte, DFLGBM )
+DIRDEF("DS", op_blkm,	0)
+DIRDEF("DW",  op_2mau,	DFLGEV)
+DIRDEF("ASEG", op_asect, 0 )
+#endif
 DIRDEF("DC.B",	op_dcb_b,	0)
 DIRDEF("DC.BM",	op_dcb_bm,	0)
 #if defined(MAC_TJ)

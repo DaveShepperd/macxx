@@ -1120,7 +1120,14 @@ static int do_exprs( int flag, EXP_stk *eps )
         case TOKEN_local: 
         case TOKEN_strng: {
 #ifndef MAC_PP
-                if (*token_pool == '.' && token_value == 1)
+				int lclPC = 0;
+				if ( token_value == 1 )
+				{
+					lclPC = *token_pool == '.';
+					if ( !lclPC && (edmask & ED_DOL_PC) )
+						lclPC = *token_pool == '$';
+				}
+                if (lclPC)
                 {
                     current_section->flg_reference = 1;
                     if (current_section->flg_abs)
