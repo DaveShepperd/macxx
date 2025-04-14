@@ -2920,6 +2920,15 @@ the stack pointer on a named stack. Examples:
         to <u><b>.=</b></u> or <u><b>$=</b></u> whichever one prefers.
     </p>
     <p>
+        Another important thing to note is macxx does <b><u>NOT</u></b> have operator precedence in expressions. This requires judicious use
+        of parenthesis to force precedence in expressions.
+    </p>
+    <p>
+        Something noticed in some old 8080 source code was the use of <b><u>high</u> variable</b> and <b><u>low</u> variable</b> in places.
+        Those will have to be changed to either <b>variable&gt;&gt;8</b> or <b>variable&255</b> respectively. An alternate method is to
+        use the unary operators <b>^^XXX</b> for high byte and <b>^vXXX</b> for low byte.
+    </p>
+    <p>
     The mac8080 assembler starts with a radix preset to 10 (decimal) and the H_HEX and DOLLAR_PC settings enabled. It
     uses macxx's 'variable is a register' flags and predefines the following registers:
     </p>
