@@ -133,7 +133,7 @@ static int get_indxea(int amflg, int treg, EA *amp )
 				exp->expr_value = '-';
 				tmps->ptr += 2;
 				tmps->ptr = compress_expr(tmps);
-				if (list_bin) compress_expr_psuedo(tmps);
+				if ((lm_bits&LIST_BIN)) compress_expr_psuedo(tmps);
                 exp = tmps->stack;
 			}
 		}
@@ -235,7 +235,7 @@ static int get_mitsyntax( int areg, EA *amp )
 			exp->expr_value = '-';
 			eps->ptr += 2;
 			eps->ptr = compress_expr(eps);
-			if (list_bin) compress_expr_psuedo(eps);
+			if ((lm_bits&LIST_BIN)) compress_expr_psuedo(eps);
 		}
     }
     else
@@ -320,7 +320,7 @@ static int get_regea(int amflg, EA *amp )
 				exp->expr_value = '-';
 				eps->ptr += 2;
 				eps->ptr = compress_expr(eps);
-				if (list_bin) compress_expr_psuedo(eps);
+				if ((lm_bits&LIST_BIN)) compress_expr_psuedo(eps);
 			}
 			else
 			    M68DBG(("get_regea(): 4. Did NOT add 'offset+2 . -' to expression\n"));
@@ -624,7 +624,7 @@ int get_oneea( EA *amp, int bwl )
         exp->expr_value = '-';
         eps->ptr += 2;
         eps->ptr = compress_expr(eps);
-        if (list_bin) compress_expr_psuedo(eps);
+        if ((lm_bits&LIST_BIN)) compress_expr_psuedo(eps);
     }
     else
     {
@@ -1142,7 +1142,7 @@ int type4(int inst, int bwl)
     expr->expr_value = '-';
     eps->ptr += 2;
     eps->ptr = compress_expr(eps);
-    if (list_bin) compress_expr_psuedo(eps);
+    if ((lm_bits&LIST_BIN)) compress_expr_psuedo(eps);
     expr = eps->stack;
     eps->tag = 'I';         /* assume signed word mode */
     if (eps->ptr == 1 && expr->expr_code == EXPR_VALUE)

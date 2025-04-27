@@ -1074,14 +1074,14 @@ int op_ldlit( Opcode *opc )
             EXP1.tag = ( edmask & ED_M68 ) ? 'L' : 'l';
             EXP1.tag_len = 1;
             olist = list_bin;
-            list_bin = 0;          /* don't print anything */
+            lm_bits &= ~LIST_BIN;          /* don't print anything */
             EXP1.ptr = compress_expr(&EXP1);
             p1o_long(&EXP1);           /* drop expression into literal pool */
             if (current_section->seg_pc > current_section->seg_len)
             {
                 current_section->seg_len = current_section->seg_pc;
             }
-            list_bin = olist;
+            lm_bits |= olist;
             EXP1.ptr = 0;          /* e1 is empty now */
             current_section = oldseg;
         }

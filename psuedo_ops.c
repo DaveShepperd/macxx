@@ -62,6 +62,7 @@ Change Log
 #include <time.h>
 #include <string.h>
 #include <strings.h>
+#include <stdlib.h>
 #if defined(VMS)
 	#include <types.h>
 	#include <stat.h>
@@ -70,8 +71,15 @@ Change Log
 	#include <sys/stat.h>
 #endif
 
-#if !defined(MAC_PP)
-static char asc[128];       /* place to stuff text */
+#ifndef OLD_ASCII_COMMON
+#define OLD_ASCII_COMMON (0)
+#endif
+#ifndef NEW_ASCII_COMMON
+#define NEW_ASCII_COMMON (1)
+#endif
+
+#if !defined(MAC_PP) && OLD_ASCII_COMMON
+static char asc[128];      /* place to stuff text */
 #endif
 
 extern int no_white_space_allowed;
@@ -253,297 +261,6 @@ int op_blkq(void)
 	return 3;
 }
 
-	#if 0
-static void ascii_common(int arg)
-{
-	int term_c, c = 0;
-	int len = 0, fake;
-	LIST_stat_t *lstat;
-	if ( meb_stats.getting_stuff )
-	{
-		lstat = &meb_stats;
-		if ( (meb_stats.pc_flag != 0) &&
-			(meb_stats.expected_pc != current_offset ||
-			 (meb_stats.expected_seg != current_section)) )
-		{
-			fixup_overflow(lstat);
-		}
-	}
-	else
-	{
-		lstat = &list_stats;
-		list_stats.pc_flag = 0;
-	}
-	if ( lstat->pc_flag == 0 )
-	{
-		lstat->pc = current_offset;
-		lstat->pc_flag = 1;
-	}
-	term_c = *inp_ptr;
-	if ( (cttbl[term_c] & (CT_EOL | CT_SMC)) != 0 )
-	{
-		bad_token(inp_ptr, "No arguments on line");
-		return;
-	}
-	move_pc();           /* always set the PC */
-	fake = 0;            /* assume we're not faking it */
-	while ( 1 )
-	{           /* for all blocks of text */
-		term_c = *inp_ptr;    /* get term char */
-		++inp_ptr;        /* eat the delimiter */
-		while ( 1 )
-		{       /* for all that will fit in asc */
-			char *asc_ptr, *asc_end;
-			asc_ptr = asc;
-			asc_end = asc + sizeof(asc);
-			doit_again:
-			while ( 1 )
-			{        /* for all delimited chars */
-				if ( asc_ptr >= asc_end )
-				{
-					fake = 1;    /* we're gonna fake a split in sections */
-					break;
-				}
-				c = *inp_ptr;   /* pickup user data */
-				if ( (cttbl[c] & CT_EOL) != 0 || c == term_c )
-				{
-					fake = 0;    /* we're not faking it anymore */
-					break;
-				}
-				if ( c == '\\' &&
-					(inp_ptr[1] >= '0' && inp_ptr[1] <= '3') &&
-					(inp_ptr[2] >= '0' && inp_ptr[2] <= '7') &&
-					(inp_ptr[3] >= '0' && inp_ptr[3] <= '7')
-				   )
-				{
-					*asc_ptr++ = ((inp_ptr[1] - '0') << 6) | ((inp_ptr[2] - '0') << 3) | (inp_ptr[3] - '0');
-					inp_ptr += 4;
-				}
-				else
-				{
-					*asc_ptr++ = c;
-					++inp_ptr;
-				}
-			}          /* -- out of chars */
-			len = asc_ptr - asc;   /* how much is in there */
-			if ( !fake )
-			{
-				if ( c == term_c )
-				{
-					char *tp = inp_ptr;  /* remember this spot */
-					++inp_ptr;   /* eat the terminator */
-					if ( isspace(*inp_ptr) && !no_white_space_allowed )
-					{
-						while ( (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) == 0 && isspace(*inp_ptr) )
-						{
-							++inp_ptr;        /* eat ws between blocks */
-						}
-					}
-					if ( c == '"' && (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) == 0 )
-					{
-						inp_ptr = tp;     /* put inp_pointer back */
-						*asc_ptr++ = c;   /* just move the char */
-						++inp_ptr;        /* eat it */
-						goto doit_again;  /* pretend this never happened */
-					}
-				}
-				if ( (arg == ASC_COMMON_NULL || arg == ASC_COMMON_MINUS)
-					&& (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
-				{
-					if ( arg == ASC_COMMON_NULL )
-					{      /* .ASCIZ */
-						*asc_ptr++ = 0;   /* null terminate the string */
-						++len;        /* add 1 char */
-					}
-					if ( arg == ASC_COMMON_MINUS )
-					{      /* .ASCIN */
-						*(asc_ptr - 1) |= 0x80; /* make last byte minus */
-					}
-				}
-			}
-			if ( len > 0 )
-			{
-				write_to_tmp(TMP_ASTNG, len, asc, sizeof(char));
-				asc_ptr = asc;
-				if ( show_line && (list_bin || meb_stats.getting_stuff) )
-				{
-					int tlen;
-					char *dst;
-					tlen = len;
-					while ( 1 )
-					{
-						int z;
-						if ( tlen <= 0 )
-						break;
-						z = (LLIST_SIZE - lstat->list_ptr) / 3;
-						if ( z <= 0 )
-						{
-							if ( !list_bex )
-							break;
-							fixup_overflow(lstat);
-							z = (LLIST_SIZE - LLIST_OPC) / 3;
-							lstat->pc = current_offset + (asc_ptr - asc);
-							lstat->pc_flag = 1;
-						}
-						dst = lstat->listBuffer + lstat->list_ptr;
-						if ( tlen < z )
-						z = tlen;
-						lstat->list_ptr += z * 3;
-						tlen -= z;
-						do
-						{
-							unsigned char c1;
-							c1 = *asc_ptr++;
-							*dst++ = hexdig[c1 >> 4];
-							*dst++ = hexdig[c1 & 0x0F];
-							++dst;
-						} while ( --z > 0 );
-					}            /* -- for each item in asc [while (1)]*/
-				}               /* -- list_bin != 0 */
-				current_offset += len;
-			}              /* -- something to write (len > 0) */
-			if ( !fake )
-			{
-				if ( arg != ASC_COMMON_COMMA && *inp_ptr == expr_open )
-				{    /* have an expression? */
-					char *ip, s1, s2, *strt;
-					int nst, val, abs;
-					EXPR_struct *exp_ptr;
-					nst = 0;         /* assume top level */
-					strt = ip = inp_ptr + 1;   /* point to place after expr_open */
-					while ( 1 )
-					{          /* find matching end */
-						int chr;
-						chr = *ip++;      /* find end pointer */
-						if ( (cttbl[chr] & CT_EOL) != 0 )
-						{
-							--ip;          /* too far, backup 1 */
-							break;
-						}
-						if ( chr == expr_close )
-						{
-							--nst;
-							if ( nst < 0 )
-							break;
-						}
-						else if ( chr == expr_open )
-						{
-							++nst;
-						}
-					}
-					s1 = *ip;        /* save the last two chars */
-					*ip++ = '\n';        /* and replace with a \n\0 */
-					s2 = *ip;
-					*ip = 0;
-					get_token();     /* setup the variables */
-					exprs(1, &EXP0);      /* evaluate the exprssion */
-					*ip = s2;        /* restore the source record */
-					*--ip = s1;
-					if ( !no_white_space_allowed )
-					{
-						while ( isspace(*inp_ptr) )
-						++inp_ptr; /* eat ws */
-					}
-					++current_offset;    /* move pc */
-					exp_ptr = EXP0.stack;
-					val = EXP0.psuedo_value & 255;
-					if ( arg == 2 && (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
-					{
-						if ( EXP0.ptr == 1 &&
-							exp_ptr->expr_code == EXPR_VALUE )
-						{
-							exp_ptr->expr_value |= 0x80;
-						}
-						else
-						{
-							exp_ptr += EXP0.ptr;
-							exp_ptr->expr_code = EXPR_VALUE;
-							(exp_ptr++)->expr_value = 0x80;
-							exp_ptr->expr_code = EXPR_OPER;
-							exp_ptr->expr_value = EXPROPER_OR;
-							EXP0.ptr += 2;
-						}
-						val |= 0x80;
-					}
-					abs = EXP0.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE;
-					if ( show_line && list_bin )
-					{
-						int fs;
-						fs = abs ? 3 : 4;
-						if ( list_bex || lstat->list_ptr <= LLIST_SIZE - fs )
-						{
-							char *s;
-							if ( lstat->list_ptr > LLIST_SIZE - fs )
-							fixup_overflow(lstat);
-							s = lstat->listBuffer + lstat->list_ptr;
-							*s++ = hexdig[((unsigned char)val) >> 4];
-							*s++ = hexdig[val & 15];
-							if ( !abs )
-							*s = 'x';
-							lstat->list_ptr += fs;
-						}
-					}
-					if ( abs )
-					{
-						int epv;
-						epv = EXP0SP->expr_value;
-						if ( epv > 255 || epv < -256 )
-						{
-							snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08X, stored: %02X",
-									 epv, epv & 255);
-							show_bad_token(strt, emsg, MSG_WARN);
-							EXP0SP->expr_value = epv & 0xFF;
-						}
-						write_to_tmp(TMP_BSTNG, 1, (char *)&EXP0SP->expr_value, sizeof(char));
-					}
-					else
-					{
-						EXP0.tag = 'b';
-						EXP0.tag_len = 1;
-						write_to_tmp(TMP_EXPR, 0, &EXP0, 0);
-					}
-					if ( arg == 1 && (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
-					{
-						static char zero = 0;
-						if ( show_line && list_bin )
-						{
-							if ( list_bex || lstat->list_ptr <= LLIST_SIZE - 3 )
-							{
-								char *s;
-								if ( lstat->list_ptr > LLIST_SIZE - 3 )
-								fixup_overflow(lstat);
-								s = lstat->listBuffer + lstat->list_ptr;
-								*s++ = '0';
-								*s = '0';
-								lstat->list_ptr += 3;
-							}
-						}
-						write_to_tmp(TMP_BSTNG, 1, &zero, sizeof(char));
-					}
-				}               /* -- have an expression */
-				break;          /* do the next group */
-			}
-			else
-			{
-				continue;           /* do the next fake group */
-			}
-		}                 /* -- while each group */
-		if ( c != term_c )
-		{
-			bad_token(inp_ptr, "No matching delimiter");
-			break;
-		}
-		if ( arg == ASC_COMMON_COMMA || (cttbl[(int)*inp_ptr] & (CT_EOL | CT_SMC)) != 0 )
-		break;
-	}                    /* -- for all items in inp_str */
-	out_pc = current_offset;
-	meb_stats.expected_seg = current_section;
-	meb_stats.expected_pc = current_offset;
-	return;
-}
-
-	#else
-
 /************************************************************
 01/12/2022	Added support for Octal Listing		- TG
 		changed for correct variable function 
@@ -558,12 +275,19 @@ The most inner loop handles filling the buffer with input data.
 
 ************************************************************/
 
-		#define ASC_COMMON_NONE		(0x00)
-		#define ASC_COMMON_NULL		(0x01)
-		#define ASC_COMMON_MINUS	(0x02)
-		#define ASC_COMMON_COMMA	(0x04)
-		#define ASC_COMMON_ESCAPES	(0x08)
+		#define ASC_COMMON_NONE		(0x00)	/* nothing special */
+		#define ASC_COMMON_NULL		(0x01)	/* end of string needs a null */
+		#define ASC_COMMON_MINUS	(0x02)	/* very last character in string needs to be or'ed with 0x80 */
+		#define ASC_COMMON_COMMA	(0x04)	/* commas are required to separate parameters */
+		#define ASC_COMMON_ESCAPES	(0x08)	/* C type string escapes are allowed */
+		#define ASC_COMMON_QUOTE	(0x10)	/* Strings have to be delimited with single or double quotes */
+		#define ASC_COMMON_PRX		(0x20)	/* Strings have to be delimited with non-alphanumeric */
 
+/* DMS - re-wrote this function completely so I can make use of some of it in the op_db function */
+/* For now, however, leaving it in to sources. At some point when I prove the new stuff does exactly
+ *  the same as this old stuff does, I'll remove this function.
+*/
+#if OLD_ASCII_COMMON
 static void ascii_common(int arg)
 {
 	int term_c, c = 0;
@@ -1036,37 +760,628 @@ static void ascii_common(int arg)
 	meb_stats.expected_pc = current_offset;
 	return;
 }
-	#endif
+
+#endif	/* OLD_ASCII_COMMON*/
+
+#if NEW_ASCII_COMMON
+static char *tmpAscStr;
+static int tmpAscStrLen;
+
+static char *getTmpStr(int minLen)
+{
+	if ( tmpAscStrLen < minLen )
+	{
+		tmpAscStrLen = minLen;
+		tmpAscStr = (char *)realloc(tmpAscStr,tmpAscStrLen);
+		if ( !tmpAscStr )
+		{
+			return NULL;
+		}
+	}
+	return tmpAscStr;
+}
+
+static void ascToList(LIST_stat_t *lstat, int len, const char *asc_ptr)
+{
+	int tlen, n_ct; /* fix for OCTAL listing */
+	char *dst;
+
+	if ( show_line && (list_bin || meb_stats.getting_stuff)  )
+	{
+		/* This does not work with .list meb. Needs fixing */
+		tlen = len;
+		/*    01-16-2022  Support for Octal listing  */
+		if ( list_radix == 16 )
+		{   /* HEX - two hex nibbles and trailing space for a count of 3 */
+			n_ct = 3;
+		}
+		else
+		{   /* OCTAL - three octal nibbles and trailing space for a count of 4 */
+			n_ct = 4;
+		}
+		while ( tlen > 0 )
+		{
+			int z;
+			z = (LLIST_SIZE - lstat->list_ptr) / n_ct;  /* fix for OCTAL listing */
+			if ( z <= 0 )
+			{
+				if ( !list_bex )
+					break;
+				fixup_overflow(lstat);
+				z = (LLIST_SIZE - LLIST_OPC) / n_ct;    /* fix for OCTAL listing */
+				lstat->pc = current_offset + (asc_ptr - tmpAscStr);
+				lstat->pc_flag = 1;
+			}
+			dst = lstat->listBuffer + lstat->list_ptr;
+			if ( tlen < z )
+				z = tlen;
+			tlen -= z;
+			lstat->list_ptr += z * n_ct;    /* fix for OCTAL listing */
+			do
+			{
+				unsigned char c1;
+				c1 = *asc_ptr++;
+				if ( list_radix == 16 ) /* fix for OCTAL listing */
+				{
+					*dst++ = hexdig[c1 >> 4];
+					*dst++ = hexdig[c1 & 0x0F];
+				}
+				else
+				{
+					*dst++ = ((c1 >> 6) & 7) + 0x30;
+					*dst++ = ((c1 >> 3) & 7) + 0x30;
+					*dst++ = (c1 & 7) + 0x30;
+				}
+				*dst++ = ' ';			/* trailing space */
+			} while ( --z > 0 );
+		}            /* -- for each item in asc_ptr [while (tlen > 0)]*/
+	}
+}
+
+static void exprsToList(LIST_stat_t *lstat, const EXP_stk *stack)
+{
+	if ( show_line && (list_bin || meb_stats.getting_stuff)  )
+	{
+		int n_ct; /* fix for OCTAL listing */
+		int val, rel=0;
+		char *dst;
+		int z;
+		
+		/* This does not work with .list meb. Needs fixing */
+		val = stack->psuedo_value&0xFF;
+		/*    01-16-2022  Support for Octal listing  */
+		if ( list_radix == 16 )
+		{   /* HEX - two hex nibbles and trailing space for a count of 3 */
+			n_ct = 3;
+		}
+		else
+		{   /* OCTAL - three octal nibbles and trailing space for a count of 4 */
+			n_ct = 4;
+		}
+		if ( stack->ptr > 1 || stack->stack[0].expr_code != EXPR_VALUE )
+		{
+			++n_ct;	/* add one for the trailing 'x' */
+			rel = 1;
+		}
+		z = (LLIST_SIZE - lstat->list_ptr) / n_ct;  /* fix for OCTAL listing */
+		if ( z <= 0 )
+		{
+			if ( !list_bex )
+				return;
+			fixup_overflow(lstat);
+			z = (LLIST_SIZE - LLIST_OPC) / n_ct;    /* fix for OCTAL listing */
+			lstat->pc = current_offset + 1;
+			lstat->pc_flag = 1;
+		}
+		dst = lstat->listBuffer + lstat->list_ptr;
+		lstat->list_ptr += n_ct;
+		if ( list_radix == 16 )
+		{
+			*dst++ = hexdig[val >> 4];
+			*dst++ = hexdig[val & 0x0F];
+		}
+		else
+		{
+			*dst++ = ((val >> 6) & 7) + 0x30;
+			*dst++ = ((val >> 3) & 7) + 0x30;
+			*dst++ = (val & 7) + 0x30;
+		}
+		if ( rel )
+			*dst++ = 'x';
+		*dst++ = ' ';	/* trailing space */
+	}
+}
+
+static void ascii_close_string(LIST_stat_t *lstat, int options, int len)
+{
+	ascToList(lstat, len, tmpAscStr);
+	write_to_tmp(TMP_BSTNG, len, tmpAscStr, sizeof(char));
+}
+
+static void ascii_close_exprs(LIST_stat_t *lstat, int options)
+{
+	EXP0.tag = 'b';
+	EXP0.tag_len = 1;
+	exprsToList(lstat, &EXP0);
+	write_to_tmp(TMP_EXPR, 0, &EXP0, 0);
+	EXP0.ptr = 0;
+}
+
+static int patchLastAscStr(LIST_stat_t *lstat, int options, int len)
+{
+	char *asc_ptr = tmpAscStr+len;
+	/* If reached true end of data fix last byte for .ASCIN and .ASCIZ */
+	if ((options&(ASC_COMMON_NULL|ASC_COMMON_MINUS)))
+	{
+		if ( (options&ASC_COMMON_NULL) )
+		{      /* .ASCIZ */
+			*asc_ptr++ = 0;   /* null terminate the string */
+			++len;        /* add 1 char */
+		}
+		if ( (options&ASC_COMMON_MINUS) )
+		{      /* .ASCIN */
+			/*	04-16-2022 - TG
+				This is not correct but it's the way the old version
+		  of MACxx worked  Firefox took advantage of this in 
+		  in file FFMES.MAC
+				Not 100 percent sure if it's a problem here or if the macro
+				called us with a null     .ascin //   aka   .ascin /null/   
+		  But if you need an end of text marker then you would need this
+*/
+			if ( asc_ptr == tmpAscStr )
+			{
+				*asc_ptr++ = 0;
+				++len;        /* add 1 char */
+			}
+			*(asc_ptr - 1) |= 0x80; /* make last byte minus */
+		}
+	}
+	return len;
+}
+
+static void patchLastExprStr(LIST_stat_t *lstat, int options)
+{
+	if ( (options&ASC_COMMON_MINUS) )
+	{
+		EXPR_struct *exp_ptr;
+		exp_ptr = EXP0.stack;
+		if ( EXP0.ptr == 1 &&
+			 exp_ptr->expr_code == EXPR_VALUE )
+		{
+			exp_ptr->expr_value |= 0x80;
+		}
+		else
+		{
+			exp_ptr += EXP0.ptr;
+			exp_ptr->expr_code = EXPR_VALUE;
+			(exp_ptr++)->expr_value = 0x80;
+			exp_ptr->expr_code = EXPR_OPER;
+			exp_ptr->expr_value = EXPROPER_OR;
+			EXP0.ptr += 2;
+		}
+	}
+	if ( (options&ASC_COMMON_NULL) )
+	{
+		exprsToList(lstat, &EXP0);
+		ascii_close_exprs(lstat, options);
+		EXP0.ptr = 1;
+		EXP0.stack[0].expr_code = EXPR_VALUE;
+		EXP0.stack[0].expr_value = 0;
+	}
+}
+
+static int handle_ascii_string(int options, int startLen)
+{
+	int term_c = *inp_ptr++;
+	int len;
+	int cc;
+	char *asc_ptr, *asc_end;
+	
+	asc_ptr = getTmpStr(256);
+	asc_end = tmpAscStr+tmpAscStrLen;
+	if ( asc_ptr )
+		asc_ptr += startLen;
+	while ( 1 )
+	{
+		cc = *inp_ptr;   /* pickup user data */
+		if ( (cttbl[cc] & CT_EOL) != 0 )
+		{
+			break;	/* we're done*/
+		}
+		if ( cc == term_c )
+		{
+			++inp_ptr;	/* eat the terminating character */
+			break;	/* we're done */
+		}
+		if ( asc_ptr >= asc_end )
+		{
+			len = asc_ptr-tmpAscStr;
+			asc_ptr = getTmpStr(tmpAscStrLen+256);
+			if ( !asc_ptr )
+			{
+				bad_token(NULL,"handle_ascii_string(): Out of memory");
+				f1_eatit();
+				return 0;
+			}
+			asc_end = asc_ptr+tmpAscStrLen;
+			asc_ptr += len;
+		}
+		if ( cc == '\\' )
+		{
+			unsigned char whatToPass=inp_ptr[1];
+			if ( (options&ASC_COMMON_ESCAPES))
+			{
+				/* Allows for standard 'C' string escape processing */
+				switch (whatToPass)
+				{
+				case 'a':	/* alert/bell */
+					whatToPass = '\a';
+					break;
+				case 'b':	/* backspace */
+					whatToPass = '\b';
+					break;
+				case 'e':	/* escape */
+					whatToPass = 033;
+					break;
+				case 'f':	/* formfeed */
+					whatToPass = '\f';
+					break;
+				case 'n':	/* newline */
+					whatToPass = '\n';
+					break;
+				case 'r':	/* carriage return */
+					whatToPass = '\r';
+					break;
+				case 't':	/* tab */
+					whatToPass = '\t';
+					break;
+				case 'v':	/* vertical tab */
+					whatToPass = '\v';
+					break;
+				case 'x':	/* hex number */
+					{
+						unsigned long val=0;
+						char *iptr = inp_ptr+2;
+						while ( 1 )
+						{
+							char ch0;
+							ch0 = *iptr;
+							if ( islower(ch0 ) )
+								ch0 = toupper(ch0);
+							if ( (ch0 >= '0' && ch0 <= '9') )
+							{
+								val <<= 4;
+								val |= ch0 - '0';
+							}
+							else if ( (ch0 >= 'A' && ch0 <= 'F') )
+							{
+								val <<= 4;
+								val |= 10 + ch0 - 'A';
+							}
+							else
+								break;
+							++iptr;
+						}
+						if ( iptr > inp_ptr+2 )
+						{
+							whatToPass = val&0xFF;
+							inp_ptr = iptr-2;
+						}
+					}
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':	/* octal number */
+					if (    (inp_ptr[2] >= '0' && inp_ptr[2] <= '7')
+						 && (inp_ptr[3] >= '0' && inp_ptr[3] <= '7')
+					   )
+					{
+						whatToPass = ((whatToPass - '0') << 6) | ((inp_ptr[2] - '0') << 3) | (inp_ptr[3] - '0');
+						inp_ptr += 2;
+					}
+					break;
+#if 0
+				/* should also handle unicode here. Not going to */
+				case 'u':
+				case 'U':
+					break;
+#endif
+#if 0
+				case '\\':	/* backslash */
+				case '\'':	/* apostrohpe */
+				case '"':	/* double quote */
+				case '?':	/* question mark */
+					break;
+#endif
+				default:
+					break;
+				}
+				*asc_ptr++ = whatToPass;
+				inp_ptr += 2;			/* Skip backslash and character */
+			}
+			else if ( 
+				 (inp_ptr[1] >= '0' && inp_ptr[1] <= '3') &&
+				 (inp_ptr[2] >= '0' && inp_ptr[2] <= '7') &&
+				 (inp_ptr[3] >= '0' && inp_ptr[3] <= '7')
+			   )
+			{
+				/* Allows a three digit octal number to be entered within the delimiters
+				   example:  \377 would be FF hex -  /ABC\377DEF/    */
+				*asc_ptr++ = ((inp_ptr[1] - '0') << 6) | ((inp_ptr[2] - '0') << 3) | (inp_ptr[3] - '0');
+				inp_ptr += 4;
+			}
+		}
+		else
+		{
+			/* Not a backslash */
+			*asc_ptr++ = cc;
+			++inp_ptr;
+		}
+	}
+	if ( cc != term_c )
+	{
+		char msg[64];
+		snprintf(msg,sizeof(msg),"Failed to find trailing terminator character '%c'", term_c);
+		bad_token(NULL,msg);
+	}
+	len = asc_ptr - tmpAscStr;
+	current_offset += len;    /* move pc */
+	return len;
+}
+
+static int handle_ascii_exprs(int options, int open_c, int close_c)
+{
+	char *ip, s1, s2;
+	int nst;
+	nst = 0;         /* assume top level */
+
+	/* point to place after expr_open */
+	ip = inp_ptr;
+	while ( 1 )
+	{          /* find matching end */
+		int chr;
+		chr = *ip++;      /* find end pointer */
+		if ( (cttbl[chr] & CT_EOL) != 0 )
+		{
+			--ip;          /* too far, backup 1 */
+			if ( close_c )
+			{
+				char msg[64];
+				snprintf(msg,sizeof(msg),"Missing Expression Bracket '%c'", close_c);
+				bad_token(ip,msg ); /* fix for variable function */
+				f1_eatit();
+				return -1;
+			}
+			break;
+		}
+#if 0
+		if ( (options&ASC_COMMON_COMMA) || close_c == ',' )
+		{
+			if ( chr == ',' )
+			{
+				--ip;	/* backup one */
+				break;
+			}
+		}
+#endif
+		if ( close_c && chr == close_c )
+		{
+			--nst;
+			if ( nst <= 0 )
+				break;
+		}
+		else if ( open_c && chr == open_c )
+		{
+			++nst;
+		}
+	}
+	s1 = *ip;        /* save the last two chars */
+	*ip++ = '\n';        /* and replace with a \n\0 */
+	s2 = *ip;
+	*ip = 0;
+	get_token();     /* setup the variables */
+	comma_expected = 0;
+	exprs(1, &EXP0);      /* evaluate the exprssion */
+	*ip = s2;        /* restore the source record */
+	*--ip = s1;
+	++current_offset;    /* move pc */
+	return 0;
+}
+
+static void new_ascii_common(int options)
+{
+	int term_c, cc, comma_rpt=0; 
+	int arg_cnt=0, last_len=0, len = 0;
+	int last_expr=0;
+	LIST_stat_t *lstat;
+	
+	if ( meb_stats.getting_stuff )
+	{
+		lstat = &meb_stats;
+		if ( (meb_stats.pc_flag != 0) &&
+			 (meb_stats.expected_pc != current_offset ||
+			  (meb_stats.expected_seg != current_section)) )
+		{
+			fixup_overflow(lstat);
+		}
+	}
+	else
+	{
+		lstat = &list_stats;
+		list_stats.pc_flag = 0;
+	}
+	if ( lstat->pc_flag == 0 )
+	{
+		lstat->pc = current_offset;
+		lstat->pc_flag = 1;
+	}
+	move_pc();           /* always set the PC */
+	while ( 1 )
+	{
+		/* for all blocks of text and expressions */
+		/* Skip white space */
+		while ( !no_white_space_allowed )
+		{
+			cc = *inp_ptr;
+			if ( !(cttbl[cc]&CT_WS) )
+				break;
+			++inp_ptr;
+		}
+		last_len = len;
+		len = 0;
+		term_c = *inp_ptr;    /* get opening char */
+		if ( (cttbl[term_c] & (CT_EOL | CT_SMC)) != 0 )
+		{
+			if ( !arg_cnt )
+				bad_token(inp_ptr, "No arguments on line");
+			break;		/* end of line */
+		}
+		if ( !comma_rpt && arg_cnt && (last_len|last_expr) && (options&ASC_COMMON_COMMA) && term_c != ',' )
+		{
+/*			bad_token(inp_ptr,"Comma expected here"); */
+			comma_rpt = 1;
+		}
+		++arg_cnt;			/* we have an argument */
+		if ( term_c == ',' )
+		{
+			++inp_ptr;      /* skip over comma and any subsequent whitespace */
+			len = last_len;
+			continue;
+		}
+		if ( (options & ASC_COMMON_QUOTE) )
+		{
+			/* The DB/DC directive syntax requires single or double quotes to delimit strings */
+			if ( term_c == '\'' || term_c == '"' )
+			{
+				/*  This is a string term */
+				if ( last_expr )
+				{
+					ascii_close_exprs(lstat, 0);	/* If previous term was an expression, close it */
+					last_expr = 0;
+				}
+				len = handle_ascii_string(options, last_len);	/* just append next string to previous if there was one */
+			}
+			else
+			{
+				/* Otherwise it is an expression term */
+				if ( last_len )
+					ascii_close_string(lstat, 0, last_len);	/* if previous term was a string, close it */
+				if ( last_expr )	
+					ascii_close_exprs(lstat, 0);		/* if previous term was an expression close it */
+				handle_ascii_exprs(options,0,0);
+				len = 0;
+				last_expr = 1;
+			}
+			continue;
+		}
+		if ( term_c == expr_open )
+		{
+			/* For macxx syntax, expressions are delimited with expr_open character */
+			if ( last_len )
+				ascii_close_string(lstat, 0, last_len);	/* if previous term was a string, close it */
+			if ( last_expr )	
+				ascii_close_exprs(lstat, 0);		/* if previous term was an expression close it */
+			comma_expected = 0;
+			handle_ascii_exprs(options,expr_open,expr_close);
+			last_expr = 1;
+			len = 0;
+			continue;
+		}
+		/*  Assume this is a string term */
+		if ( last_expr )
+		{
+			ascii_close_exprs(lstat, 0);	/* If previous term was an expression, close it */
+			last_expr = 0;
+		}
+		len = handle_ascii_string(options, last_len);	/* just append next string to previous if there was one */
+	}                    /* -- for all items on line */
+	if ( last_len )
+	{
+		len = patchLastAscStr(lstat, options,last_len);
+		ascii_close_string(lstat, options, len);
+	}
+	else if ( last_expr )
+	{
+		patchLastExprStr(lstat, options);
+		ascii_close_exprs(lstat, options);
+	}
+	else
+	{
+		len = patchLastAscStr(lstat, options, 0);
+		ascii_close_string(lstat, options, len);
+	}
+	out_pc = current_offset;
+	meb_stats.expected_seg = current_section;
+	meb_stats.expected_pc = current_offset;
+	return;
+}
+#endif	/* NEW_ASCII_COMMON */
+
+int op_db(void)
+{
+#if NEW_ASCII_COMMON
+	new_ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE|ASC_COMMON_QUOTE|ASC_COMMON_COMMA);
+#else
+	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE|ASC_COMMON_QUOTE|ASC_COMMON_COMMA);
+#endif
+	return 0;
+}
+
+int op_dc(void)
+{
+#if NEW_ASCII_COMMON
+	new_ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE|ASC_COMMON_QUOTE|ASC_COMMON_COMMA);
+#else
+	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE|ASC_COMMON_QUOTE|ASC_COMMON_COMMA);
+#endif
+	return 0;
+}
 
 int op_ascii(void)
 {
+#if OLD_ASCII_COMMON
 	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE);
+#else
+	new_ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE);
+#endif
 	return 0;
 }
 
 int op_asciz(void)
 {
+#if OLD_ASCII_COMMON
 	ascii_common(ASC_COMMON_NULL);
+#else
+	new_ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NULL);
+#endif
 	return 0;
 }
 
 int op_ascin(void)
 {
+#if OLD_ASCII_COMMON
 	ascii_common(ASC_COMMON_MINUS);
+#else
+	new_ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_MINUS);
+#endif
 	return 0;
 }
 
 int op_string(void)
 {
+#if OLD_ASCII_COMMON
 	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NULL);
-#if 0
+#else
+	new_ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NULL);
+#endif
+	if ( current_section->seg_dalign ) 
 	{
-		/* What is this all about? Do not believe there is a requirement for alignment */
+		/* some assemblers expect data alignment */
 		int t;
 		t = (1 << current_section->seg_dalign); /* assume default */
 		current_offset = (current_offset + (t - 1)) & -t;
 	}
-#endif
 	return 0;
 }
 
@@ -1135,7 +1450,11 @@ static int op_dcb_with_mask(int inpMask)
 		{
 			if ( cc == '\'' || cc == '"' )
 			{
+#if OLD_ASCII_COMMON
 				ascii_common(ASC_COMMON_COMMA);
+#else
+				new_ascii_common(ASC_COMMON_COMMA);
+#endif
 				cc = *inp_ptr;
 				if ( no_white_space_allowed && isspace(cc) )
 					break;
@@ -3844,13 +4163,21 @@ static void rad50_common(void)
 	++inp_ptr;        /* eat the terminating delimiter */
 
 	while ( 1 )    /* Set up Buffer */
-	{       /* for all that will fit in asc
-			   asc is a buffer of 128 bytes used for temp storage */
+	{
 		char *asc_ptr, *asc_end;
+#if OLD_ASCII_COMMON
+		/* for all that will fit in asc
+			asc is a buffer of 128 bytes used for temp storage */
 		asc_ptr = asc;
+		asc_end = asc + sizeof(asc) - 4;
+#else
+		/* for all that will fit in tmpAscStr
+			tmpAscStr is a dynamic buffer of at least 256 bytes used for temp storage */
+		asc_ptr = getTmpStr(256);
+		asc_end = tmpAscStr + tmpAscStrLen;
+#endif
 		/* save four spaces for packing at the end of buffer if
 		   not three bytes yet */
-		asc_end = asc + sizeof(asc) - 4;
 		while ( 1 )
 		{        /* process line of characters */
 			if ( asc_ptr >= asc_end )
@@ -4094,13 +4421,22 @@ static void rad50_common(void)
 			y = 0;
 		}
 		/* if any packed data write it to *.ol file and write info into the *.lst file */
+#if OLD_ASCII_COMMON
 		len = asc_ptr - asc;   /* how much is in there */
+#else
+		len = asc_ptr - tmpAscStr;   /* how much is in there */
+#endif
 		if ( len > 0 )
 		{
 			/* write to *.ol file */
+#if OLD_ASCII_COMMON
 			write_to_tmp(TMP_ASTNG, len, asc, sizeof(char));
-			/* write to *.lis file */
 			asc_ptr = asc;
+#else
+			write_to_tmp(TMP_ASTNG, len, tmpAscStr, sizeof(char));
+			asc_ptr = tmpAscStr;
+#endif
+			/* write to *.lis file */
 			if ( show_line && (list_bin || meb_stats.getting_stuff) )
 			{
 				int tlen;
@@ -4131,7 +4467,11 @@ static void rad50_common(void)
 							break;
 						fixup_overflow(lstat);
 						z = (LLIST_SIZE - LLIST_OPC) / n_ct;
+#if OLD_ASCII_COMMON
 						lstat->pc = current_offset + (asc_ptr - asc);
+#else
+						lstat->pc = current_offset + (asc_ptr - tmpAscStr);
+#endif
 						lstat->pc_flag = 1;
 					}
 					dst = lstat->listBuffer + lstat->list_ptr;
@@ -4148,7 +4488,7 @@ static void rad50_common(void)
 						/* For *.lis files - swap low high bytes for little endian CPU's
 						   so that it shows as High byte Low byte in the *.lst file
 						   Unless LIST_COD is on which states list as used in *.ol file */
-						if ( ((edmask & ED_M68) == 0) && ((lm_bits.list_mask & LIST_COD) == 0) )
+						if ( ((edmask & ED_M68) == 0) && ((lm_bits & LIST_COD) == 0) )
 						{
 							c2 = *asc_ptr++;
 							c1 = *asc_ptr++;

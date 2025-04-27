@@ -2231,7 +2231,7 @@ void pass1( int fileNumber)
                     list_stats.list_ptr = LLIST_OPC;
 #endif
                 }
-                lm_bits.list_mask = qued_lm_bits.list_mask;
+                lm_bits = qued_lm_bits;
             }
             if (get_text() == EOF)
             {

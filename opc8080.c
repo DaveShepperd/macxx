@@ -286,6 +286,28 @@ void do_opcode(Opcode *opc)
 
 }                   /* -- opc80() */
 
+static void mac80_reset_list(int onoff)
+{
+    if ( onoff < 0 )
+    {
+        list_radix = 16;    /* .nlist oct */
+        LLIST_OPC = 14;
+        LLIST_OPR = 17;
+        macxx_nibbles_byte = 2;
+        macxx_nibbles_word = 4;
+        macxx_nibbles_long = 8;
+    }
+    else
+    {
+        list_radix = 8;     /* .list oct */
+        LLIST_OPC = 16;
+        LLIST_OPR = 24;
+        macxx_nibbles_byte = 3;
+        macxx_nibbles_word = 6;
+        macxx_nibbles_long = 11;
+    }
+}
+
 
 struct rinit
 {
@@ -341,6 +363,8 @@ int ust_init(void)
 		ptr->ss_value = ri->value;    /* value */
 		ri += 1;              /* next */
 	}
+	reset_list_params = mac80_reset_list;
+	mac80_reset_list(1);
 	return 0;            /* would fill a user symbol table */
 }
 

@@ -1126,7 +1126,7 @@ int op_irpc( void )           /* .IRPC macro */
 #ifndef MAC_PP
         if (list_meb && !list_mes) setup_mebstats();
 #endif
-        list_mes = 1;     /* make sure the .ENDR shows up */
+        lm_bits |= LIST_MES;     /* make sure the .ENDR shows up */
     }
     return 0;            /* continue with macro next */
 }
@@ -1219,7 +1219,7 @@ int op_rept( void )           /* .REPT macro */
         free_macbody(ma->mac_body);   /* free the area */
         MEM_free((char *)marg);       /* and free the local space */
     }
-    if (macro_level == 1) list_mes = 1;  /* make sure the .ENDR shows up */
+    if (macro_level == 1) lm_bits |= LIST_MES;  /* make sure the .ENDR shows up */
     return 0;                /* continue with macro next */
 }
 
@@ -1259,7 +1259,7 @@ void mexit_common( int depth)
             clear_list(&meb_stats);
         meb_stats.getting_stuff = 0;
         clear_list(&list_stats);
-		if ( list_level <= 0 || !(lm_bits.list_mask & (LIST_ME | LIST_MES)) )
+		if ( list_level <= 0 || !(lm_bits & (LIST_ME | LIST_MES)) )
 			show_line = 0;
     }
 #endif

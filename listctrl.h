@@ -79,6 +79,8 @@ extern void clear_list(LIST_stat_t *lstat);
 extern int fixup_overflow(LIST_stat_t *lstat);
 extern int limitSrcPosition(int value);
 
+/* Apr 16, 2025 - DMS got rid of the union list bits */
+#if 0
 typedef struct list_bits
 {
    unsigned int lm_bin:1;
@@ -97,16 +99,14 @@ typedef struct list_bits
    unsigned int lm_src:1;
    unsigned int lm_sym:1;
    unsigned int lm_toc:1;
+   unsigned int lm_oct:1;
 } LIST_bits;
 
 typedef union list_mask
 {
-   unsigned short list_mask;
+   unsigned int list_mask;
    struct list_bits list_bits;
 } LIST_mask;
-
-extern LIST_mask lm_bits,saved_lm_bits,qued_lm_bits;
-
 #define list_bin lm_bits.list_bits.lm_bin
 #define list_bex lm_bits.list_bits.lm_bex
 #define list_cnd lm_bits.list_bits.lm_cnd
@@ -123,6 +123,30 @@ extern LIST_mask lm_bits,saved_lm_bits,qued_lm_bits;
 #define list_src lm_bits.list_bits.lm_src
 #define list_sym lm_bits.list_bits.lm_sym
 #define list_toc lm_bits.list_bits.lm_toc
+#define list_oct lm_bits.list_bits.lm_oct
+#else
+/* Just make use of a bit mask as normal people would do */
+typedef unsigned int LIST_mask;
+#define list_bin (lm_bits&LIST_BIN)
+#define list_bex (lm_bits&LIST_BEX)
+#define list_cnd (lm_bits&LIST_CND)
+#define list_cod (lm_bits&LIST_COD)
+#define list_com (lm_bits&LIST_COM)
+#define list_ld  (lm_bits&LIST_LD)
+#define list_loc (lm_bits&LIST_LOC)
+#define list_mc  (lm_bits&LIST_MC)
+#define list_md  (lm_bits&LIST_MD)
+#define list_me  (lm_bits&LIST_ME)
+#define list_meb (lm_bits&LIST_MEB)
+#define list_mes (lm_bits&LIST_MES)
+#define list_seq (lm_bits&LIST_SEQ)
+#define list_src (lm_bits&LIST_SRC)
+#define list_sym (lm_bits&LIST_SYM)
+#define list_toc (lm_bits&LIST_TOC)
+#define list_oct (lm_bits&LIST_OCT)
+#endif
+
+extern LIST_mask lm_bits, saved_lm_bits, qued_lm_bits;
 
 /**************************************************tg*/
 /*    01-24-2022  Added for HLLxxF support by TG

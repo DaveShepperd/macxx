@@ -28,40 +28,42 @@ Change Log
 
 /* Constants to use for placement of data on listing_line */
 
-#if MACXX_BIG_ENDIAN != 0
-#define LIST_BIN 0x8000		/* binary */
-#define LIST_BEX 0x4000		/* multi-line binary */
-#define LIST_CND 0x2000		/* conditionals */
-#define LIST_COD 0x1000		/* display words/longs as appears in mem */
-#define LIST_COM 0x0800		/* comments */
-#define LIST_LD  0x0400		/* listing directives */
-#define LIST_LOC 0x0200		/* location */
-#define LIST_MC  0x0100		/* macro calls */
-#define LIST_MD  0x0080		/* macro definitions */
-#define LIST_ME  0x0040		/* macro expansions */
-#define LIST_MEB 0x0020		/* macro expansions, binary only */
-#define LIST_MES 0x0010		/* source code on macro expansions */
-#define LIST_SEQ 0x0008		/* listing line number */
-#define LIST_SRC 0x0004		/* source code */
-#define LIST_SYM 0x0002		/* symbol table */
-#define LIST_TOC 0x0001		/* table of contents */
+#if 0 && (MACXX_BIG_ENDIAN != 0)
+#define LIST_OCT 0x00010000		/* printout is in octal */
+#define LIST_BIN 0x00008000		/* binary */
+#define LIST_BEX 0x00004000		/* multi-line binary */
+#define LIST_CND 0x00002000		/* conditionals */
+#define LIST_COD 0x00001000		/* display words/longs as appears in mem */
+#define LIST_COM 0x00000800		/* comments */
+#define LIST_LD  0x00000400		/* listing directives */
+#define LIST_LOC 0x00000200		/* location */
+#define LIST_MC  0x00000100		/* macro calls */
+#define LIST_MD  0x00000080		/* macro definitions */
+#define LIST_ME  0x00000040		/* macro expansions */
+#define LIST_MEB 0x00000020		/* macro expansions, binary only */
+#define LIST_MES 0x00000010		/* source code on macro expansions */
+#define LIST_SEQ 00000x0008		/* listing line number */
+#define LIST_SRC 00000x0004		/* source code */
+#define LIST_SYM 00000x0002		/* symbol table */
+#define LIST_TOC 00000x0001		/* table of contents */
 #else
-#define LIST_BIN 0x0001		/* binary */
-#define LIST_BEX 0x0002		/* multi-line binary */
-#define LIST_CND 0x0004		/* conditionals */
-#define LIST_COD 0x0008		/* display words/longs as appears in mem */
-#define LIST_COM 0x0010		/* comments */
-#define LIST_LD  0x0020		/* listing directives */
-#define LIST_LOC 0x0040		/* location */
-#define LIST_MC  0x0080		/* macro calls */
-#define LIST_MD  0x0100		/* macro definitions */
-#define LIST_ME  0x0200		/* macro expansions */
-#define LIST_MEB 0x0400		/* macro expansions, binary only */
-#define LIST_MES 0x0800		/* source code on macro expansions */
-#define LIST_SEQ 0x1000		/* listing line number */
-#define LIST_SRC 0x2000		/* source code */
-#define LIST_SYM 0x4000		/* symbol table */
-#define LIST_TOC 0x8000		/* table of contents */
+#define LIST_BIN 0x00000001		/* binary */
+#define LIST_BEX 0x00000002		/* multi-line binary */
+#define LIST_CND 0x00000004		/* conditionals */
+#define LIST_COD 0x00000008		/* display words/longs as appears in mem */
+#define LIST_COM 0x00000010		/* comments */
+#define LIST_LD  0x00000020		/* listing directives */
+#define LIST_LOC 0x00000040		/* location */
+#define LIST_MC  0x00000080		/* macro calls */
+#define LIST_MD  0x00000100		/* macro definitions */
+#define LIST_ME  0x00000200		/* macro expansions */
+#define LIST_MEB 0x00000400		/* macro expansions, binary only */
+#define LIST_MES 0x00000800		/* source code on macro expansions */
+#define LIST_SEQ 0x00001000		/* listing line number */
+#define LIST_SRC 0x00002000		/* source code */
+#define LIST_SYM 0x00004000		/* symbol table */
+#define LIST_TOC 0x00008000		/* table of contents */
+#define LIST_OCT 0x00010000		/* printout is in octal */
 #endif
 
 #ifndef MAC_PP

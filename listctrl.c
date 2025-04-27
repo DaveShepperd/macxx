@@ -50,7 +50,7 @@ char listing_line[LLIST_MAXSRC+2] = "    1";
 
 LIST_stat_t list_stats;
 LIST_Source_t list_source;
-union list_mask lm_bits,saved_lm_bits,qued_lm_bits;
+LIST_mask lm_bits, saved_lm_bits, qued_lm_bits;
 
 #if 0
 /**************************************************tg*/
@@ -75,28 +75,29 @@ int list_init(int onoff)
 	if ( onoff == 0 )
 	{
 		list_level = -1;
-		lm_bits.list_mask = 0;
-		saved_lm_bits.list_mask = 0;
+		lm_bits = 0;
+		saved_lm_bits = 0;
 	}
 	else
 	{
 		list_level = 0;
-		lm_bits.list_mask = saved_lm_bits.list_mask =
-			macxx_lm_default;
+		lm_bits = saved_lm_bits = macxx_lm_default;
 	}
-	qued_lm_bits.list_mask = lm_bits.list_mask;
+	qued_lm_bits = lm_bits;
 #ifndef MAC_PP
 	list_stats.list_ptr = LLIST_OPC;
 	meb_stats.list_ptr = LLIST_OPC;
 #endif
 	show_line = 1;       /* assume to show it */
+	if ( (lm_bits&LIST_OCT) && reset_list_params )
+		reset_list_params(1);
 	return 0;
 }
 
 static struct
 {
 	char *string;
-	unsigned short flag;
+	unsigned int flag;
 } list_stuff[] = {
 	{ "BEX", LIST_BEX },      /* display binary extensions */
 	{ "BIN", LIST_BIN },      /* display binary */
@@ -112,7 +113,8 @@ static struct
 	{ "ME", LIST_ME | LIST_MES }, /* display macro expansions */
 	{ "MEB", LIST_MEB },      /* display macro expansions which produce binary */
 	{ "MES", LIST_MES },      /* display macro expansion source */
-	{ "OCT", 0 },             /* display address and object data in octal */
+	{ "OCT", LIST_OCT },      /* display address and object data in octal */
+	{ "OCTAL", LIST_OCT },    /* display address and object data in octal */
 	{ "SEQ", LIST_SEQ },      /* display sequence numbers */
 	{ "SRC", LIST_SRC },      /* display source */
 	{ "SYM", LIST_SYM },      /* display symbol table */
@@ -410,27 +412,27 @@ static int op_list_common(int onoff)
 		list_level += onoff;
 		if ( list_level == 0 )
 		{
-			lm_bits.list_mask = saved_lm_bits.list_mask;
+			lm_bits = saved_lm_bits;
 		}
 		else if ( list_level == -1 || list_level == 1 )
 		{
 			if ( onoff > 0 )
 			{
-				lm_bits.list_mask |=
+				lm_bits |=
 					LIST_CND | LIST_LD | LIST_MC | LIST_MD | LIST_ME | LIST_SRC | LIST_MES | LIST_BIN | LIST_LOC;
 			}
 			else
 			{
-				lm_bits.list_mask = 0;
+				lm_bits = 0;
 			}
 		}
 		if ( list_level > 0 )
 			show_line = 1;
 		if ( list_level == 0 )
-			show_line = list_ld;
+			show_line = (lm_bits&LIST_LD);
 		if ( list_level < 0 )
 			show_line = 0;
-		qued_lm_bits.list_mask = lm_bits.list_mask;
+		qued_lm_bits = lm_bits;
 		return 1;
 	}
 	/* There must be stuff on the line */
@@ -487,32 +489,29 @@ static int op_list_common(int onoff)
 				/* Nothing special with these options, just fall through to normal */
 			}
 		}
-		if ( !list_stuff[ii].flag )      /* Special OCT keyword */
+		if ( onoff < 0 )
+		{
+			saved_lm_bits &= ~list_stuff[ii].flag;
+		}
+		else
+		{
+			saved_lm_bits |= list_stuff[ii].flag;
+		}
+		if ( (list_stuff[ii].flag&LIST_OCT) )      /* Special OCT keyword */
 		{
 			if ( reset_list_params )
 				reset_list_params(onoff);
 		}
-		else
-		{
-			if ( onoff < 0 )
-			{
-				saved_lm_bits.list_mask &= ~list_stuff[ii].flag;
-			}
-			else
-			{
-				saved_lm_bits.list_mask |= list_stuff[ii].flag;
-			}
-		}
 		comma_expected = 1;
 	}
 	if ( list_level == 0 )
-		lm_bits.list_mask = saved_lm_bits.list_mask;
+		lm_bits = saved_lm_bits;
 	if ( list_level > 0 )
 	{
-		lm_bits.list_mask = saved_lm_bits.list_mask |
+		lm_bits = saved_lm_bits |
 			LIST_CND | LIST_LD | LIST_MC | LIST_MD | LIST_ME | LIST_SRC | LIST_MES | LIST_BIN | LIST_LOC;
 	}
-	qued_lm_bits.list_mask = lm_bits.list_mask;
+	qued_lm_bits = lm_bits;
 /*	printf("op_list_common(): list_level=%d, lm_bits.list_mask=0x%04X\n", list_level, lm_bits.list_mask); */
 	return 1;
 }
@@ -634,7 +633,7 @@ void display_line(LIST_stat_t *lstat)
 {
 	char *chrPtr, *outLinePtr;
 	outLinePtr = lstat->listBuffer;
-	if ( list_seq )
+	if ( (lm_bits&LIST_SEQ) )
 	{
 		if ( lstat->line_no != 0 )
 		{
@@ -651,7 +650,7 @@ void display_line(LIST_stat_t *lstat)
 		}
 	}
 #ifndef MAC_PP
-	if ( list_loc )
+	if ( (lm_bits&LIST_LOC) )
 	{
 		if ( lstat->pc_flag != 0 )
 		{
@@ -713,11 +712,11 @@ void display_line(LIST_stat_t *lstat)
 		if ( !flg )
 		{
 			if ( macro_nesting == 0 )
-				flg = list_src;
+				flg = (lm_bits&LIST_SRC);
 			else if ( macro_nesting == 1 )
-				flg = list_mc;
+				flg = (lm_bits&LIST_MC);
 			else
-				flg = list_me || list_mes;
+				flg = (lm_bits&LIST_ME) || (lm_bits&LIST_MES);
 		}
 		if ( flg )
 		{
@@ -852,7 +851,7 @@ void n_to_list(int nibbles, long value, int tag)
 	}
 	if ( lstat->list_ptr >= lcnt )
 	{
-		if ( !list_bex )
+		if ( !(lm_bits&LIST_BEX) )
 			return;
 		fixup_overflow(lstat);
 	}
