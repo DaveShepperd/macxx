@@ -38,7 +38,6 @@ int list_toc_hd = 0;				/* header flag for TOC listing - By TRG 20240503 */
 int show_line = 1;
 int list_level;
 int list_radix = 16;
-void (*reset_list_params)(int onoff);
 
 #ifndef MAC_PP
 int LLIST_OPC = 14;
@@ -51,6 +50,30 @@ char listing_line[LLIST_MAXSRC+2] = "    1";
 LIST_stat_t list_stats;
 LIST_Source_t list_source;
 LIST_mask lm_bits, saved_lm_bits, qued_lm_bits;
+
+void set_list_radix(int on)
+{
+#ifndef MAC_PP
+    if ( !on )
+    {
+        list_radix = 16;    /* .nlist oct */
+        LLIST_OPC = 14;
+        LLIST_OPR = 17;
+        macxx_nibbles_byte = 2;
+        macxx_nibbles_word = 4;
+        macxx_nibbles_long = 8;
+    }
+    else
+    {
+        list_radix = 8;     /* .list oct */
+        LLIST_OPC = 16;
+        LLIST_OPR = 24;
+        macxx_nibbles_byte = 3;
+        macxx_nibbles_word = 6;
+        macxx_nibbles_long = 11;
+    }
+#endif
+}
 
 #if 0
 /**************************************************tg*/
@@ -89,8 +112,7 @@ int list_init(int onoff)
 	meb_stats.list_ptr = LLIST_OPC;
 #endif
 	show_line = 1;       /* assume to show it */
-	if ( (lm_bits&LIST_OCT) && reset_list_params )
-		reset_list_params(1);
+	set_list_radix((macxx_lm_default&LIST_OCT));
 	return 0;
 }
 
@@ -497,11 +519,6 @@ static int op_list_common(int onoff)
 		{
 			saved_lm_bits |= list_stuff[ii].flag;
 		}
-		if ( (list_stuff[ii].flag&LIST_OCT) )      /* Special OCT keyword */
-		{
-			if ( reset_list_params )
-				reset_list_params(onoff);
-		}
 		comma_expected = 1;
 	}
 	if ( list_level == 0 )
@@ -511,6 +528,7 @@ static int op_list_common(int onoff)
 		lm_bits = saved_lm_bits |
 			LIST_CND | LIST_LD | LIST_MC | LIST_MD | LIST_ME | LIST_SRC | LIST_MES | LIST_BIN | LIST_LOC;
 	}
+	set_list_radix((lm_bits&LIST_OCT));
 	qued_lm_bits = lm_bits;
 /*	printf("op_list_common(): list_level=%d, lm_bits.list_mask=0x%04X\n", list_level, lm_bits.list_mask); */
 	return 1;

@@ -27,6 +27,7 @@ extern Opcpst perm_opcpst[];
 extern Dirpst perm_dirpst[];
 extern Opcode *opcode_lookup();
 #include "memmgt.h"
+/* #include "listctrl.h" */
 
 void opcinit( void )          /* preloads the opcode table */
 {
@@ -134,6 +135,9 @@ void opcinit( void )          /* preloads the opcode table */
 		++dir;
     }
     ust_init();
+#ifndef MAC_PP
+	set_list_radix((macxx_lm_default&LIST_OCT));
+#endif
     return;
 }
 #endif /* _OPCOMMON_H_ */

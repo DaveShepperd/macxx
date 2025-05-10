@@ -73,7 +73,7 @@ extern int list_que;
 extern unsigned long record_count;
 extern FILE *save_lisfp;
 extern int show_line;
-extern void (*reset_list_params)(int onoff);
+extern void set_list_radix(int on);
 extern void display_line(LIST_stat_t *lstat);
 extern void clear_list(LIST_stat_t *lstat);
 extern int fixup_overflow(LIST_stat_t *lstat);

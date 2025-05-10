@@ -281,6 +281,7 @@
 			<F N="macxx.c"/>
 			<F N="macxx.html"/>
 			<F N="memmgt.c"/>
+			<F N="obsolete.c"/>
 			<F N="opc11.c"/>
 			<F N="opc65.c"/>
 			<F N="opc68.c"/>

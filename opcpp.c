@@ -39,7 +39,7 @@ char macxx_nibbles_long = 8;
 
 unsigned long macxx_edm_default = 0;    /* default edmask */
 /* default list mask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD);
+unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_OCT);
 int current_radix = 16;         /* default the radix to hex */
 
 char expr_open = '(';       /* char that opens an expression */

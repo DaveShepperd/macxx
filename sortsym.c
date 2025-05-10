@@ -73,8 +73,7 @@ int sort_symbols(void)
     SS_struct **ls,*st;
     extern SEG_struct *find_segment();
 
-	if ( reset_list_params )
-		reset_list_params(1);
+	set_list_radix((lm_bits&LIST_OCT));
 	for (j=i=0;i<HASH_TABLE_SIZE;i++)
     {
         for (st=hash[(short)i] ; st != 0 ; st=st->ss_next)
