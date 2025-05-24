@@ -1255,7 +1255,8 @@ int get_token( void )
                         tmp *= tmp_radix;
                         tmp += c;
                     }
-					if ( (edmask&ED_H_HEX) && !gotPrefix && (c == 'h' || c == 'H') )
+					c = _toupper(c);
+					if ( (edmask&ED_H_HEX) && !gotPrefix && c == 'H' )
 					{
 						++inp_ptr;	/* eat the char */
 						/* if not already in hex */
@@ -1263,6 +1264,28 @@ int get_token( void )
 						{
 							/* set the radix to 16 and rescan */
 							tmp_radix = 16;
+							continue;
+						}
+					}
+					if ( (edmask&ED_O_OCT) && !gotPrefix && c == 'O' )
+					{
+						++inp_ptr;	/* eat the char */
+						/* if not already in hex */
+						if ( tmp_radix != 8 )
+						{
+							/* set the radix to 8 and rescan */
+							tmp_radix = 8;
+							continue;
+						}
+					}
+					if ( (edmask&ED_Q_OCT) && !gotPrefix && c == 'Q' )
+					{
+						++inp_ptr;	/* eat the char */
+						/* if not already in hex */
+						if ( tmp_radix != 8 )
+						{
+							/* set the radix to 8 and rescan */
+							tmp_radix = 8;
 							continue;
 						}
 					}

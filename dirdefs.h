@@ -19,10 +19,13 @@
 #ifndef MAC_PP
 #if defined(MAC_8080)
 DIRDEF("DB", op_db, DFLGBM )
-DIRDEF("DC", op_db, DFLGBM )
+DIRDEF("DC", op_dc, DFLGBM )
 DIRDEF("DS", op_blkm,	0)
 DIRDEF("DW",  op_2mau,	DFLGEV)
 DIRDEF("ASEG", op_asect, 0 )
+DIRDEF("CSEG", op_csect, 0 )
+DIRDEF("DSEG", op_csect, 0 )
+DIRDEF("END", op_end, 0)
 #endif
 DIRDEF("DC.B",	op_dcb_b,	0)
 DIRDEF("DC.BM",	op_dcb_bm,	0)
@@ -89,7 +92,7 @@ DIRDEF(".DISABLE",    op_dsabl,	0)
 DIRDEF(".ECREF",    op_ecref,	0)
 DIRDEF(".ENABLE",    op_enabl,	0)
 DIRDEF(".ENABL",    op_enabl,	0)
-DIRDEF(".END",	op_end,		DFLCND|DFLMAC|DFLEND|DFLMEND)
+DIRDEF(".END",	op_end,		DFLEND)
 #endif
 DIRDEF(".ENDC",	op_endc,	DFLCND)
 DIRDEF(".ENDM",	op_endm,	DFLMAC|DFLMEND)

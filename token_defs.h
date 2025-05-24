@@ -124,25 +124,27 @@ enum misc {
    MSG_NO_EXTRA	=64,	/* Do not add anything extra to output error message */
    MSG_DONT_COUNT = 128, /* Do not count the error */
 	
-   ED_MOS	=0x00001,	/* enable MOS syntax */
-   ED_AMA	=0x00002,	/* enable absolute address mode */
-   ED_ABS	=0x00004,	/* enable absolute output */
-   ED_LSB	=0x00008,	/* enable local symbol block */
-   ED_USD	=0x00010,	/* enable unsigned divide */
-   ED_M68	=0x00020,	/* enable 68000 word mode (big endian) */
-   ED_GBL  	=0x00040,	/* enable all undefines to be global */
-   ED_WRD  	=0x00080,	/* enable undefined opcodes to .word */
-   ED_LC	=0x00100,	/* enable lowercase symbols */
-   ED_DOL	=0x00200,	/* enable leading dollar hex constants */
-   ED_DOTLCL=0x00400,	/* enable symbols starting with '.' to be local */
-   ED_BYT  	=0x00800,	/* enable undefined opcodes to .byte */
-   ED_CR  	=0x01000,	/* enable carriage returns in source */
-   ED_TRUNC	=0x02000, 	/* enable truncation check in .byte and .word */
-   ED_SIMPLE=0x04000,	/* enable simple .ifdf/.ifndf expression (technically disables the complex test for def/ndef symbols). */
-   ED_CPU   =0x08000,	/* enable reporting checks for different behavior on different model CPU's (mac11) */
-   ED_HEXLCL=0x10000,	/* enable local symbols to be hexidecimal */
-   ED_H_HEX =0x20000,	/* enable trailing 'h' or 'H' to indicate hex constants */
-   ED_DOL_PC=0x40000	/* enable single symbol '$' to indicate pc (same as '.') */
+   ED_MOS	=0x00000001,	/* enable MOS syntax */
+   ED_AMA	=0x00000002,	/* enable absolute address mode */
+   ED_ABS	=0x00000004,	/* enable absolute output */
+   ED_LSB	=0x00000008,	/* enable local symbol block */
+   ED_USD	=0x00000010,	/* enable unsigned divide */
+   ED_M68	=0x00000020,	/* enable 68000 word mode (big endian) */
+   ED_GBL  	=0x00000040,	/* enable all undefines to be global */
+   ED_WRD  	=0x00000080,	/* enable undefined opcodes to .word */
+   ED_LC	=0x00000100,	/* enable lowercase symbols */
+   ED_DOL	=0x00000200,	/* enable leading dollar hex constants */
+   ED_DOTLCL=0x00000400,	/* enable symbols starting with '.' to be local */
+   ED_BYT  	=0x00000800,	/* enable undefined opcodes to .byte */
+   ED_CR  	=0x00001000,	/* enable carriage returns in source */
+   ED_TRUNC	=0x00002000, 	/* enable truncation check in .byte and .word */
+   ED_SIMPLE=0x00004000,	/* enable simple .ifdf/.ifndf expression (technically disables the complex test for def/ndef symbols). */
+   ED_CPU	=0x00008000,	/* enable reporting checks for different behavior on different model CPU's (mac11) */
+   ED_HEXLCL=0x00010000,	/* enable local symbols to be hexidecimal */
+   ED_H_HEX	=0x00020000,	/* enable trailing 'h' or 'H' to indicate hex constants */
+   ED_DOL_PC=0x00040000,	/* enable single symbol '$' to indicate pc (same as '.') */
+   ED_O_OCT	=0x00080000,	/* enable trailing 'o' or 'O' to indicate octal constants */
+   ED_Q_OCT	=0x00100000		/* enable trailing 'q' or 'Q' to indicate octal constants */
 };
 
 #endif /* _TOKEN_DEFS_H_ */

@@ -189,3 +189,36 @@ Opcode *opcode_lookup(char *strng, int err_flag )
     return(new);         /* return pointing to new block */
 }    
 
+void deleteAllMacros(void)
+{
+	Opcode **hashPtr,*opc,**prev;
+	int num;
+	
+	for (num=0; num < OP_HASH_SIZE; ++num)
+	{
+		hashPtr = ophash+num;
+		prev = hashPtr;
+		while ( (opc = *prev) )
+		{
+			Macargs *ma;
+
+			if ( opc->op_class != OP_CLASS_MAC )
+			{
+				prev = &opc->op_next;
+				continue;
+			}
+			if ( prev == hashPtr )
+				*prev = opc->op_next;   /* Pluck this guy from the hash table entry */
+			else
+				(*prev)->op_next = opc->op_next; /* else make last guy point to our next */
+			ma = opc->op_margs;
+			if ( ma )
+			{
+				if (ma->mac_body)
+					free_macbody(ma->mac_body);
+				MEM_free(ma);
+			}
+		}
+	}
+}
+

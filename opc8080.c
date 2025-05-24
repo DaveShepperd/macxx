@@ -58,7 +58,7 @@ char macxx_nibbles_byte = 2;    /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_AMA | ED_TRUNC | ED_DOL_PC | ED_H_HEX;  /* default edmask */
+unsigned long macxx_edm_default = ED_TRUNC | ED_DOL_PC | ED_H_HEX | ED_O_OCT | ED_Q_OCT;  /* default edmask */
 unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);  /* default list mask */
 
 int current_radix = 10;     /* default the radix to decimal */
@@ -71,8 +71,8 @@ char macro_arg_escape = '^';    /* char that escapes a macro argument */
 char macro_arg_gensym = '?';    /* char indicating generated symbol for macro */
 char macro_arg_genval = '\\';   /* char indicating generated value for macro */
 
-int max_opcode_length = 16; /* significant length of opcodes */
-int max_symbol_length = 16; /* significant length of symbols */
+int max_opcode_length = 6; /* significant length of opcodes */
+int max_symbol_length = 6; /* significant length of symbols */
 
 extern int dotwcontext;
 extern int no_white_space_allowed;

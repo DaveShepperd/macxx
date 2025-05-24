@@ -656,7 +656,7 @@ int op_db(void)
 
 int op_dc(void)
 {
-	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NONE|ASC_COMMON_QUOTE|ASC_COMMON_COMMA);
+	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_MINUS|ASC_COMMON_QUOTE|ASC_COMMON_COMMA);
 	return 0;
 }
 
@@ -1523,6 +1523,8 @@ static struct
 	{ "LSB", ED_LSB },
 	{ "M68", ED_M68 },
 	{ "MOS", ED_MOS },
+	{ "O_OCTAL", ED_O_OCT },
+	{ "Q_OCTAL", ED_Q_OCT },
 	{ "SIMPLE", ED_SIMPLE },
 	{ "TRUNCATE_CHECK", ED_TRUNC },
 	{ "USD", ED_USD },

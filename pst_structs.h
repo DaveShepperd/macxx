@@ -76,6 +76,8 @@ typedef struct opcode {
 extern Opcode *opcode_lookup(char *strng, int err_flag );
 extern void do_opcode(Opcode *opc);
 extern int macro_call(Opcode *opc);
+extern void deleteAllMacros(void);
+extern void free_macbody( unsigned char *link );
 
 #define op_value types.val
 #define op_func  types.fnc

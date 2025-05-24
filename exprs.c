@@ -1345,7 +1345,9 @@ static int do_exprs( int flag, EXP_stk *eps )
                         {
                             inp_ptr = tkn_ptr+1;   /* un-eat any white space */
                             expr_ptr->expr_value  = *inp_ptr++;
-                        }
+							if ( *inp_ptr == '\'' )
+								++inp_ptr;		/* if syntax is 'x', eat the trailing apostrophe */
+						}
                         ++eps->ptr;
                         ++sexptr;
                         while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */

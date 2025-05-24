@@ -87,7 +87,8 @@ void opcinit( void )          /* preloads the opcode table */
         if (token_pool_size <= max_opcode_length+1)
             get_token_pool(max_opcode_length+1, 1);
         len = strlen(opc->name);
-        if (len > max_opcode_length) len = max_opcode_length;
+        if (len > max_opcode_length)
+			len = max_opcode_length;
         /* Keep gcc 13.2.1 quiet */
         if ( len > token_pool_size )
             len = token_pool_size;
@@ -111,16 +112,14 @@ void opcinit( void )          /* preloads the opcode table */
         if (token_pool_size <= max_opcode_length+1)
             get_token_pool(max_opcode_length+1, 1);
         len = strlen(dir->name);
-        if (len > max_opcode_length) len = max_opcode_length;
+        if (len > max_opcode_length)
+			len = max_opcode_length;
         /* Keep gcc 13.2.1 quiet */
         if ( len > token_pool_size )
             len = token_pool_size;
         strncpy(token_pool,dir->name,len);
         *(token_pool+len) = 0;
         op = opcode_lookup(token_pool,1);
-        ++len;
-        token_pool += len;
-        token_pool_size -= len;
         if ((op->op_class&OP_CLASS_MAC) == 0)
         {
             op->op_func  = dir->func;
@@ -132,6 +131,9 @@ void opcinit( void )          /* preloads the opcode table */
 			snprintf(err, sizeof(err), "Duplicate PST entry while adding '%s'. Already have '%s'", token_pool, op->op_name);
 			show_bad_token(NULL, err, MSG_FATAL);
 		}
+		++len;
+		token_pool += len;
+		token_pool_size -= len;
 		++dir;
     }
     ust_init();

@@ -40,6 +40,7 @@ Change Log
 #include "memmgt.h"
 #include "strsub.h"
 #include "listctrl.h"
+#include "pst_tokens.h"
 
 extern int gc_pass;
 struct stat file_stat;
@@ -479,6 +480,7 @@ int main(int argc, char *argv[])
 		purge_data_stacks(NULL);
 		string_macros = NULL;
 		current_radix = savedRadix;
+		deleteAllMacros();
 	}
 #endif
     if (output_files[OUT_FN_LIS].fn_present)

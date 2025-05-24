@@ -123,7 +123,7 @@
     <tr><td><a href="#gen_syntax">Statement syntax</a></td><td></td>
     <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
     <tr><td><a href="#dir_dc">DB</a></td><td>Put constants in memory (mac8080 only)</td>
-    <tr><td><a href="#dir_dc">DC</a></td><td>Put constants in memory (mac8080 only)</td>
+    <tr><td><a href="#dir_ascix">DC</a></td><td>Put constants in memory (mac8080 only)</td>
     <tr><td><a href="#dir_dc">DC.x</a></td><td>Put constants in memory</td>
     <tr><td><a href="#dir_dcb">DCB.x</a></td><td>Fill memory witn constants</td>
     <tr><td><a href="#dir_blkx">DS.x</a></td><td>Allocation storage</td>
@@ -139,6 +139,7 @@
     <tr><td><a href="#dir_defstack">.DEFSTACK</a></td><td>Define a user stack</td>
     <tr><td><a href="#dir_dpage">.DPAGE</a></td><td>65816 specific instruction</td>
     <tr><td><a href="#dir_enabl">.ENABL, .DSABL</a></td><td>Enable/Disable assembler functions</td>
+    <tr><td><a href="#dir_end">END</a></td><td>End of assembly (mac8080 only)</td>
     <tr><td><a href="#dir_end">.END</a></td><td>End of assembly</td>
     <tr><td><a href="#dir_endm">.ENDM</a></td><td>End of macro</td>
     <tr><td><a href="#dir_endm">.ENDR</a></td><td>End of indefinite repeat blocks</td>
@@ -497,8 +498,7 @@
   numbers appearing between that directive and the next .RADIX or end of
   file. The unary operators ^B, ^O, ^D (or trailing period), ^X or ^H
   can be used on individual numbers to indicate the radices 2, 8, 10, 16
-  or 16 respectively. In addition, hexadecimal numbers may be expressed by
-  prefixing a "0x" or "0X" to them. 
+  or 16 respectively.
   </p>
   <h4>Numbers</h4>
   <p>
@@ -511,6 +511,13 @@
   temporary decimal radix can be set by appending a period to the number
   or any other temporary radix can be set via a one of the unary operators
   (^B, ^D, ^O, ^X or ^H for binary, decimal, octal, hex or hex respectively).
+  In addition, hexadecimal numbers may be expressed by
+  prefixing a "0x" or "0X" to them. If the H_HEX option is <a href="#dir_enabl">.ENABL</a>'d, then
+  an 'h' or 'H' suffix will denote the number as hex. If the DOLLAR_HEX is <a href="#dir_enabl">.ENABL</a>'d,
+  then a '$" will denote the number as hex. Likewise, if the O_OCTAL or Q_OCTAL
+  is <a href="#dir_enabl">.ENABL</a>'d, then a 'o' or 'O' or 'q' 'Q' respective suffix will
+  denote the number as octal.
+  <br>        
   For example: 
   </p>
         <pre>
@@ -521,7 +528,13 @@
       A000     ;not a valid number (valid symbol, though)
       1000.    ;decimal 1000
       0x1234   ;hexadecimal number
-      ^X 1234  ;hexadecimal number
+      ^X1234   ;hexadecimal number
+      <a href="#dir_enabl">.ENABL</a> H_HEX
+      0AAAH    ;hexadecimal number (Note: Still have to prefix a 0-9)
+      <a href="#dir_enabl">.ENABL</a> DOLLAR_HEX
+      0AAA$    ;hexadecimal number
+      <a href="#dir_enabl">.ENABL</a> O_OCTAL
+      1234o    ;octal number
         </pre>
   
   <h3 id="gen_expressions">Expressions</h3>
@@ -711,12 +724,13 @@
       .ALIGN 1    ;aligns to 2 byte boundary
       .ALIGN fred ;aligns to whatever FRED resolves to
     </pre>
-  <h3 id="dir_ascix">.ASCII, .ASCIIZ, .ASCIN and .STRING</h3>
+  <h3 id="dir_ascix">.ASCII, .ASCIIZ, .ASCIN, .STRING and DC (mac8080 only)</h3>
     <pre>
       .ASCII [string]
       .ASCIN [string]
       .ASCIZ [string]
       .STRING [string]  ;Same as .ASCIZ
+      DC [string]       ;Same as .ASCIN (mac8080 only)
     </pre>
   <p>  
   Deposits a string of ASCII characters beginning at the current location.
@@ -724,9 +738,10 @@
   by a pair of ASCII characters. The first character in the string is assumed
   the delimiter for the string. The delimiters are not considered part of the
   string so are not inserted into the output file. Any printing character can
-  be a delimiter. Expressions can be inserted in the middle of the string by
-  delimiting the string and enclosing the expression in matching expression
-  brackets (&lt;&gt;'s in MAC65, ()'s in the other assemblers). Ths general 
+  be a delimiter except for <b>DC</b> where the only delimiters can be
+  single quotes (') or double quotes (").  Expressions can be inserted in
+  the middle of the string by delimiting the string and enclosing the expression
+  in matching expression brackets (&lt;&gt;'s in MAC65, ()'s in the other assemblers). Ths general 
   format is:
   </p>
     <pre>
@@ -734,6 +749,7 @@
       .ASCIN string ;The last byte of the string has bit 7 set
       .ASCIZ string ;An extra byte of 0 is inserted at the end
                     ;    of the string
+      DC 'text' [, expression [, "more text"]]  ;comment
     </pre>
   <p>
   Some examples:
@@ -746,6 +762,7 @@
                                ;second set of delimiters doesn't have to match the
                                ;first set of delimiters.
       .ASCII \123\(expr)/456/  ;Others: puts 31 32 33 xx 34 35 36
+      DC '123',4,"56",7 ;puts (hex) 31 32 33 04 35 36 87
     </pre>
   <h3 id="dir_asect">.ASECT</h3>
     <pre>
@@ -796,13 +813,16 @@
     <p>
   An obsolete directive. See <a href="#dir_psect">.PSECT</a> for details.
     </p>
-  <h3 id="dir_byte">.BYTE, .WORD, .LONG, .MAU, .2MAU, .4MAU, DB, DC and DC.x</h3>
+  <h3 id="dir_csect">.CSECT</h3>
+  <p>
+    An obsolete directive. See <a href="#dir_psect">.PSECT</a> for details.
+    </p>
+  <h3 id="dir_byte">DB, DC.x, .BYTE, .WORD, .LONG, .MAU, .2MAU and .4MAU</h3>
     <pre>
       .BYTE [expression[, expression [, ...]]]
       .WORD [expression[, expression [, ...]]]
       .LONG [expression[, expression [, ...]]]
       DB    (similar to .BYTE)
-      DC    (similar to .BYTE)
       DC.W	(same as .WORD)
       DC.L	(same as .LONG)
       .MAU  (same as .BYTE if MAU=8)
@@ -837,15 +857,10 @@
                               ;own. As a result, four expressions are output:
                               ;fred, '+ (hex 2B), sam and foobar.
     </pre>
-  <h3 id="dir_csect">.CSECT</h3>
-  <p>
-    An obsolete directive. See <a href="#dir_psect">.PSECT</a> for details.
-    </p>
-  <h3 id="dir_dc">DB, DC and DC.x</h3>
+  <h3 id="dir_dc">DB and DC.x</h3>
     <pre>
       DC.B  [expression[,expression[,...]]]
       DB    (same as DC.B but only in mac8080)
-      DC    (same as DC.B but only in mac8080)
     </pre>
     <p>
   All of the above directives have the same syntax. There can be 0 or more
@@ -995,17 +1010,19 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CPU_CHECK</td><td>Enables checks for behavior on different PDP11 CPU's. Specific to MAC11 only.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>Allows hexadecimal constants to be expressed Motorola style ($?=&gt;0x?)</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>Allows hex numbers to be expressed via trailing '$' (makes it compatible with Motorola assembler).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_PC</td><td>Allows single dollar sign '$' to represent current location counter (same as '.')</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;DOT_LOCAL</td><td>Enables all variables prefixed with double dot to be local. (I.e. <b>..foo</b> would be local) </td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared global. Use with care. </td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;HEX_LOCAL</td><td>Allows local symbols to be expressed in hexidecimal instead of decimal.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;H_HEX</td><td>Allows hexidecimal constants to be expressed Intel style (?h or ?H=&gt;0x?).</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;H_HEX</td><td>Allows hex numbers to be expressed via trailing 'H' or 'h' (makes it compatible with various other assemblers).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LC</td><td>Obsolete. Has no effect.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>See <a href="#MOS_ED_opt">HERE</a>.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;O_OCTAL</td><td>Allows octal numbers to be expressed via trailing 'O' or 'o' (makes it compatible with Intel assembler).</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;Q_OCTAL</td><td>Same as O_OCTAL above.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;SIMPLE</td><td>Enable this to neuter the complex expression handler in .ifdf/.ifndf directives (makes it compatible with RT11 macxx).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE_CHECK</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
@@ -1014,7 +1031,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;.WORD</td><td>Same as WORD above.</td></tr>
     </table>
     <p id="MOS_ED_opt">
-  The following keyword is specific just to MAC65 and 6502.
+  The following keyword is specific just to MAC65.
     </p>
   <table style="width: 50%">
     <tr><th>Keyword</th><th>Function</th></tr>
@@ -1039,7 +1056,8 @@ the stack pointer on a named stack. Examples:
     The default for mac11 is DISABLed.
     </p>
     <p>
-    The defaults for all options is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed and <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k.
+    The defaults for all assemblers is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed on all of them,
+    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and O_OCTAL, Q_OCTAL, H_HEX and DOLLAR_PC which are ENABLed on mac8080.
     </p>
   <p>
   Some examples:
@@ -1322,10 +1340,10 @@ the stack pointer on a named stack. Examples:
   <p>
   This directive allows for additional source files to be included for 
   assembly. Note that the semicolon delimits comments so, on VMS systems anyway, 
-  one cannot specify version numbers on filenames. The filename string
-  is has the default filetype (.MAC or .mac) appended to it if required and is
-  passed otherwise unmodified to the operating system. The filename
-  syntax is that of the underlying operating system.
+  one cannot specify version numbers on filenames. Otherwise the filename
+  string must conform to the syntax of the underlying operating system. An open is attempted using the filename
+  as specified and if that fails, the text .mac is appened and the open is retried. If that too
+  fails, the text .MAC is instead appened and the open is tried yet again. 
   </p>
   <h3 id="dir_irp">.IRP</h3>
   <pre>
@@ -1880,7 +1898,7 @@ the stack pointer on a named stack. Examples:
   </p>
   <table style="width: 100%">
     <tr><th>Argument</th><th>Meaning</th></tr>
-    <tr><td>ABS</td><td>Section is absolute; I.e. positioned is fixed at address 0</td></tr>
+    <tr><td>ABS</td><td>Section is absolute; I.e. base position is fixed at address 0</td></tr>
     <tr><td>REL</td><td>Section is relative; I.e. final position is set by LLF</td></tr>
     <tr><td>CON</td><td>Section is to be concatenated by LLF with like named sections</td></tr>
     <tr><td>OVR</td><td>Section is to be overlayed by LLF with like named sections</td></tr>
@@ -2225,7 +2243,7 @@ the stack pointer on a named stack. Examples:
   may be used in simple applications. It exists mainly to insert the 
   program vector table for the 6502 at 0xFFFx without the overhead of 
   establishing a program section and having LLF position it accordingly.
-  The <u>address</u>is an expression resolving to an absolute value 
+  The <u>address</u> is an expression resolving to an absolute value 
   representing where the first byte of data should be placed and data is 
   0 or more expressions (which may be global and/or relocatable) which will placed in 
   the target memory as 16 bit words. The data expressions are interpreted 
