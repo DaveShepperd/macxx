@@ -50,6 +50,9 @@ Change Log
 #include "listctrl.h"
 #include "memmgt.h"
 #include <stdlib.h>
+#if defined(MAC_8080)
+#include "le_itfc.h"
+#endif
 
 int exprs_nest;
 EXP_stk exprs_stack[EXPR_MAXSTACKS];

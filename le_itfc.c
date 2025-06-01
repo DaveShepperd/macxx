@@ -1,6 +1,6 @@
 /*
-    version.h - Part of macxx, a cross assembler family for various micro-processors
-    Copyright (C) 2008 David Shepperd
+    le_itfc.c - Part of macxx, a cross assembler family for various micro-processors
+    Copyright (C) 2025 David Shepperd
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,9 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_ 1
-
-char *macxx_version = "v11.66";
-
-#endif /* _VERSION_H_ */
+#include "token.h"
+#include "exproper.h"
+#include "listctrl.h"
+#include "memmgt.h"
+#include <stdlib.h>
+#if defined(MAC_8080)
+#include "le_itfc.h"
+#endif
