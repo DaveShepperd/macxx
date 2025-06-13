@@ -179,6 +179,7 @@ typedef struct exp_stk {
    unsigned int autodec:1;	/* suggested autodecrement */
    unsigned int autoinc:1;	/* suggester autoincrement */
    unsigned int :4;		/* round it up to next short */
+   short nest;			/* nest level */
 } EXP_stk;
 
 #define BOS_CODE  expr_code
