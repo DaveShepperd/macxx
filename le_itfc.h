@@ -21,4 +21,6 @@
 
 #include "lib_exprs.h"
 
+extern int le_itfc(int relative, EXP_stk *eps);
+
 #endif	/* _LE_ITFC_H_ */

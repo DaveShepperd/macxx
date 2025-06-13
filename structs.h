@@ -166,6 +166,7 @@ typedef struct exp_stk {
    unsigned short tag_len;	/* length of tag */
    short ptr;			/* expression stack pointer */
    short paren_cnt;		/* number of open parens found */
+   short oper_ptr;		/* operator stack pointer */
    unsigned int forward_reference:1;
    unsigned int base_page_reference:1;
    unsigned int register_reference:1;

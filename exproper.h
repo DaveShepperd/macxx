@@ -24,7 +24,7 @@
 #define EXPROPER_MUL	'*'	/* multiply */
 #define EXPROPER_DIV	'/'	/* divide */
 #define EXPROPER_AND	'&'	/* and */
-#define EXPROPER_OR	'|'	/* inclusive or */
+#define EXPROPER_OR		'|'	/* inclusive or */
 #define EXPROPER_XOR	'^'	/* exclusive or */
 #define EXPROPER_NEG	'_'	/* negate (2's compliment) */
 #define EXPROPER_COM	'~'	/* compliment (1's compliment) */
@@ -47,7 +47,7 @@
 #define EXPROPER_PICK	'$'	/* dup n'th item on stack */
 #define EXPROPER_PURGE	'#'	/* purge top of stack */
 #define EXPROPER_XCHG	'`'	/* exchange top 2 items */
-#define EXPROPER_IF	'('	/* if condit true, do until endif */
+#define EXPROPER_IF		'('	/* if condit true, do until endif */
 #define EXPROPER_ELSE	'"'	/* if condit false, do until endif */
 
 extern void init_exprs( void );

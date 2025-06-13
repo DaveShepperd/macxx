@@ -269,11 +269,13 @@
 			<F N="endlin.c"/>
 			<F N="err2str.c"/>
 			<F N="exprs.c"/>
+			<F N="exprs_prec.c"/>
 			<F N="gc.c"/>
 			<F N="gc_table.c"/>
 			<F N="hashit.c"/>
 			<F N="help.c"/>
 			<F N="le_itfc.c"/>
+			<F N="lib_exprs.c"/>
 			<F N="listctrl.c"/>
 			<F N="m11types.c"/>
 			<F N="m682types.c"/>
@@ -282,6 +284,7 @@
 			<F N="macxx.c"/>
 			<F N="macxx.html"/>
 			<F N="memmgt.c"/>
+			<F N="mk_operstuff.c"/>
 			<F N="obsolete.c"/>
 			<F N="opc11.c"/>
 			<F N="opc65.c"/>
@@ -329,6 +332,7 @@
 			<F N="gc_struct.h"/>
 			<F N="header.h"/>
 			<F N="le_itfc.h"/>
+			<F N="lib_exprs.h"/>
 			<F N="listctrl.h"/>
 			<F N="lstcnsts.h"/>
 			<F N="m682k.h"/>
@@ -340,6 +344,7 @@
 			<F N="opcs11.h"/>
 			<F N="opcs682k.h"/>
 			<F N="opcs68k.h"/>
+			<F N="operstuff.h"/>
 			<F N="outx.h"/>
 			<F N="pdp11.h"/>
 			<F N="pragma.h"/>
@@ -394,6 +399,7 @@
 			<F
 				N="Makefile.pi32"
 				Type="Makefile"/>
+			<F N="operstuff.dat"/>
 			<F N="stab.def"/>
 		</Folder>
 	</Files>

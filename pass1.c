@@ -1072,11 +1072,12 @@ void bad_token( char *ptr, const char *msg )
 /******************************************************************
  * mklocal - make a local symbol name
  */
-int mklocal(int cnt)
+int mklocal(const char *symName, int symLen)
 {
     register char *rs;
     register unsigned long lsb;
 
+	/* make a new name with the lsb area in hex first */
     lsb = current_lsb;
     rs = token_pool;
     while (lsb > 0)
@@ -1084,9 +1085,11 @@ int mklocal(int cnt)
         *rs++ = hexdig[lsb&15];
         lsb >>= 4;
     }
+	/* append an underscore */
     *rs++ = '_';
-    strncpy(rs,tkn_ptr,cnt);
-    rs += cnt;
+	/* then copy the actual text symbol name */
+    strncpy(rs,symName,symLen);
+    rs += symLen;
     *rs = 0;
     token_type = TOKEN_local;
     return rs-token_pool;
@@ -1162,7 +1165,8 @@ int get_token( void )
             comma_expected = 0;
         }
         cct = cctbl[(int)c];
-        if (c == '$' && (edmask&ED_DOL) != 0) cct = CC_NUM;
+        if (c == '$' && (edmask&ED_DOL) != 0)
+			cct = CC_NUM;
         switch (cct)
         {        /* act on the decoded data */
         case CC_PCX: {     /* printing character */
@@ -1299,7 +1303,7 @@ int get_token( void )
                             }
                             else
                             {
-                                tmp = mklocal(inp_ptr-tkn_ptr+1);
+                                tmp = mklocal(tkn_ptr, inp_ptr-tkn_ptr+1);
                             }
                             ++inp_ptr;     /* eat the $ */
                             break;
@@ -1368,7 +1372,7 @@ int get_token( void )
                         if ((cttbl[(int)c] & (CT_ALP|CT_NUM)) == 0) break;
                     }
                     --inp_ptr;    /* backup 1 */
-                    token_value = mklocal(inp_ptr-tkn_ptr); /* convert into local symbol */
+                    token_value = mklocal(tkn_ptr, inp_ptr-tkn_ptr); /* convert into local symbol */
                     break;    /* done */
                 }
             }
@@ -1993,7 +1997,7 @@ SS_struct *do_symbol(SymInsertFlag_t flag)
 #if !defined(MAC_PP)
 	if ( squawk_syms )
 	{
-		snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, flg_defined=%d, flg_exprs=%d, flg_segment=%d, flg_more=%d, value=0x%lX, segPtr=%p",
+		snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, flg_defined=%d, flg_exprs=%d, flg_segment=%d, flg_more=%d, value=0x%lX, segPtr=%p, local=%d",
 				 sym_ptr->ss_string,
 				 (void *)sym_ptr,
 				 (void *)sym_ptr->ss_next,
@@ -2002,7 +2006,8 @@ SS_struct *do_symbol(SymInsertFlag_t flag)
 				 sym_ptr->flg_segment,
 				 sym_ptr->flg_more,
 				 sym_ptr->ss_value,
-				 (void *)sym_ptr->ss_seg);
+				 (void *)sym_ptr->ss_seg,
+				 sym_ptr->flg_macLocal);
 		show_bad_token(NULL,emsg, MSG_WARN);
 	}
 #endif

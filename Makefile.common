@@ -28,7 +28,7 @@ ALLO68 = exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
 ALLO69 = exprs69.o char_tbl65.o opc69.o pass0.o pass1.o pst69.o debug.o help.o
 ALLOAS = exprs.o char_table.o opcas.o pass1.o pstas.o debug.o help.o dummy_pass0.o
 ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o dummy_pass0.o
-ALLO8080 = exprs8080.o le_itfc8080.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o
+ALLO8080 = exprs_prec.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o #le_itfc8080.o lib_exprs.o
 ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o dummy_pass0.o #pass068k.o 
 #ALLO682K = exprs682k.o char_table.o opc682k.o pass168k.o pst682k.o m682types.o debug.o help.o dummy_pass0.o
 ALLO11 = exprs11.o char_tbl65.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
@@ -215,15 +215,35 @@ exprs8080.o : exprs.c lib_exprs.c token.h token_defs.h structs.h add_defs.h head
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_8080 -o $@ $<
 
-le_itfc8080.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h 
-	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC_8080 -o $@ $<
+#le_itfc8080.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
+#   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h 
+#	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
+#	$C -DMAC_8080 -o $@ $<
 
 exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
+
+exprs_prec.o : exprs_prec.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  exproper.h listctrl.h lstcnsts.h operstuff.h
+	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
+	$C -o $@ $<
+
+mk_operstuff.o : mk_operstuff.c Makefile.common
+	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
+	$C -o $@ $<
+
+mk_operstuff$(EXE) : mk_operstuff.o Makefile.common
+	$(link_it)
+
+operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
+	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
+	./mk_operstuff > $@
+
+#lib_exprs.o : lib_exprs.c lib_exprs.h
+#	$(ECHO) $(DELIM)    Compiling $< ...$(DELIM)
+#	$C -D_FMT_LD_='"%d"' -DNO_FLOATING_POINT -o $@ $<
 
 #pass068k.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
 #  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
@@ -244,7 +264,7 @@ pass18080.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.
 
 clean :
 	$(ECHO) $(DELIM)    Cleaning ...$(DELIM)
-	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mac682k$(EXE) mactj$(EXE) mac11$(EXE) *.o *.b *.d *.E
+	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mac682k$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE) mk_operstuff$(EXE) operstuff.h *.o *.b *.d *.E 
 
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 

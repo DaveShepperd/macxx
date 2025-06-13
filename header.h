@@ -155,7 +155,7 @@ extern int squawk_syms;
 
 extern char expr_open;
 extern char expr_close;
-extern char expr_escape;
+/* extern char expr_escape; */
 
 extern char macro_arg_open;
 extern char macro_arg_close;
@@ -314,6 +314,7 @@ extern void dumpAMATags(const FN_struct *fnd);
 extern int totalTagsUsed;
 extern int totalTagsChecked;
 extern void change_section(SEG_struct *new_seg);
+extern int mklocal(const char *symName, int symLen);
 
 #ifndef n_elts
 #define n_elts(x) (int)(sizeof(x)/sizeof((x)[0]))

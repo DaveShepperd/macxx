@@ -65,7 +65,9 @@ extern int dotwcontext;
 #endif
 
 int quoted_ascii_strings = 0;
+#if !defined(MAC_8080)
 static int do_exprs( int flag, EXP_stk *eps );
+#endif
 
 void init_exprs( void )
 {
@@ -992,7 +994,8 @@ int compress_expr( EXP_stk *exptr )
 #endif
     return newTerms;
 }
-
+
+#if !defined(MAC_8080)
 static int do_unary(int *sexptr, EXP_stk *eps )
 {
     EXPR_struct *expr_ptr;
@@ -1025,7 +1028,7 @@ static int do_unary(int *sexptr, EXP_stk *eps )
             *sexptr += 1;
             token_value = EXPROPER_AND;        /* low byte */
         }
-        if (c == expr_escape)
+        if (c == '^')
         {
             expr_ptr->expr_code = EXPR_VALUE;
             (expr_ptr++)->expr_value  = 8;
@@ -1274,7 +1277,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                             continue;          /* and loop */
                         }
 #endif
-                        if (c == expr_escape)
+                        if (c == '^')
                         {   /* first thing a unary? */
                             if (do_unary(&sexptr,eps) <= 0) return(-1);
                             break;
@@ -1619,7 +1622,8 @@ static int do_exprs( int flag, EXP_stk *eps )
         return(eps->ptr);
     }
 }
-
+#endif	/* !defined(MAC_8080 */
+
 /*******************************************************************
  * Expression evaluator. Calls do_exprs() which recursively calls
  * itself to evaluate an expression. This stub routine checks that
@@ -1642,6 +1646,7 @@ int exprs( int relative, EXP_stk *eps )
 	EXPR_struct *sSave;
 	unsigned short tagSave;
 	unsigned short tagLenSave;
+	int err;
 	
     exprs_nest = 0;      /* start with no nesting */
 	sSave = eps->stack;
@@ -1652,7 +1657,12 @@ int exprs( int relative, EXP_stk *eps )
 	eps->stack = sSave; /* Except for these three things */
 	eps->tag = tagSave;
 	eps->tag_len = tagLenSave;
-    if (do_exprs(1,eps) <0)
+#if !defined(MAC_8080)
+	err = do_exprs(1,eps);
+#else
+	err = le_itfc(1,eps);
+#endif
+    if ( err < 0 )
     {    /* call expression evaluator */
         eps->ptr = 0;     /* bad expression */
         return(-1);

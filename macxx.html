@@ -513,10 +513,10 @@
   (^B, ^D, ^O, ^X or ^H for binary, decimal, octal, hex or hex respectively).
   In addition, hexadecimal numbers may be expressed by
   prefixing a "0x" or "0X" to them. If the H_HEX option is <a href="#dir_enabl">.ENABL</a>'d, then
-  an 'h' or 'H' suffix will denote the number as hex. If the DOLLAR_HEX is <a href="#dir_enabl">.ENABL</a>'d,
-  then a '$" will denote the number as hex. Likewise, if the O_OCTAL or Q_OCTAL
+  an 'h' or 'H' suffix will denote the number as hex. If the O_OCTAL or Q_OCTAL
   is <a href="#dir_enabl">.ENABL</a>'d, then a 'o' or 'O' or 'q' 'Q' respective suffix will
-  denote the number as octal.
+  denote the number as octal. If the DOLLAR_HEX is <a href="#dir_enabl">.ENABL</a>'d,
+  then a prefixed '$" will denote the number as hex.
   <br>        
   For example: 
   </p>
@@ -532,7 +532,7 @@
       <a href="#dir_enabl">.ENABL</a> H_HEX
       0AAAH    ;hexadecimal number (Note: Still have to prefix a 0-9)
       <a href="#dir_enabl">.ENABL</a> DOLLAR_HEX
-      0AAA$    ;hexadecimal number
+      $AAA     ;hexadecimal number (Note: No leading 0-9 required)
       <a href="#dir_enabl">.ENABL</a> O_OCTAL
       1234o    ;octal number
         </pre>

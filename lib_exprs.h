@@ -56,6 +56,11 @@
  * a unary negative (i.e. 5--6 means subtract a negative 6 from
  * 5.
  */
+
+#ifndef _FMT_LD_
+#define _FMT_LD_ "%ld"
+#endif
+
 typedef enum
 {
 	ExprsPoolNull,
@@ -71,6 +76,7 @@ typedef struct
 	size_t mEntrySize;
 	int mNumUsed;
 	int mNumAvailable;
+	int mMaxUsed;
 	ExprsPoolID_t mPoolID;
 } ExprsPool_t;
 
@@ -87,6 +93,7 @@ typedef enum
 	EXPRS_TERM_NULL,
 	EXPRS_TERM_LINK,	/* link to another stack */
 	EXPRS_TERM_SYMBOL,	/* Symbol */
+	EXPRS_TERM_SYMBOL_COMPLEX, /* Complex symbol */
 	EXPRS_TERM_FUNCTION,/* Function call (not supported yet) */
 	EXPRS_TERM_STRING,	/* Text string (text delimited with quotes) */
 	EXPRS_TERM_FLOAT,	/* floating point number */
@@ -120,13 +127,18 @@ typedef enum
 	EXPRS_TERM_ASSIGN	/* = */
 } ExprsTermTypes_t;
 
+#define EXPRS_TERM_FLAG_LOCAL_SYMBOL	(0x01)	/* term is a local symbol */
+#define EXPRS_TERM_FLAG_REGISTER		(0x02)	/* term is a register */
+#define EXPRS_TERM_FLAG_COMPLEX			(0x04)	/* symbol value is complex */
+
 /** ExprsTerm_t - definition of the primitive contents of any
  *  individual term.
  **/
 typedef struct
 {
-	ExprsTermTypes_t termType;	/* the type of the term */
-	const char *chrPtr;			/* pointer to place in expression string where this term was found */
+	ExprsTermTypes_t termType;	/*! the type of the term */
+	const char *chrPtr;			/*! pointer to place in expression string where this term was found */
+	int flags;					/*! 0 or more of the EXPRS_TERM_FLAG_xxx options */
 	/* The actual term is one of the following: */
 	union
 	{
@@ -136,6 +148,7 @@ typedef struct
 		long s64;
 		unsigned long u64;
 		char oper[4];
+		void *complex;
 	} term;
 } ExprsTerm_t;
 
@@ -178,7 +191,8 @@ typedef enum
 	EXPR_TERM_BAD_RVALUE,
 	EXPR_TERM_BAD_PARAMETER,
 	EXPR_TERM_BAD_NOLOCK,		/*! error doing pthread lock. See errno for additional error. */
-	EXPR_TERM_BAD_NOUNLOCK		/*! error doing pthread unlock. See errno for additional error. */
+	EXPR_TERM_BAD_NOUNLOCK,		/*! error doing pthread unlock. See errno for additional error. */
+	EXPR_TERM_BAD_UNDEFINED
 } ExprsErrs_t;
 
 /** ExprsSymTermTypes_t - definition of the subset of types
@@ -186,27 +200,30 @@ typedef enum
  **/
 typedef enum
 {
+	EXPRS_SYM_TERM_NULL=EXPRS_TERM_NULL,
 	EXPRS_SYM_TERM_STRING=EXPRS_TERM_STRING,	/* Text string */
 	EXPRS_SYM_TERM_FLOAT=EXPRS_TERM_FLOAT,		/* 64 bit floating point number */
 	EXPRS_SYM_TERM_INTEGER=EXPRS_TERM_INTEGER,	/* 64 bit integer number */
-	EXPRS_SYM_TERM_COMPLEX						/* type defined by symbol manager */
+	EXPRS_SYM_TERM_COMPLEX=EXPRS_TERM_SYMBOL_COMPLEX /* type defined by symbol manager */
 } ExprsSymTermTypes_t;
 
 /** ExprsSymTerm_t - definition of the primitive contents of any
  *  individual term as stored in an external symbol table. The
- *  valid types are a small subset of what the expression parser
- *  would use internally.
+ *  valid types are a subset of what the expression parser would
+ *  use internally.
  **/
 typedef struct
 {
 	ExprsSymTermTypes_t termType;	/* type of item this is */
+	const void *symbolExtra;		/* use for anything */
+	int flags;
 	union
 	{
 		char *string;
 		double f64;
 		long s64;
-		void *complex;
-	} term;
+		void *complex;				/* defined by user */
+	} value;
 } ExprsSymTerm_t;
 
 /** ExprsMsgSeverity_t - define the severity of messages that
@@ -254,21 +271,26 @@ typedef unsigned char ExprsPrecedence_t;
 
 /** Exprs flags:
  */
-#define EXPRS_FLG_USE_RADIX		0x00000001	/*! Use radix to figure out numbers */
-#define EXPRS_FLG_NO_FLOAT		0x00000002	/*! No floating point allowed */
-#define EXPRS_FLG_NO_STRING		0x00000004	/*! No strings allowed */
-#define EXPRS_FLG_NO_PRECEDENCE	0x00000008	/*! No operator precedence */
-#define EXPRS_FLG_H_HEX			0x00000010	/*! Hex can be expressed with trailing 'h' or 'H' */
-#define EXPRS_FLG_DOLLAR_HEX	0x00000020	/*! Hex can be expressed with trailing '$' */
-#define EXPRS_FLG_O_OCTAL		0x00000040	/*! Octal can be expressed with trailing 'o' or 'O' */
-#define EXPRS_FLG_Q_OCTAL		0x00000080	/*! Octal can be expressed with trailing 'q' or 'Q' */
-#define EXPRS_FLG_DOT_DECIMAL	0x00000100	/*! Decimal can be expressed with trailing '.' */
-#define EXPRS_FLG_NO_POWER		0x00000200	/*! No exponent allowed */
-#define EXPRS_FLG_SINGLE_QUOTE	0x00000400	/*! Allow single quoted chars (i.e. 'a vs. 'a' */
-#define EXPRS_FLG_NO_LOGICALS	0x00000800	/*! No logical operators allowed (i.e. mac65 et al) */
-#define EXPRS_FLG_SPECIAL_UNARY	0x00001000	/*! Enable special unary operators (i.e. mac65 et al) */
-#define EXPRS_FLG_NO_ASSIGNMENT	0x00002000	/*! No assignment */
-#define EXPRS_FLG_WS_DELIMIT	0x00004000	/*! White space delimits non-operator terms */
+#define EXPRS_FLG_USE_RADIX			0x00000001	/*! Use radix to figure out numbers */
+#define EXPRS_FLG_NO_FLOAT			0x00000002	/*! No floating point allowed */
+#define EXPRS_FLG_NO_STRING			0x00000004	/*! No quoted strings allowed */
+#define EXPRS_FLG_NO_PRECEDENCE		0x00000008	/*! No operator precedence */
+#define EXPRS_FLG_H_HEX				0x00000010	/*! Hex can be expressed with trailing 'h' or 'H' */
+#define EXPRS_FLG_PRE_DOLLAR_HEX	0x00000020	/*! Hex can be expressed with leading '$' */
+#define EXPRS_FLG_POST_DOLLAR_HEX	0x00000040	/*! Hex can be expressed with trailing '$' */
+#define EXPRS_FLG_O_OCTAL			0x00000080	/*! Octal can be expressed with trailing 'o' or 'O' */
+#define EXPRS_FLG_Q_OCTAL			0x00000100	/*! Octal can be expressed with trailing 'q' or 'Q' */
+#define EXPRS_FLG_DOT_DECIMAL		0x00000200	/*! Decimal can be expressed with trailing '.' */
+#define EXPRS_FLG_NO_POWER			0x00000400	/*! No exponent allowed */
+#define EXPRS_FLG_SINGLE_QUOTE		0x00000800	/*! Allow single quoted chars (i.e. 'a vs. 'a' */
+#define EXPRS_FLG_NO_LOGICALS		0x00001000	/*! No logical operators allowed (i.e. mac65 et al) */
+#define EXPRS_FLG_SPECIAL_UNARY		0x00002000	/*! Enable special unary operators (i.e. mac65 et al) */
+#define EXPRS_FLG_NO_ASSIGNMENT		0x00004000	/*! No symbol assignments */
+#define EXPRS_FLG_WS_DELIMIT		0x00008000	/*! White space delimits non-operator terms */
+#define EXPRS_FLG_SANITY			0x00010000	/*! Don't allow more than one bump in pool increments */
+#define EXPRS_FLG_LOCAL_SYMBOLS		0x00020000	/*! Local symbols are expressed via decimalNumber$ (cannot be combined with POST_DOLLAR_HEX) */
+#define EXPRS_FLG_DOT_SYMBOL		0x00040000	/*! Symbols can begin with leading period (.) (forces flag 0x2 = NO_FLOAT) */
+#define EXPRS_FLG_PCNT_IS_REGISTER	0x00080000	/*! A unary '%' means term is a register */
 
 /** ExprsDef_t - definition of expression stack internal
  *  variables. With the exception of userArg1 and userArg2
@@ -497,6 +519,8 @@ extern ExprsErrs_t libExprsEval(ExprsDef_t *exprs, const char *text, ExprsTerm_t
  *
  **/
 extern ExprsErrs_t libExprsParseToRPN(ExprsDef_t *exprs, const char *text, int alreadyLocked);
+
+extern ExprsErrs_t libExprsWalkParsedStack(ExprsDef_t *exprs, ExprsErrs_t (*walkCallback)(ExprsDef_t *exprs, const ExprsTerm_t *term), int alreadyLocked);
 
 /** libExprsXXXPoolTop - get the pointers to the tops of the
  *  various pools.
