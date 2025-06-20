@@ -412,7 +412,9 @@
   <h4>Location counter symbol</h4>
   <p>
   There's a special pre-defined symbol, period (.), that refers to
-  the current location counter. The value of this symbol is always defined
+  the current location counter. The special symbol '$' can be made
+    a duplicate of a '.' with '.ENABL DOLLAR_PC'.
+    The value of this symbol is always defined
   and may be relocatable or absolute depending on the attribute of the
   current section. The period may not be used as a label. It may only be
   used in expressions and as the target of a direct assignment statement. 
@@ -782,7 +784,7 @@
       .ASCIN string ;The last byte of the string has bit 7 set
       .ASCIZ string ;An extra byte of 0 is inserted at the end
                     ;    of the string
-      DC 'text' [, expression [, "more text"]]  ;comment
+      DC 'text' [, expression [, "more text"]]  ;bit 7 set on last byte (mac8080 only)
     </pre>
   <p>
   Some examples:
@@ -825,6 +827,7 @@
       DS.B	expression	;(identical to .BLKB)
       DS.W	expression	;(identical to .BLKW)
       DS.L	expression	;(identical to .BLKL)
+      DS expression     ;(identical to .BLKB but mac8080 only)
   </pre>
     <p>
   These directives allocate space in the current program section. They move the
@@ -1039,6 +1042,7 @@ the stack pointer on a named stack. Examples:
     <tr><th>Keyword</th><th>Function</th></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;ABS</td><td>Obsolete. Has no effect.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>See <a href="#AMA_ED_opt">HERE</a>.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;ALTEXP</td><td>Use the alternate expression evaluator.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;BYTE</td><td>Undefined opcodes are assumed to be arguments to a .BYTE directive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;CPU_CHECK</td><td>Enables checks for behavior on different PDP11 CPU's. Specific to MAC11 only.</td></tr>
@@ -1053,9 +1057,11 @@ the stack pointer on a named stack. Examples:
     <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;M8085</td><td>Enable the 12 extra instructions in the 8085 CPU (mac8080 only).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>See <a href="#MOS_ED_opt">HERE</a>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;O_OCTAL</td><td>Allows octal numbers to be expressed via trailing 'O' or 'o' (makes it compatible with Intel assembler).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;Q_OCTAL</td><td>Same as O_OCTAL above.</td></tr>
+    <tr><td>&nbsp;&nbsp;&nbsp;PRECEDENCE</td><td>Enable expression operator precedence. Only works if ALTEXP is also enabled.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;SIMPLE</td><td>Enable this to neuter the complex expression handler in .ifdf/.ifndf directives (makes it compatible with RT11 macxx).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE_CHECK</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
@@ -1090,7 +1096,7 @@ the stack pointer on a named stack. Examples:
     </p>
     <p>
     The defaults for all assemblers is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed on all of them,
-    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and O_OCTAL, Q_OCTAL, H_HEX and DOLLAR_PC which are ENABLed on mac8080.
+    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and O_OCTAL, Q_OCTAL, H_HEX, ALTEXP, PRECEDENCE and DOLLAR_PC which are ENABLed on mac8080.
     </p>
   <p>
   Some examples:

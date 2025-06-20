@@ -140,7 +140,7 @@ extern int expr_message_tag;
 #define DEFG_STATIC 16
 #define DEFG_FIXED 32
 extern int f1_defg(int gbl_flg);
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K)
 #define WST_LABEL    (0) /* no white space before labels */
 #define WST_OPC      (1) /* one white space before opcode */
 #define WST_OPRAND   (2) /* two white spaces before operand(s) */
@@ -237,7 +237,7 @@ extern unsigned short cttbl[];
 extern char char_toupper[];
 extern char hexdig[];
 
-extern int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp, were_mac8080;
+extern int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_macas, were_mac11, were_macpp, were_mac8080;
 
 extern char **cmd_assems;
 extern char **cmd_includes;

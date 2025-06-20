@@ -104,7 +104,7 @@ DIRDEF(".ERROR",  op_error,	0)
 #ifndef MAC_PP
 DIRDEF(".ESCAPE", op_escape,	0)
 DIRDEF(".EVEN",	op_even,	0)
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K) 
 DIRDEF(".FILE", f1_eatit,	0) 
 #endif
 #if defined(MAC_TJ)
@@ -149,7 +149,7 @@ DIRDEF(".LIMIT",  op_limit,	DFLGEV)
 #endif  /* MAC_PP */
 DIRDEF(".LIST",	  op_list,	0)
 #ifndef MAC_PP
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K) 
 DIRDEF(".LOC", f1_eatit,	0) 
 #endif
 DIRDEF(".LOCAL",  op_local,	0)
@@ -197,7 +197,7 @@ DIRDEF(".REXIT", op_rexit,	0)
 #ifndef MAC_PP
 DIRDEF(".SAVE", op_save,	0)
 DIRDEF(".SBTTL", op_sbttl,	0)
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K) 
 DIRDEF(".SIZE", f1_eatit,	0) 
 #endif
 DIRDEF(".SQON",op_sqon,0)
@@ -215,7 +215,7 @@ DIRDEF(".TITLE", op_title,	0)
 #if defined(MAC_65)
 DIRDEF(".TRIPLET", op_triplet,	0)
 #endif
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K) 
 DIRDEF(".TYPE", f1_eatit,	0) 
 #endif
 #endif /* MAC_PP */
@@ -233,7 +233,7 @@ DIRDEF(".WORD",	op_4mau,	DFLGEV)
 #else
 DIRDEF(".WORD",  op_2mau,	DFLGEV)
 #endif
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K) 
 DIRDEF("xref",	op_globl,	0)
 DIRDEF("xref.s",op_globb,	0)
 #endif

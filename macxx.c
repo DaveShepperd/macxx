@@ -266,7 +266,7 @@ char **gc_argv;
 #endif
 #define DOPEN_ARGS  "wb"
 
-int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_mac682k, were_macas, were_mac11, were_macpp, were_mac8080;
+int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_macas, were_mac11, were_macpp, were_mac8080;
 /************************************************************************
  * MACXX main entry.
  */
@@ -338,8 +338,6 @@ int main(int argc, char *argv[])
 		{
 			if ( macxx_name[5] == 'k')
 				were_mac68k = 1;
-			else if (macxx_name[5] == '2' && macxx_name[6] == 'k')
-				were_mac682k = 1;
 			else
 				were_mac68 = 1;
 		}

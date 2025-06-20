@@ -31,7 +31,6 @@ ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o dummy_pass0
 ALLO8080 = exprs8080.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o le_itfc8080.o lib_exprs.o
 #ALLO8080 = exprs_prec.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o #le_itfc8080.o lib_exprs.o
 ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o dummy_pass0.o #pass068k.o 
-#ALLO682K = exprs682k.o char_table.o opc682k.o pass168k.o pst682k.o m682types.o debug.o help.o dummy_pass0.o
 ALLO11 = exprs11.o char_tbl65.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
 
 ALLOPP0 = macxx_pp.o pass1_pp.o lstctlpp.o opcode_pp.o
@@ -91,7 +90,7 @@ endif
 	$(ECHO) $(DELIM)    Compiling $< to $@ ...$(DELIM)
 	$(CC) $(CFLAGS) -E $< > $@
 
-all : macas$(EXE) mac65$(EXE) mac68$(EXE) mac68k$(EXE) mac69$(EXE) macpp$(EXE) mactj$(EXE) mac11$(EXE) mac8080$(EXE) #mac682k$(EXE)
+all : macas$(EXE) mac65$(EXE) mac68$(EXE) mac68k$(EXE) mac69$(EXE) macpp$(EXE) mactj$(EXE) mac11$(EXE) mac8080$(EXE)
 	$(ECHO) $(DELIM)    Done$(DELIM)
 
 define link_it
@@ -116,9 +115,6 @@ mac68$(EXE):  $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68)
 
 mac68k$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68K) 
 	$(link_it)
-
-#mac682k$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO682K) 
-#	$(link_it)
 
 mac69$(EXE):  $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO69)
 	$(link_it)
@@ -201,11 +197,6 @@ exprs68k.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC68K -o $@ $<
 
-exprs682k.o : exprs.c token.h token_defs.h m682k.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h exproper.h listctrl.h lstcnsts.h 
-	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC682K -o $@ $<
-
 exprs69.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
@@ -265,7 +256,7 @@ pass18080.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.
 
 clean :
 	$(ECHO) $(DELIM)    Cleaning ...$(DELIM)
-	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mac682k$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE) mk_operstuff$(EXE) operstuff.h *.o *.b *.d *.E 
+	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE) mk_operstuff$(EXE) operstuff.h *.o *.b *.d *.E 
 
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 
@@ -295,9 +286,6 @@ listctrl.o : listctrl.c token.h token_defs.h structs.h add_defs.h header.h memmg
 m11types.o : m11types.c token.h \
   token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h pdp11.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
-m682types.o : m682types.c token.h \
-  token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h m682k.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
 m68types.o : m68types.c token.h token_defs.h \
   structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   m68k.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
@@ -312,8 +300,6 @@ opc65.o : opc65.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn65.h opcommon.h 
 opc68.o : opc68.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn68.h opcommon.h 
-#opc682k.o : opc682k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-#  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m682k.h opcommon.h 
 opc68k.o : opc68k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m68k.h opcommon.h 
 opc69.o : opc69.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
@@ -338,7 +324,6 @@ pass2.o : pass2.c outx.h token.h token_defs.h structs.h add_defs.h header.h memm
 pst11.o : pst11.c pst_tokens.h pst_structs.h pdp11.h opcs11.h dirdefs.h 
 pst65.o : pst65.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
 pst68.o : pst68.c pst_tokens.h pst_structs.h psttkn68.h dirdefs.h 
-#pst682k.o : pst682k.c pst_tokens.h pst_structs.h dirdefs.h opcs682k.h 
 pst68k.o : pst68k.c pst_tokens.h pst_structs.h dirdefs.h opcs68k.h 
 pst69.o : pst69.c pst_tokens.h pst_structs.h psttkn69.h dirdefs.h
 #pst816.o : pst816.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 

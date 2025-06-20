@@ -26,9 +26,6 @@ Change Log
 #if defined(MAC68K)
     #include "m68k.h"
 #endif
-#if defined(MAC682K)
-    #include "m682k.h"
-#endif
 /*********************************************tg*/
 /* 04/04/2022 changed for MAC69 support by Tim Giddens
  * 03/26/2022 changed for MAC68 support by Tim Giddens
@@ -56,11 +53,8 @@ Change Log
 
 int exprs_nest;
 EXP_stk exprs_stack[EXPR_MAXSTACKS];
-#if defined(MAC682K)
-int squawk_experr = 1;
-#endif
 
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K)
 extern int dotwcontext;
 #endif
 
@@ -733,39 +727,6 @@ int compress_expr( EXP_stk *exptr )
                         break;
                     }
                 case EXPROPER_MUL: {
-#if defined(MAC682K)
-                        if (op2->expr_flags != 0)
-                        {
-                            if (exptr->register_scale != 0)
-                            {
-                                bad_token((char *)0,"Register term has multiple SCALE factors");
-                            }
-                            else
-                            {
-                                if ((op1->expr_flags&(EXPR_FLG_REG|EXPR_FLG_REGMASK)) != 0)
-                                {
-                                    bad_token((char *)0,"Multiplying two register terms produces useless results");
-                                }
-                                else
-                                {
-                                    long rv;
-                                    rv = op1->expr_value;
-                                    if (op1->expr_code != EXPR_VALUE ||
-                                        (rv != 1 && rv != 2 && rv != 4 && rv != 8))
-                                    {
-                                        bad_token((char *)0,"Index SCALE must be an absolute value of 1,2,4 or 8");
-                                    }
-                                    else
-                                    {
-                                        if (rv == 2) exptr->register_scale = 1;
-                                        else if (rv == 4) exptr->register_scale = 2;
-                                        else exptr->register_scale = 3;
-                                    }
-                                }
-                            }
-                            break;
-                        }
-#endif
                         op2->expr_value *= op1->expr_value;
                         break;
                     }
@@ -1216,7 +1177,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                         expr_ptr->expr_sym = sym_ptr;
                         expr_ptr->expr_value = 0;
 						eps->forward_reference = 1;     /* signal this expression contains a forward reference */
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K)
                         if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
                              && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )
                         {
@@ -1373,18 +1334,6 @@ static int do_exprs( int flag, EXP_stk *eps )
                     }
                     if (c == expr_open)
                     {
-#if defined(MAC682K)
-                        ++eps->paren_cnt; /* count the paren */
-                        if (!squawk_experr)
-                        {
-                            if (eps->paren_cnt == 1 && (*inp_ptr == '[' || *inp_ptr == ','))
-                            {
-                                eps->ptr = 0;   /* say there's no terms */
-                                flag = 0;   /* pickup no more terms */
-                                break;  /* and quit the switch */
-                            }
-                        }
-#endif
                         if (get_token() == EOL)
                         {
                             bad_token(tkn_ptr,"Unbalanced expression nesting");
@@ -1393,21 +1342,11 @@ static int do_exprs( int flag, EXP_stk *eps )
                         if (do_exprs(1,eps) < 0) return(eps->ptr = -1); /* recurse */
                         if (*inp_ptr != expr_close)
                         {
-#if defined(MAC682K)
-                            if (!squawk_experr)
-                            {
-                                if (eps->paren_cnt == 1 && *inp_ptr == ',')
-                                {
-                                    flag = 0;    /* pickup no more terms */
-                                    break;   /* and quit the switch */
-                                }
-                            }
-#endif
                             bad_token(tkn_ptr,"Unbalanced expression nesting");
                             return(eps->ptr = -1);
                         }
                         while (++inp_ptr,isspace(*inp_ptr)); /* skip over white space */
-#if defined(MAC682K) || defined(MAC68K)
+#if defined(MAC68K)
                         --eps->paren_cnt; /* found a matching close paren */
                         if (inp_ptr[0] == '.')
                         { /* look for a trailing .W, .B or .L */
@@ -1512,14 +1451,6 @@ static int do_exprs( int flag, EXP_stk *eps )
                 c = *inp_ptr;       /* pickup next char */
                 if ((cttbl[c] & (CT_UOP|CT_ALP|CT_NUM)) == 0)
                 {
-#if defined(MAC682K)
-                    if (token_value == '+' && !squawk_experr && eps->paren && !eps->autodec)
-                    {
-                        eps->autoinc = 1;
-                        flag = 0;     /* pickup no more terms */
-                        break;        /* and take a normal exit */
-                    }
-#endif
                     bad_token(tkn_ptr,"Expression syntax error");
                     return(eps->ptr);
                 }
@@ -1551,18 +1482,6 @@ static int do_exprs( int flag, EXP_stk *eps )
 #else
                 if (do_exprs(0,eps) < 0) return(eps->ptr = -1); /* recurse for 1 term */
 #endif
-#if defined(MAC682K)
-                if (!squawk_experr && oper_save == '-' && eps->ptr == 2 && eps->register_reference
-                    && eps->paren && eps->stack->expr_code == EXPR_VALUE &&
-                    eps->stack->expr_value == 0)
-                {
-                    eps->autodec = 1; /* this is a -(r) autodecrement syntax */
-                    --sexptr;    /* take the leading 0 off the top of the stack*/
-                    eps->ptr = 1;    /* now there's only 1 term instead of 2 */
-                    memcpy(eps->stack,eps->stack+1,sizeof(EXPR_struct)); /* replace the const 0 with reg term */
-                    break;       /* fall out of switch statement */
-                }
-#endif
                 expr_ptr = eps->stack + eps->ptr;
                 if (sp_save == eps->ptr)
                 {
@@ -1577,7 +1496,7 @@ static int do_exprs( int flag, EXP_stk *eps )
             }          /* -- TOKEN_oper */
         }             /* -- switch (token_type) */
         c = *inp_ptr;      /* pick up next char */
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K)
 /*        printf("Falling out of do_exprs(). token=\"%s\", inp_ptr=\"%s\", rest of line=%s",
             token_pool, inp_ptr, tkn_ptr );                                       */
         if ( dotwcontext && c == '.' )

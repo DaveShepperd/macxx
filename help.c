@@ -139,7 +139,7 @@ int display_help(void)
         }
         if (help_msg[i] == help_grnhill_mark)
         {
-            if (! (were_mac68k || were_mac682k) )
+            if (!were_mac68k )
             {
                 i += 3;     /* skip the delim, option name and text */
             }

@@ -170,7 +170,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 				expr_ptr->expr_sym = sym_ptr;
 				expr_ptr->expr_value = 0;
 				eps->forward_reference = 1;     /* signal this expression contains a forward reference */
-#if defined(MAC68K) || defined(MAC682K)
+#if defined(MAC68K)
 				if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
 					 && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )
 				{
