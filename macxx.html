@@ -542,7 +542,7 @@
   An expression is a collection of one or more terms separated by
   arithmetic operators. There are both unary operators (apply only to a
   single term) and binary operators (apply to two terms). Unlike most
-  other languages, all operators have equal precedence and are evaluated
+  other languages, and except for mac8080 (see below), all operators have equal precedence and are evaluated
   from left to right. The order of evaluation can be changed by the use of
   the parenthesis. (In MAC65, MAC68, MAC69 and MAC11, the parenthesis must be substituted with the
   expression brackets "<" and ">"). All terms in an expression and the
@@ -603,6 +603,39 @@
     <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^^</td><td>^^ A</td><td>returns high byte: bits 15-8 of A</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^~</td><td>^~ A</td><td>returns bits 15:8 swapped with bits 7:0 and bits 23-16 with bits 31-24 of A</td></tr>
   </table>  
+      <p>
+      MAC8080 is different in that the expression operators do have precedence however, the precedence can be made
+      the same as the others with a '.DSABL PRECEDENCE'. The operator precedences are listed below. Higher numbers
+      indicate higher precedence. Terms with equal precedence are processed left to right.
+      </p>
+   <table style="width: 30%">
+    <tr><th>Operator</th><th>Precedence</th><th>Description</th></tr>
+       <tr><td>Symbol</td><td>20</td><td>Symbol name</td></tr>
+       <tr><td>Integer</td><td>20</td><td>Number</td></tr>
+       <tr><td>-</td><td>18</td><td>Negative term (as opposed to a subtract)</td></tr>
+       <tr><td>+</td><td>18</td><td>Positive term (as opposed to an add)</td></tr>
+       <tr><td>~</td><td>18</td><td>1's compliment</td></tr>
+       <tr><td>!</td><td>18</td><td>Not (relational)</td></tr>
+       <tr><td>^?</td><td>16</td><td>All unaries defined by leading circumflex</td></tr>
+       <tr><td>*</td><td>14</td><td>Multiply</td></tr>
+       <tr><td>/</td><td>14</td><td>Divide</td></tr>
+       <tr><td>%</td><td>14</td><td>Modulo</td></tr>
+       <tr><td>+</td><td>12</td><td>Add</td></tr>
+       <tr><td>-</td><td>12</td><td>Subtract</td></tr>
+       <tr><td>&gt;&gt;</td><td>10</td><td>Shift left</td></tr>
+       <tr><td>&lt;&lt;</td><td>10</td><td>Shift right</td></tr>
+       <tr><td>&gt;</td><td>8</td><td>Greater than</td></tr>
+       <tr><td>&gt;=</td><td>8</td><td>Greater or equal</td></tr>
+       <tr><td>&lt;</td><td>8</td><td>Less than</td></tr>
+       <tr><td>&lt;=</td><td>8</td><td>Less or equal</td></tr>
+       <tr><td>=</td><td>8</td><td>Equal</td></tr>
+       <tr><td>!=</td><td>8</td><td>Not equal</td></tr>
+       <tr><td>&amp;</td><td>6</td><td>And</td></tr>
+       <tr><td>^</td><td>5</td><td>Xor</td></tr>
+       <tr><td>|</td><td>4</td><td>Or</td></tr>
+       <tr><td>&amp;&amp;</td><td>3</td><td>Logical and</td></tr>
+       <tr><td>||</td><td>2</td><td>Logical or</td></tr>
+   </table>
     <p>
   Any term of an expression may be enclosed in a pair of expression
   brackets ('&lt;' and '&gt;' in MAC65, MAC68, MAC69 and MAC11 or '(' and ')' in the other assemblers)
