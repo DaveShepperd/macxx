@@ -236,7 +236,13 @@ void do_opcode(Opcode *opc)
 	/* dst address modes are indicated in the upper 16 bits of op_amode */
 	/* src address modes are indicated in the lower 16 bits of op_amode */
 	/* The opcode syntax is op dst, src */
-	dstAmode = opc->op_amode >> 16; 
+	if ( (opc->op_amode&(1<<(2*OPC_AM_BIT_SHIFT))) && !(edmask&ED_8085) )
+	{
+		bad_token(tkn_ptr,"Opcode reserved for 8085. Use '.ENABL M8085' to enable its use.");
+		f1_eatit();
+		return;
+	}
+	dstAmode = (opc->op_amode >> OPC_AM_BIT_SHIFT)&((1<<OPC_AM_BIT_SHIFT)-1);
 	if ( dstAmode )
 	{
 		/* The PST is setup so the dst is only ever a register or register pair */
@@ -251,7 +257,7 @@ void do_opcode(Opcode *opc)
 		if ( *inp_ptr == ',' )
 			++inp_ptr;	/* eat comma if there is one */
 	}
-	srcAmode = opc->op_amode&0xFFFF;
+	srcAmode = opc->op_amode&((1<<OPC_AM_BIT_SHIFT)-1);
 	if ( srcAmode )
 	{
 		/* Get the src operand */

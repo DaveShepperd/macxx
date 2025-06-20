@@ -361,7 +361,7 @@ int compress_expr( EXP_stk *exptr )
 	if ( squeak )
 	{
 		printf("compress_expr(%p): Pass %d: Before:\n",(void *)exptr,pass);
-		dump_expr(exptr);
+		dump_expr(exptr, 0);
 	}
 #endif
 	for ( termCount = 0; termCount < oldTerms; ++src, ++termCount )
@@ -989,7 +989,7 @@ int compress_expr( EXP_stk *exptr )
 	if ( squeak )
 	{
 		printf("compress_expr(%p): pass %d: After (%d elements):\n",(void *)exptr, pass, newTerms);
-		dump_expr(exptr);
+		dump_expr(exptr, 0);
 	}
 #endif
     return newTerms;
@@ -1692,7 +1692,7 @@ int exprs( int relative, EXP_stk *eps )
     return(-1);
 }
 
-void dump_expr(EXP_stk *eps)
+void dump_expr(EXP_stk *eps, int noTag)
 {
     int i,j;
     EXPR_struct *eptr;
@@ -1736,7 +1736,7 @@ void dump_expr(EXP_stk *eps)
         }
         continue;
     }
-    if (eps->tag != 0)
+    if ( !noTag && eps->tag != 0)
 		printf(":%c %d",eps->tag,eps->tag_len);
 	printf("\n");
     return;
@@ -1766,7 +1766,7 @@ void dumpSymbolTable(int flag)
 			if ( st->flg_defined )
 			{
 				if ( st->flg_exprs && (eps=st->ss_exprs) )
-					dump_expr(eps);
+					dump_expr(eps, 0);
 			}
 			else if ( st->flg_abs )
 				printf("\tValue (abs): 0x%08lX\n", st->ss_value);

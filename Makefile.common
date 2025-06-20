@@ -222,7 +222,7 @@ exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h
 	$C -DMAC_PP -o $@ $<
 
 le_itfc8080.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h 
+   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_8080 -o $@ $<
 
@@ -231,18 +231,18 @@ le_itfc8080.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h 
 #	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 #	$C -o $@ $<
 
-#mk_operstuff.o : mk_operstuff.c Makefile.common
-#	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-#	$C -o $@ $<
+mk_operstuff.o : mk_operstuff.c Makefile.common
+	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
+	$C -o $@ $<
 
-#mk_operstuff$(EXE) : mk_operstuff.o Makefile.common
-#	$(link_it)
+mk_operstuff$(EXE) : mk_operstuff.o Makefile.common
+	$(link_it)
 
-#operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
-#	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
-#	./mk_operstuff > $@
+operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
+	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
+	./mk_operstuff > $@
 
-lib_exprs.o : lib_exprs.c lib_exprs.h
+lib_exprs.o : lib_exprs.c lib_exprs.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $< ...$(DELIM)
 	$C -D_FMT_LD_='"%d"' -DNO_FLOATING_POINT -o $@ $<
 

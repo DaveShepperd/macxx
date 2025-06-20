@@ -55,7 +55,7 @@ extern void init_exprs( void );
 extern int compress_expr_psuedo( EXP_stk *ep );
 extern int compress_expr( EXP_stk *exptr );
 extern int exprs( int relative, EXP_stk *eps );
-extern void dump_expr(EXP_stk *eps);
+extern void dump_expr(EXP_stk *eps, int noTag);
 extern void dumpSymbolTable(int flag);
 
 #endif  /* _EXPROPER_H_ */

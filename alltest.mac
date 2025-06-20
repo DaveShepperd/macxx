@@ -1,0 +1,21 @@
+; Tests for various functions of macxx
+
+	.asect
+	.nlist octal
+	.=0
+
+	.globl foo,bar
+	
+	.word foo
+	.word foo bar
+	.word foo,bar
+	.word 1
+	.word 1+2
+	.word 1-2
+	.word -1-2
+	.word -+1+2
+	.word --1+2
+	.word 1+-2
+	.word 1+2*3
+	.word 2*3+4
+	.word 2*3+4*5

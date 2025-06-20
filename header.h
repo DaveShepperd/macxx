@@ -112,6 +112,7 @@ extern int   max_token;		/* maximum length of any single token found in file */
 extern char *token_pool_base;	/* base addr of current token pool */
 extern char *token_pool;
 extern char *tkn_ptr;
+extern char *actualTknPtr;		/* actual token pointer (needed by mac8080) */
 extern char *inp_ptr;
 extern long token_value;
 extern char next_token;     /* next token character */

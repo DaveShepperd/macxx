@@ -22,9 +22,7 @@
 #include "listctrl.h"
 #include "memmgt.h"
 #include <stdlib.h>
-#if defined(MAC_8080)
 #include "le_itfc.h"
-#endif
 
 #if defined(MAC_65) || defined(MAC_68) || defined(MAC_69) 
     #define EXPR_C 0
@@ -54,7 +52,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 		expr_ptr->expr_code = EXPR_VALUE;
 		expr_ptr->expr_value  = term->term.s64;
 		break;          /* exit from switch */
-	case EXPRS_TERM_SYMBOL_COMPLEX:
+/*	case EXPRS_TERM_SYMBOL_COMPLEX: */
 	case EXPRS_TERM_SYMBOL:
 		{
 			int sLen;
@@ -212,7 +210,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 		expr_ptr->expr_value = EXPROPER_AND;
 		eps->ptr += 1;
 		break;
-	case EXPRS_TERM_XCHG:	/* exchange bytes */
+	case EXPRS_TERM_SWAP:	/* exchange bytes */
 		expr_ptr->expr_code = EXPR_OPER;
 		expr_ptr->expr_value = EXPROPER_SWAP;
 		break;
@@ -236,11 +234,11 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 		expr_ptr->expr_code = EXPR_OPER;
 		expr_ptr->expr_value = EXPROPER_SUB;
 		break;
-	case EXPRS_TERM_ASL:		/* << */
+	case EXPRS_TERM_SHL:		/* << */
 		expr_ptr->expr_code = EXPR_OPER;
 		expr_ptr->expr_value = EXPROPER_SHL;
 		break;
-	case EXPRS_TERM_ASR:		/* >> */
+	case EXPRS_TERM_SHR:		/* >> */
 		expr_ptr->expr_code = EXPR_OPER;
 		expr_ptr->expr_value = EXPROPER_SHR;
 		break;
@@ -296,6 +294,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 		expr_ptr->expr_code = EXPR_OPER;
 		expr_ptr->expr_value = (EXPROPER_TST_NOT<<8)|EXPROPER_TST;
 		break;
+#if 0
 	case EXPRS_TERM_POW:		/* ** */
 		show_bad_token(NULL,"libExprs(): unsupported POWER term type", MSG_ERROR);
 		err = EXPR_TERM_BAD_UNSUPPORTED;
@@ -316,6 +315,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 		show_bad_token(NULL,"libExprs(): unsupported STRING term type", MSG_ERROR);
 		err = EXPR_TERM_BAD_UNSUPPORTED;
 		break;
+#endif
 	default:
 		snprintf(eBuf, sizeof(eBuf), "libExprs(): Undefined termtype %d", term->termType);
 		show_bad_token(NULL,eBuf,MSG_ERROR);
@@ -329,15 +329,14 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 
 int le_itfc(int flag, EXP_stk *eps)
 {
-    int ii, cnt;
+    int cnt;
 	ExprsErrs_t eErrs;
 	char eBuf[128];
-	ExprsStack_t *sp;
 	unsigned long flags;
 	
 	if ( !exprsDef )
 	{
-		exprsDef = libExprsInit(NULL,0,0,0);
+		exprsDef = libExprsInit(NULL,0,0);
 		if ( !exprsDef )
 			return (eps->ptr = -1);
 	}
@@ -362,7 +361,7 @@ int le_itfc(int flag, EXP_stk *eps)
 	if ( (edmask & ED_Q_OCT) )
 		flags |= EXPRS_FLG_Q_OCTAL;
 	libExprsSetFlags(exprsDef, flags, NULL);
-/*	libExprsSetVerbose(exprsDef,1,NULL); */
+/*	libExprsSetVerbose(exprsDef,1,NULL);  */
 	eErrs = libExprsSetRadix(exprsDef,current_radix,NULL);
 	if ( eErrs )
 	{
@@ -371,20 +370,14 @@ int le_itfc(int flag, EXP_stk *eps)
 		return (eps->ptr = -1);
 	}
 /*	printf("calling libExprsParseToRPN(). token_pool='%s', token_value=%ld, token_type=%d. tkn_ptr=%s\n", token_pool, token_value, token_type, tkn_ptr); */
-	if ( token_type == TOKEN_numb && (edmask&ED_DOL) && tkn_ptr[-1] == '$' )
-		--tkn_ptr;	/* keep the leading dollar sign */
-	eErrs = libExprsParseToRPN(exprsDef, tkn_ptr, 0);
+	eErrs = libExprsParseToRPN(exprsDef, actualTknPtr, 0);
 	if ( eErrs > EXPR_TERM_END )
 	{
 		snprintf(eBuf,sizeof(eBuf),"libExprsParseToRPN failed: %d = %s", eErrs, libExprsGetErrorStr(eErrs));
 		show_bad_token(inp_ptr, eBuf, MSG_FATAL);
 		return (eps->ptr = -1);
 	}
-	sp = libExprsStackPoolTop(exprsDef);
-	for (cnt=0, ii=0; ii < exprsDef->mStackPool.mNumUsed; ++ii, ++sp)
-	{
-		cnt += sp->mTermsPool.mNumUsed;
-	}
+	cnt = exprsDef->mStack.mTermsPool.mNumUsed;
 	if ( cnt >= EXPR_MAXDEPTH)
 	{
 		bad_token(tkn_ptr,"Too many terms in expression");

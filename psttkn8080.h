@@ -43,4 +43,6 @@ typedef enum {
 	MAX_NUM
 } AModes;
 
+#define OPC_AM_BIT_SHIFT (MAX_NUM)
+
 #endif /* _PSTTKN8080_H_ */

@@ -1,34 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-
-static const char License1[] =
-"/*\n"
-"    operstuff.h - Part of macxx, a cross assembler family for various micro-processors\n"
-"    Copyright (C) 2025 David Shepperd\n"
-"\n"
-"    This program is free software: you can redistribute it and/or modify\n"
-"    it under the terms of the GNU General Public License as published by\n"
-"    the Free Software Foundation, either version 3 of the License, or\n"
-"    (at your option) any later version.\n"
-"\n";
-static const char License2[] =
-"    This program is distributed in the hope that it will be useful,\n"
-"    but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"    GNU General Public License for more details.\n"
-"\n"
-"    You should have received a copy of the GNU General Public License\n"
-"    along with this program.  If not, see <http://www.gnu.org/licenses/>.\n"
-"*/\n\n\n";
-static const char Note[] =
-"/**************************************************************************\n"
-" * @note This file is produced by a separate program called mk_operstuff. *\n"
-" * Any manual edits made to this file will likely be lost during the next *\n"
-" * build. Edit mk_operstuff.c and/or operstuff.dat to make any necessary  *\n"
-" * changes to these lists.                                                *\n"
-" **************************************************************************/\n"
-"\n\n\n"
-;
+#include <ctype.h>
 
 typedef struct
 {
@@ -40,14 +12,21 @@ typedef struct
 	char fixedComment[128];
 } Line_t;
 
-#define MAX_LINES (32)
+typedef struct
+{
+	char errName[64];
+	char errDesc[128];
+} Errors_t;
+
+#define MAX_LINES (64)
 
 int main(int argc, char *argv[])
 {
-	char *str, *end, buf[sizeof(Line_t)+5];
-	int ii, lineNo;
+	char *str, *end, buf[sizeof(Line_t)+5], oBuf[sizeof(Line_t)+5];
+	int ii, datLineNo, numLines, numErrs;
 	FILE *inF;
 	Line_t lines[MAX_LINES], *lp;
+	Errors_t errors[MAX_LINES], *ep;
 	
 	inF = fopen("operstuff.dat","r");
 	if ( !inF )
@@ -55,114 +34,179 @@ int main(int argc, char *argv[])
 		perror("Failed to open operstuff.dat\n");
 		return 1;
 	}
-	lineNo = 0;
+	numLines = 0;
+	numErrs = 0;
+	datLineNo = 0;
 	lp = lines;
+	ep = errors;
 	memset(lp,0,sizeof(lines));
-	while ( lineNo < MAX_LINES && fgets(buf, sizeof(buf), inF) )
+	while ( numLines < MAX_LINES && numErrs < MAX_LINES && fgets(buf, sizeof(buf), inF) )
 	{
-		++lineNo;
+		++datLineNo;
 		end = strchr(buf,'\n');
 		if ( !end )
 		{
-			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No newline found: %s\n", lineNo, buf);
-			fclose(inF);
-			return 1;
+			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No newline found: %s\n", datLineNo, buf);
+			end = buf;
 		}
 		*end = 0;
-		if ( end == buf )
-			break;
-		str = buf;
-		end = strchr(buf, '\t');
-		if ( !end || end[-1] != ',')
+		memcpy(oBuf,buf,sizeof(oBuf));
+		if ( buf[0] == ';' )
+			continue;
+		if ( buf[0] != 'E' && buf[0] != 'B' )
 		{
-			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No first tab or comma found: %s\n", lineNo, buf);
+			printf("%s\n",buf);
+			continue;
+		}
+		end = strchr(buf, ',');
+		if ( !end )
+		{
+			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No first comma found: %s\n", datLineNo, oBuf);
 			fclose(inF);
 			return 1;
 		}
-		end[-1] = 0;
-		memcpy(lp->enumItem, str, sizeof(lp->enumItem)-1);
+		*end = 0;	/* step on comma */
+		if ( !strcmp(buf,"B") )
+		{
+			str = end+1;
+			/* eat any leading whitespace */
+			while ( isspace(*str) )
+				++str;
+			/* look for comma 2 */
+			end = strchr(str, ',');
+			if ( !end )
+			{
+				fprintf(stderr,"operstuff.dat:%d: Malformed entry. No second comma found: %s\n", datLineNo, oBuf);
+				fclose(inF);
+				return 1;
+			}
+			*end = 0;	/* step on comma */
+			strncpy(ep->errName,str,sizeof(ep->errName));
+			str = end+1;
+			/* eat any leading whitespace */
+			while ( isspace(*str) )
+				++str;
+			strncpy(ep->errDesc,str,sizeof(ep->errDesc));
+			++ep;
+			++numErrs;
+			continue;
+		}
+		memcpy(lp->enumItem, buf, sizeof(lp->enumItem) - 1);
+		/* start looking at char after comma */
 		str = end+1;
-		end = strchr(str,'\t');
-		if ( !end || end[-1] != ',')
+		/* eat any leading whitespace */
+		while ( isspace(*str) )
+			++str;
+		/* look for comma 2 */
+		end = strchr(str, ',');
+		if ( !end )
 		{
-			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No second tab or comma found: %s\n", lineNo, buf);
+			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No second comma found: %s\n", datLineNo, oBuf);
 			fclose(inF);
 			return 1;
 		}
-		end[-1] = 0;
+		*end = 0;	/* step on comma */
 		strncpy(lp->operItem, str, sizeof(lp->operItem) - 1);
+		/* start looking at char after comma */
 		str = end+1;
-		end = strchr(str,'\t');
-		if ( !end || end[-1] != ',')
+		/* eat any leading whitespace */
+		while ( isspace(*str) )
+			++str;
+		/* look for comma 3 */
+		end = strchr(str, ',');
+		if ( !end )
 		{
-			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No third tab or comma found: %s\n", lineNo, buf);
+			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No third comma found: %s\n", datLineNo, oBuf);
 			fclose(inF);
 			return 1;
 		}
-		end[-1] = 0;
+		/* step on comma */
+		*end = 0;
 		strncpy(lp->precNorm, str, sizeof(lp->precNorm) - 1);
+		/* start looking at char after comma */
 		str = end+1;
-		end = strchr(str,'\t');
-		if ( !end || end[-1] != ',')
+		/* eat any leading whitespace */
+		while ( isspace(*str) )
+			++str;
+		/* look for comma 4 */
+		end = strchr(str,',');
+		if ( !end )
 		{
-			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No fourth tab or comma found: %s\n", lineNo, buf);
+			fprintf(stderr,"operstuff.dat:%d: Malformed entry. No fourth comma found: %s\n", datLineNo, oBuf);
 			fclose(inF);
 			return 1;
 		}
-		end[-1] = 0;
+		/* step on comma */
+		*end = 0;
 		strncpy(lp->precNone, str, sizeof(lp->precNone)-1);
+		/* start looking at char after comma */
 		str = end+1;
+		/* eat any leading whitespace */
+		while ( isspace(*str) )
+			++str;
 		strncpy(lp->comment, str, sizeof(lp->comment)-1);
 		snprintf(lp->fixedComment, sizeof(lp->fixedComment) - 1, "/* %s: %s", lp->enumItem, lp->comment+3);
 		++lp;
+		++numLines;
 	}
 	fclose(inF);
 	inF = NULL;
-	lineNo = lp-lines;
-	fputs(License1, stdout);
-	fputs(License2, stdout);
-	fputs(Note, stdout);
 	fputs("#if OPERSTUFF_GET_ENUM\n"
-		  "typedef enum {\n",stdout);
+		  "typedef enum\n{\n",stdout);
 	lp = lines;
-	for (ii=0; ii < lineNo; ++ii, ++lp)
+	for (ii=0; ii < numLines; ++ii, ++lp)
 	{
-		fprintf(stdout,"   %s%s\t%s\n", lp->enumItem, ii < lineNo-1 ? ",":"", lp->comment );
+		fprintf(stdout,"   %s%s\t%s\n", lp->enumItem, ii < numLines-1 ? ",":"", lp->comment );
 	}
-	fputs("} OperType_t;\n"
-		  "#undef OPERSTUFF_GET_ENUM\n"
-		  "#endif\n\n",
-		  stdout);
+	fputs("} ExprsTermTypes_t;\n\n"
+		  "typedef enum\n{\n"
+		  ,stdout);
+	ep = errors;
+	for (ii=0; ii < numErrs; ++ii, ++ep)
+	{
+		fprintf(stdout, "   %s%s\t/* %s */\n", ep->errName, ii < numErrs - 1 ? "," : "", ep->errDesc);
+	}
+	fputs("} ExprsErrs_t;\n", stdout);
+	fputs("#undef OPERSTUFF_GET_ENUM\n"
+		  "#endif\n\n"
+		  ,stdout);
 
 	fputs("#if OPERSTUFF_GET_OTHERS\n"
 		  "static const unsigned short OperXlate[] =\n"
 		  "{\n"
 		  ,stdout);
 	lp = lines;
-	for (ii=0; ii < lineNo; ++ii, ++lp)
+	for (ii=0; ii < numLines; ++ii, ++lp)
 	{
-		fprintf(stdout,"   %s%s\t%s\n", lp->operItem, ii < lineNo-1 ? ",":"", lp->fixedComment );
+		fprintf(stdout,"   %s%s\t%s\n", lp->operItem, ii < numLines-1 ? ",":"", lp->fixedComment );
 	}
 	fputs("};\n\n", stdout);
 	fputs("static const ExprsPrecedence_t PrecedenceNormal[] =\n"
 		  "{\n"
 		  ,stdout);
 	lp = lines;
-	for (ii=0; ii < lineNo; ++ii, ++lp)
+	for (ii=0; ii < numLines; ++ii, ++lp)
 	{
-		fprintf(stdout, "   %s%s\t%s\n", lp->precNorm, ii < lineNo - 1 ? "," : "", lp->fixedComment);
+		fprintf(stdout, "   %s%s\t%s\n", lp->precNorm, ii < numLines - 1 ? "," : "", lp->fixedComment);
 	}
 	fputs("};\n\n"
 		  "static const ExprsPrecedence_t PrecedenceNone[] =\n"
 		  "{\n"
 		  ,stdout);
 	lp = lines;
-	for (ii=0; ii < lineNo; ++ii, ++lp)
+	for (ii=0; ii < numLines; ++ii, ++lp)
 	{
-		fprintf(stdout, "   %s%s\t%s\n", lp->precNone, ii < lineNo - 1 ? "," : "", lp->fixedComment);
+		fprintf(stdout, "   %s%s\t%s\n", lp->precNone, ii < numLines - 1 ? "," : "", lp->fixedComment);
 	}
-	fputs("};\n\n"
-		  "#undef OPERSTUFF_GET_OTHERS\n"
+	fputs("};\n\n", stdout);
+	fputs("static const char *ErrorDescriptions[] =\n{\n",stdout);
+	ep = errors;
+	for (ii=0; ii < numErrs; ++ii, ++ep)
+	{
+		fprintf(stdout, "   %s%s\t/* %s */\n", ep->errDesc, ii < numErrs - 1 ? "," : "", ep->errName);
+	}
+	fputs("};\n", stdout);
+	fputs("#undef OPERSTUFF_GET_OTHERS\n"
 		  "#endif\n"
 		  ,stdout);
 	return 0;	

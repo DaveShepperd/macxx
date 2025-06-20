@@ -55,6 +55,7 @@ int token_type;         /* decoded token type */
 unsigned char token_minus;  /* minus sign prefixed */
 char cur_char;          /* first character of token */
 char *tkn_ptr;          /* pointer to first character of token */
+char *actualTknPtr;		/* actual token pointer (needed by mac8080) */
 long token_value;       /* value of token */
 int next_type;          /* next token character type */
 char *token_pool;       /* pointer to free token memory */
@@ -1134,6 +1135,7 @@ int get_token( void )
             ++inp_ptr; /* skip over white space */
         c = *inp_ptr;
         tkn_ptr = inp_ptr++;  /* point to beginning of token */
+		actualTknPtr = tkn_ptr;	/* keep the real start (needed by mac8080) */
         cur_char = c;     /* say what the token is */
         ct = cttbl[(int)c];       /* decode the character */
 #if defined(MAC68K) || defined(MAC682K)

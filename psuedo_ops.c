@@ -1522,6 +1522,7 @@ static struct
 	{ "LOWER_CASE", ED_LC },
 	{ "LSB", ED_LSB },
 	{ "M68", ED_M68 },
+	{ "M8085", ED_8085 },
 	{ "MOS", ED_MOS },
 	{ "O_OCTAL", ED_O_OCT },
 	{ "Q_OCTAL", ED_Q_OCT },

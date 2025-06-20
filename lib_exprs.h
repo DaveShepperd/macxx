@@ -57,6 +57,9 @@
  * 5.
  */
 
+#define OPERSTUFF_GET_ENUM 1
+#include "operstuff.h"
+
 #ifndef _FMT_LD_
 #define _FMT_LD_ "%ld"
 #endif
@@ -64,9 +67,7 @@
 typedef enum
 {
 	ExprsPoolNull,
-	ExprsPoolStacks,
 	ExprsPoolTerms,
-	ExprsPoolOpers,
 	ExprsPoolString
 } ExprsPoolID_t;
 
@@ -80,6 +81,7 @@ typedef struct
 	ExprsPoolID_t mPoolID;
 } ExprsPool_t;
 
+#if 0	/* This has been moved to operstuff.h */
 /** ExprsTermTypes_t - Ident of the various types of terms
  *  that may be parsed.
  **/
@@ -91,7 +93,6 @@ typedef enum
 	 * precedence.
 	 **/
 	EXPRS_TERM_NULL,
-	EXPRS_TERM_LINK,	/* link to another stack */
 	EXPRS_TERM_SYMBOL,	/* Symbol */
 	EXPRS_TERM_SYMBOL_COMPLEX, /* Complex symbol */
 	EXPRS_TERM_FUNCTION,/* Function call (not supported yet) */
@@ -126,6 +127,7 @@ typedef enum
 	EXPRS_TERM_LOR,		/* || */
 	EXPRS_TERM_ASSIGN	/* = */
 } ExprsTermTypes_t;
+#endif
 
 #define EXPRS_TERM_FLAG_LOCAL_SYMBOL	(0x01)	/* term is a local symbol */
 #define EXPRS_TERM_FLAG_REGISTER		(0x02)	/* term is a register */
@@ -156,10 +158,10 @@ typedef struct
  **/
 typedef struct
 {
-	ExprsPool_t mTermsPool;			/* pool of terms for this stack */
-	ExprsPool_t mOpersPool;			/* pool of operators for this stack */
+	ExprsPool_t mTermsPool;			/* pool of terms for stack */
 } ExprsStack_t;
 
+#if 0 /* This has been moved to operstuff.h */
 /** ExprsErrs_t - definition of errors that may be returned
  *  by the various expression functions.
  **/
@@ -194,7 +196,9 @@ typedef enum
 	EXPR_TERM_BAD_NOUNLOCK,		/*! error doing pthread unlock. See errno for additional error. */
 	EXPR_TERM_BAD_UNDEFINED
 } ExprsErrs_t;
+#endif
 
+#if 0
 /** ExprsSymTermTypes_t - definition of the subset of types
  *  of terms stored in an external symbol table.
  **/
@@ -225,6 +229,7 @@ typedef struct
 		void *complex;				/* defined by user */
 	} value;
 } ExprsSymTerm_t;
+#endif
 
 /** ExprsMsgSeverity_t - define the severity of messages that
  *  may be emitted by the parser. */
@@ -262,9 +267,11 @@ typedef struct
 	void *memArg;									/*! Argument to pass to above memory callbacks */
 	void (*msgOut)(void *msgArg, ExprsMsgSeverity_t severity, const char *msg);	/*! Message (error and info) output callback */
 	void *msgArg;									/*! Argument to pass to msgOut callback */
+#if 0
 	ExprsErrs_t (*symGet)(void *symArg, const char *symName, ExprsSymTerm_t *symValue);	/*! Symbol value fetch callback */
 	ExprsErrs_t (*symSet)(void *symArg, const char *symName, const ExprsSymTerm_t *symValue);	/*! Symbol value set callback */
 	void *symArg;									/*! Argument to pass to symGet/symSet callbacks */
+#endif
 } ExprsCallbacks_t;
 
 typedef unsigned char ExprsPrecedence_t;
@@ -298,15 +305,13 @@ typedef unsigned char ExprsPrecedence_t;
  **/
 typedef struct
 {
-	pthread_mutex_t mMutex;			/*! Used to lock updates to members of this structure */
 	void *userArg1;					/*! can be used for any purpose */
 	void *userArg2;					/*! can be used for any purpose */
 	ExprsCallbacks_t mCallbacks;	/*! callbacks to be used by the parser */
 	unsigned int mVerbose;			/*! verbose flags */
-	int mStackPoolInc;				/*! stack pool increment */
 	int mTermsPoolInc;				/*! term pool increment */
 	int mStringPoolInc;				/*! string pool increment */
-	ExprsPool_t mStackPool;			/*! stack pool */
+	ExprsStack_t mStack;			/*! expression stack */
 	ExprsPool_t mStringPool;		/*! string pool */
 	const char *mCurrPtr;			/*! Pointer to current place in expression string being processed */
 	const char *mLineHead;			/*! Pointer to first character in expression string */
@@ -315,15 +320,18 @@ typedef struct
 	char mOpenDelimiter;			/*! Open expression delimiter */
 	char mCloseDelimiter;			/*! Close expression delimiter */
 	const ExprsPrecedence_t *precedencePtr; /*! Pointer to our precedence table */
+	const unsigned short *chMaskPtr;/*! Pointer to cttbl */
 } ExprsDef_t;
+
+#ifndef EXPRS_MAX_NEST
+#define EXPRS_MAX_NEST (128)		/*! A sanity check */
+#endif
 
 /** libExprsInit - Initialize an expression parser.
  *
  *  At entry:
  * @param callbacks - pointer to list of various callbacks the
  *  				parser is to use.
- * @param stackIncs - sets the number of stacks added at one
- *  				time. If 0, the default is set to 8.
  * @param termIncs - sets the number of terms added when needed.
  *  			   If 0, a default is set to 32.
  * @param stringIncs - sets the number of bytes for strings
@@ -338,7 +346,7 @@ typedef struct
  *  	 ExprsDef_t struct. The struct pointed to by 'callbacks'
  *  	 does not need to remain in static memory.
  **/
-extern ExprsDef_t *libExprsInit(const ExprsCallbacks_t *callbacks, int stackIncs, int termIncs, int stringIncs);
+extern ExprsDef_t *libExprsInit(const ExprsCallbacks_t *callbacks,  int termIncs, int stringIncs);
 
 /** libExprsDestroy - free all the previously allocated
  *  memory used by the expression parser.
@@ -461,6 +469,7 @@ extern ExprsErrs_t libExprsSetCloseDelimiter(ExprsDef_t *exprs, char newVal, cha
  **/
 extern const char *libExprsGetErrorStr(ExprsErrs_t errCode);
 
+#if 0
 /** libExprsEval - Evaluate an expression
  *
  *  At entry:
@@ -494,6 +503,7 @@ extern const char *libExprsGetErrorStr(ExprsErrs_t errCode);
  *  	  will not survive a subsequent call to either.
  **/
 extern ExprsErrs_t libExprsEval(ExprsDef_t *exprs, const char *text, ExprsTerm_t *returnTerm, int alreadyLocked);
+#endif
 
 /** libExprsParseToRPN - Parse an expression to RPN
  *
@@ -532,11 +542,10 @@ extern ExprsErrs_t libExprsWalkParsedStack(ExprsDef_t *exprs, ExprsErrs_t (*walk
  *  At exit:
  *  @return pointer to top of selected pool.
  **/
-extern ExprsStack_t *libExprsStackPoolTop(ExprsDef_t *exprs);
 extern ExprsTerm_t *libExprsTermPoolTop(ExprsDef_t *exprs, ExprsStack_t *stack);
-extern ExprsTerm_t *libExprsOpersPoolTop(ExprsDef_t *exprs, ExprsStack_t *stack);
 extern char *libExprsStringPoolTop(ExprsDef_t *exprs);
 
+#if 0
 /** libExprsLock - lock the hash table.
  *
  * At entry:
@@ -558,5 +567,5 @@ extern ExprsErrs_t libExprsLock(ExprsDef_t *pTable);
  *  	   further indication of error.
  **/
 extern ExprsErrs_t  libExprsUnlock(ExprsDef_t *pTable);
-
+#endif
 #endif	/* _LIB_EXPRS_H_ */
