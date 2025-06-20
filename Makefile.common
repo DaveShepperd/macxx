@@ -212,7 +212,7 @@ exprs69.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h 
 	$C -DMAC_69 -o $@ $<
 
 exprs8080.o : exprs.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h  
+   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h operstuff.h 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_8080 -o $@ $<
 
