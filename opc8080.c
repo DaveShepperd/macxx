@@ -75,7 +75,7 @@ int max_opcode_length = 6; /* significant length of opcodes */
 int max_symbol_length = 6; /* significant length of symbols */
 
 extern int dotwcontext;
-extern int no_white_space_allowed;
+/* extern int no_white_space_allowed; */
 static char *am_ptr;
 
 /* End of processor specific stuff */

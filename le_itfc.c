@@ -360,16 +360,11 @@ int le_itfc(int flag, EXP_stk *eps)
 		flags |= EXPRS_FLG_O_OCTAL;
 	if ( (edmask & ED_Q_OCT) )
 		flags |= EXPRS_FLG_Q_OCTAL;
+	if ( !(edmask & ED_PRECED) )
+		flags |= EXPRS_FLG_NO_PRECEDENCE;
 	libExprsSetFlags(exprsDef, flags, NULL);
+	libExprsSetRadix(exprsDef, current_radix, NULL);
 /*	libExprsSetVerbose(exprsDef,1,NULL);  */
-	eErrs = libExprsSetRadix(exprsDef,current_radix,NULL);
-	if ( eErrs )
-	{
-		snprintf(eBuf,sizeof(eBuf),"libExprsSetRadix failed: %d = %s", eErrs, libExprsGetErrorStr(eErrs));
-		show_bad_token(NULL, eBuf, MSG_FATAL);
-		return (eps->ptr = -1);
-	}
-/*	printf("calling libExprsParseToRPN(). token_pool='%s', token_value=%ld, token_type=%d. tkn_ptr=%s\n", token_pool, token_value, token_type, tkn_ptr); */
 	eErrs = libExprsParseToRPN(exprsDef, actualTknPtr, 0);
 	if ( eErrs > EXPR_TERM_END )
 	{

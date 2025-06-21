@@ -47,7 +47,7 @@ Change Log
 #include "listctrl.h"
 #include "memmgt.h"
 #include <stdlib.h>
-#if defined(MAC_8080)
+#if !defined(MAC_PP)
 #include "le_itfc.h"
 #endif
 
@@ -59,9 +59,8 @@ extern int dotwcontext;
 #endif
 
 int quoted_ascii_strings = 0;
-#if !defined(MAC_8080)
 static int do_exprs( int flag, EXP_stk *eps );
-#endif
+extern int no_white_space_allowed;
 
 void init_exprs( void )
 {
@@ -83,7 +82,7 @@ void init_exprs( void )
 int compress_expr_psuedo( EXP_stk *ep )
 {
     EXPR_struct *src,*op1,*op2,*texpbase,texp[8];
-    int src_terms,dst_terms;
+    int src_terms,dst_terms,tcnt=0;
     src_terms = ep->ptr;
     if (src_terms <= sizeof(texp)/sizeof(EXPR_struct))
     {
@@ -118,7 +117,7 @@ int compress_expr_psuedo( EXP_stk *ep )
                 continue;
             }
         case EXPR_OPER: {
-                int oper,tcnt;
+                int oper;
                 oper = src->expr_value;
                 --op1;          /* point to top of stack */
                 op2 = op1-1;        /* point to second on stack */
@@ -133,7 +132,8 @@ int compress_expr_psuedo( EXP_stk *ep )
                 {
                     tcnt = 2;
                 }
-                if (dst_terms < tcnt) goto bad_expression;
+                if (dst_terms < tcnt)
+					goto bad_expression;
                 dst_terms -= tcnt-1;
                 switch (oper&255)
                 {      /* dispatch on code */
@@ -318,8 +318,11 @@ int compress_expr_psuedo( EXP_stk *ep )
     }                /* -- for (terms) */
     if (dst_terms != 1)
     {
-        bad_expression:
-        bad_token((char *)0,"Invalid expression syntax");
+		char eBuf[128];
+bad_expression:
+		snprintf(eBuf,sizeof(eBuf),"Invalid expression syntax. dst_terms=%d, tcnt=%d. expected dst_terms to be 1, nwsa=%d",
+				 dst_terms, tcnt, no_white_space_allowed);
+        bad_token((char *)0,eBuf);
         ep->psuedo_value = 0;
     }
     else
@@ -956,7 +959,6 @@ int compress_expr( EXP_stk *exptr )
     return newTerms;
 }
 
-#if !defined(MAC_8080)
 static int do_unary(int *sexptr, EXP_stk *eps )
 {
     EXPR_struct *expr_ptr;
@@ -1541,7 +1543,6 @@ static int do_exprs( int flag, EXP_stk *eps )
         return(eps->ptr);
     }
 }
-#endif	/* !defined(MAC_8080 */
 
 /*******************************************************************
  * Expression evaluator. Calls do_exprs() which recursively calls
@@ -1576,10 +1577,13 @@ int exprs( int relative, EXP_stk *eps )
 	eps->stack = sSave; /* Except for these three things */
 	eps->tag = tagSave;
 	eps->tag_len = tagLenSave;
-#if !defined(MAC_8080)
-	err = do_exprs(1,eps);
+#if !defined(MAC_PP)
+	if ( !(edmask&ED_ALTEXP) )
+		err = do_exprs(1,eps);
+	else
+		err = le_itfc(1,eps);
 #else
-	err = le_itfc(1,eps);
+	err = do_exprs(1,eps);
 #endif
     if ( err < 0 )
     {    /* call expression evaluator */

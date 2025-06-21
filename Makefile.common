@@ -17,28 +17,27 @@
 #
 
 COREO = symbol.o hashit.o memmgt.o dumdir.o dummy.o opcnds.o err2str.o add_defs.o utils.o
-
+CORE1 = debug.o help.o le_itfc.o lib_exprs.o
 ALLO0 = macxx.o gc_table.o gc.o opcode.o
 ALLO1 = endlin.o outx.o pass2.o macros.o psuedo_ops.o
 ALLO2 = listctrl.o sortsym.o stack_ops.o qksort.o
-ALLO3 = $(COREO)
+ALLO3 = $(COREO) $(CORE1)
 
-ALLO65 = exprs65.o char_tbl65.o opc65.o pass0.o pass1.o pst65.o debug.o help.o
-ALLO68 = exprs68.o char_tbl65.o opc68.o pass0.o pass1.o pst68.o debug.o help.o
-ALLO69 = exprs69.o char_tbl65.o opc69.o pass0.o pass1.o pst69.o debug.o help.o
-ALLOAS = exprs.o char_table.o opcas.o pass1.o pstas.o debug.o help.o dummy_pass0.o
-ALLOTJ = exprs.o char_table.o opctj.o pass1.o psttj.o debug.o help.o dummy_pass0.o
-ALLO8080 = exprs8080.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o le_itfc8080.o lib_exprs.o
-#ALLO8080 = exprs_prec.o char_table.o opc8080.o pass0.o pass18080.o pst8080.o debug.o help.o #le_itfc8080.o lib_exprs.o
-ALLO68K = exprs68k.o char_table.o opc68k.o pass168k.o pst68k.o m68types.o debug.o help.o dummy_pass0.o #pass068k.o 
-ALLO11 = exprs11.o char_tbl65.o opc11.o pass0.o pass1.o pst11.o m11types.o debug.o help.o
+ALLO65 = exprs65.o char_tbl65.o opc65.o pst65.o pass0.o pass1.o
+ALLO68 = exprs68.o char_tbl65.o opc68.o pst68.o pass0.o pass1.o
+ALLO69 = exprs69.o char_tbl65.o opc69.o pst69.o pass0.o pass1.o
+ALLOAS = exprs.o char_table.o opcas.o pstas.o dummy_pass0.o pass1.o
+ALLOTJ = exprs.o char_table.o opctj.o psttj.o dummy_pass0.o pass1.o
+ALLO8080 = exprs.o char_table.o opc8080.o pst8080.o pass0.o pass1.o
+ALLO68K = exprs68k.o char_table.o opc68k.o pst68k.o m68types.o dummy_pass0.o pass168k.o 
+ALLO11 = exprs11.o char_tbl65.o opc11.o  pst11.o m11types.o pass0.o pass1.o 
 
 ALLOPP0 = macxx_pp.o pass1_pp.o lstctlpp.o opcode_pp.o
 ALLOPP1 = gc_tblpp.o gc_pp.o exprs_pp.o macros_pp.o
 ALLOPP2 = psdo_ops_pp.o pstpp.o opcpp.o char_table.o
 ALLOPP3 = help_pp.o $(COREO)
 
-ALLH = structs.h header.h ct.h token_defs.h token.h 
+ALLH = structs.h header.h ct.h token_defs.h token.h
 
 EXE =
 ifeq ($(MINGW),1)
@@ -178,49 +177,34 @@ psdo_ops_pp.o : psuedo_ops.c add_defs.h token.h token_defs.h structs.h header.h 
 	$C -DMAC_PP -o $@ $<
 
 exprs65.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_65 -o $@ $<
 
 exprs11.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_11 -o $@ $<
 
 exprs68.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_68 -o $@ $<
 
 exprs68k.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC68K -o $@ $<
 
 exprs69.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_69 -o $@ $<
 
-exprs8080.o : exprs.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h operstuff.h 
-	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC_8080 -o $@ $<
-
 exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
-
-le_itfc8080.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h operstuff.h
-	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC_8080 -o $@ $<
-
-#exprs_prec.o : exprs_prec.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-#  exproper.h listctrl.h lstcnsts.h operstuff.h
-#	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-#	$C -o $@ $<
 
 mk_operstuff.o : mk_operstuff.c Makefile.common
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
@@ -236,11 +220,6 @@ operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
 lib_exprs.o : lib_exprs.c lib_exprs.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $< ...$(DELIM)
 	$C -D_FMT_LD_='"%d"' -DNO_FLOATING_POINT -o $@ $<
-
-#pass068k.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-#  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
-#	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-#	$C -DMAC68K -o $@ $<
 
 pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
@@ -273,7 +252,7 @@ endlin.o : endlin.c header.h outx.h token.h token_defs.h structs.h add_defs.h he
   listctrl.h lstcnsts.h exproper.h vlda_structs.h pragma.h pragma1.h segdef.h
 err2str.o : err2str.c  
 exprs.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h 
+  exproper.h listctrl.h lstcnsts.h operstuff.h
 gc.o : gc.c  token.h token_defs.h header.h memmgt.h ct.h qual_tbl.h gc_struct.h 
 gc_table.o : gc_table.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h gc_struct.h 
@@ -283,6 +262,8 @@ hashit.o : hashit.c
 help.o : help.c add_defs.h 
 listctrl.o : listctrl.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h listctrl.h lstcnsts.h utils.h
+le_itfc.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
+   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h operstuff.h
 m11types.o : m11types.c token.h \
   token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
   qual_tbl.h pdp11.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
