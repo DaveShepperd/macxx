@@ -1115,7 +1115,7 @@ int type4(int inst, int bwl)
         0x6800,0x6900,0x6000,0x6100};
 
     edmaskSave = edmask;
-    edmask |= ~ED_AMA;        /* default to ABS on branch */
+    edmask |= ED_AMA;        /* default to ABS on branch */
     t = get_oneea(&source,bwl);
     edmask = edmaskSave;
     if (t != ONEEA_RET_SUCC || (source.mode&E_ABS) == 0)

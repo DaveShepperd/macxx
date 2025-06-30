@@ -2067,8 +2067,8 @@ static int op_segcomm(int type, int new_one, SEG_struct *new_seg,
 {
 #if 0
 	if ( squeak )
-	printf("op_segcomm(): pass=%d, type=%d, new_one=%d, flags=%04X, maxLen=%ld, Segment '%s': len=%ld, base=%ld, rel=%ld\n",
-		   pass, type, new_one, flags, maxlen,
+	printf("op_segcomm(): pass=%d, type=%d, new_one=%d, flags=%04X, salign=%d, dalign=%d, maxLen=%ld, Segment '%s': len=%ld, base=%ld, rel=%ld\n",
+		   pass, type, new_one, flags, salign, dalign, maxlen,
 		   new_seg->seg_string, new_seg->seg_len, new_seg->seg_base, new_seg->rel_offset);
 #endif
 	if ( flags != 0 )
@@ -2254,8 +2254,9 @@ static int op_segcomm(int type, int new_one, SEG_struct *new_seg,
 		}
 		if ( dalign > salign )
 		{
-			show_bad_token((char *)0, "DALIGN > SALIGN cannot be enforced",
-						   MSG_WARN);
+			char eBuf[128];
+			snprintf(eBuf,sizeof(eBuf),"DALIGN of %d > SALIGN of %d cannot be enforced", dalign, salign );
+			show_bad_token((char *)0, eBuf, MSG_WARN);
 			dalign = salign;
 		}
 		new_seg->seg_salign = salign;
@@ -2388,37 +2389,27 @@ int op_psect(void)
 						bad_token(tkn_ptr, "Unknown PSECT keyword");
 						break;
 					}
-					else
+					if ( *inp_ptr == '=' )
 					{
-						if ( *inp_ptr == '=' )
+						++inp_ptr;
+						if ( get_token() != EOL )
 						{
-							++inp_ptr;
-							if ( get_token() != EOL )
-							{
-								exprs(0, &EXP0);
-								if ( (segdat & PS_DALGN) != 0 )
-									dalign = EXP0SP->expr_value;
-								if ( (segdat & PS_SALGN) != 0 )
-									salign = EXP0SP->expr_value;
-								if ( (segdat & PS_MAXLN) != 0 )
-									maxlen = EXP0SP->expr_value;
-							}
+							exprs(0, &EXP0);
+							if ( (segdat & PS_DALGN) != 0 )
+								dalign = EXP0SP->expr_value;
+							if ( (segdat & PS_SALGN) != 0 )
+								salign = EXP0SP->expr_value;
+							if ( (segdat & PS_MAXLN) != 0 )
+								maxlen = EXP0SP->expr_value;
 						}
-						else
-						{
-							
-						}
-						flags |= segdat;
-						break;
 					}
+					flags |= segdat;
+					break;
 				}
-				else
+				if ( strcmp(token_pool, psect_table[tt].name) == 0 )
 				{
-					if ( strcmp(token_pool, psect_table[tt].name) == 0 )
-					{
-						flags |= psect_table[tt].flags;
-						break;
-					}
+					flags |= psect_table[tt].flags;
+					break;
 				}
 			}
 		}

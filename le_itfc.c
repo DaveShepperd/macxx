@@ -362,6 +362,8 @@ int le_itfc(int flag, EXP_stk *eps)
 		flags |= EXPRS_FLG_Q_OCTAL;
 	if ( !(edmask & ED_PRECED) )
 		flags |= EXPRS_FLG_NO_PRECEDENCE;
+	if ( no_white_space_allowed )
+		flags |= EXPRS_FLG_WS_DELIMIT;
 	libExprsSetFlags(exprsDef, flags, NULL);
 	libExprsSetRadix(exprsDef, current_radix, NULL);
 /*	libExprsSetVerbose(exprsDef,1,NULL);  */
