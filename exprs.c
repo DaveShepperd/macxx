@@ -79,10 +79,61 @@ void init_exprs( void )
     return;
 }   
 
+static void dump_stack(const EXP_stk *ep, char *eBuf, size_t bufLen)
+{
+	const EXPR_struct *src;
+	int oper, src_terms, newLen=0;
+	
+	src_terms = ep->ptr;
+	src = ep->stack;
+	for (; src_terms > 0; --src_terms, ++src )
+	{
+		if ( newLen >= bufLen-(24) )
+		{
+			newLen += snprintf(eBuf+newLen,bufLen-newLen," (plus %d more terms)", src_terms);
+			return;
+		}
+		switch (src->expr_code)
+		{
+		case EXPR_LINK:
+			newLen += snprintf(eBuf+newLen, bufLen-newLen," <link>");
+			continue;
+		case EXPR_SYM:
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " %s", src->expt.expt_sym->ss_string);
+			continue;
+		case EXPR_SEG:
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " (%s)", src->expt.expt_seg->seg_string);
+			continue;
+		case EXPR_VALUE:
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " %ld", src->expr_value);
+			continue;
+		case EXPR_OPER:
+			oper = src->expr_value;
+			if ( (oper & 255) == EXPROPER_TST )
+			{
+				eBuf[newLen++] = ' ';
+				eBuf[newLen++] = EXPROPER_TST;
+				eBuf[newLen++] = oper>>8;
+			}
+			else
+			{
+				newLen += snprintf(eBuf + newLen, bufLen - newLen, " %c", oper);
+			}
+			continue;
+		default:
+			continue; /* this keeps gcc from bitching */
+		}			/* switch(code) */
+		break;            /* if fall out of switch, fall out of for */
+	}                /* -- for (terms) */
+}
+
+
 int compress_expr_psuedo( EXP_stk *ep )
 {
     EXPR_struct *src,*op1,*op2,*texpbase,texp[8];
-    int src_terms,dst_terms,tcnt=0;
+    int len, src_terms, dst_terms, tcnt=0;
+	char eBuf[256];
+
     src_terms = ep->ptr;
     if (src_terms <= sizeof(texp)/sizeof(EXPR_struct))
     {
@@ -95,6 +146,11 @@ int compress_expr_psuedo( EXP_stk *ep )
     src = ep->stack;
     op1 = texpbase;      /* point to dst array */
 	op1->expr_flags = 0;	/* make sure this starts at 0 */
+#if 0
+	len = snprintf(eBuf,sizeof(eBuf),"compress_expr(): dump test %d terms: ", src_terms);
+	dump_stack(ep,eBuf+len,sizeof(eBuf)-(len+1));
+	printf("%s\n",eBuf);
+#endif
     for (dst_terms=0;src_terms > 0; --src_terms,++src)
     {
         switch (src->expr_code)
@@ -318,18 +374,18 @@ int compress_expr_psuedo( EXP_stk *ep )
     }                /* -- for (terms) */
     if (dst_terms != 1)
     {
-		char eBuf[128];
 bad_expression:
-		snprintf(eBuf,sizeof(eBuf),"Invalid expression syntax. dst_terms=%d, tcnt=%d. expected dst_terms to be 1, nwsa=%d",
-				 dst_terms, tcnt, no_white_space_allowed);
-        bad_token((char *)0,eBuf);
+		len = snprintf(eBuf,sizeof(eBuf),"Invalid expression syntax. dst_terms=%d s/b 1: ", dst_terms);
+		dump_stack(ep, eBuf+len, sizeof(eBuf)-(len+1));
+        bad_token(NULL,eBuf);
         ep->psuedo_value = 0;
     }
     else
     {
         ep->psuedo_value = texpbase->expr_value;
     }
-    if (texpbase != texp) MEM_free((char *)texpbase);
+    if (texpbase != texp)
+		MEM_free((char *)texpbase);
     return 0;
 }
 
