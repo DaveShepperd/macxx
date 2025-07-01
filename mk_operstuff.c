@@ -81,12 +81,12 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			*end = 0;	/* step on comma */
-			strncpy(ep->errName,str,sizeof(ep->errName));
+			strncpy(ep->errName,str,sizeof(ep->errName)-1);
 			str = end+1;
 			/* eat any leading whitespace */
 			while ( isspace(*str) )
 				++str;
-			strncpy(ep->errDesc,str,sizeof(ep->errDesc));
+			strncpy(ep->errDesc,str,sizeof(ep->errDesc)-1);
 			++ep;
 			++numErrs;
 			continue;
