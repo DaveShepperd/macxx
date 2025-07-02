@@ -1508,7 +1508,7 @@ static struct
 } edstuff[] = {
 	{ "ABS", ED_ABS },
 	{ "AMA", ED_AMA },
-	{ "ALTEXP", ED_AMA },
+	{ "ALTEXP", ED_ALTEXP },
 	{ "BYTE", ED_BYT },
 	{ "CPU_CHECK", ED_CPU },
 	{ "CR", ED_CR },
@@ -1526,7 +1526,7 @@ static struct
 	{ "M8085", ED_8085 },
 	{ "MOS", ED_MOS },
 	{ "O_OCTAL", ED_O_OCT },
-	{ "PRECEDENCE", ED_AMA },
+	{ "PRECEDENCE", ED_PRECED },
 	{ "Q_OCTAL", ED_Q_OCT },
 	{ "SIMPLE", ED_SIMPLE },
 	{ "TRUNCATE_CHECK", ED_TRUNC },

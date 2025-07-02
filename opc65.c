@@ -874,7 +874,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 	{        /* if no operand supplied */
 		if ( ((1L << amdcdnum) & opc->op_amode) == 0 )
 		{
-			bad_token((char *)0, "Opcode requires an operand");
+			show_bad_token((char *)0, "Opcode requires an operand", MSG_WARN);
 			return bad_amode();
 		}
 		return amdcdnum;

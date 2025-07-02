@@ -191,13 +191,12 @@ Opcode *opcode_lookup(char *strng, int err_flag )
 
 void deleteAllMacros(void)
 {
-	Opcode **hashPtr,*opc,**prev;
+	Opcode *opc,**prev;
 	int num;
 	
 	for (num=0; num < OP_HASH_SIZE; ++num)
 	{
-		hashPtr = ophash+num;
-		prev = hashPtr;
+		prev = ophash+num;
 		while ( (opc = *prev) )
 		{
 			Macargs *ma;
@@ -207,16 +206,14 @@ void deleteAllMacros(void)
 				prev = &opc->op_next;
 				continue;
 			}
-			if ( prev == hashPtr )
-				*prev = opc->op_next;   /* Pluck this guy from the hash table entry */
-			else
-				(*prev)->op_next = opc->op_next; /* else make last guy point to our next */
+			*prev = opc->op_next; /* make last guy point to our next */
 			ma = opc->op_margs;
 			if ( ma )
 			{
 				if (ma->mac_body)
 					free_macbody(ma->mac_body);
 				MEM_free(ma);
+				opc->op_margs = NULL;
 			}
 		}
 	}

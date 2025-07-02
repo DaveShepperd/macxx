@@ -435,16 +435,11 @@ static ExprsErrs_t handleString(ExprsDef_t *exprs, ExprsStack_t *sPtr, ExprsTerm
 	chMask = exprs->chMaskPtr[(int)cc];
 	if ( (chMask&CT_EOL) )
 		return EXPR_TERM_BAD_NO_STRING_TERM;
-	if ( cc == '\\' )
-	{
-		++endP;
-		cc = *endP;
-		chMask = exprs->chMaskPtr[(int)cc];
-		if ( (chMask&CT_EOL) )
-			return EXPR_TERM_BAD_NO_STRING_TERM;
-	}
 	term->term.u64 = cc;
 	term->termType = EXPRS_TERM_INTEGER;
+	cc = *endP;
+	if ( cc == '\'' )
+		++endP;
 	exprs->mCurrPtr = endP;
 	++sPtr->mTermsPool.mNumUsed;
 	return EXPR_TERM_GOOD;

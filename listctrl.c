@@ -107,12 +107,12 @@ int list_init(int onoff)
 		lm_bits = saved_lm_bits = macxx_lm_default;
 	}
 	qued_lm_bits = lm_bits;
+	show_line = 1;       /* assume to show it */
+	set_list_radix((macxx_lm_default&LIST_OCT));
 #ifndef MAC_PP
 	list_stats.list_ptr = LLIST_OPC;
 	meb_stats.list_ptr = LLIST_OPC;
 #endif
-	show_line = 1;       /* assume to show it */
-	set_list_radix((macxx_lm_default&LIST_OCT));
 	return 0;
 }
 
