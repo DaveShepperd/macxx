@@ -45,35 +45,35 @@
 ;expected enum and structs.
 ;								Precedences
 ;Numeric ID		Operator in object file			Normal	None	Comment
-EXPRS_TERM_NULL,	('L'<<8)|'N',				20,	20,	/* NULL */
-EXPRS_TERM_SYMBOL,	('Y'<<8)|'S',				20,	20,	/* Symbol */
-EXPRS_TERM_INTEGER,	('N'<<8)|'I',				20,	20,	/* integer number */
-EXPRS_TERM_MINUS,	EXPROPER_NEG,				18,	18,	/* - (negative term) */
-EXPRS_TERM_PLUS,	EXPROPER_ADD,				18,	18,	/* + (positive term) */
-EXPRS_TERM_COM,	EXPROPER_COM,				18,	18,	/* ~ (1's compliment) */
+EXPRS_TERM_NULL,	('L'<<8)|'N',				20,	20,	/* f (NULL) */
+EXPRS_TERM_SYMBOL,	('Y'<<8)|'S',				20,	20,	/* f (Symbol) */
+EXPRS_TERM_INTEGER,	('N'<<8)|'I',				20,	20,	/* f (int) */
+EXPRS_TERM_NEG,	EXPROPER_NEG,				18,	18,	/* - (neg) */
+EXPRS_TERM_POS,	EXPROPER_ADD,				18,	18,	/* + (pos) */
+EXPRS_TERM_COM,	EXPROPER_COM,				18,	18,	/* ~ (comp) */
 EXPRS_TERM_NOT,	(EXPROPER_TST_NOT<<8)|EXPROPER_TST,	18,	18,	/* ! (not) */
-EXPRS_TERM_LOW_BYTE,	('v'<<8)|'^',				16,	18,	/* low byte */
-EXPRS_TERM_HIGH_BYTE,	('^'<<8)|'^',				16,	18,	/* high byte */
-EXPRS_TERM_SWAP,	EXPROPER_SWAP,				16,	18,	/* swap bytes (7:0->15:8, 15:8->7:0) */
-EXPRS_TERM_MUL,	EXPROPER_MUL,				14,	7,	/* * (multiply) */
-EXPRS_TERM_DIV,	EXPROPER_DIV,				14,	7,	/* / (divide) */
-EXPRS_TERM_UDIV,	EXPROPER_USD,				14,	7,	/* / (unsigned divide) */
-EXPRS_TERM_MOD,	EXPROPER_MOD,				14,	7,	/* % (modulo) */
+EXPRS_TERM_LOW_BYTE,	('v'<<8)|'^',				16,	18,	/* ^v (low byte) */
+EXPRS_TERM_HIGH_BYTE,	('^'<<8)|'^',				16,	18,	/* ^^ (high byte) */
+EXPRS_TERM_SWAP,	EXPROPER_SWAP,				16,	18,	/* ^~ (swap) */
+EXPRS_TERM_MUL,	EXPROPER_MUL,				14,	7,	/* * (mul) */
+EXPRS_TERM_DIV,	EXPROPER_DIV,				14,	7,	/* / (div) */
+EXPRS_TERM_UDIV,	EXPROPER_USD,				14,	7,	/* / (udiv) */
+EXPRS_TERM_MOD,	EXPROPER_MOD,				14,	7,	/* % (mod) */
 EXPRS_TERM_ADD,	EXPROPER_ADD,				12,	7,	/* + (add) */
-EXPRS_TERM_SUB,	EXPROPER_SUB,				12,	7,	/* - (subtract) */
-EXPRS_TERM_SHL,	EXPROPER_SHL,				10,	7,	/* << (shift left) */
-EXPRS_TERM_SHR,	EXPROPER_SHR,				10,	7,	/* >> (shift right) */
-EXPRS_TERM_GT,		(EXPROPER_TST_GT<<8)|EXPROPER_TST,	 8,	7,	/* > (greater than) */
-EXPRS_TERM_GE,		(EXPROPER_TST_GE<<8)|EXPROPER_TST,	 8,	7,	/* >= (greater or equal than) */
-EXPRS_TERM_LT,		(EXPROPER_TST_LT<<8)|EXPROPER_TST,	 8,	7,	/* < (less than) */
-EXPRS_TERM_LE,		(EXPROPER_TST_LE<<8)|EXPROPER_TST,	 8,	7,	/* <= (less or equal than) */
-EXPRS_TERM_EQ,		(EXPROPER_TST_EQ<<8)|EXPROPER_TST,	 8,	7,	/* == (equal) */
-EXPRS_TERM_NE,		(EXPROPER_TST_NE<<8)|EXPROPER_TST,	 8,	7,	/* != (not equal) */
+EXPRS_TERM_SUB,	EXPROPER_SUB,				12,	7,	/* - (sub) */
+EXPRS_TERM_SHL,	EXPROPER_SHL,				10,	7,	/* << (shl) */
+EXPRS_TERM_SHR,	EXPROPER_SHR,				10,	7,	/* >> (shr) */
+EXPRS_TERM_GT,		(EXPROPER_TST_GT<<8)|EXPROPER_TST,	 8,	7,	/* > (gt) */
+EXPRS_TERM_GE,		(EXPROPER_TST_GE<<8)|EXPROPER_TST,	 8,	7,	/* >= (ge) */
+EXPRS_TERM_LT,		(EXPROPER_TST_LT<<8)|EXPROPER_TST,	 8,	7,	/* < (lt) */
+EXPRS_TERM_LE,		(EXPROPER_TST_LE<<8)|EXPROPER_TST,	 8,	7,	/* <= (le) */
+EXPRS_TERM_EQ,		(EXPROPER_TST_EQ<<8)|EXPROPER_TST,	 8,	7,	/* == (eq) */
+EXPRS_TERM_NE,		(EXPROPER_TST_NE<<8)|EXPROPER_TST,	 8,	7,	/* != (ne) */
 EXPRS_TERM_AND,	EXPROPER_AND,				 6,	7,	/* & (and) */
-EXPRS_TERM_XOR,	EXPROPER_XOR,				 5,	7,	/* ^ (exclusive or) */
+EXPRS_TERM_XOR,	EXPROPER_XOR,				 5,	7,	/* ^ (xor) */
 EXPRS_TERM_OR,		EXPROPER_OR,				 4,	7,	/* | (or) */
-EXPRS_TERM_LAND,	(EXPROPER_TST_AND<<8)|EXPROPER_TST,	 3,	7,	/* && (logical and) */
-EXPRS_TERM_LOR,	(EXPROPER_TST_OR<<8)|EXPROPER_TST,	 2,	7,	/* || (logical or) */
+EXPRS_TERM_LAND,	(EXPROPER_TST_AND<<8)|EXPROPER_TST,	 3,	7,	/* && (land) */
+EXPRS_TERM_LOR,	(EXPROPER_TST_OR<<8)|EXPROPER_TST,	 2,	7,	/* || (lor) */
 ;
 ;
 ; Error definitions and descriptions. The following has to begin with a 'B,' to get them loaded

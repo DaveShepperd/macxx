@@ -1509,6 +1509,7 @@ static struct
 	{ "ABS", ED_ABS },
 	{ "AMA", ED_AMA },
 	{ "ALTEXP", ED_ALTEXP },
+	{ "ALTVERB", ED_ALTVER },
 	{ "BYTE", ED_BYT },
 	{ "CPU_CHECK", ED_CPU },
 	{ "CR", ED_CR },
@@ -1608,6 +1609,11 @@ static int op_edcommon(int onoff)
 int op_enabl(void)
 {
 	op_edcommon(1);
+	if ( (edmask&(ED_ALTEXP|ED_PRECED)) && (macxx_name_mask&(MACXX_M_68K)) )
+	{
+		show_bad_token(NULL,"Sorry, ALTEXP and PRECEDENCE are not supported in this assembler",MSG_WARN);
+		edmask &= ~(ED_ALTEXP|ED_PRECED);
+	}
 	return 0;
 }
 

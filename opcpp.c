@@ -15,14 +15,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "token.h"
 #include "lstcnsts.h"
 #include "pst_tokens.h"
 
 /* The following are variables specific to the particular assembler */
 
-char macxx_name[] = "macpp";
-char *macxx_target = "unknown";
-char *macxx_descrip = "Macro pre-processor.";
+const int macxx_name_mask = MACXX_M_PP;
+const char macxx_name[] = "macpp";
+const char *macxx_target = "unknown";
+const char *macxx_descrip = "Macro pre-processor.";
 
 unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */
 unsigned short macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */

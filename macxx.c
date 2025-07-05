@@ -243,11 +243,11 @@ struct item_list
     int *retlen;
 };
 
-readonly static struct item_list jpi_item[2] = {
+static const struct item_list jpi_item[2] = {
     { 256,519,emsg,&image_name_length},
     { 8,518,login_time,0}
 };
-readonly static int item_terminator=0;
+static const int item_terminator=0;
 
 #endif
 
@@ -266,7 +266,7 @@ char **gc_argv;
 #endif
 #define DOPEN_ARGS  "wb"
 
-int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_macas, were_mac11, were_macpp, were_mac8080;
+/* int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_macas, were_mac11, were_macpp, were_mac8080; */
 /************************************************************************
  * MACXX main entry.
  */
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
     snprintf(ascii_date,sizeof(ascii_date),"\"%s %02d %4d %02d:%02d:%02d\"",
             months[our_time->tm_mon],our_time->tm_mday,our_time->tm_year+1900,
             our_time->tm_hour,our_time->tm_min,our_time->tm_sec);
-#if defined(VMS) || defined(MS_DOS)
+#if 0 && (defined(VMS) || defined(MS_DOS))
     for (i=0;macxx_name[i];++i)
     {
         if (islower(macxx_name[i])) macxx_name[i] = toupper(macxx_name[i]);
@@ -328,6 +328,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	*d = 0;
+#if 0
 	if (macxx_name[3] == '6')
 	{
 		if ( macxx_name[4] == '5')
@@ -350,6 +351,7 @@ int main(int argc, char *argv[])
 		were_macas = 1;
 	else if ( !strcmp(macxx_name+3,"8080") )
 		were_mac8080 = 1;
+#endif
 #if defined(MS_DOS)
 	fprintf(stderr,"%s\n",token_pool);
 #endif
@@ -383,7 +385,7 @@ int main(int argc, char *argv[])
 		int ii;
 		int savedRadix = current_radix;
 		
-		if ( !were_mac65 && !were_mac68 && !were_mac69 && !were_mac11 && !were_mac8080 )
+		if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080)) /* !were_mac65 && !were_mac68 && !were_mac69 && !were_mac11 && !were_mac8080 */ )
 		{
 			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
 			EXIT_FALSE;

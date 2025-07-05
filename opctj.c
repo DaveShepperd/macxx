@@ -38,9 +38,10 @@ unsigned short rel_dalign = 1; /* def algnmnt for data in rel segments */
 unsigned short abs_salign = 3; /* default alignment for abs segments */
 unsigned short abs_dalign = 1; /* def algnmnt for data in abs segments */
 
-char macxx_name[] = "mactj";
-char *macxx_target = "TOM"; /* "1357785-001"; */
-char *macxx_descrip = "Cross assembler for the Tom and Jerry.";
+const int macxx_name_mask = MACXX_M_TJ;
+const char macxx_name[] = "mactj";
+const char *macxx_target = "TOM"; /* "1357785-001"; */
+const char *macxx_descrip = "Cross assembler for the Tom and Jerry.";
 
 #if 0
 unsigned short macxx_rel_salign = 3; /* default alignment for rel segments */

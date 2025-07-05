@@ -171,14 +171,32 @@ int main(int argc, char *argv[])
 		  "#endif\n\n"
 		  ,stdout);
 
-	fputs("#if OPERSTUFF_GET_OTHERS\n"
-		  "static const unsigned short OperXlate[] =\n"
+	fputs("#if OPERSTUFF_GET_OTHERS\n",stdout);
+#if 0
+	fputs("static const unsigned short OperXlate[] =\n"
 		  "{\n"
 		  ,stdout);
 	lp = lines;
 	for (ii=0; ii < numLines; ++ii, ++lp)
 	{
 		fprintf(stdout,"   %s%s\t%s\n", lp->operItem, ii < numLines-1 ? ",":"", lp->fixedComment );
+	}
+	fputs("};\n\n", stdout);
+#endif
+	fputs("static const char *OperDescriptions[] =\n"
+		  "{\n"
+		  ,stdout);
+	lp = lines;
+	for (ii=0; ii < numLines; ++ii, ++lp)
+	{
+		char cmt[64], *src, *dst;
+		src = lp->comment+3;
+		dst = cmt;
+		while ( *src && *src != ')' && dst < cmt+sizeof(cmt)-2)
+			*dst++ = *src++;
+		*dst++ = ')';
+		*dst = 0;
+		fprintf(stdout,"   \"%s\"%s\t%s\n", cmt, ii < numLines-1 ? ",":"", lp->fixedComment );
 	}
 	fputs("};\n\n", stdout);
 	fputs("static const ExprsPrecedence_t PrecedenceNormal[] =\n"

@@ -31,10 +31,22 @@ extern short current_scopblk;		/* current scope level within block */
 extern short current_scope;		/* sum of the two above */
 #define SCOPE_PROC (-(1<<3))		/* mask for procblk */
 
-extern char macxx_name[];
-extern char *macxx_target;
+#define MACXX_M_11		0x00001
+#define MACXX_M_65		0x00002
+#define MACXX_M_68		0x00004
+#define MACXX_M_68K		0x00008
+#define MACXX_M_69		0x00010
+#define MACXX_M_8080	0x00020
+#define MACXX_M_Z80		0x00040
+#define MACXX_M_AS		0x00080
+#define MACXX_M_PP		0x00100
+#define MACXX_M_TJ		0x00200
+
+extern const int macxx_name_mask;
+extern const char macxx_name[];
+extern const char *macxx_target;
 extern char *macxx_version;
-extern char *macxx_descrip;
+extern const char *macxx_descrip;
 extern char macxx_mau;      /* number of bits in a minimum addressable unit */
 extern char macxx_bytes_mau; /* number of bytes in a minimum addressable unit */
 extern char macxx_mau_byte; /* number of mau's in a byte */
@@ -140,7 +152,7 @@ extern int expr_message_tag;
 #define DEFG_STATIC 16
 #define DEFG_FIXED 32
 extern int f1_defg(int gbl_flg);
-#if defined(MAC68K)
+#if defined(MAC_68K)
 #define WST_LABEL    (0) /* no white space before labels */
 #define WST_OPC      (1) /* one white space before opcode */
 #define WST_OPRAND   (2) /* two white spaces before operand(s) */
@@ -237,7 +249,7 @@ extern unsigned short cttbl[];
 extern char char_toupper[];
 extern char hexdig[];
 
-extern int were_mac65, were_mac68, were_mac69, were_mactj, were_mac68k, were_macas, were_mac11, were_macpp, were_mac8080;
+/* extern int were_mac65, were_mac68, were_mac69, were_mactj, were_MAC_68K, were_macas, were_mac11, were_macpp, were_mac8080; */
 
 extern char **cmd_assems;
 extern char **cmd_includes;

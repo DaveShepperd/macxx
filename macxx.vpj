@@ -289,7 +289,6 @@
 			<F N="opc11.c"/>
 			<F N="opc65.c"/>
 			<F N="opc68.c"/>
-			<F N="opc682k.c"/>
 			<F N="opc68k.c"/>
 			<F N="opc69.c"/>
 			<F N="opc8080.c"/>

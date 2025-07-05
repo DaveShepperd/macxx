@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MAC68K 1
+#define MAC_68K 1
 #include "token.h"
 #include "pst_tokens.h"
 #include "exproper.h"
@@ -25,9 +25,10 @@
 
 /* The following are variables specific to the particular assembler */
 
-char macxx_name[] = "mac68k";
-char *macxx_target = "68000";
-char *macxx_descrip = "Cross assembler for the 68000.";
+const int macxx_name_mask = MACXX_M_68K;
+const char macxx_name[] = "MAC_68K";
+const char *macxx_target = "68000";
+const char *macxx_descrip = "Cross assembler for the 68000.";
 
 #if 0
 unsigned short macxx_rel_salign = 1;    /* default alignment for .REL. segment */

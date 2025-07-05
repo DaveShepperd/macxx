@@ -48,10 +48,10 @@ Change Log
 #define DEFNAM(name,numb) {"name",name,numb},
 
 /* The following are variables specific to the particular assembler */
-
-char macxx_name[] = "mac68";
-char *macxx_target = "6800";
-char *macxx_descrip = "Cross assembler for the 6800.";
+const int macxx_name_mask = MACXX_M_68;
+const char macxx_name[] = "mac68";
+const char *macxx_target = "6800";
+const char *macxx_descrip = "Cross assembler for the 6800.";
 
 #if 0
 unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */

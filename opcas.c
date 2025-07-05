@@ -39,9 +39,10 @@ unsigned short rel_dalign = 2; /* def algnmnt for data in rel segments */
 unsigned short abs_salign = 2; /* default alignment for abs segments */
 unsigned short abs_dalign = 2; /* def algnmnt for data in abs segments */
 
-char macxx_name[] = "macas";
-char *macxx_target = "ASAP";
-char *macxx_descrip = "Cross assembler for the ASAP.";
+const int macxx_name_mask = MACXX_M_AS;
+const char macxx_name[] = "macas";
+const char *macxx_target = "ASAP";
+const char *macxx_descrip = "Cross assembler for the ASAP.";
 
 #if 0
 unsigned short macxx_rel_salign = 2; /* default alignment for rel segments */

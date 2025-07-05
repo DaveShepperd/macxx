@@ -45,7 +45,13 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 	
 	expr_ptr = eps->stack+eps->ptr;
 	memset(expr_ptr,0,sizeof(EXPR_struct));
-/*	printf("copyTerm(): Entry. termType=%d, flags=0x%X, value=0x%lX\n", term->termType, term->flags, term->term.u64 ); */
+	if ( (edmask&ED_ALTVER) )
+		printf("copyTerm(): Entry. termType=%d, flags=0x%X, value=0x%lX\n", term->termType, term->flags, term->term.u64 );
+	if ( (term->flags&EXPRS_TERM_FLAG_REGISTER) )
+		eps->register_reference |= 1;
+	eps->force_byte |= (term->flags & EXPRS_TERM_FLAG_BYTE) ? 1 : 0;
+	eps->force_short |= (term->flags & EXPRS_TERM_FLAG_WORD) ? 1 : 0;
+	eps->force_long |= (term->flags & EXPRS_TERM_FLAG_LONG) ? 1 : 0;
 	switch (term->termType)
 	{
 	case EXPRS_TERM_INTEGER:
@@ -170,7 +176,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 				expr_ptr->expr_sym = sym_ptr;
 				expr_ptr->expr_value = 0;
 				eps->forward_reference = 1;     /* signal this expression contains a forward reference */
-#if defined(MAC68K)
+#if defined(MAC_68K)
 				if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
 					 && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )
 				{
@@ -183,9 +189,9 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 			}
 			break;          /* exit from switch */
 		}
-	case EXPRS_TERM_PLUS:	/* + (unary term in this case) */
+	case EXPRS_TERM_POS:	/* + (unary term in this case) */
 		return EXPR_TERM_GOOD;	/* Do nothing with this */
-	case EXPRS_TERM_MINUS:	/* - (unary term in this case) */
+	case EXPRS_TERM_NEG:	/* - (unary term in this case) */
 		expr_ptr->expr_code = EXPR_OPER;
 		expr_ptr->expr_value = EXPROPER_NEG;
 		break;
@@ -276,7 +282,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 		break;
 	case EXPRS_TERM_OR:		/* | */
 		expr_ptr->expr_code = EXPR_OPER;
-		expr_ptr->expr_value = EXPROPER_XOR;
+		expr_ptr->expr_value = EXPROPER_OR;
 		break;
 	case EXPRS_TERM_LAND:	/* && */
 		expr_ptr->expr_code = EXPR_OPER;
@@ -339,6 +345,8 @@ int le_itfc(int flag, EXP_stk *eps)
 		exprsDef = libExprsInit(NULL,0,0);
 		if ( !exprsDef )
 			return (eps->ptr = -1);
+		exprsDef->mOpenDelimiter = expr_open;
+		exprsDef->mCloseDelimiter = expr_close;
 	}
 	flags = 
 		 EXPRS_FLG_USE_RADIX
@@ -351,6 +359,9 @@ int le_itfc(int flag, EXP_stk *eps)
 		|EXPRS_FLG_LOCAL_SYMBOLS
 		|EXPRS_FLG_DOT_SYMBOL
 		|EXPRS_FLG_PCNT_IS_REGISTER
+		|EXPRS_FLG_OPEN_IS_END
+		|EXPRS_FLG_CLOSE_IS_END
+		|EXPRS_FLG_NO_DOUBLE_PLAIN
 		;
 	if ( (edmask & ED_H_HEX) )
 		flags |= EXPRS_FLG_H_HEX;
@@ -364,9 +375,15 @@ int le_itfc(int flag, EXP_stk *eps)
 		flags |= EXPRS_FLG_NO_PRECEDENCE;
 	if ( no_white_space_allowed )
 		flags |= EXPRS_FLG_WS_DELIMIT;
+	if ( (macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11)) )
+		flags |= EXPRS_FLG_SPECIAL_UNARY|EXPRS_FLG_NO_LOGICALS;
+	if ( (macxx_name_mask&(MACXX_M_68K|MACXX_M_11)) )
+		flags |= EXPRS_FLG_PCNT_REGISTER;
+	if ( (macxx_name_mask&(MACXX_M_68K)) )
+		flags |= EXPRS_FLG_LEN_QUALIFIERS;
 	libExprsSetFlags(exprsDef, flags, NULL);
 	libExprsSetRadix(exprsDef, current_radix, NULL);
-/*	libExprsSetVerbose(exprsDef,1,NULL);  */
+	libExprsSetVerbose(exprsDef,(edmask&ED_ALTVER) ? 1 : 0,NULL);
 	eErrs = libExprsParseToRPN(exprsDef, actualTknPtr, 0);
 	if ( eErrs > EXPR_TERM_END )
 	{

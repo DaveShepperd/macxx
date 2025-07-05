@@ -81,57 +81,12 @@ typedef struct
 	ExprsPoolID_t mPoolID;
 } ExprsPool_t;
 
-#if 0	/* This has been moved to operstuff.h */
-/** ExprsTermTypes_t - Ident of the various types of terms
- *  that may be parsed.
- **/
-typedef enum
-{
-	/**
-	 * If any of this is changed, be sure to also change the
-	 * Precedence[] table found in lib_exprs.c to reflect the actual
-	 * precedence.
-	 **/
-	EXPRS_TERM_NULL,
-	EXPRS_TERM_SYMBOL,	/* Symbol */
-	EXPRS_TERM_SYMBOL_COMPLEX, /* Complex symbol */
-	EXPRS_TERM_FUNCTION,/* Function call (not supported yet) */
-	EXPRS_TERM_STRING,	/* Text string (text delimited with quotes) */
-	EXPRS_TERM_FLOAT,	/* floating point number */
-	EXPRS_TERM_INTEGER,	/* integer number */
-	EXPRS_TERM_PLUS,	/* + (unary term in this case) */
-	EXPRS_TERM_MINUS,	/* - (unary term in this case) */
-	EXPRS_TERM_COM,		/* ~ */
-	EXPRS_TERM_NOT,		/* ! */
-	EXPRS_TERM_HIGH_BYTE, /* high byte */
-	EXPRS_TERM_LOW_BYTE,/* low byte */
-	EXPRS_TERM_XCHG,	/* exchange bytes */
-	EXPRS_TERM_POW,		/* ** */
-	EXPRS_TERM_MUL,		/* * */
-	EXPRS_TERM_DIV,		/* / */
-	EXPRS_TERM_MOD,		/* % */
-	EXPRS_TERM_ADD,		/* + (binary terms in this case) */
-	EXPRS_TERM_SUB,		/* - (binary terms in this case) */
-	EXPRS_TERM_ASL,		/* << */
-	EXPRS_TERM_ASR,		/* >> */
-	EXPRS_TERM_GT,		/* > */
-	EXPRS_TERM_GE,		/* >= */
-	EXPRS_TERM_LT,		/* < */
-	EXPRS_TERM_LE,		/* <= */
-	EXPRS_TERM_EQ,		/* == */
-	EXPRS_TERM_NE,		/* != */
-	EXPRS_TERM_AND,		/* & */
-	EXPRS_TERM_XOR,		/* ^ */
-	EXPRS_TERM_OR,		/* | */
-	EXPRS_TERM_LAND,	/* && */
-	EXPRS_TERM_LOR,		/* || */
-	EXPRS_TERM_ASSIGN	/* = */
-} ExprsTermTypes_t;
-#endif
-
-#define EXPRS_TERM_FLAG_LOCAL_SYMBOL	(0x01)	/* term is a local symbol */
-#define EXPRS_TERM_FLAG_REGISTER		(0x02)	/* term is a register */
-#define EXPRS_TERM_FLAG_COMPLEX			(0x04)	/* symbol value is complex */
+#define EXPRS_TERM_FLAG_LOCAL_SYMBOL	(0x001)	/* term is a local symbol */
+#define EXPRS_TERM_FLAG_REGISTER		(0x002)	/* term is a register */
+#define EXPRS_TERM_FLAG_COMPLEX			(0x004)	/* symbol value is complex */
+#define EXPRS_TERM_FLAG_BYTE			(0x008)	/* term qualified as byte (68k) */
+#define EXPRS_TERM_FLAG_WORD			(0x010)	/* term qualified as word (68k) */
+#define EXPRS_TERM_FLAG_LONG			(0x020)	/* term qualified as long (68k) */
 
 /** ExprsTerm_t - definition of the primitive contents of any
  *  individual term.
@@ -160,76 +115,6 @@ typedef struct
 {
 	ExprsPool_t mTermsPool;			/* pool of terms for stack */
 } ExprsStack_t;
-
-#if 0 /* This has been moved to operstuff.h */
-/** ExprsErrs_t - definition of errors that may be returned
- *  by the various expression functions.
- **/
-typedef enum
-{
-	EXPR_TERM_GOOD,
-	EXPR_TERM_END,
-	EXPR_TERM_COMPLEX_VALUE,
-	EXPR_TERM_BAD_OUT_OF_MEMORY,
-	EXPR_TERM_BAD_NO_STRING_TERM,
-	EXPR_TERM_BAD_STRINGS_NOT_SUPPORTED,
-	EXPR_TERM_BAD_SYMBOL_SYNTAX,
-	EXPR_TERM_BAD_SYMBOL_TOO_LONG,
-	EXPR_TERM_BAD_NUMBER,
-	EXPR_TERM_BAD_UNARY,
-	EXPR_TERM_BAD_OPER,
-	EXPR_TERM_BAD_SYNTAX,
-	EXPR_TERM_BAD_TOO_MANY_TERMS,
-	EXPR_TERM_BAD_TOO_MANY_STACKS,
-	EXPR_TERM_BAD_TOO_FEW_TERMS,
-	EXPR_TERM_BAD_NO_TERMS,
-	EXPR_TERM_BAD_NO_CLOSE,
-	EXPR_TERM_BAD_UNSUPPORTED,
-	EXPR_TERM_BAD_DIV_BY_0,
-	EXPR_TERM_BAD_UNDEFINED_SYMBOL,
-	EXPR_TERM_BAD_NO_SYMBOLS,
-	EXPR_TERM_BAD_SYMBOL_TABLE_FULL,
-	EXPR_TERM_BAD_LVALUE,
-	EXPR_TERM_BAD_RVALUE,
-	EXPR_TERM_BAD_PARAMETER,
-	EXPR_TERM_BAD_NOLOCK,		/*! error doing pthread lock. See errno for additional error. */
-	EXPR_TERM_BAD_NOUNLOCK,		/*! error doing pthread unlock. See errno for additional error. */
-	EXPR_TERM_BAD_UNDEFINED
-} ExprsErrs_t;
-#endif
-
-#if 0
-/** ExprsSymTermTypes_t - definition of the subset of types
- *  of terms stored in an external symbol table.
- **/
-typedef enum
-{
-	EXPRS_SYM_TERM_NULL=EXPRS_TERM_NULL,
-	EXPRS_SYM_TERM_STRING=EXPRS_TERM_STRING,	/* Text string */
-	EXPRS_SYM_TERM_FLOAT=EXPRS_TERM_FLOAT,		/* 64 bit floating point number */
-	EXPRS_SYM_TERM_INTEGER=EXPRS_TERM_INTEGER,	/* 64 bit integer number */
-	EXPRS_SYM_TERM_COMPLEX=EXPRS_TERM_SYMBOL_COMPLEX /* type defined by symbol manager */
-} ExprsSymTermTypes_t;
-
-/** ExprsSymTerm_t - definition of the primitive contents of any
- *  individual term as stored in an external symbol table. The
- *  valid types are a subset of what the expression parser would
- *  use internally.
- **/
-typedef struct
-{
-	ExprsSymTermTypes_t termType;	/* type of item this is */
-	const void *symbolExtra;		/* use for anything */
-	int flags;
-	union
-	{
-		char *string;
-		double f64;
-		long s64;
-		void *complex;				/* defined by user */
-	} value;
-} ExprsSymTerm_t;
-#endif
 
 /** ExprsMsgSeverity_t - define the severity of messages that
  *  may be emitted by the parser. */
@@ -267,11 +152,6 @@ typedef struct
 	void *memArg;									/*! Argument to pass to above memory callbacks */
 	void (*msgOut)(void *msgArg, ExprsMsgSeverity_t severity, const char *msg);	/*! Message (error and info) output callback */
 	void *msgArg;									/*! Argument to pass to msgOut callback */
-#if 0
-	ExprsErrs_t (*symGet)(void *symArg, const char *symName, ExprsSymTerm_t *symValue);	/*! Symbol value fetch callback */
-	ExprsErrs_t (*symSet)(void *symArg, const char *symName, const ExprsSymTerm_t *symValue);	/*! Symbol value set callback */
-	void *symArg;									/*! Argument to pass to symGet/symSet callbacks */
-#endif
 } ExprsCallbacks_t;
 
 typedef unsigned char ExprsPrecedence_t;
@@ -298,6 +178,11 @@ typedef unsigned char ExprsPrecedence_t;
 #define EXPRS_FLG_LOCAL_SYMBOLS		0x00020000	/*! Local symbols are expressed via decimalNumber$ (cannot be combined with POST_DOLLAR_HEX) */
 #define EXPRS_FLG_DOT_SYMBOL		0x00040000	/*! Symbols can begin with leading period (.) (forces flag 0x2 = NO_FLOAT) */
 #define EXPRS_FLG_PCNT_IS_REGISTER	0x00080000	/*! A unary '%' means term is a register */
+#define EXPRS_FLG_OPEN_IS_END		0x00100000	/*! A lone open expression w/o leading operator is just the end */
+#define EXPRS_FLG_CLOSE_IS_END		0x00200000	/*! A lone close expression is just the end */
+#define EXPRS_FLG_NO_DOUBLE_PLAIN	0x00400000	/*! A second plain term terminates expression parse */
+#define EXPRS_FLG_PCNT_REGISTER		0x00800000	/*! A percent sign signals register type */
+#define EXPRS_FLG_LEN_QUALIFIERS	0x01000000	/*! Term can have length qualifiers (68k mode) */
 
 /** ExprsDef_t - definition of expression stack internal
  *  variables. With the exception of userArg1 and userArg2

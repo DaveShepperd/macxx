@@ -38,7 +38,7 @@ static char help_grnhill_mark[1], help_predef_mark[1];
 
 #define UPC help_uppercase_mark
 
-static char *help_msg[] = {
+static const char *help_msg[] = {
     "Usage: ",UPC,macxx_name," file1 file2 ... [",opt_delim,"","option]\n",
     "Where option is one of ([] implies optional text):\n",
     opt_delim,"[no]output", "[=name]	- name object file\n",
@@ -116,7 +116,7 @@ int display_help(void)
     int i, upc = 0;
     for (i=0;help_msg[i] && i < sizeof(help_msg)/sizeof(char *);++i)
     {
-        char *s;
+        const char *s;
         if (help_msg[i] == opt_delim)
         {
             fputs(opt_delim,stderr);
@@ -139,7 +139,7 @@ int display_help(void)
         }
         if (help_msg[i] == help_grnhill_mark)
         {
-            if (!were_mac68k )
+            if ( !(macxx_name_mask&MACXX_M_68K) /* were_mac68k */ )
             {
                 i += 3;     /* skip the delim, option name and text */
             }
@@ -147,7 +147,7 @@ int display_help(void)
         }
 		if (help_msg[i] == help_predef_mark)
 		{
-			if ( !were_mac11 )
+			if ( !(macxx_name_mask&MACXX_M_11) /* were_mac11 */ )
 			{
 				i += 3;     /* skip the delim, option name and text */
 			}
@@ -155,7 +155,7 @@ int display_help(void)
 		}
         if (help_msg[i] == help_jerry_mark)
         {
-            if (!were_mactj)
+            if (!(macxx_name_mask&MACXX_M_TJ) /* were_mactj */ )
             {    /* If not mactj, */
                 i += 3;     /* skip the delim, option name and text */
             }
@@ -163,7 +163,7 @@ int display_help(void)
         }
         if (help_msg[i] == help_cmos_mark)
         {
-            if (!were_mac65)
+            if (!(macxx_name_mask&MACXX_M_65) /* were_mac65 */ )
             {
                 i += 3;     /* skip the delim, option name and text */
             }
@@ -171,13 +171,13 @@ int display_help(void)
         }
 		if (help_msg[i] == help_2_pass_mark)
 		{
-			if ( !(were_mac65 || were_mac68 || were_mac69 || were_mac11) )
+			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11)) /* (were_mac65 || were_mac68 || were_mac69 || were_mac11) */ )
 				i += 3;     /* skip the delim, option name and text */
 			continue;
 		}
         if (help_msg[i] == help_cmos_default)
         {
-            if (!were_mac65)
+            if (!(macxx_name_mask&MACXX_M_65) /* were_mac65 */ )
             {
                 i += 2;     /* skip the delim and option name */
             }
@@ -185,7 +185,7 @@ int display_help(void)
         }
 		if ( help_msg[i] == help_2_pass_default )
 		{
-			if ( !(were_mac65 || were_mac68 || were_mac69) )
+			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11)) /* (were_mac65 || were_mac68 || were_mac69) */ )
 				i += 2;		/* skip the delim and option name */
 			continue;
 		}

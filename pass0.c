@@ -143,7 +143,7 @@ void pass0( int fileNumber)
             }
             continue;
         }
-#if defined(MAC68K)
+#if defined(MAC_68K)
         dotwcontext = 0;
 #endif
         if (tokt == TOKEN_strng || tokt == TOKEN_local)
@@ -151,7 +151,7 @@ void pass0( int fileNumber)
             int gbl_flg = 0;       /* assume not global */
             c = *inp_ptr;          /* pickup next item */
             if (c == ':'
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 || ( options[QUAL_GRNHILL] 
                      && !white_space_section
                      && tokt == TOKEN_strng
@@ -181,7 +181,7 @@ void pass0( int fileNumber)
                 }
                 if (condit_word < 0)
                 {
-#if defined(MAC68K)
+#if defined(MAC_68K)
                     white_space_section = 3;
                     no_white_space_allowed = 0;
 #endif
@@ -199,7 +199,7 @@ void pass0( int fileNumber)
                 f1_defg(gbl_flg);   /* define a label */
                 list_stats.pc = current_offset;
                 list_stats.pc_flag = 1;
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 ++white_space_section;
 #endif
                 continue;       /* rest of line is ok */
@@ -209,7 +209,7 @@ void pass0( int fileNumber)
                 found_symbol(gbl_flg, tokt);
                 continue;
             }
-#if defined(MAC68K)
+#if defined(MAC_68K)
             if ( !white_space_section )
             {
                 char *einp = tkn_ptr + strlen(token_pool);
@@ -320,7 +320,7 @@ void pass0( int fileNumber)
                     else
                     {
                         int rv;
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         if ( options[QUAL_GRNHILL] )
                         {
                             no_white_space_allowed = 1;

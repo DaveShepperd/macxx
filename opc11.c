@@ -27,9 +27,10 @@
 
 /* The following are variables specific to the particular assembler */
 
-char macxx_name[] = "mac11";
-char *macxx_target = "pdp11";
-char *macxx_descrip = "Cross assembler for the PDP11.";
+const int macxx_name_mask = MACXX_M_11;
+const char macxx_name[] = "mac11";
+const char *macxx_target = "pdp11";
+const char *macxx_descrip = "Cross assembler for the PDP11.";
 
 #if 0
 unsigned short macxx_rel_salign = 1;    /* default alignment for .REL. segment */

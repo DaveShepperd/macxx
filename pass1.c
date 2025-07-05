@@ -71,7 +71,7 @@ int seg_pool_size;      /* elements remaining in segment pool */
 int no_white_space_allowed;
 int squawk_syms;
 
-#if defined(MAC68K)
+#if defined(MAC_68K)
 int white_space_section;
 int dotwcontext;
 #endif
@@ -352,7 +352,7 @@ int get_text( void )
         }
     }
     inp_ptr = inp_str;       /* reset the pointer */
-#if defined(MAC68K)
+#if defined(MAC_68K)
     white_space_section = 0;
     no_white_space_allowed = 0;
 #endif
@@ -1125,7 +1125,7 @@ int get_token( void )
     token_value = token_minus = 0;
     while (1)
     {          /* in order to allow continuations */
-#if defined(MAC68K)
+#if defined(MAC_68K)
         if ( isspace(*inp_ptr) && options[QUAL_GRNHILL] )
         {
             ++white_space_section;
@@ -1138,7 +1138,7 @@ int get_token( void )
 		actualTknPtr = tkn_ptr;	/* keep the real start (needed by mac8080) */
         cur_char = c;     /* say what the token is */
         ct = cttbl[(int)c];       /* decode the character */
-#if defined(MAC68K)
+#if defined(MAC_68K)
 /*        printf("Into get_token(). ct=0x%02X, c='%c', inp_ptr=\"%s\"",
             ct, c, inp_ptr ); */
         if ( options[QUAL_GRNHILL] && (white_space_section > 2) && no_white_space_allowed )
@@ -1176,7 +1176,7 @@ int get_token( void )
                 {
                     if (*inp_ptr == '\n')
                     {  /* next thing a \n? */
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         int s_ws_sec, s_no_ws_a;
                         s_ws_sec = white_space_section;
                         s_no_ws_a = no_white_space_allowed;
@@ -1185,7 +1185,7 @@ int get_token( void )
 #endif
                         if (get_text() == EOF)
                             return(EOF); /* get another line */
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         white_space_section = s_ws_sec;
                         no_white_space_allowed = s_no_ws_a;
 #endif
@@ -1312,7 +1312,7 @@ int get_token( void )
                         }
                         else    /* It's a period */
                         {
-#if MAC68K
+#if MAC_68K
                             /* Motorola has this syntax where a .W or .L can suffix an expression */
                             if ( dotwcontext )
                             {
@@ -1415,7 +1415,7 @@ int get_token( void )
                         *rs++ = _toupper(c);
                     }
                 }
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 /* Motorola has this syntax where a .W, .L or .B can suffix a label or expression */
                 if ( dotwcontext && rs > token_pool+2 )
                 {
@@ -1436,7 +1436,7 @@ int get_token( void )
                 break;
             }          /* -- case */
         }
-#if defined(MAC68K)
+#if defined(MAC_68K)
         if ( !options[QUAL_GRNHILL] || !no_white_space_allowed )
 #endif
             while (isspace(*inp_ptr))
@@ -1476,7 +1476,7 @@ void f1_eol( void )
     unsigned short ct;
     while (cttbl[(int)*inp_ptr] & CT_WS) ++inp_ptr;
     ct = cttbl[(int)*inp_ptr];
-#if defined(MAC68K)
+#if defined(MAC_68K)
     if ( options[QUAL_GRNHILL] && (no_white_space_allowed || white_space_section > 2) )
         ct = CT_SMC;
 #endif
@@ -1688,7 +1688,7 @@ int f1_defg(int flag)
 			f1_eatit();
             return -1;
         }
-#if defined(MAC68K)
+#if defined(MAC_68K)
         if ( options[QUAL_GRNHILL] )
         {
             white_space_section = 2;
@@ -2294,7 +2294,7 @@ void pass1( int fileNumber)
 #if defined(MAC_PP)
         line_is_empty = 0;        /* line is not empty */
 #endif
-#if defined(MAC68K)
+#if defined(MAC_68K)
         dotwcontext = 0;
 /*        printf("Processing token=\"%s\", type=%d, rest of line: %s",
             token_pool, tokt, tkn_ptr ); */
@@ -2304,7 +2304,7 @@ void pass1( int fileNumber)
             int gbl_flg = 0;       /* assume not global */
             c = *inp_ptr;          /* pickup next item */
             if (c == ':'
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 || ( options[QUAL_GRNHILL] 
                      && !white_space_section
                      && tokt == TOKEN_strng
@@ -2339,7 +2339,7 @@ void pass1( int fileNumber)
 #endif
                 if (condit_word < 0)
                 {
-#if defined(MAC68K)
+#if defined(MAC_68K)
                     white_space_section = 3;
                     no_white_space_allowed = 0;
 #endif
@@ -2376,7 +2376,7 @@ void pass1( int fileNumber)
                 f1_defg(gbl_flg);   /* define a label */
                 list_stats.pc = current_offset;
                 list_stats.pc_flag = 1;
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 ++white_space_section;
 #endif
 #endif
@@ -2387,7 +2387,7 @@ void pass1( int fileNumber)
                 found_symbol(gbl_flg, tokt);
                 continue;
             }
-#if defined(MAC68K)
+#if defined(MAC_68K)
             if ( !white_space_section )
             {
                 char *einp = tkn_ptr + strlen(token_pool);
@@ -2551,7 +2551,7 @@ void pass1( int fileNumber)
                     else
                     {
                         int rv;
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         if ( options[QUAL_GRNHILL] )
                         {
                             no_white_space_allowed = 1;

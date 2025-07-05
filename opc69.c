@@ -77,9 +77,10 @@ Change Log
 
 /* The following are variables specific to the particular assembler */
 
-char macxx_name[] = "mac69";
-char *macxx_target = "6809";
-char *macxx_descrip = "Cross assembler for the 6809.";
+const int macxx_name_mask = MACXX_M_69;
+const char macxx_name[] = "mac69";
+const char *macxx_target = "6809";
+const char *macxx_descrip = "Cross assembler for the 6809.";
 
 #if 0
 unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */

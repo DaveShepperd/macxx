@@ -16,26 +16,28 @@
 #    You should have received a copy of the GNU General Public License
 #
 
-COREO = symbol.o hashit.o memmgt.o dumdir.o dummy.o opcnds.o err2str.o add_defs.o utils.o
-CORE1 = debug.o help.o le_itfc.o lib_exprs.o
-ALLO0 = macxx.o gc_table.o gc.o opcode.o
-ALLO1 = endlin.o outx.o pass2.o macros.o psuedo_ops.o
-ALLO2 = listctrl.o sortsym.o stack_ops.o qksort.o
-ALLO3 = $(COREO) $(CORE1)
+CORE0 = symbol.o hashit.o memmgt.o dumdir.o dummy.o opcnds.o err2str.o add_defs.o utils.o
+CORE1 = debug.o help.o 
+CORE2 = macxx.o gc_table.o gc.o opcode.o
+CORE3 = endlin.o outx.o pass2.o macros.o psuedo_ops.o
+CORE4 = listctrl.o sortsym.o stack_ops.o qksort.o
+EXPx  = le_itfc.o lib_exprs.o
+PASSx = pass0.o pass1.o
+MOST = $(CORE0) $(CORE1) $(CORE2) $(CORE3) $(CORE4)
 
-ALLO65 = exprs65.o char_tbl65.o opc65.o pst65.o pass0.o pass1.o
-ALLO68 = exprs68.o char_tbl65.o opc68.o pst68.o pass0.o pass1.o
-ALLO69 = exprs69.o char_tbl65.o opc69.o pst69.o pass0.o pass1.o
-ALLOAS = exprs.o char_table.o opcas.o pstas.o dummy_pass0.o pass1.o
-ALLOTJ = exprs.o char_table.o opctj.o psttj.o dummy_pass0.o pass1.o
-ALLO8080 = exprs.o char_table.o opc8080.o pst8080.o pass0.o pass1.o
-ALLO68K = exprs68k.o char_table.o opc68k.o pst68k.o m68types.o dummy_pass0.o pass168k.o 
-ALLO11 = exprs11.o char_tbl65.o opc11.o  pst11.o m11types.o pass0.o pass1.o 
+ALLO65   = exprs65.o char_tbl65.o opc65.o pst65.o             $(MOST) $(PASSx) $(EXPx)
+ALLO68   = exprs68.o char_tbl65.o opc68.o pst68.o             $(MOST) $(PASSx) $(EXPx)
+ALLO69   = exprs69.o char_tbl65.o opc69.o pst69.o             $(MOST) $(PASSx) $(EXPx)
+ALLO11   = exprs11.o char_tbl65.o opc11.o pst11.o m11types.o  $(MOST) $(PASSx) $(EXPx)
+ALLO8080 = exprs.o char_table.o opc8080.o pst8080.o           $(MOST) $(PASSx) $(EXPx)
+ALLOAS   = exprs.o char_table.o opcas.o pstas.o dummy_pass0.o pass1.o $(MOST) $(EXPx)
+ALLOTJ   = exprs.o char_table.o opctj.o psttj.o dummy_pass0.o pass1.o $(MOST) $(EXPx)
+ALLO68K  = exprs68k.o char_table.o opc68k.o pst68k.o m68types.o dummy_pass0.o pass168k.o $(MOST)
 
 ALLOPP0 = macxx_pp.o pass1_pp.o lstctlpp.o opcode_pp.o
 ALLOPP1 = gc_tblpp.o gc_pp.o exprs_pp.o macros_pp.o
 ALLOPP2 = psdo_ops_pp.o pstpp.o opcpp.o char_table.o
-ALLOPP3 = help_pp.o $(COREO)
+ALLOPP3 = help_pp.o $(CORE0)
 
 ALLH = structs.h header.h ct.h token_defs.h token.h
 
@@ -100,28 +102,28 @@ endef
 macpp$(EXE) : $(MAKEFILE) $(ALLOPP0) $(ALLOPP1) $(ALLOPP2) $(ALLOPP3) 
 	$(link_it)
 
-mactj$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOTJ) 
+mactj$(EXE) : $(MAKEFILE) $(ALLOTJ) 
 	$(link_it)
 
-mac8080$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO8080) 
+mac8080$(EXE) : $(MAKEFILE) $(ALLO8080) 
 	$(link_it)
 
-mac65$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO65) 
+mac65$(EXE) : $(MAKEFILE) $(ALLO65) 
 	$(link_it)
 
-mac68$(EXE):  $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68)
+mac68$(EXE):  $(MAKEFILE) $(ALLO68)
 	$(link_it)
 
-mac68k$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO68K) 
+mac68k$(EXE) : $(MAKEFILE) $(ALLO68K) 
 	$(link_it)
 
-mac69$(EXE):  $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO69)
+mac69$(EXE):  $(MAKEFILE) $(ALLO69)
 	$(link_it)
 
-macas$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLOAS) 
+macas$(EXE) : $(MAKEFILE) $(ALLOAS) 
 	$(link_it)
 
-mac11$(EXE) : $(MAKEFILE) $(ALLO0) $(ALLO1) $(ALLO2) $(ALLO3) $(ALLO11)
+mac11$(EXE) : $(MAKEFILE) $(ALLO11)
 	$(link_it)
 
 dmpod$(EXE) : dmpod.o
@@ -194,7 +196,7 @@ exprs68.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h 
 exprs68k.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC68K -o $@ $<
+	$C -DMAC_68K -o $@ $<
 
 exprs69.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   exproper.h listctrl.h lstcnsts.h operstuff.h
@@ -224,18 +226,29 @@ lib_exprs.o : lib_exprs.c lib_exprs.h operstuff.h
 pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC68K -o $@ $<
+	$C -DMAC_68K -o $@ $<
 
 pass18080.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_8080 -o $@ $<
 
-.PHONY: clean
+.PHONY: clean show
 
 clean :
 	$(ECHO) $(DELIM)    Cleaning ...$(DELIM)
 	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE) mk_operstuff$(EXE) operstuff.h *.o *.b *.d *.E 
+
+show :
+	$(ECHO) $(DELIM) ALLO65   = $(ALLO65) $(DELIM)
+	$(ECHO) $(DELIM) ALLO68   = $(ALLO68) $(DELIM)
+	$(ECHO) $(DELIM) ALLO69   = $(ALLO69) $(DELIM)
+	$(ECHO) $(DELIM) ALLO11   = $(ALLO11) $(DELIM)
+	$(ECHO) $(DELIM) ALLO8080 = $(ALLO8080) $(DELIM)
+	$(ECHO) $(DELIM) ALLOAS   = $(ALLOAS) $(DELIM)
+	$(ECHO) $(DELIM) ALLOTJ   = $(ALLOTJ) $(DELIM)
+	$(ECHO) $(DELIM) ALLO68K  = $(ALLO68K) $(DELIM)
+	$(ECHO) $(DELIM) ALLOPP   = $(ALLOPP) $(DELIM)
 
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 

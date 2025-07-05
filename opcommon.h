@@ -82,7 +82,11 @@ void opcinit( void )          /* preloads the opcode table */
             if ((opc->class&OPCL_TOM) == 0) continue;
         }
 #endif
-        legal_am = opc->amodes;
+#if defined(MAC_68K)
+		legal_am = opc->bwl;
+#else
+		legal_am = opc->amodes;
+#endif
 #endif
         if (token_pool_size <= max_opcode_length+1)
             get_token_pool(max_opcode_length+1, 1);

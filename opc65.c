@@ -42,9 +42,10 @@ Change Log
 
 /* The following are variables specific to the particular assembler */
 
-char macxx_name[] = "mac65";
-char *macxx_target = "6502";
-char *macxx_descrip = "Cross assembler for the 6502, 65C02 and 65816.";
+const int macxx_name_mask = MACXX_M_65;
+const char macxx_name[] = "mac65";
+const char *macxx_target = "6502";
+const char *macxx_descrip = "Cross assembler for the 6502, 65C02 and 65816.";
 
 #if 0
 unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */

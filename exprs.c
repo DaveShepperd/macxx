@@ -23,7 +23,7 @@ Change Log
     03/26/2022	- Changed added support for MAC68  - Tim Giddens
 
 ******************************************************************************/
-#if defined(MAC68K)
+#if defined(MAC_68K)
     #include "m68k.h"
 #endif
 /*********************************************tg*/
@@ -54,7 +54,7 @@ Change Log
 int exprs_nest;
 EXP_stk exprs_stack[EXPR_MAXSTACKS];
 
-#if defined(MAC68K)
+#if defined(MAC_68K)
 extern int dotwcontext;
 #endif
 
@@ -490,7 +490,7 @@ int compress_expr( EXP_stk *exptr )
                 sym_ptr = src->expr_sym;
 				exptr->base_page_reference |= sym_ptr->flg_base;
                 exptr->register_reference |= sym_ptr->flg_register;
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 exptr->register_mask |= sym_ptr->flg_regmask;
 #endif
                 if ( sym_ptr->flg_defined )
@@ -499,7 +499,7 @@ int compress_expr( EXP_stk *exptr )
                     {
                         dst->expr_code = EXPR_VALUE;
                         dst->expr_value = sym_ptr->ss_value;
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         if (sym_ptr->flg_regmask) dst->expr_flags = EXPR_FLG_REGMASK;
                         else if (sym_ptr->flg_register) dst->expr_flags = EXPR_FLG_REG;
 #endif
@@ -748,7 +748,7 @@ int compress_expr( EXP_stk *exptr )
                         break;
                     }
                 case EXPROPER_SUB: {
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         if ((op2->expr_flags&EXPR_FLG_REG) != 0 &&
                             (op1->expr_flags&EXPR_FLG_REG) != 0)
                         {
@@ -813,7 +813,7 @@ int compress_expr( EXP_stk *exptr )
                         break;
                     }
                 case EXPROPER_OR: {
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         if (op1->expr_flags != 0 && op2->expr_flags != 0)
                         {
                             if (exptr->register_scale != 0)
@@ -1235,7 +1235,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                         expr_ptr->expr_sym = sym_ptr;
                         expr_ptr->expr_value = 0;
 						eps->forward_reference = 1;     /* signal this expression contains a forward reference */
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         if ( !sym_ptr->flg_global && sym_ptr->ss_string[0] == '.' 
                              && ( sym_ptr->ss_string[1] == 'L' || sym_ptr->ss_string[1] == 'l') )
                         {
@@ -1404,7 +1404,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                             return(eps->ptr = -1);
                         }
                         while (++inp_ptr,isspace(*inp_ptr)); /* skip over white space */
-#if defined(MAC68K)
+#if defined(MAC_68K)
                         --eps->paren_cnt; /* found a matching close paren */
                         if (inp_ptr[0] == '.')
                         { /* look for a trailing .W, .B or .L */
@@ -1527,7 +1527,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                     bad_token(tkn_ptr,"Premature end of line");
                     return(eps->ptr);
                 }
-#if defined(MAC68K)
+#if defined(MAC_68K)
                 if (oper_save == '/' && eps->register_reference)
                 {
                     if (do_exprs(1,eps) < 0) return(eps->ptr = -1); /* recurse */
@@ -1554,7 +1554,7 @@ static int do_exprs( int flag, EXP_stk *eps )
             }          /* -- TOKEN_oper */
         }             /* -- switch (token_type) */
         c = *inp_ptr;      /* pick up next char */
-#if defined(MAC68K)
+#if defined(MAC_68K)
 /*        printf("Falling out of do_exprs(). token=\"%s\", inp_ptr=\"%s\", rest of line=%s",
             token_pool, inp_ptr, tkn_ptr );                                       */
         if ( dotwcontext && c == '.' )
@@ -1633,7 +1633,7 @@ int exprs( int relative, EXP_stk *eps )
 	eps->stack = sSave; /* Except for these three things */
 	eps->tag = tagSave;
 	eps->tag_len = tagLenSave;
-#if !defined(MAC_PP)
+#if !defined(MAC_PP) && !defined(MAC_68K)
 	if ( !(edmask&ED_ALTEXP) )
 		err = do_exprs(1,eps);
 	else
@@ -1681,7 +1681,7 @@ void dump_expr(EXP_stk *eps, int noTag)
     printf("\t\tfwd_reference = %d\n\t\tbase_page = %d\n\t\tregister_reference = %d\n",
             eps->forward_reference,eps->base_page_reference,
             eps->register_reference);
-#ifdef MAC68K
+#ifdef MAC_68K
     printf("\t\tforce_short = %d\n\t\tforce_long = %d\n",eps->force_short,
             eps->force_long);
 #endif

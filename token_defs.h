@@ -87,7 +87,7 @@ typedef enum {
    EXPR_SEG   =0x4C,	/* segment pointer follows */
    EXPR_LINK  =0x60,	/* link to another expression */
 
-#if defined(MAC68K)
+#if defined(MAC_68K)
     EXPR_MAXSTACKS =7,	/* max number of expression stacks */
 #else
     EXPR_MAXSTACKS =4,	/* max number of expression stacks */
@@ -148,6 +148,7 @@ enum misc {
 	ED_8085	 =0x00200000,	/* enable 8085 instructions */
 	ED_ALTEXP=0x00400000,	/* enable use of le_itfc */
 	ED_PRECED=0x00800000,	/* enable expression precedence */
+	ED_ALTVER=0x01000000,
 	ED_END_OF_LIST			/* Just leave this as the last one (so the missing comma doesn't cause error) */
 };
 

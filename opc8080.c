@@ -41,9 +41,10 @@ Change Log
 
 /* The following are variables specific to the particular assembler */
 
-char macxx_name[] = "mac8080";
-char *macxx_target = "8080";
-char *macxx_descrip = "Cross assembler for the 8080.";
+const int macxx_name_mask = MACXX_M_8080;
+const char macxx_name[] = "mac8080";
+const char *macxx_target = "8080";
+const char *macxx_descrip = "Cross assembler for the 8080.";
 
 unsigned short macxx_salign = 0;    /* default alignment segments by LLF */
 unsigned short macxx_dalign = 0;    /* default alignment data within segment */

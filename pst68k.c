@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define MAC68K
+#define MAC_68K
 
 #include "pst_tokens.h"
 
