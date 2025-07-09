@@ -207,8 +207,8 @@ void* mem_realloc(void *old, int nbytes, char *file, int line)
 		siz = hdr->size;
 		if ( hdr->magic != PRE_MAGIC )
 		{
-			fprintf(stderr, "%%%s-F-FATAL, %s:%d realloc'd %08lX with corrupted header.\n",
-					macxx_name, file, line, (unsigned long)old);
+			fprintf(stderr, "%%%s-F-FATAL, %s:%d realloc'd %p with corrupted header.\n",
+					macxx_name, file, line, old);
 			abort();
 		}
 #if defined(LLF) || defined(MACXX)
@@ -217,8 +217,8 @@ void* mem_realloc(void *old, int nbytes, char *file, int line)
 		end = (unsigned long *)((char *)old + hdr->size);
 		if ( *end != POST_MAGIC )
 		{
-			fprintf(stderr, "%%%s-F-FATAL, %s:%d realloc'd %08lX with corrupted trailer.\n",
-					macxx_name, file, line, (unsigned long)old);
+			fprintf(stderr, "%%%s-F-FATAL, %s:%d realloc'd %p with corrupted trailer.\n",
+					macxx_name, file, line, old);
 			if ( hdr->line > 0 )
 				fprintf(stderr, "              area allocated by %s:%d\n", hdr->file, hdr->line);
 			abort();

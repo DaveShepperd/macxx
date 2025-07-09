@@ -169,7 +169,7 @@ static void *pointToNextInPool(ExprsDef_t *exprs, ExprsPool_t *pool, int increme
 			name = PoolNames[0];
 			if ( pool->mPoolID >= 0 && pool->mPoolID < n_elts(PoolNames) )
 				name = PoolNames[pool->mPoolID];
-			snprintf(eBuf,sizeof(eBuf),"nextPool %d(%s) due to sanity check, bump from %d items (" _FMT_LD_ " bytes) to %d items (" _FMT_LD_ " bytes) failed\n",
+			snprintf(eBuf,sizeof(eBuf),"nextPool %d(%s) due to sanity check, bump from %d items (" _FMT_SZ_ " bytes) to %d items (" _FMT_SZ_ " bytes) failed\n",
 					 pool->mPoolID, name,
 					 pool->mNumAvailable, pool->mNumAvailable * pool->mEntrySize,
 					 newNum, newNum * pool->mEntrySize);
@@ -183,7 +183,7 @@ static void *pointToNextInPool(ExprsDef_t *exprs, ExprsPool_t *pool, int increme
 			name = PoolNames[0];
 			if ( pool->mPoolID >= 0 && pool->mPoolID < n_elts(PoolNames) )
 				name = PoolNames[pool->mPoolID];
-			snprintf(tBuf,sizeof(tBuf),"lib_exprs().getMemoryItem(): Failed to allocate " _FMT_LD_ " bytes for pool %d(%s): %s\n",
+			snprintf(tBuf,sizeof(tBuf),"lib_exprs().getMemoryItem(): Failed to allocate " _FMT_SZ_ " bytes for pool %d(%s): %s\n",
 					 newNum * pool->mEntrySize, pool->mPoolID, name, strerror(errno));
 			exprs->mCallbacks.msgOut(exprs->mCallbacks.msgArg, EXPRS_SEVERITY_FATAL, tBuf);
 			return NULL;
@@ -1519,7 +1519,7 @@ ExprsDef_t *libExprsInit(const ExprsCallbacks_t *callbacks, int termIncs, int st
 	exprs = (ExprsDef_t *)tCallbacks.memAlloc(tCallbacks.memArg, sizeof(ExprsDef_t));
 	if ( !exprs )
 	{
-		snprintf(tBuf,sizeof(tBuf),"libExprsInit(): Failed to allocate " _FMT_LD_ " bytes for ExprsDef_t: %s\n",
+		snprintf(tBuf,sizeof(tBuf),"libExprsInit(): Failed to allocate " _FMT_SZ_ " bytes for ExprsDef_t: %s\n",
 				 sizeof(ExprsDef_t), strerror(errno));
 		tCallbacks.msgOut(tCallbacks.msgArg, EXPRS_SEVERITY_FATAL, tBuf);
 		return NULL;

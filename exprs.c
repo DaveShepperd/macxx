@@ -62,9 +62,6 @@ EXP_stk exprs_stack[EXPR_MAXSTACKS];
 extern int dotwcontext;
 #endif
 
-#define LONG_MSB (((unsigned long)__LONG_MAX__)+1) /* 0x80000000l; */
-#define LONG_MAX (__LONG_MAX__)
-
 int quoted_ascii_strings = 0;
 static int do_exprs( int flag, EXP_stk *eps );
 extern int no_white_space_allowed;

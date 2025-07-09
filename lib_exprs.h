@@ -57,17 +57,23 @@
 #define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
 #endif
 
-#ifndef _FMT_LD_
-#if __SIZEOF_SIZE_T__ == 4
-#define _FMT_LD_ "%d"
+#ifndef _FMT_SZ_
+    #if __SIZEOF_SIZE_T__ == 4
+        #define _FMT_SZ_ "%d"
+    #endif
+    #if __SIZEOF_SIZE_T__ == 8
+        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
+            #define _FMT_SZ_ "%lld"
+        #else
+            #define _FMT_SZ_ "%ld"
+        #endif
+    #endif
 #endif
-#if __SIZEOF_SIZE_T__ == 8
-#define _FMT_LD_ "%ld"
+
+#ifndef _FMT_SZ_
+  #error "Failed to define _FMT_SZ_"
 #endif
-#endif
-#ifndef _FMT_LD_
-#error "Need to define _FMT_LD_. __SIZEOF_SIZE_T__ is " __SIZEOF_SIZE_T__;
-#endif
+
 #define OPERSTUFF_GET_ENUM 1
 #include "operstuff.h"
 

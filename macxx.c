@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
     strcpy(emsg,"\001 Version \002, \003");
     gc_argc = argc;                      /* pass argument pointers to GC */
     gc_argv = argv;
-    unix_time = time((long *)0);         /* get ticks since 1970 */
+    unix_time = time(NULL);         /* get ticks since 1970 */
     our_time = localtime(&unix_time);    /* get current time of year */
     snprintf(ascii_date,sizeof(ascii_date),"\"%s %02d %4d %02d:%02d:%02d\"",
             months[our_time->tm_mon],our_time->tm_mday,our_time->tm_year+1900,

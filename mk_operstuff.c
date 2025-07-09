@@ -1,6 +1,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+
+#ifndef _FMT_SZ_
+    #if __SIZEOF_SIZE_T__ == 4
+        #define _FMT_SZ_ "%d"
+    #endif
+    #if __SIZEOF_SIZE_T__ == 8
+        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
+            #define _FMT_SZ_ "%lld"
+        #else
+            #define _FMT_SZ_ "%ld"
+        #endif
+    #endif
+#endif
+
+#ifndef _FMT_SZ_
+  #error "Failed to define _FMT_SZ_"
+#endif
 
 typedef struct
 {
@@ -153,6 +171,20 @@ int main(int argc, char *argv[])
 	inF = NULL;
 	fputs("#if OPERSTUFF_GET_ENUM\n"
 		  "typedef enum\n{\n",stdout);
+	fprintf(stdout,"/* numLines=%d */\n", numLines);
+	fprintf(stdout,	"/* sizeof(char)=" _FMT_SZ_
+					", sizeof(int)=" _FMT_SZ_
+					", sizeof(long)=" _FMT_SZ_
+					", sizeof(void *)=" _FMT_SZ_
+					", sizeof(sizeof)=" _FMT_SZ_
+					", sizeof(time_t)=" _FMT_SZ_ 
+					" */\n",
+				sizeof(char),
+				sizeof(int),
+				sizeof(long),
+				sizeof(char *),
+				sizeof(sizeof(char)),
+				sizeof(time_t));
 	lp = lines;
 	for (ii=0; ii < numLines; ++ii, ++lp)
 	{

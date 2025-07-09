@@ -27,21 +27,47 @@ Change Log
 #ifndef _HEADER_H_
 #define _HEADER_H_ 1
 
+#include <sys/types.h>
+#include <time.h>
+
 #ifndef n_elts
-#define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
+    #define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
 #endif
 
-#if !__LONG_MAX__ || !__SIZEOF_SIZE_T__
-#error This build requires compiler variables __LONG_MAX__ and __SIZEOF_SIZE_T__
+#if !defined(__LONG_MAX__)
+    #error This build requires compiler variable __LONG_MAX__
+#endif
+#if !defined(__SIZEOF_SIZE_T__)
+    #error This build requires compiler variable __SIZEOF_SIZE_T__
+#endif
+#if 0
+    /* Hopefully, sizeof(time_t) is the same as sizeof(size_t) */
+    #if !defined(__SIZEOF_TIME_T__)
+        #error This build requires compiler variable __SIZEOF_TIME_T__
+    #endif
 #endif
 
-#ifndef _FMT_LD_
-#if __SIZEOF_SIZE_T__ == 4
-#define _FMT_LD_ "%d"
+#define LONG_MSB (1l<<(__SIZEOF_LONG__*8-1)) /* 0x80000000l; */
+
+#ifndef LONG_MAX
+    #define LONG_MAX (__LONG_MAX__)
 #endif
-#if __SIZEOF_SIZE_T__ == 8
-#define _FMT_LD_ "%ld"
+
+#ifndef _FMT_SZ_
+    #if __SIZEOF_SIZE_T__ == 4
+        #define _FMT_SZ_ "%d"
+    #endif
+    #if __SIZEOF_SIZE_T__ == 8
+        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
+            #define _FMT_SZ_ "%lld"
+        #else
+            #define _FMT_SZ_ "%ld"
+        #endif
+    #endif
 #endif
+
+#ifndef _FMT_SZ_
+  #error "Failed to define _FMT_SZ_"
 #endif
 
 extern short current_procblk;		/* current procedure block number */
@@ -75,15 +101,8 @@ extern char macxx_nibbles_word;
 extern char macxx_nibbles_long;
 extern unsigned long macxx_lm_default;
 extern unsigned long macxx_edm_default;
-#if 0
-extern unsigned short macxx_rel_dalign;
-extern unsigned short macxx_rel_salign;
-extern unsigned short macxx_abs_dalign;
-extern unsigned short macxx_abs_salign;
-#else
 extern unsigned short macxx_dalign;
 extern unsigned short macxx_salign;
-#endif
 extern unsigned short macxx_min_dalign;
 
 extern int max_symbol_length;
@@ -260,14 +279,12 @@ extern int seg_list_index;
 extern SEG_struct **seg_list;
 extern int subseg_list_index;
 extern SEG_struct **subseg_list;
-extern long unix_time;
+extern time_t unix_time;
 extern int pass;
 extern int quoted_ascii_strings;
 extern unsigned short cttbl[];
 extern char char_toupper[];
 extern char hexdig[];
-
-/* extern int were_mac65, were_mac68, were_mac69, were_mactj, were_MAC_68K, were_macas, were_mac11, were_macpp, were_mac8080; */
 
 extern char **cmd_assems;
 extern char **cmd_includes;

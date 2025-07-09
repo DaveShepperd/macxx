@@ -2,6 +2,24 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <sys/types.h>
+
+#ifndef _FMT_SZ_
+    #if __SIZEOF_SIZE_T__ == 4
+        #define _FMT_SZ_ "%d"
+    #endif
+    #if __SIZEOF_SIZE_T__ == 8
+        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
+            #define _FMT_SZ_ "%lld"
+        #else
+            #define _FMT_SZ_ "%ld"
+        #endif
+    #endif
+#endif
+
+#ifndef _FMT_SZ_
+  #error "Failed to define _FMT_SZ_"
+#endif
 
 #define OP_ALL		(1)	/* A */
 #define OP_NO_PP	(2)	/* N */
@@ -68,7 +86,10 @@ int main(int argc, char *argv[])
 			continue;
 		if ( inBuf[0] == 'S' && inBuf[1] == ',' )
 		{
-			strncpy(sp->str,inBuf+2,sizeof(sp->str));
+			size_t len = strlen(inBuf+2);
+			if ( len > sizeof(sp->str)-1 )
+				len = sizeof(sp->str)-1;
+			memcpy(sp->str,inBuf+2,len);
 			++sp;
 			++numStructs;
 			continue;
@@ -98,19 +119,6 @@ int main(int argc, char *argv[])
 		{
 			switch (ii)
 			{
-#if 0
-				int op;  /* OP - one of A, N or O */
-				int val; /* Val - 1 if no value is allowed */
-				int opt; /* Opt - 1 if value is optional */
-				int num; /* Num - 1 if value must be a number */
-				int out; /* Out - 1 if param is an output file */
-				int str; /* Str - 1 if value is a string */
-				int neg; /* Neg - 1 if param is negatible */
-				char enumName[32]; /* Enum - name of enum */
-				char name[32]; /* Name - name of parameter */
-				char outIdx[32]; /* OutIdx - if param is output file, the index of same */
-				char comment[64]; /* Comment - comment to include */
-#endif
 			case 0:
 				continue;
 			case 1:
@@ -171,6 +179,19 @@ int main(int argc, char *argv[])
 	fclose(inF);
 	inF = NULL;
 	fprintf(stdout,"/* numLines=%d */\n", numLines);
+	fprintf(stdout,	"/* sizeof(char)=" _FMT_SZ_
+					", sizeof(int)=" _FMT_SZ_
+					", sizeof(long)=" _FMT_SZ_
+					", sizeof(void *)=" _FMT_SZ_
+					", sizeof(sizeof)=" _FMT_SZ_
+					", sizeof(time_t)=" _FMT_SZ_ 
+					" */\n",
+				sizeof(char),
+				sizeof(int),
+				sizeof(long),
+				sizeof(char *),
+				sizeof(sizeof(char)),
+				sizeof(time_t));
 	fputs("#if QUALTBL_GET_ENUM\n"
 		  "typedef enum\n{\n",stdout);
 	lp = lines;

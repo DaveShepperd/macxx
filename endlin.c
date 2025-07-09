@@ -571,7 +571,7 @@ void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz)
         t = fwrite(&tmp_length,sizeof(tmp_length),1,tmp_fp);
         if (t != 1)
         {
-            sprintf(emsg,"%%%s-F-FATAL, Tried to fwrite " _FMT_LD_ " bytes (1 elem) to tmp_file, wrote " _FMT_LD_ ".\n\t",
+            sprintf(emsg,"%%%s-F-FATAL, Tried to fwrite " _FMT_SZ_ " bytes (1 elem) to tmp_file, wrote " _FMT_SZ_ ".\n\t",
                     macxx_name,sizeof(tmp_length),t*sizeof(tmp_length));
             perror(emsg);
             EXIT_FALSE;
@@ -607,7 +607,7 @@ int read_from_tmp( void )
         t = fread(&tmp_length,sizeof(tmp_length),1,tmp_fp);
         if (t != 1)
         {
-            sprintf(emsg,"%%%s-F-FATAL, Tried to fread " _FMT_LD_ " bytes (1 elem) from tmp_file, actually read " _FMT_LD_ ".\n\t",
+            sprintf(emsg,"%%%s-F-FATAL, Tried to fread " _FMT_SZ_ " bytes (1 elem) from tmp_file, actually read " _FMT_SZ_ ".\n\t",
                     macxx_name,sizeof(tmp_length),t*sizeof(tmp_length));
             perror(emsg);
             EXIT_FALSE;
@@ -628,13 +628,13 @@ int read_from_tmp( void )
         if (ts->tf_type == TMP_LINK)
         {
             int ferr;
-            ts = tmp_next = (TMP_struct *)ts->tf_length;
+            ts = tmp_next = ts->tf_link;
             ferr = MEM_free((char *)tmp_top);
 #if !defined(SUN)
             if (ferr)
             {    /* give back the memory */
-                sprintf(emsg,"Error (%08X) free'ing %d bytes at %08lX from tmp_pool",
-                        ferr, max_token*8, (long)tmp_top);
+                sprintf(emsg,"Error (%08X) free'ing %d bytes at %p from tmp_pool",
+                        ferr, max_token*8, (void *)tmp_top);
                 err_msg(MSG_WARN,emsg);
             }
 #endif

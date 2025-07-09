@@ -306,8 +306,8 @@ int pass2( void )
 #if !defined(SUN)
                     if (ferr)
                     {   /* give back the memory */
-                        sprintf(emsg,"Error (%08X) free'ing %d bytes at %08lX from tmp_pool",
-                                ferr, max_token*8, (unsigned long)tmp_top);
+                        sprintf(emsg,"Error (%08X) free'ing %d bytes at %p from tmp_pool",
+                                ferr, max_token*8, (void *)tmp_top);
                         err_msg(MSG_WARN,emsg);
                     }
 #endif

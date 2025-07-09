@@ -38,3 +38,5 @@ mac8080
 old
 tim
 test
+*.exe
+.vscode

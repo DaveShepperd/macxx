@@ -754,7 +754,7 @@ static int formvar(unsigned long num, char *where )
     *--vp = hexdig[(int)c];
     if ( vp != where )
     {
-        fprintf(stderr, "OUTX:formvar- bad estimate, %lX != %lX\n", (unsigned long)vp, (unsigned long)where);
+        fprintf(stderr, "OUTX:formvar- bad estimate, %p != %p\n", vp, where);
     }
     return(count+1);
 }
@@ -1128,7 +1128,7 @@ int flushobj( void )
 #else
                 evenodd = 0;
 #endif
-                if (outx_debug > 2) printf("fwriting " _FMT_LD_ " bytes to object file\n",maxop-oline);
+                if (outx_debug > 2) printf("fwriting " _FMT_SZ_ " bytes to object file\n",maxop-oline);
                 fwrite(oline,(int)(maxop-oline)+evenodd,1,outxabs_fp);
                 break;
             }
