@@ -15,6 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <stdlib.h>
 #include "token.h"
 #include "gc_struct.h"
 #include "memmgt.h"
@@ -25,6 +26,7 @@
     #define OPT_DELIM '/'		/* everybody else uses slash */
 #endif
 
+#if 0
 #define QTBL(\
 	noval,			/* t/f if no value is allowed */\
 	optional,		/* t/f if value is optional */\
@@ -54,6 +56,11 @@ index,\
 struct qual qual_tbl[] = {
 #include "qual_tbl.h"
 };
+#else
+#define QUALTBL_GET_OTHERS 1
+#include "qualtbl.h"
+#endif
+
 int max_qual = QUAL_MAX;
 
 int gc_pass, gc_err;
@@ -136,19 +143,22 @@ char *do_option(char *str)
                     }
                     if (!qual_tbl[lc].noval)
                     {
-                        if (qual_tbl[lc].value == 0)
+                        if (qual_tbl[lc].strValue == NULL)
                         {
                             char *beg = s;
                             if (qual_tbl[lc].number)
                             {
-                                while (isdigit(*s)) ++s;
-                                if (s-beg == 0 || sscanf(beg,"%ld",(long *)&qual_tbl[lc].value) != 1)
-                                {
-                                    sprintf(emsg,"Value {%s} on {%c%s} must be number.",
-                                            beg,OPT_DELIM,loc);
-                                    err_msg(MSG_ERROR,emsg);
-                                    gc_err++;
-                                }
+								char *endp = NULL;
+								long ans;
+								ans = strtol(beg,&endp,0);
+								if ( !endp || *endp )
+								{
+									sprintf(emsg,"Value {%s} on {%c%s} must be number.",
+											beg,OPT_DELIM,loc);
+									err_msg(MSG_ERROR,emsg);
+									gc_err++;
+								}
+								qual_tbl[lc].intValue = ans;
                             }
                             else
                             {
@@ -161,13 +171,13 @@ char *do_option(char *str)
                                 {
                                     s += strlen(s);
                                 }
-                                if ((qual_tbl[lc].value = (char *)MEM_alloc(s-beg+1)) == 0)
+                                if ((qual_tbl[lc].strValue = (char *)MEM_alloc(s-beg+1)) == 0)
                                 {
                                     perror("Out of memory while parsing command options");
                                     EXIT_FALSE;
                                 }
-                                strncpy(qual_tbl[lc].value,beg,s-beg);
-                                qual_tbl[lc].value[s-beg] = 0;
+                                strncpy(qual_tbl[lc].strValue,beg,s-beg);
+                                qual_tbl[lc].strValue[s-beg] = 0;
                             }
                         }
                         else

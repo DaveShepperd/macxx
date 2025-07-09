@@ -996,6 +996,9 @@ long condit_word;   /* 32 condition flags */
 
 #include "opcnds.h"
 
+#define IFCOND_MASK ((unsigned long)__LONG_MAX__)
+#define IFCOND_MSB (IFCOND_MASK+1)
+
 typedef enum
 {
 	DFNDF_FALSE = 0,
@@ -1111,7 +1114,7 @@ static unsigned long if_dfndf(DFNDF_sense sense)
 {
 	int val;
 	val = if_dfndf_exprs(sense, (edmask&ED_SIMPLE)?0:1);
-	return (val ? 0l : 0x80000000L);
+	return (val ? 0l : IFCOND_MSB /*0x80000000L*/);
 }
 
 static unsigned long op_ifcondit(char *condition)
@@ -1123,7 +1126,7 @@ static unsigned long op_ifcondit(char *condition)
 	DFNDF_sense dfcond;
 	struct ccn_struct *ccs;
 
-	j = 0x80000000L;     /* assume false */
+	j = IFCOND_MSB; /* 0x80000000L; */     /* assume false */
 	l = strlen(condition);
 	tcon = CCN_MAX;      /* assume nfg */
 	for ( ccs = ccns; ccs->name != 0; ++ccs )
@@ -1169,7 +1172,7 @@ static unsigned long op_ifcondit(char *condition)
 			j = (EXP0.ptr == 1 && EXP0SP->expr_code == EXPR_VALUE);
 			if ( tcon == CCN_REL )
 				j = !j;
-			return j ? 0 : 0x80000000L;
+			return j ? 0 : IFCOND_MSB; /* 0x80000000L; */
 		}
 		exprs(0, &EXP0);       /* get an ABS expression */
 		ans = EXP0SP->expr_value;
@@ -1210,7 +1213,7 @@ static unsigned long op_ifcondit(char *condition)
 				}
 			}
 			if ( tcon == CCN_DIF )
-				j ^= 0x80000000L;
+				j ^= IFCOND_MSB; /* 0x80000000L; */
 			break;
 		}
 	case CCN_B:
@@ -1264,7 +1267,7 @@ static unsigned long op_ifcondit(char *condition)
 			if ( l1 == 0 )
 				j = 0;
 			if ( tcon == CCN_NB )
-				j ^= 0x80000000L;
+				j ^= IFCOND_MSB; /* 0x80000000L; */
 			if ( *inp_ptr == macro_arg_close )
 				++inp_ptr;    /* eat the character */
 			break;
@@ -1330,7 +1333,7 @@ int op_if(void)
 	{
 	    bad_token(tkn_ptr, "Invalid conditional argument");
 	    f1_eatit();		/* Ignore the rest of the line */
-	    retv = 0x80000000L;	/* make the condition not true no matter */
+	    retv = IFCOND_MSB; /* 0x80000000L; */	/* make the condition not true no matter */
 	}
 	else 
 	{
@@ -1404,7 +1407,7 @@ int op_iif(void)
 	tp = tkn_ptr;        /* remember where the .IIF starts */
 	if ( condit_word < 0 )
 	{   /* if currently an unsatisfied conditional */
-		retv = 0x80000000L;
+		retv = IFCOND_MSB; /* 0x80000000L; */
 	}
 	else
 	{
@@ -1417,7 +1420,7 @@ int op_iif(void)
 		if ( tt != TOKEN_strng )
 		{
 			bad_token(tkn_ptr, "Invalid conditional argument");
-			retv = 0x80000000L;
+			retv = IFCOND_MSB; /* 0x80000000L; */
 		}
 	}
 	if ( *inp_ptr == ',' )
@@ -1461,8 +1464,8 @@ int op_iff(void)
 	{
 		return 0;
 	}
-	t = (condit_polarity & 0x80000000) ^ 0x80000000L;
-	condit_word &= 0x7FFFFFFFL;
+	t = (condit_polarity & IFCOND_MSB /* 0x80000000 */) ^ IFCOND_MSB; /* 0x80000000L; */
+	condit_word &= IFCOND_MASK; /* 0x7FFFFFFFL; */
 	condit_word |= t;
 	return 0;
 }
@@ -1479,8 +1482,8 @@ int op_ift(void)
 	{
 		return 0;
 	}
-	t = condit_polarity & 0x80000000L;
-	condit_word &= 0x7FFFFFFFL;
+	t = condit_polarity & IFCOND_MSB; /* 0x80000000L; */
+	condit_word &= IFCOND_MASK; /* 0x7FFFFFFFL; */
 	condit_word |= t;
 	return 0;
 }
@@ -1496,7 +1499,7 @@ int op_iftf(void)
 	{
 		return 0;
 	}
-	condit_word &= 0x7FFFFFFFL;
+	condit_word &= IFCOND_MASK; /* 0x7FFFFFFFL; */
 	return 0;
 }
 

@@ -285,6 +285,7 @@
 			<F N="macxx.html"/>
 			<F N="memmgt.c"/>
 			<F N="mk_operstuff.c"/>
+			<F N="mk_qualtbl.c"/>
 			<F N="obsolete.c"/>
 			<F N="opc11.c"/>
 			<F N="opc65.c"/>
@@ -354,7 +355,7 @@
 			<F N="psttkn68.h"/>
 			<F N="psttkn69.h"/>
 			<F N="psttkn8080.h"/>
-			<F N="qual_tbl.h"/>
+			<F N="qualtbl.h"/>
 			<F N="segdef.h"/>
 			<F N="stab.h"/>
 			<F N="strsub.h"/>
@@ -391,6 +392,9 @@
 				N="Makefile.linux"
 				Type="Makefile"/>
 			<F
+				N="Makefile.linux32"
+				Type="Makefile"/>
+			<F
 				N="Makefile.mingw32"
 				Type="Makefile"/>
 			<F
@@ -400,6 +404,7 @@
 				N="Makefile.pi32"
 				Type="Makefile"/>
 			<F N="operstuff.dat"/>
+			<F N="qualtbl.dat"/>
 			<F N="stab.def"/>
 		</Folder>
 	</Files>

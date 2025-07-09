@@ -23,6 +23,10 @@ Change Log
     03/26/2022	- Changed added support for MAC68  - Tim Giddens
 
 ******************************************************************************/
+#if !__LONG_MAX__ || !__SIZEOF_SIZE_T__
+#error This build requires compiler variables __LONG_MAX__ and __SIZEOF_SIZE_T__
+#endif
+
 #if defined(MAC_68K)
     #include "m68k.h"
 #endif
@@ -57,6 +61,9 @@ EXP_stk exprs_stack[EXPR_MAXSTACKS];
 #if defined(MAC_68K)
 extern int dotwcontext;
 #endif
+
+#define LONG_MSB (((unsigned long)__LONG_MAX__)+1) /* 0x80000000l; */
+#define LONG_MAX (__LONG_MAX__)
 
 int quoted_ascii_strings = 0;
 static int do_exprs( int flag, EXP_stk *eps );
@@ -285,11 +292,11 @@ int compress_expr_psuedo( EXP_stk *ep )
                         {
                             if (op2->expr_value > 0)
                             {
-                                op2->expr_value = 0x7FFFFFFFl;
+                                op2->expr_value = LONG_MAX; /* 0x7FFFFFFFl; */
                             }
                             if (op2->expr_value < 0)
                             {
-                                op2->expr_value = 0x80000000l;
+                                op2->expr_value = LONG_MSB; /* 0x80000000l; */
                             }
                         }
                         else
@@ -795,11 +802,11 @@ int compress_expr( EXP_stk *exptr )
                             err_msg(MSG_WARN,"Attempted divide by 0");
                             if (op2->expr_value > 0)
                             {
-                                op2->expr_value = 0x7FFFFFFFl;
+                                op2->expr_value = LONG_MAX; /* 0x7FFFFFFFl; */
                             }
                             if (op2->expr_value < 0)
                             {
-                                op2->expr_value = 0x80000000l;
+                                op2->expr_value = LONG_MSB; /* 0x80000000l; */
                             }
                         }
                         else

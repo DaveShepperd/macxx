@@ -1128,7 +1128,7 @@ int flushobj( void )
 #else
                 evenodd = 0;
 #endif
-                if (outx_debug > 2) printf("fwriting %d bytes to object file\n",maxop-oline);
+                if (outx_debug > 2) printf("fwriting " _FMT_LD_ " bytes to object file\n",maxop-oline);
                 fwrite(oline,(int)(maxop-oline)+evenodd,1,outxabs_fp);
                 break;
             }

@@ -1,6 +1,6 @@
-# This is for a generic Linux build in 64 bit mode.
+# This is for a generic Linux build in 32 bit mode.
 
-HOST_CPU =
+HOST_CPU = -m32
 DELIM = '
 PiOS32 = 1
 LINUX = 1

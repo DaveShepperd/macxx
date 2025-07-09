@@ -23,22 +23,6 @@
 #include "pragma1.h"
 #endif
 
-struct qual {
-   unsigned int noval:1;	/* value is not allowed */
-   unsigned int optional:1;	/* value is optional */
-   unsigned int number:1;	/* value must be a number */
-   unsigned int output:1;	/* parameter is an output file */
-   unsigned int string:1;	/* option is a string */
-   unsigned int negate:1;	/* value is negatable */
-   unsigned int error:1;	/* field is in error */
-   unsigned int negated:1;	/* option is negated */
-   unsigned int present:1;	/* option found on command line */
-   int qualif;			/* value to .or. into cli_options */
-   char *name;			/* pointer to qualifier ascii string */
-   char index;			/* output file index */
-   char *value;			/* pointer to user's value string */
-};
-
 extern int gc_pass, gc_err;
 
 #if defined(INTERNAL_PACKED_STRUCTS)

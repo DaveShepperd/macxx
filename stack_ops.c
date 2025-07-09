@@ -485,7 +485,7 @@ int op_defstack(void)
 		}
 		else
 		{
-			sprintf(emsg, "Failed to create User Stack - %s: %d entries of %d bytes", tmp_name, tmp_size, totBytes);
+			sprintf(emsg, "Failed to create User Stack - %s: %d entries of " _FMT_LD_ " bytes", tmp_name, tmp_size, totBytes);
 			show_bad_token((inp_ptr), emsg, MSG_ERROR);
 			/* Eat rest of line to suppress warning error about end of line not reached */
 			f1_eatit();

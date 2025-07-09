@@ -21,10 +21,6 @@
 
 #include <pthread.h>
 
-#ifndef n_elts
-#define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
-#endif
-
 /**
  * @brief Example of an generic expression evaluator.
  *
@@ -57,12 +53,23 @@
  * 5.
  */
 
-#define OPERSTUFF_GET_ENUM 1
-#include "operstuff.h"
+#ifndef n_elts
+#define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
+#endif
 
 #ifndef _FMT_LD_
+#if __SIZEOF_SIZE_T__ == 4
+#define _FMT_LD_ "%d"
+#endif
+#if __SIZEOF_SIZE_T__ == 8
 #define _FMT_LD_ "%ld"
 #endif
+#endif
+#ifndef _FMT_LD_
+#error "Need to define _FMT_LD_. __SIZEOF_SIZE_T__ is " __SIZEOF_SIZE_T__;
+#endif
+#define OPERSTUFF_GET_ENUM 1
+#include "operstuff.h"
 
 typedef enum
 {

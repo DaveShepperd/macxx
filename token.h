@@ -31,22 +31,9 @@
 #include "header.h"		/* get our extern declarations */
 #include "ct.h"			/* character types */
 
-#define QTBL(\
-	noval,			/* t/f if no value is allowed */\
-	optional,		/* t/f if value is optional */\
-	number,			/* t/f is value must be a number */\
-	output,			/* t/f if param is an output file */\
-        string,			/* t/f if param is string (incl ws) */\
-	negate,			/* t/f if param is negatible */\
-	qual,			/* parameter mask */\
-	name,			/* name of parameter */\
-	index			/* output file index */\
-) qual
+#define QUALTBL_GET_ENUM 1
+#include "qualtbl.h"
 
-enum quals {
-#include "qual_tbl.h"
-,QUAL_MAX};
-#undef QTBL
 extern char options[QUAL_MAX];
 
 #if !defined(ALIGNMENT)

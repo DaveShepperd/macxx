@@ -281,13 +281,13 @@ static int process_outfile(FN_struct *fnd, struct qual *desc_ptr, char **defname
     if (desc_ptr != 0 && desc_ptr->present && !desc_ptr->negated)
     {  /* is the option there? */
         fnd->fn_present = 1;  /* signal filename present */
-        if (desc_ptr->value != 0)
+        if (desc_ptr->strValue != 0)
         {
             FILE_name *fnamp;
             char *tdefname;
 
-            fnd->fn_buff = desc_ptr->value;
-            if (add_defs(desc_ptr->value,(char **)0,(char **)0,
+            fnd->fn_buff = desc_ptr->strValue;
+            if (add_defs(desc_ptr->strValue,(char **)0,(char **)0,
                          ADD_DEFS_SYNTAX,&fnamp) == 0)
             {
                 if (strlen(fnamp->name_only) == 0)
@@ -365,7 +365,7 @@ static void add_def_obj(void)
 		cmd_outputs = (char **)MEM_realloc((char *)cmd_outputs, cmd_outputs_size*sizeof(char *));
 		memset((char *)(cmd_outputs+cmd_outputs_index), 0, (cmd_outputs_size-cmd_outputs_index)*sizeof(char *));
 	}
-	cmd_outputs[cmd_outputs_index++] = obj_desc.value;
+	cmd_outputs[cmd_outputs_index++] = obj_desc.strValue;
 }
 
 int getcommand(void)
@@ -418,8 +418,8 @@ int getcommand(void)
                         cmd_assems = (char **)MEM_realloc((char *)cmd_assems, cmd_assems_size*sizeof(char *));
                         memset((char *)(cmd_assems+cmd_assems_index), 0, (cmd_assems_size-cmd_assems_index)*sizeof(char *));
                     }
-                    cmd_assems[cmd_assems_index++] = assem_desc.value;
-                    assem_desc.value = 0;
+                    cmd_assems[cmd_assems_index++] = assem_desc.strValue;
+                    assem_desc.strValue = NULL;
                     assem_desc.present = 0;
                 }
                 if (incl_desc.present)
@@ -437,14 +437,14 @@ int getcommand(void)
                         cmd_includes = (char **)MEM_realloc((char *)cmd_includes, cmd_includes_size*sizeof(char *));
                         memset((char *)(cmd_includes+cmd_includes_index), 0, (cmd_includes_size-cmd_includes_index)*sizeof(char *));
                     }
-                    cmd_includes[cmd_includes_index++] = incl_desc.value;
-                    incl_desc.value = 0;
+                    cmd_includes[cmd_includes_index++] = incl_desc.strValue;
+                    incl_desc.strValue = NULL;
                     incl_desc.present = 0;
                 }
                 if (obj_desc.present)
                 {
 					add_def_obj();
-					obj_desc.value = 0;
+					obj_desc.strValue = NULL;
 					obj_desc.present = 0;
                 }
                 continue;
@@ -504,6 +504,9 @@ int getcommand(void)
 #if !defined(NO_XREF)
     if (options[QUAL_CROSS])
 		lis_desc.present = 1;   /* cross defaults to /LIS */
+#else
+	if ( options[QUAL_CROSS] )
+		err_msg( MSG_WARN, "CROSS is not supported in this build. Option Ignored.\n" );
 #endif
     if (!boff_desc.present)
 		options[QUAL_BOFF] = 1;  /* default to global branch offset testing */
@@ -528,23 +531,23 @@ int getcommand(void)
 #endif
 	if ( syml_desc.present )
 	{
-		if ( (int)syml_desc.value < 6 || (int)syml_desc.value > 16 )
+		if ( (int)syml_desc.intValue < 6 || (int)syml_desc.intValue > 16 )
 		{
-			sprintf(emsg, "Value on -symbol_length has to be 6 <= n <= 16. Value of %d ignored.", (int)syml_desc.value);
+			sprintf(emsg, "Value on -symbol_length has to be 6 <= n <= 16. Value of %ld ignored.", syml_desc.intValue);
 			err_msg(MSG_WARN, emsg);
 			++gc_err;
 		}
-		max_symbol_length = (int)syml_desc.value;
+		max_symbol_length = (int)syml_desc.intValue;
 	}
     if (opcl_desc.present)
 	{
-		if ( (int)opcl_desc.value < 6 || (int)opcl_desc.value > 16 )
+		if ( (int)opcl_desc.intValue < 6 || (int)opcl_desc.intValue > 16 )
 		{
-			sprintf(emsg, "Value on -opcode_length has to be 6 <= n <= 16. Value of %d ignored.", (int)opcl_desc.value);
+			sprintf(emsg, "Value on -opcode_length has to be 6 <= n <= 16. Value of %ld ignored.", opcl_desc.intValue);
 			err_msg(MSG_WARN, emsg);
 			++gc_err;
 		}
-        max_opcode_length = (int)opcl_desc.value;
+        max_opcode_length = opcl_desc.intValue;
 	}
     while (fnd != 0)
     {
@@ -602,11 +605,11 @@ int getcommand(void)
             objdefname = defname;
             for (i=0; i<cmd_outputs_index; ++i)
             {
-                desc_ptr->value = cmd_outputs[i];
+                desc_ptr->strValue = cmd_outputs[i];
                 if (i)
                 {
                     def_out_ptr[0] = 0;
-                    if (desc_ptr->value == 0 || strlen(desc_ptr->value) < 1)
+                    if (desc_ptr->strValue == NULL)
                     {
                         char *th, numth[32];
                         switch (i)

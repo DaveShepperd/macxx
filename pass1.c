@@ -845,7 +845,13 @@ static void show_bad_token_ide( const char *ptr, const char *msg, int sev )
 		{
 			if ( strlen(fName)+msgLen+inp_len >= MAX_ERROR_LINE_LEN )
 				lineBreak = "\n";
-			snprintf(leadMsg, msgsiz + 1, "%s:%d:%d: %s:%s %s\n", current_fnd->fn_nam->relative_name, current_fnd->fn_line, ptr-inp_str, sev_s[sev], lineBreak, msg);
+			snprintf(leadMsg, msgsiz + 1, "%s:%d:" _FMT_LD_ ": %s:%s %s\n",
+					 current_fnd->fn_nam->relative_name,
+					 current_fnd->fn_line,
+					 ptr-inp_str,
+					 sev_s[sev],
+					 lineBreak,
+					 msg);
 		}
 		else
 		{
@@ -1035,7 +1041,7 @@ void show_bad_token( const char *ptr, const char *msg, int sev )
     }
     else
     {
-        sprintf(btmsg,":%d - %s\n", (ptr > inp_str) ? ptr-inp_str : 0, msg );
+        sprintf(btmsg,":" _FMT_LD_ " - %s\n", (ptr > inp_str) ? ptr-inp_str : 0, msg );
         err_msg(sev, btmsg);
     }
     if (pass == 1) lis_fp = tfp;

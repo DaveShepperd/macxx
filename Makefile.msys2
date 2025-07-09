@@ -1,8 +1,7 @@
-# This is for a MSYS2 version running on Windows. Only been checked on a Windows 10 system.
-# For now, macxx has to be built to run in 32 bit mode.
-# Double click on the buildtools-32.bat or mingw32.exe file in your toplevel MSYS2 directory.
+# This is for a MSYS2 version running on Windows. Last checked on Windows 11.
+# Double click on buildtools.bat or buildtools-32.bat or mingw32.exe file in your toplevel MSYS2 directory.
 
-HOST_CPU = -m32
+HOST_CPU = 
 DELIM = '
 PiOS32 = 0
 LINUX = 0

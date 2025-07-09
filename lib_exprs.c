@@ -554,6 +554,21 @@ static ExprsTerm_t *getAnotherTerm(ExprsDef_t *exprs, ExprsStack_t *sPtr, int op
 	return term;
 }
 
+static void removeCrLf(char *dst, int dstLen, const char *src)
+{
+	if ( dst && dstLen > 1 )
+	{
+		while ( dstLen > 1 && *src )
+		{
+			if ( (*dst = *src++) == '\n' )
+				break;
+			++dst;
+			--dstLen;
+		}
+		*dst = 0;
+	}
+}
+
 typedef enum
 {
 	TermIsPlain,
@@ -604,11 +619,13 @@ static ExprsErrs_t parseExpression(ExprsDef_t *exprs, int nest, TermType_t lastT
 	
 	if ( exprs->mVerbose )
 	{
+		char noLf[128+64];
+		removeCrLf(noLf,sizeof(noLf),exprs->mCurrPtr);
 		snprintf(eBuf,sizeof(eBuf),"parseExpression(): Entry. nest=%d, lastTermType=%d, numTerms=%d, expr='%s'\n",
 				 nest,
 				 lastTermType,
 				 sPtr->mTermsPool.mNumUsed,
-				 exprs->mCurrPtr);
+				 noLf);
 		showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 	}
 	if ( nest > EXPRS_MAX_NEST )
@@ -658,14 +675,16 @@ static ExprsErrs_t parseExpression(ExprsDef_t *exprs, int nest, TermType_t lastT
 		}
 		if ( exprs->mVerbose )
 		{
-			snprintf(eBuf,sizeof(eBuf),"parseExpression(): Processing term[%d], cc=%c, chMask=0x%04X, flags=0x%X, operUsed=%d, lastTermType=%d: %s\n",
+			char noLf[128+64];
+			removeCrLf(noLf,sizeof(noLf),exprs->mCurrPtr);
+			snprintf(eBuf,sizeof(eBuf),"parseExpression(): Processing term[%d], cc=%c, chMask=0x%04X, flags=0x%X, operUsed=%d, lastTermType=%d: '%s'\n",
 					 sPtr->mTermsPool.mNumUsed,
 					 isprint(cc) ? cc : '.',
 					 chMask,
 					 (getNewTerm || !term) ? 0 : term->flags,
 					 operUsed,
 					 lastTermType,
-					 exprs->mCurrPtr);
+					 noLf);
 			showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 		}
 		if ( (chMask&CT_AT) || ((exprs->mFlags & EXPRS_FLG_WS_DELIMIT) && lastTermType == TermIsPlain && sPtr->mTermsPool.mNumUsed) )
@@ -1377,7 +1396,9 @@ ExprsErrs_t libExprsParseToRPN(ExprsDef_t *exprs, const char *text, int alreadyL
 		}
 		if ( exprs->mVerbose )
 		{
-			textToPrint(eBuf,sizeof(eBuf),"Ending text: '", "'\n", exprs->mCurrPtr);
+			char noLf[128+64];
+			removeCrLf(noLf,sizeof(noLf),exprs->mCurrPtr);
+			textToPrint(eBuf,sizeof(eBuf),"Ending text: '", "'\n", noLf);
 			showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 		}
 	}

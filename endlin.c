@@ -571,7 +571,7 @@ void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz)
         t = fwrite(&tmp_length,sizeof(tmp_length),1,tmp_fp);
         if (t != 1)
         {
-            sprintf(emsg,"%%%s-F-FATAL, Tried to fwrite %d bytes (1 elem) to tmp_file, wrote %d.\n\t",
+            sprintf(emsg,"%%%s-F-FATAL, Tried to fwrite " _FMT_LD_ " bytes (1 elem) to tmp_file, wrote " _FMT_LD_ ".\n\t",
                     macxx_name,sizeof(tmp_length),t*sizeof(tmp_length));
             perror(emsg);
             EXIT_FALSE;
@@ -607,7 +607,7 @@ int read_from_tmp( void )
         t = fread(&tmp_length,sizeof(tmp_length),1,tmp_fp);
         if (t != 1)
         {
-            sprintf(emsg,"%%%s-F-FATAL, Tried to fread %d bytes (1 elem) from tmp_file, actually read %d.\n\t",
+            sprintf(emsg,"%%%s-F-FATAL, Tried to fread " _FMT_LD_ " bytes (1 elem) from tmp_file, actually read " _FMT_LD_ ".\n\t",
                     macxx_name,sizeof(tmp_length),t*sizeof(tmp_length));
             perror(emsg);
             EXIT_FALSE;
