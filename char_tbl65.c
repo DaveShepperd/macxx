@@ -32,7 +32,7 @@
 #define BOP	CT_BOP		/*  binary operator */
 #define UOP	CT_UOP		/*  unary operator */
 
-unsigned short cttbl[] = {
+uint16_t cttbl[] = {
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     EOL,  WS, EOL, EOL, EOL, EOL, EOL, EOL,  /* BS,HT,LF,VT,FF,CR,SO,SI */
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* DLE,DC1,DC2,DC3,DC4,NAK,SYN,ETB */
@@ -78,7 +78,7 @@ unsigned short cttbl[] = {
 #define HEX	CC_ALP		/*  hex digit */
 #define LHEX	CC_ALP		/*  lowercase hex digit */
 
-unsigned char cctbl[] = {
+uint8_t cctbl[] = {
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     EOL,  WS, EOL, EOL, EOL, EOL, EOL, EOL,  /* BS,HT,LF,VT,FF,CR,SO,SI */
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* DLE,DC1,DC2,DC3,DC4,NAK,SYN,ETB */
@@ -100,7 +100,7 @@ unsigned char cctbl[] = {
     LC , LC , LC , EXP, EXP, EXP, PCX, EOL   /* x y z { | } ~ DEL */
 };
 
-unsigned char char_toupper[] = {
+uint8_t char_toupper[] = {
     000, 001, 002, 003, 004, 005, 006, 007,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     010, 011, 012, 013, 014, 015, 016, 017,  /* BS,HT,LF,VT,FF,CR,SO,SI */
     020, 021, 022, 023, 024, 025, 026, 027,  /* DLE,DC1,DC2,DC3,DC4,NAK,SYN,ETB */

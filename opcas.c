@@ -34,10 +34,10 @@
 #define DEFNAM(name,numb) {"name",name,numb},
 
 /* next four variables are for compatability with V7.4 Macxx */
-unsigned short rel_salign = 2; /* default alignment for rel segments */
-unsigned short rel_dalign = 2; /* def algnmnt for data in rel segments */
-unsigned short abs_salign = 2; /* default alignment for abs segments */
-unsigned short abs_dalign = 2; /* def algnmnt for data in abs segments */
+uint16_t rel_salign = 2; /* default alignment for rel segments */
+uint16_t rel_dalign = 2; /* def algnmnt for data in rel segments */
+uint16_t abs_salign = 2; /* default alignment for abs segments */
+uint16_t abs_dalign = 2; /* def algnmnt for data in abs segments */
 
 const int macxx_name_mask = MACXX_M_AS;
 const char macxx_name[] = "macas";
@@ -45,15 +45,15 @@ const char *macxx_target = "ASAP";
 const char *macxx_descrip = "Cross assembler for the ASAP.";
 
 #if 0
-unsigned short macxx_rel_salign = 2; /* default alignment for rel segments */
-unsigned short macxx_rel_dalign = 2; /* def algnmnt for data in rel segments */
-unsigned short macxx_abs_salign = 2; /* default alignment for abs segments */
-unsigned short macxx_abs_dalign = 2; /* def algnmnt for data in abs segments */
+uint16_t macxx_rel_salign = 2; /* default alignment for rel segments */
+uint16_t macxx_rel_dalign = 2; /* def algnmnt for data in rel segments */
+uint16_t macxx_abs_salign = 2; /* default alignment for abs segments */
+uint16_t macxx_abs_dalign = 2; /* def algnmnt for data in abs segments */
 #else
-unsigned short macxx_salign = 2;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 2;    /* default alignment data within segment */
+uint16_t macxx_salign = 2;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 2;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 2;
+uint16_t macxx_min_dalign = 2;
 
 char macxx_mau = 8;         /* # of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -64,8 +64,8 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_LC|ED_GBL|ED_TRUNC; /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD|LIST_OCT); /* default list mask */
+uint32_t macxx_edm_default = ED_LC|ED_GBL|ED_TRUNC; /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD|LIST_OCT); /* default list mask */
 
 int current_radix = 16;     /* default the radix to hex */
 char expr_open = '(';       /* char that opens an expression */
@@ -89,13 +89,13 @@ int ust_init(void )
 }
 
 static char *am_ptr;
-static unsigned short which_stack;  /* from whence to finally output */
+static uint16_t which_stack;  /* from whence to finally output */
 
 #define MNBI 0x8000		/* operand must not be indexed */
 #define MBI  0x4000		/* operand must be indexed */
 #define FIN  0x2000		/* opening @ or ( found */
 
-static void get_ea(unsigned short size);
+static void get_ea(uint16_t size);
 static void get_dst(void),get_s1(void),get_s2(void);
 static int merge_stacks(int a, int b);
 
@@ -229,7 +229,7 @@ void do_opcode(Opcode *opc)
             if (exp1->expr_value < MIN_DISP ||
                 exp1->expr_value > MAX_DISP )
             {
-                long toofar;
+                int32_t toofar;
                 toofar = exp1->expr_value;
                 if (toofar > 0)
                 {
@@ -239,7 +239,7 @@ void do_opcode(Opcode *opc)
                 {
                     toofar = -toofar + MIN_DISP;
                 }
-                sprintf(emsg,"Branch offset 0x%lX byte(s) out of range",toofar);
+                sprintf(emsg,"Branch offset 0x%X byte(s) out of range",toofar);
                 bad_token((char *)0,emsg);
                 exp1->expr_value = 0-(BR_OFF);
             }
@@ -280,7 +280,7 @@ void do_opcode(Opcode *opc)
                 exp2->expr_code = EXPR_OPER;
                 (exp2++)->expr_value = EXPROPER_PICK;    /* dup top of stack */
                 exp2->expr_code = EXPR_VALUE;
-                (exp2++)->expr_value = -0x00800000L; /* check for out of range - */
+                (exp2++)->expr_value = -0x00800000; /* check for out of range - */
                 exp2->expr_code = EXPR_OPER;
                 (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_LT<<8);
                 exp2->expr_code = EXPR_OPER;
@@ -461,9 +461,9 @@ void do_opcode(Opcode *opc)
     p1o_long(&exprs_stack[which_stack]);      /* output inst */
 }                   /* -- opc_as() */
 
-static void get_ea(unsigned short size)
+static void get_ea(uint16_t size)
 {
-    long val;
+    int32_t val;
     EXPR_struct *exp1,*exp2;
 
     exp1 = EXP1SP;
@@ -612,7 +612,7 @@ static void get_ea(unsigned short size)
 
 static void get_s1( void )
 {
-    long val;
+    int32_t val;
     EXPR_struct *exp1;
 
     get_token();
@@ -671,7 +671,7 @@ static void get_s1( void )
 
 static void get_s2( void )
 {
-    long val;
+    int32_t val;
     EXPR_struct *exp2;
 
     get_token();
@@ -720,7 +720,7 @@ static void get_s2( void )
 
 static void get_dst( void )
 {
-    long val;
+    int32_t val;
     EXPR_struct *exp3;
 
     get_token();
@@ -784,7 +784,7 @@ static void get_dst( void )
 */
 static int merge_stacks(int first, int second)
 {
-    short flen,slen;
+    int16_t flen,slen;
     int final;
     EXP_stk *ep1,*ep2;
     EXPR_struct *esp1,*esp2;
@@ -847,14 +847,14 @@ void dump_stack(int stacknum)
         switch (tag = curr->expr_code)
         {
         case EXPR_VALUE :
-            fprintf(stderr," 0x%lX\n",curr->expr_value);
+            fprintf(stderr," 0x%X\n",curr->expr_value);
             break;
         case EXPR_OPER :
             tag = curr->expr_value;
             fprintf(stderr," %c (0x%X)\n",(isgraph(tag) ? tag : '.'),tag);
             break;
         case EXPR_SEG :
-            fprintf(stderr," %s + 0x%lX\n",
+            fprintf(stderr," %s + 0x%X\n",
                     (curr->expt.expt_seg)->seg_string,curr->expr_value);
             break;
         case EXPR_SYM :
@@ -862,7 +862,7 @@ void dump_stack(int stacknum)
                     (curr->expt.expt_sym)->ss_string);
             break;
         default :
-            fprintf(stderr,"?? code: 0x%X value: 0x%lX\n",tag,curr->expr_value);
+            fprintf(stderr,"?? code: 0x%X value: 0x%X\n",tag,curr->expr_value);
         }   /* end case */
     }       /* end for */
 }       /* end routine dump_stack */
@@ -887,9 +887,9 @@ void dump_stacks( void )
 #define NTYPE_ABS (0x40)/* expression is absolute */
 #define NTYPE_SYM (0x80)/* expression is symbol_ref, bit 16-23 have section */
 
-long op_ntype( Opcode *opc )
+int32_t op_ntype( Opcode *opc )
 {
-    long val,type;
+    int32_t val,type;
     EXPR_struct *exp2;
 
     get_token();
@@ -926,7 +926,7 @@ long op_ntype( Opcode *opc )
 
 static SS_struct *literal_pool_sym;
 static SEG_struct *literal_pool_ptr;
-static long literal_pool_register = 26<<SRC1_POS;
+static int32_t literal_pool_register = 26<<SRC1_POS;
 
 int op_using( Opcode *opc )
 {
@@ -994,7 +994,7 @@ int op_ldlit( Opcode *opc )
     exp2 = EXP2SP;           /* point to expression stack 2 */
 #endif
     exp0->expr_code = EXPR_VALUE;    /* set the opcode expression */
-    exp0->expr_value = 0x80000000L;  /* opcode for LD */
+    exp0->expr_value = _BIT_31_; /* 0x80000000; */  /* opcode for LD */
     EXP1.ptr = 0;            /* assume no other operands */
     EXP2.ptr = 0;            /* assume no other operands */
     EXP3.ptr = 0;            /* assume no other operands */
@@ -1012,15 +1012,15 @@ int op_ldlit( Opcode *opc )
     exp = exprs_stack[which_stack].stack + exprs_stack[which_stack].ptr;
     if (exprs(1, &EXP1) >= 0)
     {      /* expression present */
-        long v, newop = 0;
+        int32_t v, newop = 0;
         if (EXP1.ptr == 1 && exp1->expr_code == EXPR_VALUE)
         {
             v = exp1->expr_value;
-            if (v >= 0 && v < 0xFFE0L)
+            if (v >= 0 && v < 0xFFE0)
             {
                 newop = 0x08<<27;       /* ADD opcode */
             }
-            else if (v < 0 && v > -0xFFE0L)
+            else if (v < 0 && v > -0xFFE0)
             {
                 newop = 0x09<<27;       /* SUB opcode */
                 v = 0-v;

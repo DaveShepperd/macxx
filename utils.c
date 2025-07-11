@@ -17,70 +17,12 @@
 */
 
 #include <stdio.h>
-
-/* Support for longToAscii() due to ISO C17 does not support '%lb' sprintf construct */
-static int longToAsciiRadix2(long data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros)
-{
-	unsigned long udata, msb;
-	char *dstSav = dst, *binDst = dst, lead;
-	int sign = 0;
-	
-	if (data < 0)
-	{
-		/* The input is negative, so make it positive and record the fact */
-		sign = 1;
-		udata = -data;
-	}
-	else
-	{
-		udata = data;
-	}
-	/* Make sure the number of digits isn't too many (32 bit long)*/
-	if ( numDigits > 31 )
-		numDigits = 31;
-	/* Get a bit to walk the bit stream */
-	msb = 1<<(numDigits-1);
-	/* Assume leading spaces */
-	lead = ' ';
-	if ( leadingZeros )
-	{
-		/* Nope, caller wants leading 0's */
-		lead = '0';
-		if ( sign )
-		{
-			/* So the sign has to come first */
-			*binDst++ = '-';
-			sign = 0;	/* signal sign already present */
-		}
-	}
-	/* while there is room in the buffer and the number of digits desired */
-	while ( msb && binDst < dstSav+(sign?numDigits-1:numDigits) )
-	{
-		if ( (udata&msb) )
-		{
-			/* need to put in a '1' */
-			if ( sign )
-			{
-				/* if negative, the sign digit comes first */
-				*binDst++ = '-';
-				sign = 0;
-			}
-			/* from here on, digits become either '0' or '1' */
-			lead = '0';
-			*binDst++ = '1';
-		}
-		else 
-			*binDst++ = lead;
-		/* walk the test bit one to the right */
-		msb >>= 1;
-	}
-	*binDst = 0;	/* terminate the string */
-	return binDst-dstSav; /* return length of string */
-}
+#include <inttypes.h>
 
 /** longToAscii() - convert long to ascii string
  *  At entry:
  *  @param data - data to convert
+ *  @param usign - bool set true if unsigned
  *  @param dst - pointer to destination string buffer
  *  @param maxDstSize - size of destination string buffer
  *  @param numDigits - number of digits to output leadingZeros -
@@ -92,7 +34,7 @@ static int longToAsciiRadix2(long data, char *dst, size_t maxDstSize, int numDig
  *  @return length of resulting string. dst buffer contains
  *  ASCII number, nul terminated.
  **/
-int longToAscii(long data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix)
+int longToAscii(long data, int usign, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix)
 {
 	int dstLen=0;
 	char fmt[32],*fmtPtr;
@@ -114,25 +56,23 @@ int longToAscii(long data, char *dst, size_t maxDstSize, int numDigits, int lead
 				if ( leadingZeros )
 					*fmtPtr++ = '0';	/* If they want leading zeros */
 				/* set the number of digits to convert */
-				fmtPtr += snprintf(fmtPtr,sizeof(fmt)-(fmtPtr-fmt),"%d",numDigits);
-				*fmtPtr++ = 'l';	/* data is a signed longword */
+				if ( numDigits )
+					fmtPtr += snprintf(fmtPtr, sizeof(fmt) - (fmtPtr - fmt), "%d", numDigits);
+				if ( sizeof(uint32_t) > sizeof(int) )
+					*fmtPtr++ = 'l';    /* data is a signed longword */
+				if ( sizeof(long) > sizeof(uint32_t) )
+					*fmtPtr++ = 'l';    /* data is a signed longword */
 				switch (radix)
 				{
 				case 2:
-					/* warning: ISO C17 does not support the ‘%lb’ gnu_printf format [-Wformat=] */
-#if 0
-					/* This would be the easy way, but for legacy and maximum portablity, do it the hard way */
 					*fmtPtr++ = 'b';
 					break;
-#else
-					return longToAsciiRadix2(data,dst,maxDstSize,numDigits,leadingZeros);
-#endif
 				case 8:
 					*fmtPtr++ = 'o';	/*  octal format indicator */
 					break;
 				default:
 				case 10:
-					*fmtPtr++ = 'd';	/* signed decimal indicator */
+					*fmtPtr++ = usign ? 'u':'d';	/* signed or unsigned decimal indicator */
 					break;
 				case 16:
 					*fmtPtr++ = 'X';	/* hexidecimal indicator */
@@ -155,6 +95,26 @@ int longToAscii(long data, char *dst, size_t maxDstSize, int numDigits, int lead
 	}
 	return dstLen;
 }
+
+#if 0
+char *int32ToAscii(int32_t data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix)
+{
+	longToAscii(data,0,dst,maxDstSize,numDigits,leadingZeros,radix);
+	return dst;
+}
+
+char *uint32ToAscii(uint32_t data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix)
+{
+	longToAscii(data,1,dst,maxDstSize,numDigits,leadingZeros,radix);
+	return dst;
+}
+
+char *szToAscii(size_t data, char *dst, size_t maxDstSize)
+{
+	longToAscii(data,0,dst,maxDstSize,0,0,0);
+	return dst;
+}
+#endif
 
 /** detab() - de-tab a string.
  * At entry:

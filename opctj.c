@@ -33,10 +33,10 @@
 #define DEFNAM(name,numb) {"name",name,numb},
 
 /* next four variables are for compatability with V7.4 Macxx */
-unsigned short rel_salign = 3; /* default alignment for rel segments */
-unsigned short rel_dalign = 1; /* def algnmnt for data in rel segments */
-unsigned short abs_salign = 3; /* default alignment for abs segments */
-unsigned short abs_dalign = 1; /* def algnmnt for data in abs segments */
+uint16_t rel_salign = 3; /* default alignment for rel segments */
+uint16_t rel_dalign = 1; /* def algnmnt for data in rel segments */
+uint16_t abs_salign = 3; /* default alignment for abs segments */
+uint16_t abs_dalign = 1; /* def algnmnt for data in abs segments */
 
 const int macxx_name_mask = MACXX_M_TJ;
 const char macxx_name[] = "mactj";
@@ -44,15 +44,15 @@ const char *macxx_target = "TOM"; /* "1357785-001"; */
 const char *macxx_descrip = "Cross assembler for the Tom and Jerry.";
 
 #if 0
-unsigned short macxx_rel_salign = 3; /* default alignment for rel segments */
-unsigned short macxx_rel_dalign = 1; /* def algnmnt for data in rel segments */
-unsigned short macxx_abs_salign = 3; /* default alignment for abs segments */
-unsigned short macxx_abs_dalign = 1; /* def algnmnt for data in abs segments */
+uint16_t macxx_rel_salign = 3; /* default alignment for rel segments */
+uint16_t macxx_rel_dalign = 1; /* def algnmnt for data in rel segments */
+uint16_t macxx_abs_salign = 3; /* default alignment for abs segments */
+uint16_t macxx_abs_dalign = 1; /* def algnmnt for data in abs segments */
 #else
-unsigned short macxx_salign = 3;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+uint16_t macxx_salign = 3;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 1;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 1;
+uint16_t macxx_min_dalign = 1;
 
 char macxx_mau = 8;         /* # of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -63,9 +63,9 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_LC|ED_GBL|ED_M68|ED_DOL|ED_TRUNC; /* default edmask */
+uint32_t macxx_edm_default = ED_LC|ED_GBL|ED_M68|ED_DOL|ED_TRUNC; /* default edmask */
 /* default list mask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_OCT);
+uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_OCT);
 int current_radix = 10;     /* default the radix to decimal */
 char expr_open = '(';       /* char that opens an expression */
 char expr_close = ')';      /* char that closes an expression */
@@ -80,7 +80,7 @@ int max_symbol_length = 16; /*  symbols */
 
 /* End of processor specific stuff */
 
-static unsigned short which_stack;  /* from whence to finally output */
+static uint16_t which_stack;  /* from whence to finally output */
 
 static int merge_stacks(int first, int second);
 
@@ -143,8 +143,8 @@ static Ccode cclist[] = {
 typedef struct
 {
     SEG_struct *section;     /* section */
-    unsigned long offset;    /* offset */
-    unsigned short opcode;   /* opcode */
+    uint32_t offset;    /* offset */
+    uint16_t opcode;   /* opcode */
     int class;           /* opcode class */
     int len;         /* length of instruction */
 #if 0
@@ -160,7 +160,7 @@ typedef struct
 static OpStatus prev_opcode, this_opcode;
 
 static int find_cc(Ccode **rv) { /* look for condition code in cctable */
-    unsigned long oedmask = edmask;
+    uint32_t oedmask = edmask;
     Ccode *ans;      
 
     *rv = 0;         /* assume error */
@@ -592,7 +592,7 @@ static int get_operr(AM_details *amd) {
     return amode;
 }
 
-static unsigned short ldcodes[] = {
+static uint16_t ldcodes[] = {
     OPC_LOADIR<<OPC_CODE,
     OPC_LOADR14n<<OPC_CODE,
     OPC_LOADR15n<<OPC_CODE,
@@ -600,7 +600,7 @@ static unsigned short ldcodes[] = {
     OPC_LOADR15R<<OPC_CODE
 };
 
-static unsigned short stcodes[] = {
+static uint16_t stcodes[] = {
     OPC_STOREIR<<OPC_CODE,
     OPC_STORER14n<<OPC_CODE,
     OPC_STORER15n<<OPC_CODE,
@@ -608,9 +608,9 @@ static unsigned short stcodes[] = {
     OPC_STORER15R<<OPC_CODE
 };
 
-static unsigned short do_ldst_op(int which) {
+static uint16_t do_ldst_op(int which) {
     AM_details amdsrc, amddst;
-    unsigned short opcode=0xFFFF;
+    uint16_t opcode=0xFFFF;
     int selam;
 
     if (which)
@@ -650,8 +650,8 @@ static unsigned short do_ldst_op(int which) {
     return opcode;
 }
 
-static unsigned short do_move_op( void ) {
-    unsigned short opcode = 0xFFFF;
+static uint16_t do_move_op( void ) {
+    uint16_t opcode = 0xFFFF;
     AM_details amsrc, amdst;   
     EXP_stk *ep;
     EXPR_struct *exp;
@@ -723,8 +723,8 @@ static unsigned short do_move_op( void ) {
     return opcode;
 }
 
-static unsigned short do_single_op(Opcode *opc) {   /* single operand processing */
-    unsigned short opcode = 0xFFFF;
+static uint16_t do_single_op(Opcode *opc) {   /* single operand processing */
+    uint16_t opcode = 0xFFFF;
     AM_details amdst;
     EXP_stk *ep;
 #if 0
@@ -748,9 +748,9 @@ static unsigned short do_single_op(Opcode *opc) {   /* single operand processing
     return opcode;
 }
 
-static unsigned short do_rr_op(Opcode *opc, int which) {
+static uint16_t do_rr_op(Opcode *opc, int which) {
     AM_details amdsrc, amddst;
-    unsigned short opcode=0xFFFF;
+    uint16_t opcode=0xFFFF;
     int selam;
 
     if (!which)
@@ -798,9 +798,9 @@ static unsigned short do_rr_op(Opcode *opc, int which) {
     return opcode;
 }
 
-static unsigned short do_nr_op(Opcode *opc) {
+static uint16_t do_nr_op(Opcode *opc) {
     AM_details amdsrc, amddst;
-    unsigned short opcode=0xFFFF;
+    uint16_t opcode=0xFFFF;
     EXP_stk *ep;
     EXPR_struct *exp;
     int selam;
@@ -867,9 +867,9 @@ static unsigned short do_nr_op(Opcode *opc) {
     return opcode;
 }
 
-static unsigned short do_jmp_op(Opcode *opc, int which) {
+static uint16_t do_jmp_op(Opcode *opc, int which) {
     AM_details amddst;
-    unsigned short opcode=0xFFFF;
+    uint16_t opcode=0xFFFF;
     EXP_stk *ep;
     EXPR_struct *exp;
     Ccode *cc;
@@ -937,7 +937,7 @@ void do_opcode( Opcode *opc )
     int opclass;
     EXPR_struct *exp;
     EXP_stk *ep;
-    unsigned short opcode;
+    uint16_t opcode;
 
     which_stack = 0;
     ep = exprs_stack;
@@ -1120,7 +1120,7 @@ void do_opcode( Opcode *opc )
         this_opcode.len = 6;      /* this is a 6 byte instruction */
         if (ill_tst)
         {
-            unsigned short pop = (prev_opcode.opcode>>OPC_CODE);
+            uint16_t pop = (prev_opcode.opcode>>OPC_CODE);
             if (pop == OPC_JR || pop == OPC_JMP)
             {
                 bad_token((char *)0,"Cannot follow a JR or JUMP with a MOVEI");
@@ -1129,8 +1129,8 @@ void do_opcode( Opcode *opc )
     }
     else if (ill_tst)
     {
-        unsigned short pop = prev_opcode.opcode>>OPC_CODE;
-        unsigned short top = opcode>>OPC_CODE;
+        uint16_t pop = prev_opcode.opcode>>OPC_CODE;
+        uint16_t top = opcode>>OPC_CODE;
         int pclass = prev_opcode.class & 15;
         int tclass = opc->op_class & 15;
         int tjmp = tclass == OPCL_JR || tclass == OPCL_JMP;
@@ -1167,7 +1167,7 @@ void do_opcode( Opcode *opc )
 *	returning first.
 */
 static int merge_stacks(int first, int second) {
-    short flen,slen;
+    int16_t flen,slen;
     int final;
     EXP_stk *ep1,*ep2;
     EXPR_struct *esp1,*esp2;
@@ -1262,7 +1262,7 @@ dump_stacks()
 }
 #endif
 
-long op_ntype(Opcode *opc)
+int32_t op_ntype(Opcode *opc)
 {
     bad_token(inp_ptr, "Function not supported at this time");
     f1_eatit();
@@ -1283,7 +1283,7 @@ int op_float(Opcode *opc) {
     union
     {
         float f;
-        long l;
+        int32_t l;
     } u;
     char *otp=0;
     EXP_stk *ep;

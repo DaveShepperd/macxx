@@ -18,6 +18,9 @@
 
 #ifndef _CT_H_
 #define _CT_H_ 1
+
+#include <stdint.h>
+
 /* Define the character classes */
 
 /* WARNING: Don't alter the order of the following items */
@@ -46,8 +49,8 @@
 #define CT_LHEX (0x400|CT_LC)	/*  lower case hex digit */
 
 #ifndef NO_EXTTBL
-extern unsigned short cttbl[];
-extern unsigned char  cctbl[];
+extern uint16_t cttbl[];
+extern uint8_t  cctbl[];
 #endif
 
 #endif  /* _CT_H_ */

@@ -31,8 +31,8 @@ Change Log
 #include "exproper.h"
 #include "utils.h"
 
-unsigned long list_toc_page_no = 1;		/* page number of TOC listing - By TRG 20240503 */
-unsigned long list_toc_line_no = 0;		/* line number of TOC listing - By TRG 20240503 */
+uint32_t list_toc_page_no = 1;		/* page number of TOC listing - By TRG 20240503 */
+uint32_t list_toc_line_no = 0;		/* line number of TOC listing - By TRG 20240503 */
 int list_toc_hd = 0;				/* header flag for TOC listing - By TRG 20240503 */
 
 int show_line = 1;
@@ -87,7 +87,7 @@ int LLIST_SRC = 40;  /* because HLLxxF uses 41 ??? for line start */
 int LLIST_SRC_QUED = 40;
 #endif
 int LLIST_REQ_NEWL = 0;
-unsigned char LLIST_TXT_BUF[18] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+uint8_t LLIST_TXT_BUF[18] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 char listing_temp[LLIST_MAXSRC+2] = "     1";
 int tab_wth = 8;  /* width of tab character */
 /*************************************************etg*/
@@ -305,7 +305,7 @@ static int op_list_common(int onoff)
 	while ( 1 )
 	{
 		int tt;
-		unsigned long old_edmask;
+		uint32_t old_edmask;
 		old_edmask = edmask;
 		edmask &= ~(ED_LC | ED_DOL);
 /**************************************************tg*/
@@ -461,7 +461,7 @@ static int op_list_common(int onoff)
 	while ( 1 )
 	{
 		int ii, tt;
-		unsigned long old_edmask;
+		uint32_t old_edmask;
 
 		old_edmask = edmask;
 		edmask &= ~(ED_LC | ED_DOL);
@@ -550,7 +550,7 @@ int op_nlist(void)
 char hexdig[] = "0123456789ABCDEF";
 #endif
 
-void dump_hex4(long value, char *ptr)
+void dump_hex4(int32_t value, char *ptr)
 {
 	register int val;
 	register char *dst;
@@ -566,10 +566,10 @@ void dump_hex4(long value, char *ptr)
 	return;
 }
 
-void dump_hex8(long value, char *ptr)
+void dump_hex8(int32_t value, char *ptr)
 {
 	register char *dst;
-	long val = value;
+	int32_t val = value;
 	dst = ptr + 7;
 	*dst = hexdig[val & 15];   /* copy in nibble */
 	val >>= 4;           /* shift */
@@ -589,7 +589,7 @@ void dump_hex8(long value, char *ptr)
 	return;
 }
 
-void dump_oct3(long value, char *ptr)
+void dump_oct3(int32_t value, char *ptr)
 {
 	register int val;
 	register char *dst;
@@ -603,7 +603,7 @@ void dump_oct3(long value, char *ptr)
 	return;
 }
 
-void dump_oct6(long value, char *ptr)
+void dump_oct6(int32_t value, char *ptr)
 {
 	register int val;
 	register char *dst;
@@ -657,12 +657,12 @@ void display_line(LIST_stat_t *lstat)
 		{
 			if ( options[QUAL_TOC] )		/* By TRG 20240503 to support TOC */
 			{
-				sprintf(outLinePtr + LLIST_SEQ, "%5ld%c",
+				sprintf(outLinePtr + LLIST_SEQ, "%5d%c",
 					list_toc_line_no, (lstat->include_level > 0) ? '+' : ' ');
 			}
 			else
 			{
-				sprintf(outLinePtr + LLIST_SEQ, "%5ld%c",
+				sprintf(outLinePtr + LLIST_SEQ, "%5d%c",
 					lstat->line_no, (lstat->include_level > 0) ? '+' : ' ');
 			}
 		}
@@ -673,9 +673,9 @@ void display_line(LIST_stat_t *lstat)
 		if ( lstat->pc_flag != 0 )
 		{
 			if ( list_radix == 16 )
-				dump_hex4((long)lstat->pc, outLinePtr + LLIST_LOC);
+				dump_hex4((int32_t)lstat->pc, outLinePtr + LLIST_LOC);
 			else
-				dump_oct6((long)lstat->pc, outLinePtr + LLIST_LOC);
+				dump_oct6((int32_t)lstat->pc, outLinePtr + LLIST_LOC);
 		}
 	}
 #endif
@@ -683,12 +683,12 @@ void display_line(LIST_stat_t *lstat)
 	{
 		if ( list_radix == 16 )
 		{
-			dump_hex8((long)lstat->pf_value, outLinePtr + LLIST_PF1);
+			dump_hex8((int32_t)lstat->pf_value, outLinePtr + LLIST_PF1);
 			*(outLinePtr + LLIST_PF1 + 8) = lstat->f1_flag >> 8;
 		}
 		else
 		{
-			dump_oct6((long)lstat->pf_value, outLinePtr + LLIST_PF1);
+			dump_oct6((int32_t)lstat->pf_value, outLinePtr + LLIST_PF1);
 			*(outLinePtr + LLIST_PF1 + 6) = lstat->f1_flag >> 8;
 		}
 	}
@@ -698,7 +698,7 @@ void display_line(LIST_stat_t *lstat)
 		{
 			if ( list_radix == 16 )
 			{
-				dump_hex8((long)lstat->pf_value, outLinePtr + LLIST_PF2);
+				dump_hex8((int32_t)lstat->pf_value, outLinePtr + LLIST_PF2);
 #ifndef MAC_PP
 				*(outLinePtr + LLIST_PF2 - 1) = '(';
 				*(outLinePtr + LLIST_PF2 + 8) = ')';
@@ -706,7 +706,7 @@ void display_line(LIST_stat_t *lstat)
 			}
 			else
 			{
-				dump_oct6((long)lstat->pf_value, outLinePtr + LLIST_PF2);
+				dump_oct6((int32_t)lstat->pf_value, outLinePtr + LLIST_PF2);
 #ifndef MAC_PP
 				*(outLinePtr + LLIST_PF2 - 1) = '(';
 				*(outLinePtr + LLIST_PF2 + 6) = ')';
@@ -820,9 +820,9 @@ int fixup_overflow(LIST_stat_t *lstat)
 	return 0;
 }
 
-void n_to_list(int nibbles, long value, int tag)
+void n_to_list(int nibbles, int32_t value, int tag)
 {
-	register unsigned long tv;
+	register uint32_t tv;
 	register char *lpr;
 	LIST_stat_t *lstat;
 	int lcnt, nyb;
@@ -959,7 +959,7 @@ static const ListErrs_t ListErrs[ListArg_MAX] =
  *
  *   Setting with .LIST BIN() not supported for now
  */
-int list_args(int arg[ListArg_MAX], const int maxIdx, int idx, unsigned char *optTextBuf, size_t optTextBufSize)
+int list_args(int arg[ListArg_MAX], const int maxIdx, int idx, uint8_t *optTextBuf, size_t optTextBufSize)
 {
 	int cr = current_radix;    /* save current */
 	int numArgs = 0;

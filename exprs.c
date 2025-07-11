@@ -23,9 +23,10 @@ Change Log
     03/26/2022	- Changed added support for MAC68  - Tim Giddens
 
 ******************************************************************************/
-#if !__LONG_MAX__ || !__SIZEOF_SIZE_T__
-#error This build requires compiler variables __LONG_MAX__ and __SIZEOF_SIZE_T__
-#endif
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #if defined(MAC_68K)
     #include "m68k.h"
@@ -50,7 +51,6 @@ Change Log
 #include "exproper.h"
 #include "listctrl.h"
 #include "memmgt.h"
-#include <stdlib.h>
 #if !defined(MAC_PP)
 #include "le_itfc.h"
 #endif
@@ -109,7 +109,7 @@ static void dump_stack(const EXP_stk *ep, char *eBuf, size_t bufLen)
 			newLen += snprintf(eBuf + newLen, bufLen - newLen, " (%s)", src->expt.expt_seg->seg_string);
 			continue;
 		case EXPR_VALUE:
-			newLen += snprintf(eBuf + newLen, bufLen - newLen, " %ld", src->expr_value);
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " %d", src->expr_value);
 			continue;
 		case EXPR_OPER:
 			oper = src->expr_value;
@@ -260,7 +260,7 @@ int compress_expr_psuedo( EXP_stk *ep )
                         continue;
                     }
                 case EXPROPER_XCHG: {
-                        long tmp;
+                        int32_t tmp;
                         tmp = op1->expr_value;
                         op1->expr_value = op2->expr_value;
                         op2->expr_value = tmp;
@@ -289,11 +289,11 @@ int compress_expr_psuedo( EXP_stk *ep )
                         {
                             if (op2->expr_value > 0)
                             {
-                                op2->expr_value = LONG_MAX; /* 0x7FFFFFFFl; */
+                                op2->expr_value = _INT32_MAX_; /* 0x7FFFFFFF; */
                             }
                             if (op2->expr_value < 0)
                             {
-                                op2->expr_value = LONG_MSB; /* 0x80000000l; */
+                                op2->expr_value = _BIT_31_; /* 0x80000000; */
                             }
                         }
                         else
@@ -319,13 +319,13 @@ int compress_expr_psuedo( EXP_stk *ep )
                         {
                             if (op2->expr_value != 0)
                             {
-                                op2->expr_value = 0xFFFFFFFFl;
+                                op2->expr_value = -1;
                             }
                         }
                         else
                         {
                             op2->expr_value = 
-                            (unsigned long)op2->expr_value/(unsigned long)op1->expr_value;
+                            (uint32_t)op2->expr_value/(uint32_t)op1->expr_value;
                         }
                         continue;
                     }
@@ -756,7 +756,7 @@ int compress_expr( EXP_stk *exptr )
                         if ((op2->expr_flags&EXPR_FLG_REG) != 0 &&
                             (op1->expr_flags&EXPR_FLG_REG) != 0)
                         {
-                            unsigned long hi,lo;
+                            uint32_t hi,lo;
                             if (exptr->register_scale != 0)
                             {
                                 bad_token((char *)0,"Index SCALE ignored in expression");
@@ -799,11 +799,11 @@ int compress_expr( EXP_stk *exptr )
                             err_msg(MSG_WARN,"Attempted divide by 0");
                             if (op2->expr_value > 0)
                             {
-                                op2->expr_value = LONG_MAX; /* 0x7FFFFFFFl; */
+                                op2->expr_value = _INT32_MAX_; /* 0x7FFFFFFF; */
                             }
                             if (op2->expr_value < 0)
                             {
-                                op2->expr_value = LONG_MSB; /* 0x80000000l; */
+                                op2->expr_value = _BIT_31_; /* 0x80000000; */
                             }
                         }
                         else
@@ -851,13 +851,13 @@ int compress_expr( EXP_stk *exptr )
                             err_msg(MSG_WARN,"Attempted divide by 0");
                             if (op2->expr_value != 0)
                             {
-                                op2->expr_value = 0xFFFFFFFFl;
+                                op2->expr_value = -1;
                             }
                         }
                         else
                         {
                             op2->expr_value = 
-                            (unsigned long)op2->expr_value/(unsigned long)op1->expr_value;
+                            (uint32_t)op2->expr_value/(uint32_t)op1->expr_value;
                         }
                         break;
                     }
@@ -907,7 +907,7 @@ int compress_expr( EXP_stk *exptr )
                         pick = newTerms-2;       /* maximum that can be picked */
                         if (op1->expr_value > pick)
                         {
-                            sprintf(emsg,"Tried to PICK %ld'th item from an expr stack of %d items",
+                            sprintf(emsg,"Tried to PICK %d'th item from an expr stack of %d items",
                                     op1->expr_value, pick);
                             bad_token((char *)0, emsg);
                             op1->expr_value = 0;
@@ -934,7 +934,7 @@ int compress_expr( EXP_stk *exptr )
                         break;
                     }
                 case EXPROPER_XCHG: {
-                        long tval,tcnt;
+                        int32_t tval,tcnt;
                         char tcode;
                         if (op1->expr_code == EXPR_OPER || 
                             op2->expr_code == EXPR_OPER)
@@ -1266,7 +1266,7 @@ static int do_exprs( int flag, EXP_stk *eps )
             }
         case TOKEN_oper: {
                 int sp_save,oper_save;
-                unsigned short ct;
+                uint16_t ct;
 
                 c = token_value;        /* get current char */
                 ct = cttbl[c];      /* get current char type */
@@ -1624,8 +1624,8 @@ int exprs( int relative, EXP_stk *eps )
 {
     char *stp = tkn_ptr;
 	EXPR_struct *sSave;
-	unsigned short tagSave;
-	unsigned short tagLenSave;
+	uint16_t tagSave;
+	uint16_t tagLenSave;
 	int err;
 	
     exprs_nest = 0;      /* start with no nesting */
@@ -1689,7 +1689,7 @@ void dump_expr(EXP_stk *eps, int noTag)
     printf("\t\tforce_short = %d\n\t\tforce_long = %d\n",eps->force_short,
             eps->force_long);
 #endif
-    printf("\t\tpsuedo_value = %08lX\n\t\tExpression: ",eps->psuedo_value);
+    printf("\t\tpsuedo_value = %08X\n\t\tExpression: ",eps->psuedo_value);
     for (i=0;i<j;++i,++eptr)
     {
         switch (eptr->expr_code)
@@ -1698,7 +1698,7 @@ void dump_expr(EXP_stk *eps, int noTag)
             printf("{%s} ",eptr->expr_sym->ss_string);
             break;
         case EXPR_VALUE:
-            printf("0x%lX ",eptr->expr_value);
+            printf("0x%X ",eptr->expr_value);
             break;
         case EXPR_OPER:
             if ((eptr->expr_value&255) == EXPROPER_TST)
@@ -1727,12 +1727,12 @@ void dump_expr(EXP_stk *eps, int noTag)
 
 void dumpSymbolTable(int flag)
 {
-	long ii;
+	int32_t ii;
 	SS_struct *st;
 
 	for (ii=0;ii<HASH_TABLE_SIZE;++ii)
 	{
-		for (st=hash[(short)ii] ; st != 0 ; st=st->ss_next)
+		for (st=hash[(int16_t)ii] ; st != 0 ; st=st->ss_next)
 		{
 			EXP_stk *eps;
 			printf("Symbol '%s'. flags:\n\tdefined: %d\n\texprs: %d\n\tabs: %d\n\tfwdRef: %d\n\tlabel: %d\n\tmacLocal: %d\n\tgasLocal: %d\n\treferenced: %d\n",
@@ -1752,9 +1752,9 @@ void dumpSymbolTable(int flag)
 					dump_expr(eps, 0);
 			}
 			else if ( st->flg_abs )
-				printf("\tValue (abs): 0x%08lX\n", st->ss_value);
+				printf("\tValue (abs): 0x%08X\n", st->ss_value);
 			else
-				printf("\tValue (undef): 0x%08lX\n", st->ss_value);
+				printf("\tValue (undef): 0x%08X\n", st->ss_value);
 		}
 	}
 }

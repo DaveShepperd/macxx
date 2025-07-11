@@ -18,7 +18,7 @@
 #include "outx.h"
 #include "memmgt.h"
 
-long xfer_addr;
+int32_t xfer_addr;
 static int noout_flag;
 #if 0
 extern char *outexp();
@@ -60,13 +60,13 @@ extern int outorg(),outtstexp();
 #define LONG_LWF  'j'
 #define LONG_HWF  'J'
 
-int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
+int out_compexp(uint8_t *value, int32_t tv, int tag, int taglen) {
     int flip = 0;
     switch (tag)
     {
     case VAR_LBF:
     case VAR_HBF: {
-            long mask;
+            int32_t mask;
             mask = (1<<taglen) -1; /* compute mask */   
             if (tv&~mask)
             {
@@ -92,7 +92,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             *value++ = tv>>24;
             *value++ = tv>>16;
 #if 0
-            unsigned char b0,b1,b2,b3; /* bytes in long */
+            uint8_t b0,b1,b2,b3; /* bytes in long */
             b0 = tv&0xFF;          /* pickup individual bytes */
             b1 = (tv>>8)&0xFF;
             b2 = (tv>>16)&0xFF;
@@ -100,7 +100,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             tv = (b2<<24) | (b3<<16) | (b0<<8) | (b1);
             *value = tv;
 #endif
-            return sizeof(long);
+            return sizeof(int32_t);
         }
     case LONG_HWF: {      /* long, low byte of high word first */
             *value++ = tv>>16;
@@ -115,7 +115,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             tv = (b1<<24) | (b0<<16) | (b3<<8) | (b2);
             *value = tv;
 #endif
-            return sizeof(long);
+            return sizeof(int32_t);
         }
     case LONG_HBF: {      /* long, high byte first */
             *value++ = tv>>24;
@@ -141,14 +141,14 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             *value++ = tv>>8;
             *value++ = tv>>16;
             *value++ = tv>>24;
-            return sizeof(long);
+            return sizeof(int32_t);
         }
     case WORD_HBF: {      /* word, high byte first  */
             flip = 1;      /* signal to flip it */
         }             /* fall thru to 'w' */
     case WORD_LBF: {   
             if ( (edmask&ED_TRUNC) && (tv > 65535 || tv < -65536) )
-				trunc_err(65535L,tv);
+				trunc_err(65535,tv);
             goto common_word;  /* jump to common word processing */
         }
     case SIGN_HBF: {
@@ -156,15 +156,15 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
         }
     case SIGN_LBF: {
             if ( (edmask&ED_TRUNC) && (tv > 32767 || tv < -32768))
-				trunc_err(65535L,tv);
+				trunc_err(65535,tv);
             goto common_word;
         }
     case USIGN_HBF: {
             flip = 1;
         }
     case USIGN_LBF: {
-            if ( (edmask&ED_TRUNC) && (tv &0xFFFF0000L))
-				trunc_err(65535L,tv);
+            if ( (edmask&ED_TRUNC) && (tv &0xFFFF0000))
+				trunc_err(65535,tv);
         }
         common_word:
 #if 0
@@ -212,27 +212,27 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
 #endif
     case 'b': {
             if ( (edmask&ED_TRUNC) && (tv > 255 || tv < -128))
-				trunc_err(255L,tv);
+				trunc_err(255,tv);
             *value = tv;
             return sizeof(char);
         }
     case 's': {
             if ( (edmask&ED_TRUNC) && (tv > 127 || tv < -128))
-				trunc_err(255L,tv);
+				trunc_err(255,tv);
             *value = tv;
             return sizeof(char);
         }
     case 'c': {
             if ( (edmask&ED_TRUNC) && (tv & 0xFFFFFF00))
-				trunc_err(255L,tv);
+				trunc_err(255,tv);
             *value = tv;
             return sizeof(char);
         }
     case 'y': {
-            if ( tv > 32767L || tv < -32768L )
+            if ( tv > 32767 || tv < -32768 )
             {
                 if ((edmask&ED_TRUNC))
-					trunc_err(65534L,tv);
+					trunc_err(65534,tv);
                 tv = -3;
             }
             *value++ = tv;
@@ -240,10 +240,10 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             return sizeof(short);
         }
     case 'Y': {
-            if ( tv > 32767L || tv < -32768L )
+            if ( tv > 32767 || tv < -32768 )
             {
 				if ( (edmask&ED_TRUNC) )
-					trunc_err(65534L,tv);
+					trunc_err(65534,tv);
                 tv = -3;
             }
             *value++ = tv>>8;
@@ -261,7 +261,7 @@ int out_compexp(unsigned char *value, long tv, int tag, int taglen) {
             if (tv > 127 || tv < -128)
             {
 				if ( (edmask&ED_TRUNC) )
-					trunc_err(254L, tv);
+					trunc_err(254, tv);
                 tv = -2;
             }
             *value = tv;
@@ -283,7 +283,7 @@ int pass2( void )
  */
 {
     int i,r_flg=1;
-    long lc;
+    int32_t lc;
 
     if ((outxabs_fp = obj_fp) == 0) return(1); /* no output required */
     endlin();            /* flush the opcode buffer */
@@ -328,17 +328,17 @@ int pass2( void )
                         char *s;
                         if (options[QUAL_OCTAL])
                         {
-                            s = "\t(%06lo bytes offset from segment {%s})\n";
+                            s = "\t(%06o bytes offset from segment {%s})\n";
                         }
                         else
                         {
-                            s = "\t(%04lX bytes offset from segment {%s})\n";
+                            s = "\t(%04X bytes offset from segment {%s})\n";
                         }
                         snprintf(emsg,ERRMSG_SIZE,s,current_offset,current_section->seg_string);
                         err_msg(MSG_ERROR|MSG_CTRL,emsg);
                     }
 #ifdef PC_DEBUG
-                    fprintf(stderr,"%s:%d: EXPR pc = %08lX, sec = {%s}, tag=%c:%d\n",
+                    fprintf(stderr,"%s:%d: EXPR pc = %08X, sec = {%s}, tag=%c:%d\n",
 							current_fnd->fn_buff,
                             current_fnd->fn_line,current_offset,
                             current_section->seg_string,
@@ -354,7 +354,7 @@ int pass2( void )
                     if ((EXP0.ptr == 1 && EXP0SP->expr_code == EXPR_VALUE) && 
                         (EXP0.tag_len == 1 || _toupper(EXP0.tag) == 'X'))
                     {
-                        unsigned char tmpv[sizeof(long)];
+                        uint8_t tmpv[sizeof(int32_t)];
                         i = out_compexp(tmpv, EXP0SP->expr_value, (int)EXP0.tag,EXP0.tag_len);
                         outbstr((char *)tmpv,i);
                     }
@@ -421,7 +421,7 @@ int pass2( void )
         case TMP_ASTNG: {
                 if (noout_flag == 0) outbstr((char *)tmp_pool,(int)tmp_ptr->tf_length);
 #ifdef PC_DEBUG
-                fprintf(stderr,"%s:%d: TXT, %ld bytes, pc = %08lX, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: TXT, %ld bytes, pc = %08X, sec = {%s}\n",
 						current_fnd->fn_buff,
 						current_fnd->fn_line,
                         tmp_ptr->tf_length,    
@@ -438,12 +438,12 @@ int pass2( void )
                 {
                     if (options[QUAL_OCTAL])
                     {
-                        sprintf(emsg,"ORG may be incorrectly set to %010lo\n",
+                        sprintf(emsg,"ORG may be incorrectly set to %010o\n",
                                 EXP0SP->expr_value);
                     }
                     else
                     {
-                        sprintf(emsg,"ORG may be incorrectly set to %08lX\n",
+                        sprintf(emsg,"ORG may be incorrectly set to %08X\n",
                                 EXP0SP->expr_value);
                     }
                     err_msg(MSG_CONT,emsg);
@@ -458,7 +458,7 @@ int pass2( void )
                 noout_flag = seg_ptr->flg_noout;
                 if (noout_flag == 0) outorg(&EXP0);
 #ifdef PC_DEBUG
-                fprintf(stderr,"%s:%d: ORG at newpc = %08lX, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: ORG at newpc = %08X, sec = {%s}\n",
 						current_fnd->fn_buff,
                         current_fnd->fn_line,
 						current_offset,
@@ -472,12 +472,12 @@ int pass2( void )
                 {
                     if (options[QUAL_OCTAL])
                     {
-                        sprintf(emsg,"XFER addr may be incorrectly set to %010lo\n",
+                        sprintf(emsg,"XFER addr may be incorrectly set to %010o\n",
                                 EXP0SP->expr_value);
                     }
                     else
                     {
-                        sprintf(emsg,"XFER addr may be incorrectly set to %08lX\n",
+                        sprintf(emsg,"XFER addr may be incorrectly set to %08X\n",
                                 EXP0SP->expr_value);
                     }
                     err_msg(MSG_CONT,emsg);

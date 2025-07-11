@@ -19,6 +19,8 @@
 #ifndef _PST_TOKENS_H_
 #define _PST_TOKENS_H_ 1
 
+#include <inttypes.h>
+
 typedef enum {
       OPCL00=0,		/* 0 operands required */
       OPCL01,		/* bit mode instructions */

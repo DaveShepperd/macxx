@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <search.h>
 #include <errno.h>
+#include <inttypes.h>
 #include "lib_exprs.h"
 
 #define OPERSTUFF_GET_OTHERS 1
@@ -35,6 +36,20 @@
 #include "structs.h"
 #include "exproper.h"
 #include "operstuff.h"
+
+#if __WORDSIZE == 64
+	#define FMT_PTRDIF "l"
+	#if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
+		#define FMT_PFX "ll"
+	#else
+		#define FMT_PFX "l"
+	#endif
+#else
+	#define FMT_PTRDIFF
+	#define FMT_PFX
+#endif
+
+#define FMT_SZ "%" FMT_PFX "d"
 
 /* Define the character classes */
 /* WARNING: Don't alter the order of the following items */
@@ -89,7 +104,7 @@
 #define AT		CT_AT		/* at sign */
 #define COL		CT_COL		/* colon */
 
-static const unsigned short CttblNormal[] =
+static const uint16_t CttblNormal[] =
 {
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     EOL,  WS, EOL, EOL, EOL, EOL, EOL, EOL,  /* BS,HT,LF,VT,FF,CR,SO,SI */
@@ -112,7 +127,7 @@ static const unsigned short CttblNormal[] =
     LC , LC , LC , PCX, BOP, PCX, UOP, EOL   /* x y z { | } ~ DEL */
 };
 
-static const unsigned short CttblSpecial[] =
+static const uint16_t CttblSpecial[] =
 {
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     EOL,  WS, EOL, EOL, EOL, EOL, EOL, EOL,  /* BS,HT,LF,VT,FF,CR,SO,SI */
@@ -135,7 +150,7 @@ static const unsigned short CttblSpecial[] =
     LC , LC , LC , BOP, BOP, BOP, UOP, EOL   /* x y z { | } ~ DEL */
 };
 
-typedef unsigned char bool;
+typedef uint8_t bool;
 enum
 {
 	false,
@@ -169,7 +184,7 @@ static void *pointToNextInPool(ExprsDef_t *exprs, ExprsPool_t *pool, int increme
 			name = PoolNames[0];
 			if ( pool->mPoolID >= 0 && pool->mPoolID < n_elts(PoolNames) )
 				name = PoolNames[pool->mPoolID];
-			snprintf(eBuf,sizeof(eBuf),"nextPool %d(%s) due to sanity check, bump from %d items (" _FMT_SZ_ " bytes) to %d items (" _FMT_SZ_ " bytes) failed\n",
+			snprintf(eBuf,sizeof(eBuf),"nextPool %d(%s) due to sanity check, bump from %d items (" FMT_SZ " bytes) to %d items (" FMT_SZ " bytes) failed\n",
 					 pool->mPoolID, name,
 					 pool->mNumAvailable, pool->mNumAvailable * pool->mEntrySize,
 					 newNum, newNum * pool->mEntrySize);
@@ -183,7 +198,7 @@ static void *pointToNextInPool(ExprsDef_t *exprs, ExprsPool_t *pool, int increme
 			name = PoolNames[0];
 			if ( pool->mPoolID >= 0 && pool->mPoolID < n_elts(PoolNames) )
 				name = PoolNames[pool->mPoolID];
-			snprintf(tBuf,sizeof(tBuf),"lib_exprs().getMemoryItem(): Failed to allocate " _FMT_SZ_ " bytes for pool %d(%s): %s\n",
+			snprintf(tBuf,sizeof(tBuf),"lib_exprs().getMemoryItem(): Failed to allocate " FMT_SZ " bytes for pool %d(%s): %s\n",
 					 newNum * pool->mEntrySize, pool->mPoolID, name, strerror(errno));
 			exprs->mCallbacks.msgOut(exprs->mCallbacks.msgArg, EXPRS_SEVERITY_FATAL, tBuf);
 			return NULL;
@@ -217,7 +232,7 @@ static ExprsTerm_t *pointToNextTerm(ExprsDef_t *exprs, ExprsStack_t *stack)
 	ans = (ExprsTerm_t *)pointToNextInPool(exprs, &stack->mTermsPool, exprs->mTermsPoolInc, 1);
 	if ( !ans )
 		return ans;
-	ans->term.s64 = 0;
+	ans->term.s32 = 0;
 	ans->termType = EXPRS_TERM_NULL;
 	ans->chrPtr = NULL;
 	ans->flags = 0;
@@ -256,9 +271,9 @@ ExprsErrs_t libExprsSetVerbose(ExprsDef_t *exprs, unsigned int newVal, unsigned 
 	return EXPR_TERM_GOOD;
 }
 
-ExprsErrs_t libExprsSetFlags(ExprsDef_t *exprs, unsigned long newVal, unsigned long *oldValP)
+ExprsErrs_t libExprsSetFlags(ExprsDef_t *exprs, uint32_t newVal, uint32_t *oldValP)
 {
-	unsigned long oldVal;
+	uint32_t oldVal;
 	oldVal = exprs->mFlags;
 	exprs->mFlags = newVal;
 	if ( oldValP )
@@ -332,7 +347,7 @@ static void dumpStack(ExprsDef_t *exprs, ExprsTerm_t *opers, int numOpers)
 				eBuf[len++] = ' ';
 				if ( (term->flags & EXPRS_TERM_FLAG_REGISTER) )
 					len += snprintf(eBuf+len,sizeof(eBuf)-len,"(register)");
-				len += snprintf(eBuf + len, sizeof(eBuf) - len, "%ld", term->term.s64);
+				len += snprintf(eBuf + len, sizeof(eBuf) - len, "%d", term->term.s32);
 			}
 			break;
 		case EXPRS_TERM_POS:	/* + */
@@ -385,7 +400,7 @@ static void dumpStack(ExprsDef_t *exprs, ExprsTerm_t *opers, int numOpers)
 	showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 }
 
-static ExprsErrs_t badSyntax(ExprsDef_t *exprs, unsigned short chMask, char cc, ExprsErrs_t retErr)
+static ExprsErrs_t badSyntax(ExprsDef_t *exprs, uint16_t chMask, char cc, ExprsErrs_t retErr)
 {
 	char eBuf[256];
 	snprintf(eBuf,sizeof(eBuf),"parseExpression(): Syntax error. cc='%c', chMask=0x%04X\n", isprint(cc)?cc:'.',chMask);
@@ -397,7 +412,7 @@ static ExprsErrs_t badSyntax(ExprsDef_t *exprs, unsigned short chMask, char cc, 
 static char *handleLengthQualifiers(ExprsDef_t *exprs, ExprsTerm_t *term, char *sEndp, bool *eatSuffixP)
 {
 	char cc;
-	unsigned short chMask;
+	uint16_t chMask;
 	cc = toupper( sEndp[1] );
 	chMask = exprs->chMaskPtr[(int)sEndp[2]];
 	if ( !(chMask&(CT_ALP|CT_XALP|CT_HEX)) )
@@ -434,7 +449,7 @@ static ExprsErrs_t storeInteger(ExprsDef_t *exprs,
 	if ( !skipStrtol )
 	{
 		sEndp = NULL;
-		term->term.s64 = strtoll(startP,&sEndp,radix);
+		term->term.s32 = strtol(startP,&sEndp,radix);
 		if ( !sEndp || sEndp == startP || (eatSuffix && toupper(*sEndp) != suffix) )
 			return EXPR_TERM_BAD_NUMBER;
 		if ( (exprs->mFlags&EXPRS_FLG_LEN_QUALIFIERS) && *sEndp == '.' )
@@ -446,8 +461,8 @@ static ExprsErrs_t storeInteger(ExprsDef_t *exprs,
 	term->termType = EXPRS_TERM_INTEGER;
 	if ( exprs->mVerbose )
 	{
-		snprintf(eBuf,sizeof(eBuf),"parseExpression().storeInteger(): Pushed to terms[%d] a %s Integer %ld. flags=0x%X, radix=%d.\n",
-				 sPtr->mTermsPool.mNumUsed, rdxName, term->term.s64, term->flags, radix);
+		snprintf(eBuf,sizeof(eBuf),"parseExpression().storeInteger(): Pushed to terms[%d] a %s Integer %d. flags=0x%X, radix=%d.\n",
+				 sPtr->mTermsPool.mNumUsed, rdxName, term->term.s32, term->flags, radix);
 		showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 	}
 	++sPtr->mTermsPool.mNumUsed;
@@ -458,7 +473,7 @@ static ExprsErrs_t handleString(ExprsDef_t *exprs, ExprsStack_t *sPtr, ExprsTerm
 {
 /* NOTE: The assembler only accepts the syntax 'x or 'x' */
 	const char *endP;
-	unsigned short chMask;
+	uint16_t chMask;
 	
 	if ( cc == '"' )
 		return EXPR_TERM_BAD_STRINGS_NOT_SUPPORTED;
@@ -467,7 +482,7 @@ static ExprsErrs_t handleString(ExprsDef_t *exprs, ExprsStack_t *sPtr, ExprsTerm
 	chMask = exprs->chMaskPtr[(int)cc];
 	if ( (chMask&CT_EOL) )
 		return EXPR_TERM_BAD_NO_STRING_TERM;
-	term->term.u64 = cc;
+	term->term.u32 = cc;
 	term->termType = EXPRS_TERM_INTEGER;
 	cc = *endP;
 	if ( cc == '\'' )
@@ -482,7 +497,7 @@ static ExprsErrs_t handleSymbol(ExprsDef_t *exprs, ExprsTerm_t *term, ExprsStack
 	size_t symLen;
 	const char *endP;
 	char cc, *strPtr;
-	unsigned short chMask,chChk;
+	uint16_t chMask,chChk;
 	
 	/* symbol */
 	endP = exprs->mCurrPtr;
@@ -604,7 +619,7 @@ typedef enum
  **/
 static ExprsErrs_t parseExpression(ExprsDef_t *exprs, int nest, TermType_t lastTermType )
 {
-	unsigned short chMask=CT_EOL;
+	uint16_t chMask=CT_EOL;
 	char cc, *operPtr, *sEndp;
 	const char *startP, *endP;
 	ExprsTerm_t *term, operStack[8];
@@ -810,7 +825,7 @@ static ExprsErrs_t parseExpression(ExprsDef_t *exprs, int nest, TermType_t lastT
 #endif
 			}
 			sEndp = NULL;
-			term->term.s64 = strtoul(startP,&sEndp,16);
+			term->term.u32 = strtoul(startP,&sEndp,16);
 			if ( !sEndp )
 				return badSyntax(exprs,chMask,cc, EXPR_TERM_BAD_NUMBER);
 			cc = toupper(*sEndp);
@@ -837,7 +852,7 @@ static ExprsErrs_t parseExpression(ExprsDef_t *exprs, int nest, TermType_t lastT
 			   )
 			{
 				/* try the number using octal to see if a 'O' or 'Q' follows */
-				term->term.s64 = strtoul(startP,&sEndp,8);
+				term->term.u32 = strtoul(startP,&sEndp,8);
 				if ( !sEndp )
 					return badSyntax(exprs,chMask,cc, EXPR_TERM_BAD_NUMBER);
 				cc = toupper(*sEndp);
@@ -884,14 +899,14 @@ static ExprsErrs_t parseExpression(ExprsDef_t *exprs, int nest, TermType_t lastT
 				continue;
 			}
 			/* re-convert according to desired radix */
-			term->term.s64 = strtoul(startP, &sEndp, lRadix);
+			term->term.u32 = strtoul(startP, &sEndp, lRadix);
 			if ( !sEndp )
 				return badSyntax(exprs,chMask,cc,EXPR_TERM_BAD_NUMBER);
 			endP = sEndp;
 			if ( exprs->mVerbose )
 			{
-				snprintf(eBuf,sizeof(eBuf),"parseExpression(): Pushed to terms[%d] a plain Integer %ld. operUsed=%d. flags=0x%X, mRadix=%d\n",
-						 sPtr->mTermsPool.mNumUsed, term->term.s64, operUsed, term->flags, exprs->mRadix);
+				snprintf(eBuf,sizeof(eBuf),"parseExpression(): Pushed to terms[%d] a plain Integer %d. operUsed=%d. flags=0x%X, mRadix=%d\n",
+						 sPtr->mTermsPool.mNumUsed, term->term.s32, operUsed, term->flags, exprs->mRadix);
 				showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 			}
 			exprs->mCurrPtr = endP;
@@ -1311,7 +1326,7 @@ static void setup(ExprsDef_t *exprs)
 	if ( exprs->mFlags && exprs->mVerbose )
 	{
 		char eBuf[128];
-		snprintf(eBuf,sizeof(eBuf),"libExprsEval(): flags=0x%lX, radix=%d\n", exprs->mFlags, exprs->mRadix);
+		snprintf(eBuf,sizeof(eBuf),"libExprsEval(): flags=0x%X, radix=%d\n", exprs->mFlags, exprs->mRadix);
 		showMsg(exprs,EXPRS_SEVERITY_INFO,eBuf);
 	}
 	exprs->mFlags |= EXPRS_FLG_NO_FLOAT;
@@ -1519,7 +1534,7 @@ ExprsDef_t *libExprsInit(const ExprsCallbacks_t *callbacks, int termIncs, int st
 	exprs = (ExprsDef_t *)tCallbacks.memAlloc(tCallbacks.memArg, sizeof(ExprsDef_t));
 	if ( !exprs )
 	{
-		snprintf(tBuf,sizeof(tBuf),"libExprsInit(): Failed to allocate " _FMT_SZ_ " bytes for ExprsDef_t: %s\n",
+		snprintf(tBuf,sizeof(tBuf),"libExprsInit(): Failed to allocate " FMT_SZ " bytes for ExprsDef_t: %s\n",
 				 sizeof(ExprsDef_t), strerror(errno));
 		tCallbacks.msgOut(tCallbacks.msgArg, EXPRS_SEVERITY_FATAL, tBuf);
 		return NULL;

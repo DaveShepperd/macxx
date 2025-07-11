@@ -46,9 +46,9 @@ const char macxx_name[] = "mac8080";
 const char *macxx_target = "8080";
 const char *macxx_descrip = "Cross assembler for the 8080.";
 
-unsigned short macxx_salign = 0;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 0;    /* default alignment data within segment */
-unsigned short macxx_min_dalign = 0;
+uint16_t macxx_salign = 0;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 0;    /* default alignment data within segment */
+uint16_t macxx_min_dalign = 0;
 
 char macxx_mau = 8;         /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -59,8 +59,8 @@ char macxx_nibbles_byte = 2;    /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_TRUNC | ED_DOL_PC | ED_H_HEX | ED_O_OCT | ED_Q_OCT | ED_ALTEXP | ED_PRECED;  /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);  /* default list mask */
+uint32_t macxx_edm_default = ED_TRUNC | ED_DOL_PC | ED_H_HEX | ED_O_OCT | ED_Q_OCT | ED_ALTEXP | ED_PRECED;  /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD);  /* default list mask */
 
 int current_radix = 10;     /* default the radix to decimal */
 char expr_open = '(';       /* char that opens an expression */
@@ -296,7 +296,7 @@ void do_opcode(Opcode *opc)
 struct rinit
 {
     char *name;
-    unsigned long value;
+    uint32_t value;
 };
 
 static const struct rinit reginit[] =

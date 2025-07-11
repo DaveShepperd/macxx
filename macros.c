@@ -29,9 +29,9 @@ Change Log
 #include "exproper.h"
 #include "utils.h"
 
-unsigned char *macro_pool;   /* pointer to free space for macro expansion */
+uint8_t *macro_pool;   /* pointer to free space for macro expansion */
 int macro_pool_size;    /* amount of space left in macro pool */
-unsigned long macro_pool_used,peak_macro_pool_used;
+uint32_t macro_pool_used,peak_macro_pool_used;
 
 int macro_level;    /* nest level of macro calls */
 int macro_nesting;  /* .ne. if macro called a .INCLUDE file */
@@ -47,23 +47,23 @@ void dump_macro( Macargs *ma, Opcode *mac )
     {
         sprintf(emsg,"\tDump of macro %s\n",mac->op_name);
         puts_lis(emsg,1);
-        sprintf(emsg,"\t\t Opcode entry (%08lX):\n\t\t\top_margs: %08lX\n\t\t\top_class: %04X\n",
-                (long)mac,(long)mac->op_margs,mac->op_class);
+        sprintf(emsg,"\t\t Opcode entry (%08X):\n\t\t\top_margs: %08X\n\t\t\top_class: %04X\n",
+                (int32_t)mac,(int32_t)mac->op_margs,mac->op_class);
         puts_lis(emsg,3);
     }
     else
     {
         puts_lis("\tDump of .IRP macro\n",1);
     }
-    sprintf(emsg,"\t\t Dummy argument list (%08lX) %d arguments:\n\t\t\tMacro body at %08lX\n",
-            (long)ma,(long)ma->mac_numargs, (long)ma->mac_body);
+    sprintf(emsg,"\t\t Dummy argument list (%08X) %d arguments:\n\t\t\tMacro body at %08X\n",
+            (int32_t)ma,(int32_t)ma->mac_numargs, (int32_t)ma->mac_body);
     puts_lis(emsg,2);
     for (i=0;i<ma->mac_numargs;++i)
     {
         sp = ma->mac_keywrd+i;
         s = *sp;
-        sprintf(emsg,"\t\t\tArg %d (%08lX)->(%08lX)-> %s\n",
-                i,(long)sp,(long)s,s);
+        sprintf(emsg,"\t\t\tArg %d (%08X)->(%08X)-> %s\n",
+                i,(int32_t)sp,(int32_t)s,s);
         puts_lis(emsg,1);
     }
     if (ma->mac_body != 0)
@@ -76,7 +76,7 @@ void dump_macro( Macargs *ma, Opcode *mac )
             *d++ = '\t';
             *d++ = '\t';
             *d++ = '\t';
-            while (c = (unsigned char)*s++)
+            while (c = (uint8_t)*s++)
             {
                 if ((c & 0x80) != 0)
                 {
@@ -84,7 +84,7 @@ void dump_macro( Macargs *ma, Opcode *mac )
                     {
                         ADJ_ALIGN(s)
                         s = *((char **)s);
-                        sprintf(d,"{LINK to %08lX}", (long)s);
+                        sprintf(d,"{LINK to %08X}", (int32_t)s);
                     }
                     else if (c == MAC_EOM)
                     {
@@ -112,12 +112,12 @@ void dump_macro( Macargs *ma, Opcode *mac )
 }
 #endif
 
-void free_macbody( unsigned char *link )
+void free_macbody( uint8_t *link )
 {
 #if !defined(SUN)
-    unsigned char c,*s;   
+    uint8_t c,*s;   
     int *ip;
-    s = (unsigned char *)link;
+    s = (uint8_t *)link;
     ip = (int *)s;
     --ip;
     while (1)
@@ -126,7 +126,7 @@ void free_macbody( unsigned char *link )
         if (c == MAC_LINK)
         {
             ADJ_ALIGN(s)
-            free_macbody(*((unsigned char **)s));
+            free_macbody(*((uint8_t **)s));
             break;
         }
         if (c == MAC_EOM) break;
@@ -151,7 +151,7 @@ int macro_to_mem( Macargs *ma, char *name)
 {
     int nest = 0,tkncnt;
     char *src;
-    unsigned char *dst;
+    uint8_t *dst;
     list_stats.include_level = include_level;
 	while ( 1 )
     {          /* until .ENDM/.ENDR found */
@@ -162,16 +162,16 @@ int macro_to_mem( Macargs *ma, char *name)
         mpsize = inp_len+1+1+ALIGNMENT+sizeof(char *);
         if (macro_pool_size < mpsize)
         {
-            unsigned char **nmp;
+            uint8_t **nmp;
             if (macro_pool != 0)
             {
                 *macro_pool++ = MAC_LINK;
                 ADJ_ALIGN(macro_pool)
             }
-            nmp = (unsigned char **)macro_pool;
+            nmp = (uint8_t **)macro_pool;
             macro_pool_size = 128;
             if (macro_pool_size < mpsize) macro_pool_size = mpsize;
-            macro_pool = (unsigned char *)MEM_alloc(macro_pool_size);
+            macro_pool = (uint8_t *)MEM_alloc(macro_pool_size);
             if (nmp != 0)
                 *nmp = macro_pool;
             if (ma->mac_body == 0)
@@ -186,7 +186,7 @@ int macro_to_mem( Macargs *ma, char *name)
         tkncnt = 0;
         while (1)
         {       /* for each token on a line */
-            unsigned char *d, *aptr;
+            uint8_t *d, *aptr;
             int c;
             int argnum;
             while ((cttbl[(int)*src]&CT_WS) != 0)
@@ -310,7 +310,7 @@ int macro_to_mem( Macargs *ma, char *name)
             }
             else
             {           /* +- First char is ALP */
-                unsigned short oct,ct;  /* first char is NOT ALP */
+                uint16_t oct,ct;  /* first char is NOT ALP */
                 oct = cttbl[c];     /* get the flags of the first char */
                 while (1)
                 {          /* pass all chars until next ALP or EOL */
@@ -361,11 +361,11 @@ int macro_to_mem( Macargs *ma, char *name)
 int op_macro( void )      /* define a macro */
 {
     char **key_pool,**def_pool;
-    unsigned char *gs_flag;
-    unsigned char *mac_pool;
+    uint8_t *gs_flag;
+    uint8_t *mac_pool;
     Opcode *mac;
     int size,tt;
-    unsigned long old_edmask;
+    uint32_t old_edmask;
     Macargs *ma;
 
     comma_expected = 2;      /* comma is optional */
@@ -413,12 +413,12 @@ int op_macro( void )      /* define a macro */
                /*   and defaults */
                1)+                /* room for gsflags */
          sizeof(Macargs);   /* room for macargs struct */
-    mac_pool = (unsigned char *)MEM_alloc(tt);        /* pickup some memory */
+    mac_pool = (uint8_t *)MEM_alloc(tt);        /* pickup some memory */
     ma = mac->op_margs = (Macargs *)mac_pool;
     mac_pool += sizeof(Macargs);
     key_pool = (char **)mac_pool;    /* get space for keyword arg */
     def_pool = key_pool+size;        /* get space for default arg */
-    gs_flag = (unsigned char *)(def_pool+size);   /* point to GS flag area */
+    gs_flag = (uint8_t *)(def_pool+size);   /* point to GS flag area */
     mac_pool = gs_flag+size;     /* point to area to copy args */
 
     ma->mac_keywrd = key_pool;
@@ -545,7 +545,7 @@ int macro_call(Opcode *opc)
 {
     Macargs *ma;
     char **keywrd,**defalt,**argptr,*args;
-    unsigned char *gensym;
+    uint8_t *gensym;
     Mcall_struct *mac_pool;
     int argcnt,arglen;       /* assume no args */
     char **args_area;
@@ -649,24 +649,24 @@ int macro_call(Opcode *opc)
             }
             if (unpack_radix < 10)
             {
-                sprintf(args,"%lo",EXP0SP->expr_value);
+                sprintf(args,"%o",EXP0SP->expr_value);
             }
             else if (unpack_radix < 16)
             {
-                sprintf(args,"%ld",EXP0SP->expr_value);
+                sprintf(args,"%d",EXP0SP->expr_value);
             }
             else
             {
-                unsigned long tv;
+                uint32_t tv;
                 tv = EXP0SP->expr_value;
                 while (tv > 15) tv >>= 4;
                 if (tv > 9)
                 {
-                    sprintf(args,"0%lX",EXP0SP->expr_value);
+                    sprintf(args,"0%X",EXP0SP->expr_value);
                 }
                 else
                 {
-                    sprintf(args,"%lX",EXP0SP->expr_value);
+                    sprintf(args,"%X",EXP0SP->expr_value);
                 }
             }
             args += strlen(args);  /* position to end of string */
@@ -757,7 +757,7 @@ term_arg:
                 if (*gensym != 0)
                 { /* generated symbol */
                     *keywrd = args;  /* point to argument */
-                    sprintf(args,"%ld",autogen_lsb);
+                    sprintf(args,"%d",autogen_lsb);
                     ++autogen_lsb;   /* bump generated symbol number */
                     args += strlen(args);
                     *args++ = '$';   /* make it a local symbol */
@@ -793,9 +793,9 @@ term_arg:
 int op_irp( void )            /* .IRP macro */
 {
     char **key_pool,**def_pool,*dst;
-    unsigned char *gs_flag;
+    uint8_t *gs_flag;
     char *macro_name;
-    unsigned char *mac_pool;
+    uint8_t *mac_pool;
     int size,tt;
     Mcall_struct *marg;
     Macargs *ma;
@@ -820,7 +820,7 @@ int op_irp( void )            /* .IRP macro */
     ma = (Macargs *)(marg+1);        /* pointer to dummy macargs */
     key_pool = (char **)(ma+1);      /* get space for arg ptrs */
     def_pool = key_pool+size;        /* get space for default arg */
-    gs_flag = (unsigned char *)(def_pool+size);   /* point to GS flag area */
+    gs_flag = (uint8_t *)(def_pool+size);   /* point to GS flag area */
     mac_pool = gs_flag+size;     /* point to next free area */
     macro_name = (char *)mac_pool;       /* point to area for macro name */
     sprintf(macro_name,IRP_NAME,token_pool); /* create macro name */
@@ -984,9 +984,9 @@ int op_irp( void )            /* .IRP macro */
 int op_irpc( void )           /* .IRPC macro */
 {
     char **key_pool,**def_pool,*dst,*first_targ;
-    unsigned char *gs_flag;
+    uint8_t *gs_flag;
     char *macro_name;
-    unsigned char *mac_pool;
+    uint8_t *mac_pool;
     int c,size,tt,nest;
     Mcall_struct *marg;
     Macargs *ma;
@@ -1011,7 +1011,7 @@ int op_irpc( void )           /* .IRPC macro */
     ma = (Macargs *)(marg+1);        /* pointer to dummy macargs */
     key_pool = (char **)(ma+1);      /* get space for arg ptrs */
     def_pool = key_pool+size;        /* get space for default arg */
-    gs_flag = (unsigned char *)(def_pool+size);   /* point to GS flag area */
+    gs_flag = (uint8_t *)(def_pool+size);   /* point to GS flag area */
     mac_pool = gs_flag+size;     /* point to next free area */
     macro_name = (char *)mac_pool;       /* point to area for macro name */
     sprintf(macro_name,IRPC_NAME,token_pool);    /* create macro name */
@@ -1134,11 +1134,11 @@ int op_irpc( void )           /* .IRPC macro */
 int op_rept( void )           /* .REPT macro */
 {
     char *macro_name;
-    unsigned char *mac_pool;
+    uint8_t *mac_pool;
     int tt;
     Mcall_struct *marg;
     Macargs *ma;
-    long rept_count;
+    int32_t rept_count;
 
     tt = get_token();
     exprs(1,&EXP0);
@@ -1148,7 +1148,7 @@ int op_rept( void )           /* .REPT macro */
         EXP0SP->expr_value = 0;
         EXP0SP->expr_code = EXPR_VALUE;
     }
-#define REPT_NAME ".REPT %ld"
+#define REPT_NAME ".REPT %d"
     tt =  sizeof(Mcall_struct)+  /* room for mcall struct */
           sizeof(Macargs)+   /* room for dummy macargs struct */
           sizeof(REPT_NAME)+7;   /* room for macro name+ASCII repeat count+null */
@@ -1173,7 +1173,7 @@ int op_rept( void )           /* .REPT macro */
     }
     sprintf(macro_name,REPT_NAME,rept_count);
     ma->mac_numargs = 0;         /* .REPT has 0 replaceable args */
-	dump_hex4((long)rept_count & 0xFFFF, list_stats.listBuffer + LLIST_RPT);
+	dump_hex4((int32_t)rept_count & 0xFFFF, list_stats.listBuffer + LLIST_RPT);
 #ifndef MAC_PP
     list_stats.listBuffer[LLIST_RPT-1] = '(';
     list_stats.listBuffer[LLIST_RPT+4] = ')';

@@ -35,16 +35,16 @@
 
 /* Globals */
 
-long sym_pool_used;
+int32_t sym_pool_used;
 SS_struct *hash[HASH_TABLE_SIZE];  /* hash table */
 SS_struct *symbol_pool; /* pointer to next free symbol space */
 int symbol_pool_size=0;     /* number of symbol spaces left */
 SS_struct *first_symbol;    /* pointer to first symbol of 'duplicate' list */
 int new_symbol;         /* flags indicating that an insert happened */
 /* value (can be added)	*/
-short current_procblk;      /* current procedure block number */
-short current_scopblk;      /* current scope level within block */
-short current_scope;        /* sum of the two above */
+int16_t current_procblk;      /* current procedure block number */
+int16_t current_scopblk;      /* current scope level within block */
+int16_t current_scope;        /* sum of the two above */
 
 /************************************************************************
  * Get a block of memory to use for symbol table

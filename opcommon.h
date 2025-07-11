@@ -56,7 +56,7 @@ void opcinit( void )          /* preloads the opcode table */
     for (;opc->name;++opc)
     {
         int len;
-        unsigned long legal_am;
+        uint32_t legal_am;
 #if defined(MAC_65)
         if (options[QUAL_P816])
         {
@@ -70,7 +70,7 @@ void opcinit( void )          /* preloads the opcode table */
         {
             legal_am = opc->amodes;
         }
-        if (legal_am == 0L) continue;
+        if (legal_am == 0) continue;
 #else
 #if defined(MAC_TJ)
         if (options[QUAL_JERRY])

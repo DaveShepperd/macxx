@@ -108,7 +108,7 @@ removed
 extern int LLIST_SRC;				/* listing line location for source code */
 extern int LLIST_SRC_QUED;			/* queued listing line location for source code */
 extern int LLIST_REQ_NEWL;			/* Request a new listing line */
-extern unsigned char LLIST_TXT_BUF[18];		/* Buffer for text storage - 1 location + 16 characters + null */
+extern uint8_t LLIST_TXT_BUF[18];		/* Buffer for text storage - 1 location + 16 characters + null */
 #else
 #define LLIST_SRC	40				/* column position for source to begin */
 #define LLIST_MAX_SRC_OFFSET (LLIST_SRC+40)	/* Maximum number of columns source may be repositioned */

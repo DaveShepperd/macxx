@@ -103,7 +103,7 @@ static void ascii_common(int arg)
 				   example:  \377 would be FF hex -  /ABC\377DEF/    */
 				if ( c == '\\' && (arg&ASC_COMMON_ESCAPES) )
 				{
-					unsigned char whatToPass=inp_ptr[1];
+					uint8_t whatToPass=inp_ptr[1];
 					/* Allows for standard 'C' string escape processing */
 					switch (whatToPass)
 					{
@@ -145,7 +145,7 @@ static void ascii_common(int arg)
 						break;
 					case 'x':	/* hex number */
 						{
-							unsigned long val=0;
+							uint32_t val=0;
 							char *iptr = inp_ptr+2;
 							while ( 1 )
 							{
@@ -304,7 +304,7 @@ static void ascii_common(int arg)
 						tlen -= z;
 						do
 						{
-							unsigned char c1;
+							uint8_t c1;
 							c1 = *asc_ptr++;
 							if ( list_radix == 16 ) /* fix for OCTAL listing */
 							{
@@ -422,7 +422,7 @@ static void ascii_common(int arg)
 							s = lstat->listBuffer + lstat->list_ptr;
 							if ( list_radix == 16 ) /* fix for OCTAL listing */
 							{
-								*s++ = hexdig[((unsigned char)val) >> 4];
+								*s++ = hexdig[((uint8_t)val) >> 4];
 								*s++ = hexdig[val & 15];
 							}
 							else
@@ -870,8 +870,8 @@ static void rad50_common(void)
 					tlen -= z;
 					do
 					{
-						unsigned char c1;
-						unsigned char c2;
+						uint8_t c1;
+						uint8_t c2;
 						unsigned int c3;
 
 						/* For *.lis files - swap low high bytes for little endian CPU's

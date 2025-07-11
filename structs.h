@@ -19,6 +19,8 @@
 #ifndef _STRUCTS_H_
 #define _STRUCTS_H_ 1
 
+#include <stdint.h>
+
 #define EOL 254			/* end of line */
 
 #if defined(INTERNAL_PACKED_STRUCTS)
@@ -26,7 +28,7 @@
 #endif
 
 typedef struct my_desc {	/* define a descriptor structure cuz	*/
-   unsigned short md_len;	/* the stock descrip definitions cause	*/
+   uint16_t md_len;	/* the stock descrip definitions cause	*/
 #ifdef VMS
    char md_type;		/* the compiler to think that they are	*/
    char md_class;		/* floating point data types.		*/
@@ -46,18 +48,18 @@ typedef struct my_desc {	/* define a descriptor structure cuz	*/
 typedef struct AMA_Tags_t
 {
 	struct AMA_Tags_t *next;
-	unsigned short virt_line;
-	unsigned short tag;
+	uint16_t virt_line;
+	uint16_t tag;
 } AMA_Tags_t;
 
 typedef struct fn_struct {
 #ifdef VMS
-   unsigned short d_length;	/* length of s_buff			*/
+   uint16_t d_length;	/* length of s_buff			*/
    char s_type;			/* descriptor constant (uses 0)		*/
    char s_class;		/* descriptor constant (uses 0)		*/
 #endif
    char *fn_buff;		/* pointer to filename buffer		*/
-   unsigned short r_length;	/* length of string stored in s_buff	*/
+   uint16_t r_length;	/* length of string stored in s_buff	*/
    char *fn_name_only;		/* filename without dvc/dir/ver stuff	*/
    struct fn_struct *fn_next;	/* pointer to next filename desc	*/
    FILE *fn_file;		/* pointer to FILE structure		*/
@@ -65,9 +67,9 @@ typedef struct fn_struct {
    char *fn_version;		/* file version number (for debug)	*/
    int macro_level;		/* saved macro level			*/
    AMA_Tags_t **tagHashTable;
-   unsigned short fn_line;	/* current line number of input file    */
-   unsigned short fn_virt_line;	/* Virtual line number (includes all lines injected due to macro expansion and rept blocks) */
-   unsigned char fn_filenum;	/* file number				*/
+   uint16_t fn_line;	/* current line number of input file    */
+   uint16_t fn_virt_line;	/* Virtual line number (includes all lines injected due to macro expansion and rept blocks) */
+   uint8_t fn_filenum;	/* file number				*/
    unsigned fn_present:1;	/* this file is present (T/F)		*/
    unsigned fn_library:1;	/* this file is a library		*/
    unsigned fn_stdin:1;		/* file is from stdin 			*/
@@ -76,15 +78,15 @@ typedef struct fn_struct {
 
 typedef struct seg_struct {
    char     *seg_string;	/* pointer to section name */
-   unsigned long seg_pc;	/* segment pc */
-   unsigned long seg_base;	/* base of segment (lowest address used) */
-   unsigned long seg_len;	/* length of group/segment */
-   unsigned long seg_maxlen;	/* maximum length for the segment */
-   unsigned long rel_offset;	/* offset in relative segment this section begins */
-   unsigned short seg_index;	/* segment index */
-   unsigned short seg_ident;	/* id number for segment */
-   unsigned short seg_salign;	/* alignment of group/segment in memory */
-   unsigned short seg_dalign;	/* alignment of data within segment */
+   uint32_t seg_pc;	/* segment pc */
+   uint32_t seg_base;	/* base of segment (lowest address used) */
+   uint32_t seg_len;	/* length of group/segment */
+   uint32_t seg_maxlen;	/* maximum length for the segment */
+   uint32_t rel_offset;	/* offset in relative segment this section begins */
+   uint16_t seg_index;	/* segment index */
+   uint16_t seg_ident;	/* id number for segment */
+   uint16_t seg_salign;	/* alignment of group/segment in memory */
+   uint16_t seg_dalign;	/* alignment of data within segment */
    unsigned flg_abs:1;		/* absolute section */
    unsigned flg_zero:1;		/* base page section (.bsect) */
    unsigned flg_ro:1;		/* section is read only */
@@ -105,11 +107,11 @@ typedef struct ss_struct {
       struct seg_struct *ssp_seg; /* pointer to segment symbol is relative to */
       struct exp_stk *ssp_expr; /* pointer to expression definition area */
    } ssp_up;
-   long ss_value;		/* symbol value or offset from segment */
-   unsigned short ss_ident;		/* symbol indentifier */
-   unsigned short ss_line;		/* source line that defined the file */
-   unsigned char ss_scope;		/* scope level */
-   unsigned char ss_type;		/* symbol type (for source code debugging) */
+   int32_t ss_value;		/* symbol value or offset from segment */
+   uint16_t ss_ident;		/* symbol indentifier */
+   uint16_t ss_line;		/* source line that defined the file */
+   uint8_t ss_scope;		/* scope level */
+   uint8_t ss_type;		/* symbol type (for source code debugging) */
    unsigned int flg_defined:1;	/* label/symbol is defined */
    unsigned int flg_fwdReference:1;	/* symbol was used in an expression before being defined */
    unsigned int flg_fixed_addr:1;	/* Symbol cannot be re-defined */
@@ -141,17 +143,17 @@ extern OFN_struct *out_files;
 
 typedef struct expr_struct {
    EXPR_codes expr_code;	/* expression code */
-   long expr_value;	
+   int32_t expr_value;	
    union {
       struct ss_struct *expt_sym;
       struct seg_struct *expt_seg;   
       struct exp_stk *expt_expr;
-      unsigned long expt_count;
+      uint32_t expt_count;
    } expt;
 #define EXPR_FLG_REG	  		1
 #define EXPR_FLG_REGMASK  		2
-   unsigned char expr_flags;
-   unsigned char expr_fwdReference;
+   uint8_t expr_flags;
+   uint8_t expr_fwdReference;
 } EXPR_struct;
 
 #define expr_sym expt.expt_sym
@@ -160,13 +162,13 @@ typedef struct expr_struct {
 #define expr_count expt.expt_count
 
 typedef struct exp_stk {
-   long psuedo_value;		/* value if expr with unknowns set to 0 */
+   int32_t psuedo_value;		/* value if expr with unknowns set to 0 */
    EXPR_struct *stack;		/* expression stack */
-   unsigned short tag;		/* expression tag */
-   unsigned short tag_len;	/* length of tag */
-   short ptr;			/* expression stack pointer */
-   short paren_cnt;		/* number of open parens found */
-   short oper_ptr;		/* operator stack pointer */
+   uint16_t tag;		/* expression tag */
+   uint16_t tag_len;	/* length of tag */
+   int16_t ptr;			/* expression stack pointer */
+   int16_t paren_cnt;		/* number of open parens found */
+   int16_t oper_ptr;		/* operator stack pointer */
    unsigned int forward_reference:1;
    unsigned int base_page_reference:1;
    unsigned int register_reference:1;
@@ -179,7 +181,7 @@ typedef struct exp_stk {
    unsigned int autodec:1;	/* suggested autodecrement */
    unsigned int autoinc:1;	/* suggester autoincrement */
    unsigned int :4;		/* round it up to next short */
-   short nest;			/* nest level */
+   int16_t nest;			/* nest level */
 } EXP_stk;
 
 #define BOS_CODE  expr_code
@@ -187,11 +189,11 @@ typedef struct exp_stk {
 #define BOS_SEG   expr_seg
 
 typedef struct tmp_struct {
-   unsigned char tf_type;
-   unsigned short line_no;
+   uint8_t tf_type;
+   uint16_t line_no;
    union {
       struct tmp_struct *tf_lin;
-      long tf_len;
+      int32_t tf_len;
    } tf_ll;
 } TMP_struct;
 

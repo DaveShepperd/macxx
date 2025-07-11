@@ -76,34 +76,34 @@ enum vlda_nums {
  ************************************************************************/
 
 #if ALIGNMENT == 0
-typedef unsigned char Sentinel;
+typedef uint8_t Sentinel;
 #else
 #if ALIGNMENT == 1
-typedef unsigned short Sentinel;
+typedef uint16_t Sentinel;
 #else
-typedef unsigned long Sentinel;
+typedef uint32_t Sentinel;
 #endif
 #endif
 
 typedef struct vlda_abs {
    Sentinel vlda_type;
-   unsigned long vlda_addr;
+   uint32_t vlda_addr;
 } VLDA_abs;
 
 typedef struct vlda_id {
    Sentinel vid_rectyp;		/* record type */
    Sentinel vid_siz;		/* size of this structure in bytes */
-   unsigned short vid_maj;	/* major version number of creating image */
-   unsigned short vid_min;	/* minor version number of creating image */
-   unsigned short vid_symsiz;	/* size of symbol structure */
-   unsigned short vid_segsiz;	/* size of segment structure */
-   short vid_image;		/* offset to image name */
-   short vid_target;		/* offset to target string */
-   short vid_time;		/* offset to date/time string */
-   unsigned char vid_errors;	/* error count */
-   unsigned char vid_warns;	/* warning count */
+   uint16_t vid_maj;	/* major version number of creating image */
+   uint16_t vid_min;	/* minor version number of creating image */
+   uint16_t vid_symsiz;	/* size of symbol structure */
+   uint16_t vid_segsiz;	/* size of segment structure */
+   int16_t vid_image;		/* offset to image name */
+   int16_t vid_target;		/* offset to target string */
+   int16_t vid_time;		/* offset to date/time string */
+   uint8_t vid_errors;	/* error count */
+   uint8_t vid_warns;	/* warning count */
 #if 0
-   unsigned short vid_maxtoken;	/* maximum token length */
+   uint16_t vid_maxtoken;	/* maximum token length */
 #endif
 } VLDA_id;
 
@@ -111,35 +111,35 @@ typedef struct vlda_id {
 
 typedef struct vlda_sym {
    Sentinel vsym_rectyp;	/* record type */
-   unsigned short vsym_flags;	/* symbol flags */
-   short vsym_noff;		/* offset to symbol name */
-   unsigned short vsym_ident;	/* symbol's ident */
-   long vsym_value;		/* value */
-   short vsym_eoff;		/* offset to expression */
+   uint16_t vsym_flags;	/* symbol flags */
+   int16_t vsym_noff;		/* offset to symbol name */
+   uint16_t vsym_ident;	/* symbol's ident */
+   int32_t vsym_value;		/* value */
+   int16_t vsym_eoff;		/* offset to expression */
 } VLDA_sym; 
 
 typedef struct vlda_seg {
    Sentinel vseg_rectyp;	/* record type */
-   unsigned short vseg_flags;	/* segment flags */
-   short vseg_noff;		/* offset to symbol name */
-   unsigned short vseg_ident;	/* symbol's ident */
-   short vseg_salign;		/* alignment value */
-   short vseg_dalign;		/* alignment value */
-   long vseg_base;		/* value */
-   unsigned long vseg_maxlen;	/* maximum length for segment group */
-   long vseg_offset;		/* output offset value */
+   uint16_t vseg_flags;	/* segment flags */
+   int16_t vseg_noff;		/* offset to symbol name */
+   uint16_t vseg_ident;	/* symbol's ident */
+   int16_t vseg_salign;		/* alignment value */
+   int16_t vseg_dalign;		/* alignment value */
+   int32_t vseg_base;		/* value */
+   uint32_t vseg_maxlen;	/* maximum length for segment group */
+   int32_t vseg_offset;		/* output offset value */
 } VLDA_seg;
 
 typedef struct vlda_slen {
    Sentinel vslen_rectyp;	/* record type */
-   unsigned short vslen_ident;	/* segment's ident */
-   long vslen_len;		/* segment length */
+   uint16_t vslen_ident;	/* segment's ident */
+   int32_t vslen_len;		/* segment length */
 } VLDA_slen;
 
 typedef struct vlda_test {
    Sentinel vtest_rectyp;	/* record type */
-   unsigned short vtest_eoff;	/* offset to expression */
-   unsigned short vtest_soff;	/* offset to message */
+   uint16_t vtest_eoff;	/* offset to expression */
+   uint16_t vtest_soff;	/* offset to message */
 } VLDA_test;
 
 typedef union vexp {
@@ -147,34 +147,34 @@ typedef union vexp {
    Sentinel *vexp_type;		/* type code */
    Sentinel *vexp_oper;		/* operator */
    char *vexp_chp;		/* pointer to char (for length computations) */
-   unsigned short *vexp_ident;	/* identifier */
-   long *vexp_const;		/* constant */
+   uint16_t *vexp_ident;	/* identifier */
+   int32_t *vexp_const;		/* constant */
 #if ALIGNMENT > 0
 #if ALIGNMENT == 1
-   short *vexp_byte;		/* 68000 gets complicated, don't use bytes */
+   int16_t *vexp_byte;		/* 68000 gets complicated, don't use bytes */
 #else
-   long *vexp_byte;		/* Sparc gets complicated, don't use bytes */
+   int32_t *vexp_byte;		/* Sparc gets complicated, don't use bytes */
 #endif
 #else
    char *vexp_byte;
 #endif
-   short *vexp_word;
-   long *vexp_long;
+   int16_t *vexp_word;
+   int32_t *vexp_long;
 } VLDA_vexp;
 
 typedef struct vlda_dbgdfile {
    Sentinel type;		/* VLDA_DBGDFILE */
-   unsigned short name;		/* index to filename */
-   unsigned short version;	/* index to version */
+   uint16_t name;		/* index to filename */
+   uint16_t version;	/* index to version */
 } VLDA_dbgdfile;
 
 typedef struct vlda_dbgseg {
    Sentinel type;		/* VLDA_DBGSEG */
-   unsigned long base;		/* section base */
-   unsigned long length;	/* section length */
-   unsigned long offset;	/* section offset */
-   unsigned short name;		/* offset to section name */
-   unsigned short flags;	/* section flags */
+   uint32_t base;		/* section base */
+   uint32_t length;	/* section length */
+   uint32_t offset;	/* section offset */
+   uint16_t name;		/* offset to section name */
+   uint16_t flags;	/* section flags */
 } VLDA_dbgseg;
 
 #if defined(EXTERNAL_PACKED_STRUCTS)

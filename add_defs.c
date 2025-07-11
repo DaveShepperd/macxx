@@ -229,7 +229,7 @@ static FILE_name *fill_in_file( const char *full, const char *cwd )
 	fnp->type_only = fnp->name_type + namelen;
 	fnp->cwd = cwd;
 #if MALLOCDEBUG
-    fprintf(stderr,"Malloc'd %d at %08lX. Wrote %d\n",
+    fprintf(stderr,"Malloc'd %d at %p. Wrote %ld\n",
             tot,fnp,s-(char *)fnp);
 #endif
     return fnp;
@@ -351,12 +351,12 @@ static char *add_ext( char *sptr, char **ext, char **path)
         }
     }
 #if MALLOCDEBUG
-    fprintf(stderr,"add_ext: malloc'd %d at %08lX\n",pathlen+namelen+extlen+1,rp);
+    fprintf(stderr,"add_ext: malloc'd %d at %p\n",pathlen+namelen+extlen+1,rp);
 #endif
     lp = rp + strlen(rp);
     if (typtr == 0 && extlen != 0) strcpy_upc(lp,*ext);
 #if MALLOCDEBUG
-    fprintf(stderr,"\tCopied %d bytes into %08lX\n",strlen(rp)+1,rp);
+    fprintf(stderr,"\tCopied %d bytes into %p\n",strlen(rp)+1,rp);
 #endif
     return tmp;
 }
@@ -378,7 +378,7 @@ static void dump_txt(const char *title, const char *ptr)
 	{
 		for (ii=0; ii < 128 && *src; ++ii, ++src)
 		{
-			snprintf(dst,4," %02X", (unsigned char)*src);
+			snprintf(dst,4," %02X", (uint8_t)*src);
 			dst += 3;
 		}
 		*dst++ = ' ';
@@ -508,7 +508,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
 						EXIT_FALSE;
 					}
 #if MALLOCDEBUG
-					fprintf(stderr,"add_defs: realloc'd %d bytes to %d at %08lX\n",cl, cl+3,nTmps);
+					fprintf(stderr,"add_defs: realloc'd %d bytes to %d at %p\n",cl, cl+3,nTmps);
 #endif
 					/* Stick the path chr at the end */
 					nTmps[cl++] = C_PATH;
@@ -523,7 +523,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
 				{
 					nTmps = (char *)malloc(cl+1);
 #if MALLOCDEBUG
-					fprintf(stderr,"add_defs: malloc'd %d bytes at %08lX\n",cl,nTmps);
+					fprintf(stderr,"add_defs: malloc'd %d bytes at %p\n",cl,nTmps);
 #endif
 					if ( !nTmps )
 					{
@@ -573,7 +573,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
             {
                 free(s);
 #if MALLOCDEBUG
-                fprintf(stderr,"add_defs: free'd %08lX\n",s);
+                fprintf(stderr,"add_defs: free'd %p\n",s);
 #endif
             }
             s = add_ext(src_nam,default_types,default_paths);
@@ -600,7 +600,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
     {
         free(s);
 #if MALLOCDEBUG
-        fprintf(stderr,"add_defs: free'd %08lX\n",s);
+        fprintf(stderr,"add_defs: free'd %p\n",s);
 #endif
     }
 #endif

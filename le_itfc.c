@@ -46,7 +46,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 	expr_ptr = eps->stack+eps->ptr;
 	memset(expr_ptr,0,sizeof(EXPR_struct));
 	if ( (edmask&ED_ALTVER) )
-		printf("copyTerm(): Entry. termType=%d, flags=0x%X, value=0x%lX\n", term->termType, term->flags, term->term.u64 );
+		printf("copyTerm(): Entry. termType=%d, flags=0x%X, value=0x%X\n", term->termType, term->flags, term->term.u32 );
 	if ( (term->flags&EXPRS_TERM_FLAG_REGISTER) )
 		eps->register_reference |= 1;
 	eps->force_byte |= (term->flags & EXPRS_TERM_FLAG_BYTE) ? 1 : 0;
@@ -56,7 +56,7 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 	{
 	case EXPRS_TERM_INTEGER:
 		expr_ptr->expr_code = EXPR_VALUE;
-		expr_ptr->expr_value  = term->term.s64;
+		expr_ptr->expr_value  = term->term.s32;
 		break;          /* exit from switch */
 /*	case EXPRS_TERM_SYMBOL_COMPLEX: */
 	case EXPRS_TERM_SYMBOL:
@@ -338,7 +338,7 @@ int le_itfc(int flag, EXP_stk *eps)
     int cnt;
 	ExprsErrs_t eErrs;
 	char eBuf[128];
-	unsigned long flags;
+	uint32_t flags;
 	
 	if ( !exprsDef )
 	{

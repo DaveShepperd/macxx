@@ -44,7 +44,7 @@ Change Log
 
 extern int gc_pass;
 struct stat file_stat;
-unsigned long edmask;           /* enabl/disabl mask */
+uint32_t edmask;           /* enabl/disabl mask */
 FN_struct *current_fnd;     /* global current_fnd for error handlers */
 int current_outfile;        /* which entry in cmd_fnds[] which is the output file */
 int warning_enable=1;           /* set TRUE if warnings are enabled */
@@ -57,6 +57,8 @@ static char *months[] =
 char ascii_date[128 /*24*/];
 int debug=0;                    /* debug status value */
 int squeak=0;
+
+char ltoaBuf[16];
 
 #ifdef TIME_LIMIT
 /************************************************************************
@@ -766,7 +768,7 @@ int main(int argc, char *argv[])
     	fclose(lis_fp);
     }
     if (deb_fp) fclose(deb_fp);
-    if (squeak) printf("A total of %ld statements were processed\n",record_count);
+    if (squeak) printf("A total of %d statements were processed\n",record_count);
 #ifdef VMS
     if (error_count[MSG_FATAL]) return 0x10000004;
     if (error_count[MSG_ERROR]) return 0x10000002;

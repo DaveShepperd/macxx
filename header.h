@@ -27,52 +27,35 @@ Change Log
 #ifndef _HEADER_H_
 #define _HEADER_H_ 1
 
-#include <sys/types.h>
+#include <inttypes.h>
 #include <time.h>
+
+#if __WORDSIZE == 64
+	#define FMT_PTRDIF "l"
+	#if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
+		#define FMT_PFX "ll"
+	#else
+		#define FMT_PFX "l"
+	#endif
+#else
+	#define FMT_PTRDIFF
+	#define FMT_PFX
+#endif
+
+#define FMT_SZ "%" FMT_PFX "d"
 
 #ifndef n_elts
     #define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
 #endif
 
-#if !defined(__LONG_MAX__)
-    #error This build requires compiler variable __LONG_MAX__
-#endif
-#if !defined(__SIZEOF_SIZE_T__)
-    #error This build requires compiler variable __SIZEOF_SIZE_T__
-#endif
-#if 0
-    /* Hopefully, sizeof(time_t) is the same as sizeof(size_t) */
-    #if !defined(__SIZEOF_TIME_T__)
-        #error This build requires compiler variable __SIZEOF_TIME_T__
-    #endif
-#endif
+#define _INT32_MAX_ ((uint32_t)0x7FFFFFFF)
+#define _BIT_31_	((uint32_t)0x80000000)
 
-#define LONG_MSB (1l<<(__SIZEOF_LONG__*8-1)) /* 0x80000000l; */
+#include "utils.h"
 
-#ifndef LONG_MAX
-    #define LONG_MAX (__LONG_MAX__)
-#endif
-
-#ifndef _FMT_SZ_
-    #if __SIZEOF_SIZE_T__ == 4
-        #define _FMT_SZ_ "%d"
-    #endif
-    #if __SIZEOF_SIZE_T__ == 8
-        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
-            #define _FMT_SZ_ "%lld"
-        #else
-            #define _FMT_SZ_ "%ld"
-        #endif
-    #endif
-#endif
-
-#ifndef _FMT_SZ_
-  #error "Failed to define _FMT_SZ_"
-#endif
-
-extern short current_procblk;		/* current procedure block number */
-extern short current_scopblk;		/* current scope level within block */
-extern short current_scope;		/* sum of the two above */
+extern int16_t current_procblk;		/* current procedure block number */
+extern int16_t current_scopblk;		/* current scope level within block */
+extern int16_t current_scope;		/* sum of the two above */
 #define SCOPE_PROC (-(1<<3))		/* mask for procblk */
 
 #define MACXX_M_11		0x00001
@@ -99,11 +82,11 @@ extern char macxx_mau_long; /* number of mau's in a long */
 extern char macxx_nibbles_byte;
 extern char macxx_nibbles_word;
 extern char macxx_nibbles_long;
-extern unsigned long macxx_lm_default;
-extern unsigned long macxx_edm_default;
-extern unsigned short macxx_dalign;
-extern unsigned short macxx_salign;
-extern unsigned short macxx_min_dalign;
+extern uint32_t macxx_lm_default;
+extern uint32_t macxx_edm_default;
+extern uint16_t macxx_dalign;
+extern uint16_t macxx_salign;
+extern uint16_t macxx_min_dalign;
 
 extern int max_symbol_length;
 extern int max_opcode_length;
@@ -135,7 +118,7 @@ extern int cmd_outputs_index;	/* number of entries in cmd_fnds; */
 extern int binary_output_flag;
 extern int outx_width;         /* outx default record length */
 extern int outx_swidth;
-extern long out_pc;
+extern int32_t out_pc;
 extern int fn_pool_size;
 extern char *fn_pool;
 extern FN_struct *get_fn_struct(void);
@@ -163,21 +146,21 @@ extern char *token_pool;
 extern char *tkn_ptr;
 extern char *actualTknPtr;		/* actual token pointer (needed by mac8080) */
 extern char *inp_ptr;
-extern long token_value;
+extern int32_t token_value;
 extern char next_token;     /* next token character */
 extern int next_type;      /* next token character type */
 extern int token_type;
 extern int token_pool_size; /* size of remaining free token memory */
 extern int comma_expected;
-extern long misc_pool_used;
+extern int32_t misc_pool_used;
 extern int debug;
 extern int squeak;
 extern int inp_len;
 extern int include_level;
-extern long sym_pool_used;
+extern int32_t sym_pool_used;
 extern int new_identifier;
 extern int strings_substituted;
-extern unsigned long record_count;
+extern uint32_t record_count;
 
 /* pass0 and pass1 specific variables and functions */
 extern int no_white_space_allowed;
@@ -197,7 +180,7 @@ extern int f1_defg(int gbl_flg);
 extern int white_space_section;
 extern int dotwcontext;
 #endif /* M68k */
-extern unsigned long autogen_lsb; /* autolabel for macro processing */
+extern uint32_t autogen_lsb; /* autolabel for macro processing */
 extern int get_text_assems;
 extern void purge_data_stacks(const char *name);
 extern int squawk_syms;
@@ -240,17 +223,17 @@ extern int new_opcode;  /* flag indicating an opcode added to permanent symbol t
 #define SYM_DUP		4	/* symbol added is duplicate symbol */
 extern SS_struct *first_symbol; /* pointer to first if duplicates */
 
-extern unsigned long edmask;	/* enabl/disabl bit mask */
-extern unsigned long lismask;	/* list/nlist bit mask */
-extern unsigned long autogen_lsb;
-extern unsigned long current_lsb;
-extern unsigned long next_lsb;
+extern uint32_t edmask;	/* enabl/disabl bit mask */
+extern uint32_t lismask;	/* list/nlist bit mask */
+extern uint32_t autogen_lsb;
+extern uint32_t current_lsb;
+extern uint32_t next_lsb;
 
-extern long condit_word;
-extern long condit_polarity;
+extern int32_t condit_word;
+extern int32_t condit_polarity;
 extern int condit_level;
 extern int condit_nest;
-extern unsigned long listing_lnumb;
+extern uint32_t listing_lnumb;
 
 extern EXP_stk exprs_stack[EXPR_MAXSTACKS];
 #define EXP0 exprs_stack[0]
@@ -282,7 +265,7 @@ extern SEG_struct **subseg_list;
 extern time_t unix_time;
 extern int pass;
 extern int quoted_ascii_strings;
-extern unsigned short cttbl[];
+extern uint16_t cttbl[];
 extern char char_toupper[];
 extern char hexdig[];
 
@@ -330,9 +313,9 @@ extern int p1o_byte( EXP_stk *eps );
 extern int p1o_word( EXP_stk *eps );
 extern int p1o_long( EXP_stk *eps );
 extern int p1o_var( EXP_stk *eps );
-extern void n_to_list( int nibbles, long value, int tag);
+extern void n_to_list( int nibbles, int32_t value, int tag);
 extern void line_to_listing(void);
-extern void dump_hex4(long value,char *ptr);
+extern void dump_hex4(int32_t value,char *ptr);
 extern void outx_init( void );
 extern int list_init(int onoff);
 
@@ -341,7 +324,7 @@ extern int op_byte(void);
 extern int op_word(void);
 extern int dbg_init( void );
 extern int dbg_line( int flag);
-extern long dbg_flush( int flag );
+extern int32_t dbg_flush( int flag );
 extern int add_dbg_file( char *name, char *version, int *indx);
 extern int f1_org( void );
 extern void lap_timer(char *str);
@@ -357,7 +340,7 @@ extern void display_mem(void);
 extern void show_timer( void );
 extern void qksort (SS_struct *array[],unsigned int num_elements);
 extern int getAMATag(const FN_struct *fnd);
-extern void setAMATag(FN_struct *fnd, unsigned short tag);
+extern void setAMATag(FN_struct *fnd, uint16_t tag);
 extern void dumpAMATags(const FN_struct *fnd);
 extern int totalTagsUsed;
 extern int totalTagsChecked;

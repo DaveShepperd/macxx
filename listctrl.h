@@ -35,30 +35,30 @@ typedef struct
 	int srcPosition;					/* listing line location for source code */
 	int srcPositionQued;				/* queued listing line location for source code */
 	int reqNewLine;					/* Request a new listing line */
-	unsigned char optTextBuf[OPT_TXT_BUF_SIZE]; /* Buffer for text storage - 1 location + 16 characters + null */
+	uint8_t optTextBuf[OPT_TXT_BUF_SIZE]; /* Buffer for text storage - 1 location + 16 characters + null */
 } LIST_Source_t;
 
 typedef struct
 {
    char listBuffer[LLIST_MAXSRC+2];	/* Holds line to be printed */
 /*   char *line_end;					* Points to end of above line */
-   unsigned long line_no;			/* line number of source */
+   uint32_t line_no;			/* line number of source */
    int include_level;				/* depth of .include */
    int list_ptr;					/* Index into listBuffer between 0 and LLIST_SIZE (left of source string) */
    int pc_flag;						/* flag indicating to print program counter */
-   unsigned long pc;				/* value of program counter to print */
-   unsigned long expected_pc;		/* value of program counter to print */
+   uint32_t pc;				/* value of program counter to print */
+   uint32_t expected_pc;		/* value of program counter to print */
    struct seg_struct *expected_seg;	/* pointer to current section */
    int f1_flag;						/* flag to print pf_value at field 1 listBuffer[LLIST_PF1] */
    int f2_flag;						/* flag to print pf_value at field 2 listBuffer[LLIST_PF2] */
-   unsigned long pf_value;			/* value of field */
+   uint32_t pf_value;			/* value of field */
    int getting_stuff;				/* flag indicating accumulating stuff to print */
    int has_stuff;					/* flag indicating has some stuff to print */
 } LIST_stat_t;
 
 
-extern unsigned long list_toc_page_no;			/* page number of TOC listing - By TRG 20240503 */
-extern unsigned long list_toc_line_no;			/* line number of TOC listing - By TRG 20240503 */
+extern uint32_t list_toc_page_no;			/* page number of TOC listing - By TRG 20240503 */
+extern uint32_t list_toc_line_no;			/* line number of TOC listing - By TRG 20240503 */
 extern int list_toc_hd;					/* header flag for TOC listing - By TRG 20240503 */
 
 extern LIST_Source_t list_source;
@@ -70,7 +70,7 @@ extern int list_mask;
 extern int list_level;
 extern int list_save;
 extern int list_que;
-extern unsigned long record_count;
+/* extern uint32_t record_count; */
 extern FILE *save_lisfp;
 extern int show_line;
 extern void set_list_radix(int on);
@@ -165,7 +165,7 @@ typedef enum
 	ListArg_MAX		/* Number of arguments */
 } ListArg_t;
 
-extern int list_args(int arg[ListArg_MAX], int maxArgs, int cnt, unsigned char *optTextBuf, size_t optTextBufSize);
+extern int list_args(int arg[ListArg_MAX], int maxArgs, int cnt, uint8_t *optTextBuf, size_t optTextBufSize);
 /* extern char listing_temp[]; */
 
 /*************************************************etg*/

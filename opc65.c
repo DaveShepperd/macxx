@@ -48,15 +48,15 @@ const char *macxx_target = "6502";
 const char *macxx_descrip = "Cross assembler for the 6502, 65C02 and 65816.";
 
 #if 0
-unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */
-unsigned short macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
-unsigned short macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
-unsigned short macxx_abs_dalign = 0;
+uint16_t macxx_rel_salign = 0;    /* default alignment for .REL. segment */
+uint16_t macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
+uint16_t macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
+uint16_t macxx_abs_dalign = 0;
 #else
-unsigned short macxx_salign = 0;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 0;    /* default alignment data within segment */
+uint16_t macxx_salign = 0;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 0;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 0;
+uint16_t macxx_min_dalign = 0;
 
 char macxx_mau = 8;         /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -67,8 +67,8 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_AMA|ED_TRUNC;   /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD | LIST_OCT);  /* default list mask */
+uint32_t macxx_edm_default = ED_AMA|ED_TRUNC;   /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD | LIST_OCT);  /* default list mask */
 
 int current_radix = 16;     /* default the radix to hex */
 char expr_open = '<';       /* char that opens an expression */
@@ -84,7 +84,7 @@ char close_operand = ')';   /* char that closes an operand indirection */
 int max_opcode_length = 6;  /* significant length of opcodes and */
 int max_symbol_length = 6;  /*  symbols */
 static char *am_ptr;
-static long cpu_index,cpu_acc;
+static int32_t cpu_index,cpu_acc;
 static int cpu_hist_nest;
 enum
 {
@@ -95,7 +95,7 @@ enum
 
 /* End of processor specific stuff */
 
-extern unsigned char opc_to_hex[][OP_TO_HEX_SIZE];
+extern uint8_t opc_to_hex[][OP_TO_HEX_SIZE];
 
 enum amflag
 {
@@ -107,7 +107,7 @@ enum amflag
 	GOTSTK = OPENBKT << 1
 };
 
-static long ndxtbl[] = { ZX_NUM, AX_NUM, ZY_NUM, AY_NUM };
+static int32_t ndxtbl[] = { ZX_NUM, AX_NUM, ZY_NUM, AY_NUM };
 
 static struct
 {
@@ -141,14 +141,14 @@ static struct
 typedef struct
 {
 	int flag;            /* .ne. if value is expression */
-	unsigned long value;     /* value if not expression */
+	uint32_t value;     /* value if not expression */
 	EXP_stk *exptr;      /* ptr to expression stack */
 } DPage;
 
 typedef struct
 {
 	int flag;            /* .ne. if value is expression */
-	unsigned long value;     /* value if not expression */
+	uint32_t value;     /* value if not expression */
 	EXP_stk *exptr;      /* ptr to expression stack */
 } Bank;
 
@@ -181,7 +181,7 @@ int ust_init(void)
 static void do_branch(Opcode *opc)
 {
 	int s_test;
-	long offset;
+	int32_t offset;
 	EXPR_struct *exp_ptr;
 	const char *badExpr=NULL;
 
@@ -233,11 +233,11 @@ static void do_branch(Opcode *opc)
 		exp_ptr = EXP1.stack;
 		if ( EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE )
 		{
-			long max_dist;
+			int32_t max_dist;
 			max_dist = (opc->op_amode & RL) ? 32767 : 127;
 			if ( exp_ptr->expr_value < -(max_dist + 1) || exp_ptr->expr_value > max_dist )
 			{
-				long toofar;
+				int32_t toofar;
 				toofar = exp_ptr->expr_value;
 				if ( toofar > 0 )
 				{
@@ -247,7 +247,7 @@ static void do_branch(Opcode *opc)
 				{
 					toofar = -toofar - (max_dist + 1);
 				}
-				sprintf(emsg, "Branch offset 0x%lX byte(s) out of range", toofar);
+				sprintf(emsg, "Branch offset 0x%X byte(s) out of range", toofar);
 				badExpr = emsg;
 			}
 		}
@@ -317,7 +317,7 @@ static int do_operand(Opcode *opc)
 {                   /* 0, 1 or 2 operands */
 	AModes amdcdnum = ILL_NUM;
 	int ct;
-	long amflag = 0;
+	int32_t amflag = 0;
 	int str=0;
 	
 	ct = get_token();            /* pickup the next token */
@@ -361,7 +361,7 @@ static int do_operand(Opcode *opc)
 		str = 1; /* force fall through to default */
 		/* fall through to default */
 	case TOKEN_strng:
-		if ( !str && (edmask & ED_MOS) && ((1L << AC_NUM) & opc->op_amode) && token_type == TOKEN_strng && token_value == 1 && _toupper(*token_pool) == 'A' )
+		if ( !str && (edmask & ED_MOS) && ((1 << AC_NUM) & opc->op_amode) && token_type == TOKEN_strng && token_value == 1 && _toupper(*token_pool) == 'A' )
 		{
 			return AC_NUM;
 		}
@@ -488,7 +488,7 @@ static int do_operand(Opcode *opc)
 				{
 					char c;
 					if ( squeak )
-						printf("opc65:do_operand() entry 1: token_type=TOKEN_strng, *inp_ptr == ',', amflag=0x%04lX\n", amflag);
+						printf("opc65:do_operand() entry 1: token_type=TOKEN_strng, *inp_ptr == ',', amflag=0x%04X\n", amflag);
 					if ( amflag != 0 )
 					{
 						bad_token(am_ptr, "Invalid address mode syntax");
@@ -559,7 +559,7 @@ static int do_operand(Opcode *opc)
 				else
 				{
 					if ( squeak )
-						printf("opc65:do_operand() entry 1: token_type=%d, *inp_ptr == '%s', amflag=0x%04lX\n", token_type, inp_ptr, amflag);
+						printf("opc65:do_operand() entry 1: token_type=%d, *inp_ptr == '%s', amflag=0x%04X\n", token_type, inp_ptr, amflag);
 				}
 				if ( exprs(1, &EXP1) < 1 )
 					break;
@@ -707,7 +707,7 @@ static int check_4_dpage(EXP_stk *estk)
 	if ( estk->base_page_reference )
 		return 1; /* base page reference */
 	if ( squeak )
-		printf("check_4_dpage(): #expr:%d, sptr->code=%d, sptr->value=%08lX, fwd=%d\n", estk->ptr, expr->expr_code, expr->expr_value, estk->forward_reference);
+		printf("check_4_dpage(): #expr:%d, sptr->code=%d, sptr->value=%08X, fwd=%d\n", estk->ptr, expr->expr_code, expr->expr_value, estk->forward_reference);
 	if ( dp == 0 )
 	{
 		if ( (estk->ptr == 1) &&           /* or expression is < 256 */
@@ -762,7 +762,7 @@ static int check_4_abs(EXP_stk *estk)
 	{
 		if ( (estk->ptr == 1) &&           /* or expression is < 65535 */
 			 (expr->expr_code == EXPR_VALUE) &&
-			 ((expr->expr_value & -65536L) == 0) &&
+			 ((expr->expr_value & -65536) == 0) &&
 			 (estk->forward_reference == 0) )
 			return 1;
 	}
@@ -789,7 +789,7 @@ static int check_4_abs(EXP_stk *estk)
 		tp->expr_value = '-';
 		testk->ptr += bexp->ptr + 1;
 		i = compress_expr(testk);
-		if ( i == 1 && (texpr->expr_code == EXPR_VALUE && (texpr->expr_value & -65536L) == 0) &&
+		if ( i == 1 && (texpr->expr_code == EXPR_VALUE && (texpr->expr_value & -65536) == 0) &&
 			 !testk->forward_reference )
 		{
 			return 1;
@@ -800,11 +800,11 @@ static int check_4_abs(EXP_stk *estk)
 
 static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 {
-	long amdcd;
+	int32_t amdcd;
 	EXPR_struct *exp_ptr;
 #if 0
 	if ( squeak )
-		printf("check_am(): opc=%s, amodes=%08lX, amdcdnum=%d, forced_am_num=%d\n", opc->op_name, opc->op_amode, amdcdnum, forced_am_num);
+		printf("check_am(): opc=%s, amodes=%08X, amdcdnum=%d, forced_am_num=%d\n", opc->op_name, opc->op_amode, amdcdnum, forced_am_num);
 #endif
 	if ( forced_am_num != 0 )
 	{
@@ -873,7 +873,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 	}
 	if ( amdcdnum == AC_NUM )
 	{        /* if no operand supplied */
-		if ( ((1L << amdcdnum) & opc->op_amode) == 0 )
+		if ( ((1 << amdcdnum) & opc->op_amode) == 0 )
 		{
 			show_bad_token((char *)0, "Opcode requires an operand", MSG_WARN);
 			return bad_amode();
@@ -884,14 +884,14 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 	{  /* if bad am or exprs found an error */
 		return bad_amode();
 	}
-	amdcd = amdcdnum ? (1L << amdcdnum) : 0;
+	amdcd = amdcdnum ? (1 << amdcdnum) : 0;
 	exp_ptr = EXP1.stack;
 	if ( options[QUAL_P816] )
 	{
 		static struct
 		{
 			AModes numz, numa, numl;
-			long maskz, maska, maskl;
+			int32_t maskz, maska, maskl;
 		} *tp, test[] = { { Z_NUM, A_NUM, AL_NUM, Z, A, AL },
 			{ ZX_NUM, AX_NUM, ALX_NUM, ZX, AX, ALX },
 			{ ZY_NUM, AY_NUM, 0, ZY, AY, 0 },
@@ -952,7 +952,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 			}
 			if ( squeak )
 			{
-				printf("check_am(): pass=%d, Checking for Z vs. A mode. maybeZPage=%d, ama=%d, EXP1.ptr=%d, EXP1.fwd=%d, exp->code=%d, exp->value=%08lX\n",
+				printf("check_am(): pass=%d, Checking for Z vs. A mode. maybeZPage=%d, ama=%d, EXP1.ptr=%d, EXP1.fwd=%d, exp->code=%d, exp->value=%08X\n",
 					   pass,
 					   maybeZPage,
 					   ama,
@@ -1013,12 +1013,12 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 					amindex0 ^= 1;       /* change to Z mode */
 				}
 				amdcdnum = ndxtbl[amindex0];
-				amdcd = 1L << amdcdnum;
+				amdcd = 1 << amdcdnum;
 				if ( !(amdcd & opc->op_amode) )
 				{ /* legal ? */
 					amindex0 ^= 1;       /* nope, try the other */
 					amdcdnum = ndxtbl[amindex0];
-					amdcd = 1L << amdcdnum;
+					amdcd = 1 << amdcdnum;
 				}
 			}
 		}
@@ -1034,10 +1034,10 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 static int compute_opcode(Opcode *opc, int amdcdnum)
 {
 	int i;
-	long amdcd;
+	int32_t amdcd;
 	if ( amdcdnum != 0 )
 	{
-		amdcd = 1L << amdcdnum;
+		amdcd = 1 << amdcdnum;
 		i = opc->op_value;        /* pickup the value */
 		EXP0.psuedo_value = EXP0SP->expr_value = opc_to_hex[i][amdcdnum - 1];
 		if ( EXP0.psuedo_value == 0 )
@@ -1131,7 +1131,7 @@ void do_opcode(Opcode *opc)
 			else
 			{
 				forced_am_num  = forced_am[i].am_num;
-				if ( forced_am_num != DES_NUM && ((1L << forced_am_num) & opc->op_amode) == 0 )
+				if ( forced_am_num != DES_NUM && ((1 << forced_am_num) & opc->op_amode) == 0 )
 				{
 					bad_token(tkn_ptr, "Forced address mode not legal for this instruction. Ignored");
 					forced_am_num = UNDEF_NUM;
@@ -1148,7 +1148,7 @@ void do_opcode(Opcode *opc)
 	case OPCL02:
 		amdcdnum = do_operand(opc);    /* optional operands */
 		if ( squeak )
-			printf("opc65: do_opcode(): do_operand() OPCL02 returned %d, forced_am_num=%d, opc: name='%s', amode=0x%08lX\n",
+			printf("opc65: do_opcode(): do_operand() OPCL02 returned %d, forced_am_num=%d, opc: name='%s', amode=0x%08X\n",
 				   amdcdnum, forced_am_num, opc->op_name,  opc->op_amode);
 		if ( !compute_opcode(opc, check_am(opc, amdcdnum, forced_am_num)) )
 			bad_amode();
@@ -1358,7 +1358,7 @@ int op_cpu(void)
 static struct
 {
 	int flag;            /* .ne. if value is expression */
-	unsigned long value;     /* value if not expression */
+	uint32_t value;     /* value if not expression */
 	EXP_stk *exptr;      /* ptr to expression stack */
 }
 DPage;
@@ -1563,7 +1563,7 @@ int op_dpage(void)
 int op_triplet(void)
 {
 	char *otp;
-	long epv;
+	int32_t epv;
 #if 0
 	op_chkalgn(1,1);     /* check pc for alignment */
 #endif
@@ -1601,10 +1601,10 @@ int op_triplet(void)
 				while ( c = *++inp_ptr,isspace(c) ); /* skip over white space */
 			}
 			/*        0x00000000            0x00000000 */
-			if ( epv > 0x00FFFFFFl || epv < -0x01000000l )
+			if ( epv > 0x00FFFFFF || epv < -0x01000000 )
 			{
-				snprintf(emsg, ERRMSG_SIZE, "Triplet truncation error. Desired: %08lX, stored: %06lX",
-						epv, epv & 0x00FFFFFFl);
+				snprintf(emsg, ERRMSG_SIZE, "Triplet truncation error. Desired: %08X, stored: %06X",
+						epv, epv & 0x00FFFFFF);
 				show_bad_token(otp, emsg, MSG_WARN);
 				EXP0SP->expr_value &= 0x00FFFFFF;
 			}
@@ -1617,7 +1617,7 @@ int op_triplet(void)
 int op_address(void)
 {
 	char *otp;
-	long epv;
+	int32_t epv;
 #if 0
 	op_chkalgn(1,1);     /* check pc for alignment */
 #endif
@@ -1659,10 +1659,10 @@ int op_address(void)
 			if ( EXP0.ptr == 1 && EXP0SP->expr_code == EXPR_VALUE )
 			{
 				epv = EXP0SP->expr_value;
-				if ( epv > 65535L || epv < -65536L )
+				if ( epv > 65535 || epv < -65536 )
 				{
-					sprintf(emsg, "Address truncation error. Desired: %08lX, stored: %04lX",
-							epv, epv & 65535L);
+					sprintf(emsg, "Address truncation error. Desired: %08X, stored: %04X",
+							epv, epv & 65535);
 					show_bad_token(otp, emsg, MSG_WARN);
 					EXP0SP->expr_value &= 65535;
 				}

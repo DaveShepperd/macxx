@@ -34,8 +34,8 @@
 /*effective address structure */
 typedef struct ea {
     struct exp_stk *exp;	/* array of ptrs to expression stacks */
-    unsigned long mode;		/* which ea mode (bit mask) */
-    unsigned short eamode;	/* 6 bit mode to be inserted into opcode */
+    uint32_t mode;		/* which ea mode (bit mask) */
+    uint16_t eamode;	/* 6 bit mode to be inserted into opcode */
 } EA;
 
 extern EA source,dest;

@@ -31,8 +31,8 @@ OD_top od_line;     /* line vector table */
 static OD_elem elem_pool; /* pool for element structs */
 static OD_line *prev_linp; /* previous line so we can patch the length field */
 static SEG_struct *prev_line_segp;
-static Ulong prev_line_offset;
-static Ushort prev_cline;
+static uint32_t prev_line_offset;
+static uint16_t prev_cline;
 static FN_struct *prev_fnd;
 static char cwd[2048];  /* place to put default path */
 static int cwd_len; /* length of path */
@@ -126,11 +126,11 @@ int dbg_init( void )
     return 0;
 }
 
-long dbg_flush( int flag )
+int32_t dbg_flush( int flag )
 {
     if (prev_linp != 0)
     {
-        long diff;
+        int32_t diff;
         if (prev_line_segp != 0)
         {
             diff = prev_line_segp->seg_pc-prev_line_offset;
@@ -225,7 +225,7 @@ int find_dbg_file(char *name)
     do
     {
         int j;
-        long strndx;
+        int32_t strndx;
         fp = (OD_file *)ep->top;
         for (j=0;j<ep->alloc-ep->avail;++j,++fp,++i)
         {
@@ -364,7 +364,7 @@ static OD_sym *op_stabx(char *str, int len, int stabd )
         }
         else
         {
-            sym->name.str_ptr = (Uchar *)0;
+            sym->name.str_ptr = (uint8_t *)0;
         }
     }
     if ((sym->other = other) != 0)
@@ -452,7 +452,7 @@ int op_stabd( void )              /* .stabd 68,0,line_number */
 int dbg_line( int flag)
 {
     OD_line *linp;
-    long diff;
+    int32_t diff;
     diff = current_pc-prev_line_offset;   
     if (prev_linp == 0 || prev_line_segp != current_section ||
         prev_fnd != current_fnd ||
@@ -499,9 +499,9 @@ int dbg_line( int flag)
     return 0;
 }
 
-static long dbg_tot( OD_elem *ep, int size)
+static int32_t dbg_tot( OD_elem *ep, int size)
 {
-    long t=0;
+    int32_t t=0;
     do
     {
         t += size*(ep->alloc-ep->avail);
@@ -509,9 +509,9 @@ static long dbg_tot( OD_elem *ep, int size)
     return t;
 }
 
-static long write_dbg(OD_elem *ep, int size, char *ident )
+static int32_t write_dbg(OD_elem *ep, int size, char *ident )
 {
-    long accum = 0;
+    int32_t accum = 0;
     do
     {
         int qty;
@@ -638,207 +638,6 @@ int dbg_output( void )
     {
         perror("Error writing debug file");
     }
-#if 0
-    fprintf(stderr,"dbg sec    length = %5ld, top.index=%2d, top.length=%d\n",
-            od_hdr.sec_size,od_sec.index,od_sec.length);
-    fprintf(stderr,"dbg file   length = %5ld, top.index=%2d, top.length=%d\n",
-            od_hdr.file_size,od_file.index,od_file.length);
-    fprintf(stderr,"dbg sym    length = %5ld, top.index=%2d, top.length=%d\n",
-            od_hdr.sym_size,od_sym.index,od_sym.length);
-    fprintf(stderr,"dbg line   length = %5ld, top.index=%2d, top.length=%d\n",
-            od_hdr.line_size,od_line.index,od_line.length);
-    fprintf(stderr,"dbg string length = %5ld, top.index=%2d, top.length=%d\n",
-            od_hdr.string_size,od_string.index,od_string.length);
-#endif
     return 0;
 }
-
-#if 0
-static int got_a_type;
-
-void dbg_add_local_syms( void ) {
-    if (od_hdr.have_csrc)
-    {
-        if (got_a_type)
-        {
-            err_msg(MSG_WARN, ".TYPE directives ignored due to presence of .STABS\n");
-        }
-        return;       /* if there's C code, don't do anything */
-    }
-}
-
-enum codes
-{
-#define __define_stab(name, code, string) name = code,
-#include "stab.def"
-#undef __define_stab
-    _FILLER=0
-};
-
-static struct
-{
-    enum codes code;
-    char *name;
-} stab_types[] = {
-#define __define_stab(name, code, string) { name, string },
-#include "stab.def"
-#undef __define_stab
-};
-
-static char *basic_types[] = {
-    "int:t1=r1;-2147483648;2147483647;",     /* 1  */
-    "char:t2=r2;0;127;",             /* 2  */
-    "long int:t3=r1;-2147483648;2147483647;",    /* 3  */
-    "unsigned int:t4=r1;0;-1;",          /* 4  */
-    "long unsigned int:t5=r1;0;-1;",     /* 5  */
-    "short int:t6=r1;-32768;32767;",     /* 6  */
-    "long long int:t7=r1;0;-1;",         /* 7  */
-    "short unsigned int:t8=r1;0;65535;",     /* 8  */
-    "long long unsigned int:t9=r1;0;-1;",    /* 9  */
-    "signed char:t10=r1;-128;127;",      /* 10 */
-    "unsigned char:t11=r1;0;255;",       /* 11 */
-    "float:t12=r1;4;0;",             /* 12 */
-    "double:t13=r1;8;0;",            /* 13 */
-    "long double:t14=r1;8;0;",           /* 14 */
-    "void:t15=15",               /* 15 */
-    0
-};
-
-enum b_types
-{
-    /*********************************************************/
-    T_CHAR=  0x001,      /* Don't change the order of these without... 		 */
-    T_SHORT= 0x002,      /* ...changing the order of the valid_types array too... */
-    T_FLOAT= 0x004,
-    T_DOUBLE=    0x008,
-    T_SIGNED=    0x010,
-    T_UNSIGNED=  0x020,
-    T_LONG=  0x040,
-    T_LONGLONG=  0x080,
-    T_INT=   0x100,
-    T_TERM=  0x200,
-    T_BASIC= 0x00F,      /* basic type mask 					 */
-    T_QUAL=  0x0F0,      /* type qualifier mask 					 */
-    T_QSHIFT=    0x004,      /* number of bits to shift qualifier right 		 */
-    /*             end of "don't change order" 		 */
-    /*********************************************************/
-
-    RT_INT=  1,  /*  1 */
-    RT_CHAR,     /*  2 */
-    RT_LONG,     /*  3 */
-    RT_UINT,     /*  4 */
-    RT_ULONG,        /*  5 */
-    RT_SHORT,        /*  6 */
-    RT_LONGLONG,     /*  7 */
-    RT_USHORT,       /*  8 */
-    RT_ULONGLONG,    /*  9 */
-    RT_SCHAR,        /* 10 */
-    RT_UCHAR,        /* 11 */
-    RT_FLOAT,        /* 12 */
-    RT_DOUBLE        /* 13 */
-    RT_LONGDOUBLE,   /* 14 */
-    RT_VOID      /* 15 */
-};
-
-/* The following table is accessed by masking "typ" with T_BASIC and using the result bits
- * as the row index and computing the column index with (typ&T_QUAL)>>T_QSHIFT. An entry
- * of 0 in this table represents an illegal combination. The column labels are:
- * 0="unspecified" 1="signed" 2="unsigned" 3="signed unsigned"
- * 4="long" 5="signed long" 6="unsigned long" 7="unsigned signed long"
- * 8="long long" 9="signed long long" 10="unsigned long long" 11="unsigned signed long long"
- * 12-15 are illegal.
- * The row lables are listed on the rows.
- */
-static unsigned char valid_types[16][16] = {
-/* 0 unspecified   */   {0, RT_INT,   RT_UINT,  0, RT_LONG, RT_LONG, RT_ULONG, 0, RT_LONGLONG, RT_LONGLONG, RT_ULONGLONG, 0, 0, 0, 0},
-/* 1 char	   */   {RT_CHAR, RT_SCHAR, RT_UCHAR, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 2 short 	   */   {RT_SHORT, RT_SHORT, RT_USHORT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 3 short char	   */   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 4 float	   */   {RT_FLOAT, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 5 float char	   */   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 6 short float   */   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 7 short float char */{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 8 double	   */   {RT_DOUBLE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* 9 double char   */   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* A double short  */   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* B double short char */ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* C double float  */   {RT_DOUBLE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* D double float char */ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* E double float short */ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-/* F double float short char */ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-}
-
-typedef struct
-{
-    int flag;        /* flag for keyword */
-    char *key;       /* keyword */
-} TypeTable;
-
-static TypeTable type_table[] = {
-    {T_UNSIGNED,     "unsigned"},
-    {T_SIGNED,       "signed"},
-    {T_CHAR|T_TERM,  "char"},
-    {T_SHORT,        "short"},
-    {T_INT|T_TERM,   "int"},
-    {T_LONG,     "unsigned"},
-    {T_FLOAT|T_TERM, "float"},
-    {T_DOUBLE|T_TERM,    "double"},
-    {0, 0}
-};
-
-int op_type() {     /* .type [keyword(s)] symbol[,...] */
-    int typ=0, real_type=0;  /* assume no type */   
-    int ii;
-    TypeTable *tt;
-    while (1)
-    {      /* eat all keywords */
-        ii = get_token(); /* get the next token */
-        if (ii == EOL)
-        {
-            bad_token(tkn_ptr, "Premature EOL");
-            return 0;
-        }
-        if (ii != TOKEN_strng)
-        {
-            bad_token(tkn_ptr, "Expected a C type keyword");
-            return f1_eatit(); /* nothing to do */
-        }
-        for (tt=type_table, ii=0; tt->key != 0; ++ii, ++tt)
-        {
-            if (strcmp(token_pool, tt->key) == 0)
-            {
-                if ((typ&tt->flag) != 0)
-                {
-                    if (tt->flag == T_LONG)
-                    {
-                        if ((typ&T_LONGLONG) != 0) goto syntax_error;
-                        if ((typ&T_LONG) != 0)
-                        {
-                            typ |= T_LONGLONG;
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        syntax_error:
-                        bad_token(tkn_ptr, "C data type syntax error");
-                        return f1_eatit();
-                    }
-                }
-                typ |= tt->flag;
-                break;
-            }
-        }
-        if ((typ&T_TERM) == 0 && tt->key) continue;
-        typ &= ~T_TERM;
-        ii = valid_types[typ&T_BASIC][(typ&T_QUAL)>>T_QSHIFT];
-        if ((typ=ii) == 0)
-        {
-            bad_token(0, "Invalid C data type");
-            return f1_eatit();
-        }
-
-    }
-#endif
-
     

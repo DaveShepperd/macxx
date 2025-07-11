@@ -19,20 +19,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-long total_mem_used;
-long peak_mem_used;
-long misc_pool_used;
+int32_t total_mem_used;
+int32_t peak_mem_used;
+int32_t misc_pool_used;
 
 typedef struct hdr
 {
-	unsigned long size;
+	uint32_t size;
 	int line;
 	char *file;
 #if defined(DEBUG_MALLOC)
 	void *caller;
 	struct hdr *next, *prev;
 #endif
-	unsigned long magic;
+	uint32_t magic;
 } Hdr;
 
 #define PRE_MAGIC 	0x12345678
@@ -47,25 +47,25 @@ static Hdr *top, *bottom;
 static char* check(Hdr *hdr)
 {
 	char *msg = 0;
-	unsigned long *end;
+	uint32_t *end;
 
 	if ( hdr->magic != PRE_MAGIC )
 	{
 		if ( hdr->magic == (PRE_MAGIC | NOTALLOCED) )
 		{
-			msg = "%%%s-F-FATAL, %s:%d tried to free %08lX already free'd.\n";
+			msg = "%%%s-F-FATAL, %s:%d tried to free %p already free'd.\n";
 		}
 		else
 		{
-			msg = "%%%s-F-FATAL, %s:%d tried to free %08lX with corrupted header.\n";
+			msg = "%%%s-F-FATAL, %s:%d tried to free %p with corrupted header.\n";
 		}
 	}
 	else
 	{
-		end = (unsigned long *)((char *)(hdr + 1) + hdr->size);
+		end = (uint32_t *)((char *)(hdr + 1) + hdr->size);
 		if ( *end != POST_MAGIC )
 		{
-			msg = "%%%s-F-FATAL, %s:%d tried to free %08lX with corrupted tail.\n";
+			msg = "%%%s-F-FATAL, %s:%d tried to free %p with corrupted tail.\n";
 		}
 	}
 	return msg;
@@ -100,7 +100,7 @@ int mem_free(void *s, char *file, int line)
 
 	if ( s == 0 )
 	{
-		msg = "%s:%d tried to free %08lX.\n";
+		msg = "%s:%d tried to free %p.\n";
 	}
 	else
 	{
@@ -113,7 +113,7 @@ int mem_free(void *s, char *file, int line)
 		abort();
 	}
 #if defined(LLF) || defined(MACXX)
-	total_mem_used -= hdr->size + sizeof(Hdr) + sizeof(long);
+	total_mem_used -= hdr->size + sizeof(Hdr) + sizeof(int32_t);
 #endif
 #if defined(DEBUG_MALLOC)
 	check_all();
@@ -139,7 +139,7 @@ void *mem_alloc(int nbytes, char *file, int line)
 {
 	void *s;
 	Hdr *hdr;
-	unsigned long *end;
+	uint32_t *end;
 	int siz;
 
 	/* Round the caller's count by size of pointer then make it a multiple of sizeof pointer */
@@ -148,7 +148,7 @@ void *mem_alloc(int nbytes, char *file, int line)
 	hdr = (Hdr *)calloc((unsigned int)siz, (unsigned int)1);  /* get some memory from OS */
 	if ( hdr == (Hdr *)0 )
 	{
-		fprintf(stderr, "%%%s-F-FATAL, %s:%d Ran out of memory requesting %d bytes. Used %ld so far.\n",
+		fprintf(stderr, "%%%s-F-FATAL, %s:%d Ran out of memory requesting %d bytes. Used %d so far.\n",
 				macxx_name, file, line, siz, total_mem_used);
 #if defined(LLF) || defined(MACXX)
 		display_mem();
@@ -161,7 +161,7 @@ void *mem_alloc(int nbytes, char *file, int line)
 	hdr->line = line;	/* line number */
 	hdr->magic = PRE_MAGIC;	/* surround user's buffer with known information */
 	s = (void *)(hdr + 1);	/* Point to buffer to hand back to user */
-	end = (unsigned long *)((char *)s + nbytes); /* Get pointer to end of buffer */
+	end = (uint32_t *)((char *)s + nbytes); /* Get pointer to end of buffer */
 	*end = POST_MAGIC;	/* Stuff a magic number there too */
 #if defined(DEBUG_MALLOC)
 	if ( top == 0 )
@@ -199,7 +199,7 @@ void* mem_realloc(void *old, int nbytes, char *file, int line)
 	Hdr * prev,*next;
 #endif
 	int siz;
-	unsigned long *end;
+	uint32_t *end;
 
 	if ( old != 0 )
 	{
@@ -212,9 +212,9 @@ void* mem_realloc(void *old, int nbytes, char *file, int line)
 			abort();
 		}
 #if defined(LLF) || defined(MACXX)
-		total_mem_used -= siz + sizeof(Hdr) + sizeof(long);
+		total_mem_used -= siz + sizeof(Hdr) + sizeof(int32_t);
 #endif
-		end = (unsigned long *)((char *)old + hdr->size);
+		end = (uint32_t *)((char *)old + hdr->size);
 		if ( *end != POST_MAGIC )
 		{
 			fprintf(stderr, "%%%s-F-FATAL, %s:%d realloc'd %p with corrupted trailer.\n",
@@ -232,11 +232,11 @@ void* mem_realloc(void *old, int nbytes, char *file, int line)
 
 		/* Round up user's size and make it a multiple of sizeof pointer */
 		nbytes = (nbytes + (sizeof(char *) - 1)) & ~(sizeof(char *) - 1);
-		siz = nbytes + sizeof(Hdr) + sizeof(long);
+		siz = nbytes + sizeof(Hdr) + sizeof(int32_t);
 		s = (void *)realloc(hdr, siz);
 		if ( s == NFG )
 		{
-			fprintf(stderr, "%%%s-F-FATAL, %s:%d ran out of memory realloc'ing %ld bytes to %d. Used %ld so far.\n",
+			fprintf(stderr, "%%%s-F-FATAL, %s:%d ran out of memory realloc'ing %d bytes to %d. Used %d so far.\n",
 					macxx_name, file, line, hdr->size, siz, total_mem_used);
 #if defined(LLF) || defined(MACXX)
 			display_mem();
@@ -254,7 +254,7 @@ void* mem_realloc(void *old, int nbytes, char *file, int line)
 			memset(s, 0, nbytes - hdr->size);
 		}
 		s = (void *)(hdr + 1);	/* Compute pointer to user's buffer */
-		end = (unsigned long *)((char *)s + nbytes); /* Compute pointer to end of buffer */
+		end = (uint32_t *)((char *)s + nbytes); /* Compute pointer to end of buffer */
 		*end = POST_MAGIC;	/* deposit a marker */
 		hdr->size = nbytes;	/* record the new buffer size */
 #if defined(DEBUG_MALLOC)

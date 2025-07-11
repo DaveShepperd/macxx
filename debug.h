@@ -19,38 +19,34 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_ 1
 
+#include <stdint.h>
 #include "stab.h"
 #include "segdef.h"
-
-typedef unsigned long Ulong;
-typedef unsigned int Uint;
-typedef unsigned short Ushort;
-typedef unsigned char Uchar;
 
 #define OD_MAGIC	0x12344321
 
 typedef struct od_hdr {
-   Ulong magic;			/* file's magic number (for Unix compat) */
-   Ulong sec_size;		/* section vector table size in bytes */
-   Ulong file_size;		/* file vector table size in bytes */
-   Ulong sym_size;		/* symbol vector table size in bytes */
-   Ulong line_size;		/* line number vector table size in bytes */
-   Ulong string_size;		/* string table size in bytes */
-   long time_stamp;		/* creation time stamp (version #) */
-   int have_csrc;		/* flag indicating there's C src file(s) */
+   uint32_t magic;			/* file's magic number (for Unix compat) */
+   uint32_t sec_size;		/* section vector table size in bytes */
+   uint32_t file_size;		/* file vector table size in bytes */
+   uint32_t sym_size;		/* symbol vector table size in bytes */
+   uint32_t line_size;		/* line number vector table size in bytes */
+   uint32_t string_size;		/* string table size in bytes */
+   int32_t time_stamp;		/* creation time stamp (version #) */
+   int32_t have_csrc;		/* flag indicating there's C src file(s) */
 } OD_hdr;
 
 typedef union {
-   Uchar *str_ptr;		/* converted to real ptr in memory */
-   Ulong index;			/* simply an index */
+   uint8_t *str_ptr;		/* converted to real ptr in memory */
+   uint32_t index;			/* simply an index */
 } OD_ptr;
    
 typedef struct od_sec {
-   Ulong base;			/* section base address */
-   Ulong length;		/* length of section in bytes */
-   Ulong offset;		/* output offset */
+   uint32_t base;			/* section base address */
+   uint32_t length;		/* length of section in bytes */
+   uint32_t offset;		/* output offset */
    OD_ptr name;			/* ptr to name of section */
-   Uint flags;			/* see segdef.h for details (VSEG_xxx) */
+   uint32_t flags;			/* see segdef.h for details (VSEG_xxx) */
 } OD_sec;
 
 typedef struct od_file {
@@ -60,11 +56,11 @@ typedef struct od_file {
 
 typedef struct od_sym {
    OD_ptr name;			/* ptr to symbol name */
-   Uchar type;			/* symbol type */
-   Uchar other;			/* I think this is always 0 */
-   short desc;			/* used for various things */
+   uint8_t type;			/* symbol type */
+   uint8_t other;			/* I think this is always 0 */
+   int16_t desc;			/* used for various things */
    union {
-      Ulong value;		/* symbol's value (where appropriate) */
+      uint32_t value;		/* symbol's value (where appropriate) */
       void *ptr;		/* or ptr to some struct type or other */
    } val;
 } OD_sym;
@@ -77,21 +73,21 @@ enum line_type { LINE_NUM,	/* source line number */
 };
 
 typedef struct {
-   Uchar  type;			/* set to LINE_NUM */
-   Uchar  length;		/* length of output in bytes */
-   Ushort sline;		/* asm line # */
-   Ushort cline;		/* C line # */
+   uint8_t  type;			/* set to LINE_NUM */
+   uint8_t  length;		/* length of output in bytes */
+   uint16_t sline;		/* asm line # */
+   uint16_t cline;		/* C line # */
 } OD_sline;			/* source line type */
 
 typedef struct {
-   Uchar type;			/* set to LINE_SFILE or LINE_CFILE */
-   Uchar filenum;		/* set to filename index */
+   uint8_t type;			/* set to LINE_SFILE or LINE_CFILE */
+   uint8_t filenum;		/* set to filename index */
 } OD_fline;
 
 typedef struct {
-   Uchar type;			/* set to LINE_NEW_BASE */
-   Uchar segnum;		/* set to segment number */
-   Ulong offset;		/* and new offset from segment */
+   uint8_t type;			/* set to LINE_NEW_BASE */
+   uint8_t segnum;		/* set to segment number */
+   uint32_t offset;		/* and new offset from segment */
 } OD_bline;
 
 typedef union {

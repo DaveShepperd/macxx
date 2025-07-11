@@ -2,23 +2,24 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <stdint.h>
+#include <time.h>
 
-#ifndef _FMT_SZ_
+#ifndef FMT_SZ
     #if __SIZEOF_SIZE_T__ == 4
-        #define _FMT_SZ_ "%d"
+        #define FMT_SZ "%d"
     #endif
     #if __SIZEOF_SIZE_T__ == 8
         #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
-            #define _FMT_SZ_ "%lld"
+            #define FMT_SZ "%lld"
         #else
-            #define _FMT_SZ_ "%ld"
+            #define FMT_SZ "%ld"
         #endif
     #endif
 #endif
 
-#ifndef _FMT_SZ_
-  #error "Failed to define _FMT_SZ_"
+#ifndef FMT_SZ
+  #error "Failed to define FMT_SZ"
 #endif
 
 #define OP_ALL		(1)	/* A */
@@ -179,19 +180,26 @@ int main(int argc, char *argv[])
 	fclose(inF);
 	inF = NULL;
 	fprintf(stdout,"/* numLines=%d */\n", numLines);
-	fprintf(stdout,	"/* sizeof(char)=" _FMT_SZ_
-					", sizeof(int)=" _FMT_SZ_
-					", sizeof(long)=" _FMT_SZ_
-					", sizeof(void *)=" _FMT_SZ_
-					", sizeof(sizeof)=" _FMT_SZ_
-					", sizeof(time_t)=" _FMT_SZ_ 
+	fprintf(stdout,	"/* sizeof(char)=" FMT_SZ
+					", sizeof(int)=" FMT_SZ
+					", sizeof(long)=" FMT_SZ
+					", sizeof(void *)=" FMT_SZ
+					", sizeof(sizeof)=" FMT_SZ
+					", sizeof(time_t)=" FMT_SZ 
+					", sizeof(int8_t)=" FMT_SZ 
+					", sizeof(int16_t)=" FMT_SZ 
+					", sizeof(int32_t)=" FMT_SZ
 					" */\n",
 				sizeof(char),
 				sizeof(int),
 				sizeof(long),
 				sizeof(char *),
 				sizeof(sizeof(char)),
-				sizeof(time_t));
+				sizeof(time_t),
+				sizeof(int8_t),
+				sizeof(int16_t),
+				sizeof(int32_t)
+			);
 	fputs("#if QUALTBL_GET_ENUM\n"
 		  "typedef enum\n{\n",stdout);
 	lp = lines;

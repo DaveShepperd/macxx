@@ -26,12 +26,14 @@
  *
  *******************************************************************/
 
+#include <inttypes.h>
+
 /* Entry */
 
 int hashit( char *string, unsigned int hash_size, unsigned int hash_indx)
 {
     unsigned int hashv=0;
-    unsigned char c;
+    uint8_t c;
     while ( (c= *string++) )
     {
         hashv = hashv*hash_indx + c;

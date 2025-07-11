@@ -54,15 +54,15 @@ const char *macxx_target = "6800";
 const char *macxx_descrip = "Cross assembler for the 6800.";
 
 #if 0
-unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */
-unsigned short macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
-unsigned short macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
-unsigned short macxx_abs_dalign = 0;
+uint16_t macxx_rel_salign = 0;    /* default alignment for .REL. segment */
+uint16_t macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
+uint16_t macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
+uint16_t macxx_abs_dalign = 0;
 #else
-unsigned short macxx_salign = 1;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+uint16_t macxx_salign = 1;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 1;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 0;
+uint16_t macxx_min_dalign = 0;
 
 char macxx_mau = 8;         /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -73,8 +73,8 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_AMA|ED_M68|ED_TRUNC;  /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD | LIST_OCT);  /* default list mask */
+uint32_t macxx_edm_default = ED_AMA|ED_M68|ED_TRUNC;  /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD | LIST_OCT);  /* default list mask */
 
 int current_radix = 16;     /* default the radix to hex */
 char expr_open = '<';       /* char that opens an expression */
@@ -143,7 +143,7 @@ static struct
 static void do_branch(Opcode *opc)
 {
 	int s_test;
-    long offset;
+    int32_t offset;
     EXPR_struct *exp_ptr;
 	const char *badExpr=NULL;
 	
@@ -194,14 +194,14 @@ static void do_branch(Opcode *opc)
 		exp_ptr = EXP1.stack;
 		if (EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE)
 		{
-			long max_dist;
+			int32_t max_dist;
 	
 	/* Always 127 */
 			max_dist = 127;
 	
 			if (exp_ptr->expr_value < -(max_dist+1) || exp_ptr->expr_value > max_dist)
 			{
-				long toofar;
+				int32_t toofar;
 				toofar = exp_ptr->expr_value;
 				if (toofar > 0)
 				{
@@ -211,7 +211,7 @@ static void do_branch(Opcode *opc)
 				{
 					toofar = -toofar-(max_dist+1);
 				}
-				sprintf(emsg, "Branch offset 0x%lX byte(s) out of range", toofar);
+				sprintf(emsg, "Branch offset 0x%X byte(s) out of range", toofar);
 				badExpr = emsg;
 			}
 		}
@@ -239,7 +239,7 @@ static int do_operand(Opcode *opc)
 {                   /* 1 or 2 operands required*/
     AModes amdcdnum = ILL_NUM;
     int ct;
-    long amflag=0;
+    int32_t amflag=0;
 
     ct = get_token();            /* pickup the next token */
     switch (ct)

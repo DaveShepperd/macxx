@@ -26,10 +26,10 @@ const char macxx_name[] = "macpp";
 const char *macxx_target = "unknown";
 const char *macxx_descrip = "Macro pre-processor.";
 
-unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */
-unsigned short macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
-unsigned short macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
-unsigned short macxx_abs_dalign = 0;
+uint16_t macxx_rel_salign = 0;    /* default alignment for .REL. segment */
+uint16_t macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
+uint16_t macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
+uint16_t macxx_abs_dalign = 0;
 char macxx_mau = 8;         /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
 char macxx_mau_byte = 1;        /* number of mau's in a byte */
@@ -39,9 +39,9 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = 0;    /* default edmask */
+uint32_t macxx_edm_default = 0;    /* default edmask */
 /* default list mask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_OCT);
+uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_OCT);
 int current_radix = 16;         /* default the radix to hex */
 
 char expr_open = '(';       /* char that opens an expression */

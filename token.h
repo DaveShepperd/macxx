@@ -22,6 +22,7 @@
 #ifdef lint
 #define void int
 #endif
+#include <stdint.h>
 #include "token_defs.h"		/* get standard #define's */
 #include <stdio.h>		/* get standard I/O definitions */
 #include <ctype.h>		/* get standard string type macros */
@@ -69,7 +70,7 @@ extern void exit();
 
 extern char char_toupper[];
 
-#define _toupper(c)	(char_toupper[(unsigned char)c])
+#define _toupper(c)	(char_toupper[(uint8_t)c])
 #define _tolower(c)	((c) >= 'A' && (c) <= 'Z' ? (c) | 0x20:(c))
 
 #ifndef TRUE
