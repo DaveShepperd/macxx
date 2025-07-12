@@ -281,12 +281,12 @@ int main(int argc, char *argv[])
  *      Else Returns SUCCESS
  */
 {
-    int i,fileNumber;
+    int len,i,fileNumber;
 #ifdef TIME_LIMIT
     long timed_out,*link_time,systime[2];
 #endif
     struct tm *our_time;                 /* current time (for sym/sec and map files */
-	char c,*s,*d;
+	char c,*s;
 
     lap_timer((char *)0);                /* mark start of image */
     edmask = macxx_edm_default;          /* set default edmask */   
@@ -306,54 +306,29 @@ int main(int argc, char *argv[])
     }
 #endif
 	s = emsg;
-	d = token_pool;
+    len = 0;
 	while ((c = *s++) != 0)
 	{
 		if (c == 1)
 		{
-			strcpy(d,macxx_name);
-			d += strlen(macxx_name);
+			len += snprintf(token_pool+len,token_pool_size-len,"%s",macxx_name);
 		}
 		else if (c == 2)
 		{
-			strcpy(d,macxx_version);
-			d += strlen(macxx_version);
+            len += snprintf(token_pool+len,token_pool_size-len,"%s (%d bit)",
+                            macxx_version, sizeof(void *) > 4 ? 64:32);
 		}
 		else if ( c == 3 )
 		{
-			strcpy(d,macxx_descrip);
-			d += strlen(macxx_descrip);
+            len += snprintf(token_pool+len,token_pool_size-len,"%s",macxx_descrip);
 		}
 		else
 		{
-			*d++ = c;
+            token_pool[len] = c;
+            ++len;
 		}
 	}
-	*d = 0;
-#if 0
-	if (macxx_name[3] == '6')
-	{
-		if ( macxx_name[4] == '5')
-			were_mac65 = 1;
-		else if (macxx_name[4] == '9')
-			were_mac69 = 1;
-		else if (macxx_name[4] == '8')
-		{
-			if ( macxx_name[5] == 'k')
-				were_mac68k = 1;
-			else
-				were_mac68 = 1;
-		}
-	}
-	else if (macxx_name[3] == 't' && macxx_name[4] == 'j')
-		were_mactj = 1;
-	else if (macxx_name[3] == '1' && macxx_name[4] == '1')
-		were_mac11 = 1;
-	else if (macxx_name[3] == 'a' && macxx_name[4] == 's')
-		were_macas = 1;
-	else if ( !strcmp(macxx_name+3,"8080") )
-		were_mac8080 = 1;
-#endif
+	token_pool[len] = 0;
 #if defined(MS_DOS)
 	fprintf(stderr,"%s\n",token_pool);
 #endif
@@ -370,12 +345,6 @@ int main(int argc, char *argv[])
     }
     list_source.srcPosition = LLIST_SIZE;
     list_source.srcPositionQued = LLIST_SIZE;
-#if 0
-	if ( (were_mac65 || were_mac68 || were_mac69 || were_mac11) && options[QUAL_C_EXPR] )
-	{
-		/* change the expression handler characters here */
-	}
-#endif
 	init_exprs();
 #if !defined(MAC_PP)
     outx_init();
@@ -387,7 +356,7 @@ int main(int argc, char *argv[])
 		int ii;
 		int savedRadix = current_radix;
 		
-		if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080)) /* !were_mac65 && !were_mac68 && !were_mac69 && !were_mac11 && !were_mac8080 */ )
+		if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080)) )
 		{
 			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
 			EXIT_FALSE;

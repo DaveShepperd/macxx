@@ -94,8 +94,8 @@ int op_title(void)
 		}
 		if ( !(c = lis_title[0]) )
 			c = '\f';
-		snprintf(lis_title, sizeof(lis_title), "%c%-40s %s %s   %s",
-				 c, " ", macxx_name, macxx_version, ascii_date);
+		snprintf(lis_title, sizeof(lis_title), "%c%-40s %s %s (%d bit)   %s",
+				 c, " ", macxx_name, macxx_version, sizeof(void *) > 4 ? 64:32, ascii_date);
 		if ( len > (int)sizeof(lis_title) - 3 )
 			len = sizeof(lis_title) - 3;
 		memcpy(lis_title + 1, inp_ptr, len);

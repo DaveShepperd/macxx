@@ -1,7 +1,7 @@
 # This is for a MSYS2 version running on Windows. Last checked on Windows 11.
-# Double click on buildtools.bat file in your toplevel MSYS2 directory.
+# Double click on buildtools-32.bat or run mingw32.exe file in your toplevel MSYS2 directory.
 
-HOST_CPU = 
+HOST_CPU = -m32 
 DELIM = '
 PiOS32 = 0
 LINUX = 0

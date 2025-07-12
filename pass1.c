@@ -732,9 +732,9 @@ void puts_lis(const char *string, int lines )
 		return;     /* easy out if no lis file */
 	if (!lis_title[0])
 	{
-		snprintf(lis_title,sizeof(lis_title),"\f%-40s %s %s   %s",
+		snprintf(lis_title,sizeof(lis_title),"\f%-40s %s %s (%d bit)   %s",
 			output_files[OUT_FN_OBJ].fn_name_only,
-			macxx_name,macxx_version,ascii_date);
+			macxx_name,macxx_version,sizeof(void *) > 4 ? 64:32,ascii_date);
 	}
 	if ((i=lines) == 0)
 	{

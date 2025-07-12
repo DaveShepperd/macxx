@@ -1242,8 +1242,8 @@ void outid(FILE *fp,int mode)
             default:
                 err_msgs[0] = 0;
             }
-            fprintf(fp,".id \"translator\" \"%s %s%s\"\n",
-                    macxx_name, macxx_version, err_msgs);
+            fprintf(fp,".id \"translator\" \"%s %s (%d bit)%s\"\n",
+                    macxx_name, macxx_version, sizeof(void *) > 4 ? 64:32, err_msgs);
             fprintf(fp,".id \"mod\" \"%s\"\n",
                     output_files[OUT_FN_OBJ].fn_name_only);
             vid->md_len = 30;
@@ -1273,7 +1273,7 @@ void outid(FILE *fp,int mode)
             vldaid->vid_maxtoken = max_token;
 #endif
             s = oline + sizeof(VLDA_id);
-            sprintf(s,"\"%s %s\"",macxx_name,macxx_version);
+            sprintf(s,"\"%s %s (%d bit)\"",macxx_name,macxx_version,sizeof(void *) > 4 ? 64:32);
             while (*s++);
             vldaid->vid_target = s - kluge;
             strcpy(s,macxx_target);
