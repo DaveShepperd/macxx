@@ -30,24 +30,7 @@ Change Log
 #include <inttypes.h>
 #include <time.h>
 
-#if __SIZEOF_PTRDIFF_T__ > __SIZEOF_INT__
-	#if __SIZEOF_PTRDIFF_T__ > __SIZEOF_LONG__
-		#define FMT_PTRDIFF "%lld"
-	#else
-		#define FMT_PTRDIFF "%ld"
-	#endif
-#else
-	#define FMT_PTRDIFF "%d"
-#endif
-#if __SIZEOF_SIZE_T__ > __SIZEOF_INT__
-	#if __SIZEOF_SIZE_T__ > __SIZEOF_LONG__
-		#define FMT_SZ "%lld"
-	#else
-		#define FMT_SZ "%ld"
-	#endif
-#else
-	#define FMT_SZ "%d"
-#endif
+#include "formats.h"
 
 #ifndef n_elts
     #define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))

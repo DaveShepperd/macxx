@@ -5,24 +5,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#if __SIZEOF_PTRDIFF_T__ > __SIZEOF_INT__
-	#if __SIZEOF_PTRDIFF_T__ > __SIZEOF_LONG__
-		#define FMT_PTRDIF "%lld"
-	#else
-		#define FMT_PTRDIF "%ld"
-	#endif
-#else
-	#define FMT_PTRDIF "%d"
-#endif
-#if __SIZEOF_SIZE_T__ > __SIZEOF_INT__
-	#if __SIZEOF_SIZE_T__ > __SIZEOF_LONG__
-		#define FMT_SZ "%lld"
-	#else
-		#define FMT_SZ "%ld"
-	#endif
-#else
-	#define FMT_SZ "%d"
-#endif
+#include "formats.h"
 
 #define OP_ALL		(1)	/* A */
 #define OP_NO_PP	(2)	/* N */

@@ -11,7 +11,7 @@
 		Version="1"
 		OutputFile="%bdmacxx"
 		CompilerConfigName="Latest Version"
-		Defines="">
+		Defines='"/DNO_XREF"'>
 		<Menu>
 			<Target
 				Name="Compile"
@@ -337,6 +337,7 @@
 			<F N="debug.h"/>
 			<F N="dirdefs.h"/>
 			<F N="exproper.h"/>
+			<F N="formats.h"/>
 			<F N="gc_struct.h"/>
 			<F N="header.h"/>
 			<F N="le_itfc.h"/>

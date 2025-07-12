@@ -36,20 +36,7 @@
 #include "structs.h"
 #include "exproper.h"
 #include "operstuff.h"
-
-#if __WORDSIZE == 64
-	#define FMT_PTRDIF "l"
-	#if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
-		#define FMT_PFX "ll"
-	#else
-		#define FMT_PFX "l"
-	#endif
-#else
-	#define FMT_PTRDIFF
-	#define FMT_PFX
-#endif
-
-#define FMT_SZ "%" FMT_PFX "d"
+#include "formats.h"
 
 /* Define the character classes */
 /* WARNING: Don't alter the order of the following items */

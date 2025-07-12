@@ -4,15 +4,7 @@
 #include <time.h>
 #include <inttypes.h>
 
-#if __SIZEOF_SIZE_T__ > __SIZEOF_INT__
-	#if __SIZEOF_SIZE_T__ > __SIZEOF_LONG__
-		#define FMT_SZ "%lld"
-	#else
-		#define FMT_SZ "%ld"
-	#endif
-#else
-	#define FMT_SZ "%d"
-#endif
+#include "formats.h"
 
 typedef struct
 {
