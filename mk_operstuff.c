@@ -2,22 +2,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <inttypes.h>
 
-#ifndef _FMT_SZ_
-    #if __SIZEOF_SIZE_T__ == 4
-        #define _FMT_SZ_ "%d"
-    #endif
-    #if __SIZEOF_SIZE_T__ == 8
-        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
-            #define _FMT_SZ_ "%lld"
-        #else
-            #define _FMT_SZ_ "%ld"
-        #endif
-    #endif
-#endif
-
-#ifndef _FMT_SZ_
-  #error "Failed to define _FMT_SZ_"
+#if __SIZEOF_SIZE_T__ > __SIZEOF_INT__
+	#if __SIZEOF_SIZE_T__ > __SIZEOF_LONG__
+		#define FMT_SZ "%lld"
+	#else
+		#define FMT_SZ "%ld"
+	#endif
+#else
+	#define FMT_SZ "%d"
 #endif
 
 typedef struct
@@ -169,22 +163,37 @@ int main(int argc, char *argv[])
 	}
 	fclose(inF);
 	inF = NULL;
-	fputs("#if OPERSTUFF_GET_ENUM\n"
-		  "typedef enum\n{\n",stdout);
-	fprintf(stdout,"/* numLines=%d */\n", numLines);
-	fprintf(stdout,	"/* sizeof(char)=" _FMT_SZ_
-					", sizeof(int)=" _FMT_SZ_
-					", sizeof(long)=" _FMT_SZ_
-					", sizeof(void *)=" _FMT_SZ_
-					", sizeof(sizeof)=" _FMT_SZ_
-					", sizeof(time_t)=" _FMT_SZ_ 
-					" */\n",
-				sizeof(char),
-				sizeof(int),
-				sizeof(long),
-				sizeof(char *),
-				sizeof(sizeof(char)),
-				sizeof(time_t));
+	fprintf(stdout,"/* numLines=%d, __SIZEOF_SIZE_T__=%d, __SIZEOF_INT__=%d, __SIZEOF_LONG__=%d */\n",
+			numLines,
+			__SIZEOF_SIZE_T__,
+			__SIZEOF_INT__,
+			__SIZEOF_LONG__);
+	fprintf(stdout,	"/* sizeof(char)=" FMT_SZ
+					", sizeof(int)=" FMT_SZ
+					", sizeof(long)=" FMT_SZ
+					", sizeof(void *)=" FMT_SZ
+					" */\n/* "
+					"sizeof(int8_t)=" FMT_SZ 
+					", sizeof(int16_t)=" FMT_SZ 
+					", sizeof(int32_t)=" FMT_SZ
+					" */\n/* "
+					"sizeof(sizeof)=" FMT_SZ
+					", sizeof(size_t)=" FMT_SZ
+					", sizeof(time_t)=" FMT_SZ 
+					" */\n\n"
+				,sizeof(char)
+				,sizeof(int)
+				,sizeof(long)
+				,sizeof(void *)
+				,sizeof(int8_t)
+				,sizeof(int16_t)
+				,sizeof(int32_t)
+				,sizeof(sizeof(char))
+				,sizeof(size_t)
+				,sizeof(time_t)
+			);
+	fputs("#if OPERSTUFF_GET_ENUM\n", stdout);
+	fputs("typedef enum\n{\n", stdout);
 	lp = lines;
 	for (ii=0; ii < numLines; ++ii, ++lp)
 	{

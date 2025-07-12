@@ -5,21 +5,23 @@
 #include <stdint.h>
 #include <time.h>
 
-#ifndef FMT_SZ
-    #if __SIZEOF_SIZE_T__ == 4
-        #define FMT_SZ "%d"
-    #endif
-    #if __SIZEOF_SIZE_T__ == 8
-        #if __SIZEOF_LONG__ < __SIZEOF_SIZE_T__
-            #define FMT_SZ "%lld"
-        #else
-            #define FMT_SZ "%ld"
-        #endif
-    #endif
+#if __SIZEOF_PTRDIFF_T__ > __SIZEOF_INT__
+	#if __SIZEOF_PTRDIFF_T__ > __SIZEOF_LONG__
+		#define FMT_PTRDIF "%lld"
+	#else
+		#define FMT_PTRDIF "%ld"
+	#endif
+#else
+	#define FMT_PTRDIF "%d"
 #endif
-
-#ifndef FMT_SZ
-  #error "Failed to define FMT_SZ"
+#if __SIZEOF_SIZE_T__ > __SIZEOF_INT__
+	#if __SIZEOF_SIZE_T__ > __SIZEOF_LONG__
+		#define FMT_SZ "%lld"
+	#else
+		#define FMT_SZ "%ld"
+	#endif
+#else
+	#define FMT_SZ "%d"
 #endif
 
 #define OP_ALL		(1)	/* A */
@@ -179,26 +181,34 @@ int main(int argc, char *argv[])
 	}
 	fclose(inF);
 	inF = NULL;
-	fprintf(stdout,"/* numLines=%d */\n", numLines);
+	fprintf(stdout,"/* numLines=%d, __SIZEOF_SIZE_T__=%d, __SIZEOF_INT__=%d, __SIZEOF_LONG__=%d */\n",
+			numLines,
+			__SIZEOF_SIZE_T__,
+			__SIZEOF_INT__,
+			__SIZEOF_LONG__);
 	fprintf(stdout,	"/* sizeof(char)=" FMT_SZ
 					", sizeof(int)=" FMT_SZ
 					", sizeof(long)=" FMT_SZ
 					", sizeof(void *)=" FMT_SZ
-					", sizeof(sizeof)=" FMT_SZ
-					", sizeof(time_t)=" FMT_SZ 
-					", sizeof(int8_t)=" FMT_SZ 
+					" */\n/* "
+					"sizeof(int8_t)=" FMT_SZ 
 					", sizeof(int16_t)=" FMT_SZ 
 					", sizeof(int32_t)=" FMT_SZ
-					" */\n",
-				sizeof(char),
-				sizeof(int),
-				sizeof(long),
-				sizeof(char *),
-				sizeof(sizeof(char)),
-				sizeof(time_t),
-				sizeof(int8_t),
-				sizeof(int16_t),
-				sizeof(int32_t)
+					" */\n/* "
+					"sizeof(sizeof)=" FMT_SZ
+					", sizeof(size_t)=" FMT_SZ
+					", sizeof(time_t)=" FMT_SZ 
+					" */\n\n"
+				,sizeof(char)
+				,sizeof(int)
+				,sizeof(long)
+				,sizeof(void *)
+				,sizeof(int8_t)
+				,sizeof(int16_t)
+				,sizeof(int32_t)
+				,sizeof(sizeof(char))
+				,sizeof(size_t)
+				,sizeof(time_t)
 			);
 	fputs("#if QUALTBL_GET_ENUM\n"
 		  "typedef enum\n{\n",stdout);

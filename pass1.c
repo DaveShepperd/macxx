@@ -845,7 +845,7 @@ static void show_bad_token_ide( const char *ptr, const char *msg, int sev )
 		{
 			if ( strlen(fName)+msgLen+inp_len >= MAX_ERROR_LINE_LEN )
 				lineBreak = "\n";
-			snprintf(leadMsg, msgsiz + 1, "%s:%d:%" FMT_PTRDIFF "d: %s:%s %s\n",
+			snprintf(leadMsg, msgsiz + 1, "%s:%d:" FMT_PTRDIFF ": %s:%s %s\n",
 					 current_fnd->fn_nam->relative_name,
 					 current_fnd->fn_line,
 					 ptr-inp_str,
@@ -1046,7 +1046,7 @@ void show_bad_token( const char *ptr, const char *msg, int sev )
     }
     else
     {
-        sprintf(btmsg,":%" FMT_PTRDIFF "d - %s\n",
+        sprintf(btmsg,":" FMT_PTRDIFF " - %s\n",
 				(ptr > inp_str) ? ptr-inp_str : 0, msg );
         err_msg(sev, btmsg);
     }
