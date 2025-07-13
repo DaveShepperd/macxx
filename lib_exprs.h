@@ -20,7 +20,6 @@
 #define _LIB_EXPRS_H_ (1)
 
 #include <stdint.h>
-#include <pthread.h>
 
 /**
  * @brief Example of an generic expression evaluator.

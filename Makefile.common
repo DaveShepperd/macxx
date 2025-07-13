@@ -41,9 +41,11 @@ ALLOPP3 = help_pp.o $(CORE0)
 
 ALLH = token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h gc_struct.h
 
+HERE = ./
 EXE =
 ifeq ($(MINGW),1)
 	EXE = .exe
+	HERE = .\\
 endif
 ifeq ($(MSYS2),1)
 	EXE = .exe
@@ -202,7 +204,7 @@ mk_operstuff$(EXE) : mk_operstuff.o Makefile.common
 
 operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
 	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
-	./mk_operstuff > $@
+	$(HERE)mk_operstuff > $@
 
 mk_qualtbl.o : mk_qualtbl.c Makefile.common
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
@@ -213,7 +215,7 @@ mk_qualtbl$(EXE) : mk_qualtbl.o Makefile.common
 
 qualtbl.h : qualtbl.dat mk_qualtbl$(EXE) Makefile.common
 	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
-	./mk_qualtbl > $@
+	$(HERE)mk_qualtbl > $@
 
 lib_exprs.o : lib_exprs.c lib_exprs.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $< ...$(DELIM)
