@@ -19,7 +19,7 @@
 #ifndef _LIB_EXPRS_H_
 #define _LIB_EXPRS_H_ (1)
 
-#include <pthread.h>
+/* #include <pthread.h> */
 
 #ifndef n_elts
 #define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
