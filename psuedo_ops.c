@@ -521,6 +521,7 @@ static int handle_ascii_exprs(int options, int open_c, int close_c)
 			++nst;
 		}
 	}
+	s1 = s2 = 0;	/* keep compiler quiet */
 	if ( !eol )
 	{
 		/* Stopped on a non-comma */

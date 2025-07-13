@@ -41,9 +41,11 @@ ALLOPP3 = help_pp.o $(CORE0)
 
 ALLH = structs.h header.h ct.h token_defs.h token.h
 
+HERE = ./
 EXE =
 ifeq ($(MINGW),1)
 	EXE = .exe
+	HERE = .\\
 endif
 ifeq ($(MSYS2),1)
 	EXE = .exe
@@ -217,7 +219,7 @@ mk_operstuff$(EXE) : mk_operstuff.o Makefile.common
 
 operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
 	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
-	./mk_operstuff > $@
+	$(HERE)mk_operstuff > $@
 
 lib_exprs.o : lib_exprs.c lib_exprs.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $< ...$(DELIM)
