@@ -26,9 +26,9 @@
 /* The following are variables specific to the particular assembler */
 
 const int macxx_name_mask = MACXX_M_68K;
-const char macxx_name[] = "MAC_68K";
+const char macxx_name[] = "mac68k";
 const char *macxx_target = "68000";
-const char *macxx_descrip = "Cross assembler for the 68000.";
+const char *macxx_descrip = "Cross assembler for the 68000/68010.";
 
 #if 0
 uint16_t macxx_rel_salign = 1;    /* default alignment for .REL. segment */
