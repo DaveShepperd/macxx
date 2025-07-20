@@ -1,0 +1,103 @@
+; A semi-colon in column 1 signals a comment line for this file and ignored.
+; Except for the comment char, anything other than a 'A' 'N', 'O', 'S' or 'L'
+; in column 1 will be copied without modification to the output file: (expected
+; to be qualtbl.h)
+;
+/*
+    qualtbl.h - Part of macxx, a cross assembler family for various micro-processors.
+    Copyright (C) 2025 David Shepperd
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/**************************************************************************
+ * @note This file is produced by a separate program called mk_qualtbl. *
+ * Any manual edits made to this file will likely be lost during the next *
+ * build. Edit mk_qualtbl.c and/or qualtbl.dat to make any necessary  *
+ * changes to these lists.                                                *
+ **************************************************************************/
+;
+;
+; The text following a 'S,' in columns 1 and 2 are copied as is to the output enclosed
+; in the #if QUALTBL_GET_ENUM.
+;
+
+S,typedef struct qual
+S,{
+S,    unsigned int noval:1;     /* value is not allowed */
+S,    unsigned int optional:1;  /* value is optional */
+S,    unsigned int number:1;    /* value must be a number */
+S,    unsigned int output:1;    /* parameter is an output file */
+S,    unsigned int string:1;    /* option is a string */
+S,    unsigned int negate:1;    /* value is negatable */
+S,    unsigned int error:1;     /* field is in error */
+S,    unsigned int negated:1;   /* option is negated */
+S,    unsigned int present:1;   /* option found on command line */
+S,    int qualif;               /* value to .or. into cli_options */
+S,    char *name;               /* pointer to qualifier ascii string */
+S,    char index;               /* output file index */
+S,    char *strValue;           /* used if user's value is a string */
+S,    long intValue;            /* used if user's value is an integer */
+S,} Qual_t;
+
+; The following items are separated from one another using commas with
+; any amount of whitespace between them. Whitespace in the comment string
+; is copied to output as is.
+;
+; Lines starting with 'A' apply to all assemblers. Lines starting with 'N'
+; exclude those for MAC_PP and lines starting with 'O' apply only to MAC_PP.
+; A line starting with 'L' indicates the last line in the enum and is not
+; included in the struct init.
+
+; Legend:
+; OP - one of A, N, O or L
+; Val - 1 if no value is allowed
+; Opt - 1 if value is optional
+; Num - 1 if value must be a number
+; Out - 1 if param is an output file
+; Str - 1 if value is a string
+; Neg - 1 if param is negatible
+; Enum - name of enum
+; Name - name of parameter
+; OutIdx - if param is output file, the index of same
+; Comment - comment to include 
+;
+;OP  Val Opt Num Out Str Neg Enum,             Name,              OutIdx,        Comment
+N,    1,  0,  0,  0,  0,  1, QUAL_CROSS,       "CROSS_REFERENCE",    0,          /* cross reference */
+N,    1,  0,  0,  0,  0,  1, QUAL_2_PASS,      "2_PASS",             0,          /* make a full two pass assembler */
+N,    1,  0,  0,  0,  0,  1, QUAL_BINARY,      "BINARY",             0,          /* output binary files */
+N,    1,  0,  0,  0,  0,  1, QUAL_CMOS,        "CMOS",               0,          /* 65C02 */
+N,    1,  0,  0,  0,  0,  1, QUAL_P816,        "816",                0,          /* 65816 */
+N,    1,  0,  0,  0,  0,  1, QUAL_JERRY,       "JERRY",              0,          /* Jaguar DSP */
+N,    1,  0,  0,  0,  0,  1, QUAL_MISER,       "MISER",              0,          /* memory miser mode */
+N,    1,  0,  0,  0,  0,  1, QUAL_BOFF,        "BOFF",               0,          /* MACAS global branch offset test */
+N,    0,  1,  1,  0,  0,  1, QUAL_TEMP,        "TEMPFILE",           0,          /* use temp files */
+A,    1,  0,  0,  0,  0,  1, QUAL_IDE_SYNTAX,  "IDE_ERROR_SYNTAX",   0,          /* output error messages in IDE syntax */
+A,    0,  1,  0,  1,  0,  1, QUAL_OUTPUT,      "OUTPUT",             OUT_FN_OBJ, /* object file description */
+A,    0,  1,  0,  1,  0,  1, QUAL_LIST,        "LIST",               OUT_FN_LIS, /* list file description */
+A,    0,  1,  0,  1,  0,  1, QUAL_TOC,         "TOC",                OUT_FN_TOC, /* toc file description By TRG 20240503 to support TOC */
+A,    0,  1,  0,  1,  0,  1, QUAL_DEBUG,       "DEBUG",              OUT_FN_DEB, /* debug file description */
+A,    0,  0,  1,  0,  0,  0, QUAL_SYML,        "SYMBOL_LENGTH",      0,          /* significant length of symbols */
+A,    0,  0,  1,  0,  0,  0, QUAL_OPCL,        "OPCODE_LENGTH",      0,          /* significant length of opcodes */
+A,    1,  0,  0,  0,  0,  1, QUAL_SQUEAK,      "SQUEAK",             0,          /* announce states (debugging) */
+A,    1,  0,  0,  0,  0,  1, QUAL_OCTAL,       "OCTAL",              0,          /* list file in octal */
+A,    1,  0,  0,  0,  0,  1, QUAL_RELATIVE,    "RELATIVE",           0,          /* relative assembly */
+O,    1,  0,  0,  0,  0,  1, QUAL_LINE,        "LINE",               0,          /* place # line info in output */
+A,    0,  0,  0,  0,  1,  0, QUAL_ASSEM,       "ASSEM",              0,          /* insert text in assem stream */
+A,    0,  0,  0,  0,  0,  0, QUAL_INCLUDE,     "INCLUDE",            0,          /* include file path description */
+A,    1,  0,  0,  0,  0,  1, QUAL_GRNHILL,     "GREENHILLS",         0,          /* Greenhills assembler syntax */
+A,    1,  0,  0,  0,  0,  1, QUAL_ABBREV,      "ABBREVIATE",         0,          /* Abbreviate error messages */
+A,    1,  0,  0,  0,  0,  1, QUAL_IGNORE,      "IGNORE",             0,          /* Ignore some old undefined psuedo-ops */
+A,    1,  0,  0,  0,  0,  1, QUAL_PREDEFINE,   "PREDEFINE",          0,          /* Predefine some symbols */
+L,    0,  0,  0,  0,  0,  0, QUAL_MAX,         NULL,                 0,          /* This must be last */

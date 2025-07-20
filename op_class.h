@@ -29,8 +29,8 @@
 #define OPCL_IL 7
 
 #define BR_OFF 0
-#define MAX_DISP (8388604L)
-#define MIN_DISP (-8388608L)
+#define MAX_DISP (8388604)
+#define MIN_DISP (-8388608)
 
 #define OP_PUTPS 0x1d
 

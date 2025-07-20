@@ -19,11 +19,7 @@
 #ifndef _LIB_EXPRS_H_
 #define _LIB_EXPRS_H_ (1)
 
-/* #include <pthread.h> */
-
-#ifndef n_elts
-#define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
-#endif
+#include <inttypes.h>
 
 /**
  * @brief Example of an generic expression evaluator.
@@ -57,12 +53,14 @@
  * 5.
  */
 
+#ifndef n_elts
+#define n_elts(x) (int)(sizeof(x)/sizeof(x[0]))
+#endif
+
+#include "utils.h"
+
 #define OPERSTUFF_GET_ENUM 1
 #include "operstuff.h"
-
-#ifndef _FMT_LD_
-#define _FMT_LD_ "%ld"
-#endif
 
 typedef enum
 {
@@ -101,9 +99,13 @@ typedef struct
 	{
 		int link;		/* Index to a different stack */
 		int string;		/* Index into the string pool if type is string */
+		int32_t s32;
+		uint32_t u32;
+#if 0
 		double f64;
-		long s64;
-		unsigned long u64;
+		int64_t s64;
+		uint64_t u64;
+#endif
 		char oper[4];
 		void *complex;
 	} term;
@@ -154,7 +156,7 @@ typedef struct
 	void *msgArg;									/*! Argument to pass to msgOut callback */
 } ExprsCallbacks_t;
 
-typedef unsigned char ExprsPrecedence_t;
+typedef uint8_t ExprsPrecedence_t;
 
 /** Exprs flags:
  */
@@ -200,7 +202,7 @@ typedef struct
 	ExprsPool_t mStringPool;		/*! string pool */
 	const char *mCurrPtr;			/*! Pointer to current place in expression string being processed */
 	const char *mLineHead;			/*! Pointer to first character in expression string */
-	unsigned long mFlags;			/*! Bit mask of EXPRS_FLG_xxx bits */
+	uint32_t mFlags;				/*! Bit mask of EXPRS_FLG_xxx bits */
 	int mRadix;						/*! Radix to use if EXPRS_FLG_USE_RADIX flag set */
 	char mOpenDelimiter;			/*! Open expression delimiter */
 	char mCloseDelimiter;			/*! Close expression delimiter */
@@ -294,7 +296,7 @@ extern ExprsErrs_t libExprsSetVerbose(ExprsDef_t *exprs, unsigned int newVal, un
  * @return 0 on success else error code. Look in errno for
  *  	   further indication of error.
  **/
-extern ExprsErrs_t libExprsSetFlags(ExprsDef_t *exprs, unsigned long newVal, unsigned long *oldValP);
+extern ExprsErrs_t libExprsSetFlags(ExprsDef_t *exprs, uint32_t newVal, uint32_t *oldValP);
 
 /** libExprsSetRadix - set the default radix
  *

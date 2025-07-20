@@ -25,7 +25,7 @@
 
 struct opcpst {
    char *name;			/* ptr to name */
-   unsigned short value;	/* base value */
+   uint16_t value;	/* base value */
 #if !defined(MAC_TJ)
    OPClass class;		/* opcode class */
 #else
@@ -34,11 +34,11 @@ struct opcpst {
 #if defined(MAC_68K)
    int bwl;
 #else
-   unsigned long amodes;	/* legal address modes */
+   uint32_t amodes;	/* legal address modes */
 #endif
 #if defined(MAC_65)
-   unsigned long aamodes;	/* alternate address modes */
-   unsigned long aaamodes;	/* alternate alternate address modes */
+   uint32_t aamodes;	/* alternate address modes */
+   uint32_t aaamodes;	/* alternate alternate address modes */
 #endif
 };
 
@@ -55,9 +55,9 @@ typedef struct dirpst Dirpst;
 typedef struct macargs {
    char **mac_keywrd;	/* pointer to array of char *'s containing keywords */
    char **mac_default;	/* pointer to array of char *'s containing defaults */
-   unsigned char *mac_gsflag;	/* ptr to array of char's having generated sym flag */
-   unsigned char *mac_body;	/* pointer to macro body */
-   unsigned char *mac_end;	/* pointer to macro EOM */
+   uint8_t *mac_gsflag;	/* ptr to array of char's having generated sym flag */
+   uint8_t *mac_body;	/* pointer to macro body */
+   uint8_t *mac_end;	/* pointer to macro EOM */
    int mac_numargs;	/* number of arguments in definition */
 } Macargs;
 
@@ -65,37 +65,37 @@ typedef struct opcode {
    char *op_name;		/* opcode/directive/macro name */
    struct opcode *op_next;	/* ptr to next opcode in chain */
    union {
-      unsigned long val;	/* base value of opcode */
+      uint32_t val;	/* base value of opcode */
       int (*fnc)();		/* ptr to handler if psuedo-op */
       struct macargs *mrg;	/* ptr to macro argument struct if macro */
    } types;
-   unsigned long op_amode;	/* address modes (> 16 bits rqd for 65816) */
-   short op_class;		/* opcode class */
+   uint32_t op_amode;	/* address modes (> 16 bits rqd for 65816) */
+   int16_t op_class;		/* opcode class */
 } Opcode;   
 
 extern Opcode *opcode_lookup(char *strng, int err_flag );
 extern void do_opcode(Opcode *opc);
 extern int macro_call(Opcode *opc);
 extern void deleteAllMacros(void);
-extern void free_macbody( unsigned char *link );
+extern void free_macbody( uint8_t *link );
 
 #define op_value types.val
 #define op_func  types.fnc
 #define op_margs types.mrg
 
 typedef struct mcall_struct {
-   unsigned char *marg_top;		/* pointer to top of macro (for rewind) */
-   unsigned char *marg_ptr;		/* pointer to next char in macro to read */
-   unsigned char *marg_end;		/* pointer to EOM character */
+   uint8_t *marg_top;		/* pointer to top of macro (for rewind) */
+   uint8_t *marg_ptr;		/* pointer to next char in macro to read */
+   uint8_t *marg_end;		/* pointer to EOM character */
    char **marg_args;		/* pointer to array of pointers of args */
    int marg_cndlvl;		/* saved conditional level */
    int marg_cndnst;		/* saved conditional nest */
    long marg_cndpol;		/* saved polarity */
    long marg_cndwrd;		/* saved conditions */
    struct mcall_struct *marg_next; /* pointer to previous mcall struct */
-   unsigned short marg_count;	/* loop count for .REPT */
-   unsigned short marg_icount;	/* initial loop or argument count */
-   unsigned short marg_flag;	/* macro type (.IRP(C)/.REPT/macro_call */
+   uint16_t marg_count;	/* loop count for .REPT */
+   uint16_t marg_icount;	/* initial loop or argument count */
+   uint16_t marg_flag;	/* macro type (.IRP(C)/.REPT/macro_call */
 } Mcall_struct;
 
 #define OP_HASH_SIZE 359

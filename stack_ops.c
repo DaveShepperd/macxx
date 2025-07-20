@@ -99,9 +99,9 @@ typedef struct user_stack {
 	char *usr_stk_name;             /* Stack Name */
 	union
 	{
-		unsigned char *bytes;
-		unsigned short *words;
-		unsigned long *longs;
+		uint8_t *bytes;
+		uint16_t *words;
+		uint32_t *longs;
 		SS_struct *symbols;
 		void *generic;
 	} usr_stk_array;
@@ -227,13 +227,13 @@ struct user_stack* create_stack(char *tmp_name, unsigned int usr_stk_size, Stack
 	switch (tmp_type)
 	{
 	case TypeByte:
-/*		bytes *= sizeof(unsigned char); */
+/*		bytes *= sizeof(uint8_t); */
 		break;
 	case TypeWord:
 		bytes *= sizeof(short);
 		break;
 	case TypeLong:
-		bytes *= sizeof(long);
+		bytes *= sizeof(int32_t);
 		break;
 	case TypeRelative:
 		bytes *= sizeof(SS_struct);
@@ -485,7 +485,7 @@ int op_defstack(void)
 		}
 		else
 		{
-			sprintf(emsg, "Failed to create User Stack - %s: %d entries of %d bytes", tmp_name, tmp_size, totBytes);
+			sprintf(emsg, "Failed to create User Stack - %s: %d entries of " FMT_SZ " bytes", tmp_name, tmp_size, totBytes);
 			show_bad_token((inp_ptr), emsg, MSG_ERROR);
 			/* Eat rest of line to suppress warning error about end of line not reached */
 			f1_eatit();
@@ -540,7 +540,7 @@ int op_push(void)
 
 	struct user_stack *usrstk;
 	SS_struct dummySym, *symPtr;
-	unsigned long data = 0;
+	uint32_t data = 0;
 
 	/* variable token_pool = pointer to the string variable "token label" of the get_token function */
 	if ( get_token() != TOKEN_strng )     /* If token is not string label (Could be label of a value, keyword, etc) */
@@ -699,7 +699,7 @@ int op_push(void)
 					}
 					else 
 					{
-						unsigned char *src, *dst;        /* mem pointers */
+						uint8_t *src, *dst;        /* mem pointers */
 						EXP_stk *exp_ptr;
 						int cnt;
 						
@@ -710,8 +710,8 @@ int op_push(void)
 						exp_ptr->ptr = EXP0.ptr;      /* set the number of entries in expression */
 						exp_ptr->stack = (EXPR_struct *)(exp_ptr + 1); /* point to stack */
 						symPtr->ss_exprs = exp_ptr;   /* tell symbol where expression is */
-						dst = (unsigned char *)exp_ptr->stack;  /* point to area to load expression */
-						src = (unsigned char *)EXP0SP;      /* point to source expression */
+						dst = (uint8_t *)exp_ptr->stack;  /* point to area to load expression */
+						src = (uint8_t *)EXP0SP;      /* point to source expression */
 						memcpy(dst, src, cnt);       /* copy all the data */
 						symPtr->flg_exprs = 1;    /* signal there's an expression of some sort */
 						symPtr->flg_defined = 1;
@@ -739,11 +739,11 @@ int op_push(void)
 				break;
 			case TypeWord:
 				data &= 0xFFFF;
-				usrstk->usr_stk_array.words[usrstk->usr_stk_ptr] = (unsigned short)data;
+				usrstk->usr_stk_array.words[usrstk->usr_stk_ptr] = (uint16_t)data;
 				break;
 			case TypeByte:
 				data &= 0xFF;
-				usrstk->usr_stk_array.bytes[usrstk->usr_stk_ptr] = (unsigned char)data;
+				usrstk->usr_stk_array.bytes[usrstk->usr_stk_ptr] = (uint8_t)data;
 				break;
 			default:
 				bad_token(tkn_ptr, "User Stack is set to an Unknown \"Type Keyword\" here");
@@ -806,7 +806,7 @@ int op_pop(void)
 {
 
 	struct user_stack *usrstk;
-	unsigned long data;
+	uint32_t data;
 
 	/* variable token_pool = pointer to the string variable "token label" of the get_token function */
 

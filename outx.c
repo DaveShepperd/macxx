@@ -57,9 +57,9 @@ static  char    *oline;
 /* pointers into lines and checksums for lines */
 static       char   *symp=0,*op=0,*maxop=0;
 static  unsigned int    symcs,objcs;
-static  unsigned long   addr;
-static  unsigned char   varcs;
-static  unsigned char   namcs;
+static  uint32_t   addr;
+static  uint8_t   varcs;
+static  uint8_t   namcs;
 
 char hexdig[] = "0123456789ABCDEF";
 
@@ -108,7 +108,7 @@ static char *get_symid(SS_struct *sym_ptr,char *s)
     return(s);
 }
 
-static short rsize;
+static int16_t rsize;
 
 static void showBadExpression(const EXP_stk *topLevel)
 {
@@ -121,7 +121,7 @@ static void showBadExpression(const EXP_stk *topLevel)
 	len = snprintf(emsg,sizeof(emsg),"Expression loop. %d terms: ", topLevel->ptr);
 	for (ii=0; ii < topLevel->ptr; ++ii, ++top_exp)
 	{
-		long val = top_exp->expr_value;
+		int32_t val = top_exp->expr_value;
 		switch(top_exp->expr_code)
 		{
 		case EXPR_B:
@@ -133,7 +133,7 @@ static void showBadExpression(const EXP_stk *topLevel)
 		case EXPR_SEG:
 			val += top_exp->expr_seg->rel_offset;
 			if (val != 0)
-				len += snprintf(emsg+len,sizeof(emsg)-len, " %%%d %ld +", top_exp->expr_seg->seg_ident, val);
+				len += snprintf(emsg+len,sizeof(emsg)-len, " %%%d %d +", top_exp->expr_seg->seg_ident, val);
 			else
 				len += snprintf(emsg+len, sizeof(emsg)-len," %%%d", top_exp->expr_seg->seg_ident);
 			break;
@@ -150,7 +150,7 @@ static void showBadExpression(const EXP_stk *topLevel)
 			val = sym_ptr->ss_value;
 			/* Fall through to EXPR_VALUE */
 		case EXPR_VALUE:
-			len += snprintf(emsg+len,sizeof(emsg)-len," %ld", val);
+			len += snprintf(emsg+len,sizeof(emsg)-len," %d", val);
 			break;
 		case EXPR_OPER:
 			len += snprintf(emsg+len,sizeof(emsg)-len," %c", (char)(val&0xFF));
@@ -194,7 +194,7 @@ static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len,const EXP_stk *topLeve
                 continue;
             }
         case EXPR_SEG: {   /* segment */
-                unsigned long cmp;
+                uint32_t cmp;
                 if (exp->expr_seg->seg_ident > 255)
                 {
                     *ve.vexp_type++ = VLDA_EXPR_SYM;
@@ -255,7 +255,7 @@ static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len,const EXP_stk *topLeve
                 exp->expr_value = sym_ptr->ss_value;
             }          /* fall through to EXPR_VALUE */
         case EXPR_VALUE: { /* constant */
-                unsigned long cmp;
+                uint32_t cmp;
                 cmp = (exp->expr_value >= 0) ? exp->expr_value : -exp->expr_value;
                 if (cmp == 0)
                 {
@@ -317,7 +317,7 @@ static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len,const EXP_stk *topLeve
     }                /* --for */
     if (eps->tag != 0)
     {
-        unsigned long cmp;
+        uint32_t cmp;
         cmp = eps->tag_len;
         if (cmp < 2)
         {
@@ -371,7 +371,7 @@ static char *do_outexp_ol(EXP_stk *eps,char *s, const EXP_stk *topLevel)
             exp->expr_value += exp->expr_seg->rel_offset;
             if (exp->expr_value != 0)
             {
-                sprintf(s," %%%d %ld +",exp->expr_seg->seg_ident,exp->expr_value);
+                sprintf(s," %%%d %d +",exp->expr_seg->seg_ident,exp->expr_value);
             }
             else
             {
@@ -391,7 +391,7 @@ static char *do_outexp_ol(EXP_stk *eps,char *s, const EXP_stk *topLevel)
                 exp->expr_value = sym_ptr->ss_value;
             }
         case EXPR_VALUE: {
-                sprintf(s," %ld",exp->expr_value);
+                sprintf(s," %d",exp->expr_value);
                 while (*s++);
                 --s;
                 continue;
@@ -446,7 +446,7 @@ static char *do_outexp_ol(EXP_stk *eps,char *s, const EXP_stk *topLevel)
     return(s);
 }
 
-static int formvar(unsigned long num, char *where );
+static int formvar(uint32_t num, char *where );
 
 char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp )
 {
@@ -465,7 +465,7 @@ char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp )
         if (wrt==0) return(ve.vexp_chp);     /* exit */
         rsize = ve.vexp_chp-wrt;
 #ifndef VMS
-        fwrite(&rsize,sizeof(short),1,fp);
+        fwrite(&rsize,sizeof(int16_t),1,fp);
         evenodd = rsize&1;
 #else
         evenodd = 0;
@@ -503,7 +503,7 @@ char *outxfer(EXP_stk *eps, FILE *fp)
         s = outexp(eps,ve.vexp_chp,(char *)0,(FILE *)0);
         rsize = s-kluge;
 #ifndef VMS
-        fwrite(&rsize,sizeof(short),1,fp);
+        fwrite(&rsize,sizeof(int16_t),1,fp);
         evenodd = rsize&1;
 #else
         evenodd = 0;
@@ -529,10 +529,10 @@ char *outxfer(EXP_stk *eps, FILE *fp)
 */
 int outbstr(char *from, int len )
 {
-    register unsigned char *rop,*fop;
-    unsigned char c;
+    register uint8_t *rop,*fop;
+    uint8_t c;
     int  k,limit,toeol=0;
-    fop = (unsigned char *)from;
+    fop = (uint8_t *)from;
     if (!options[QUAL_BINARY])
     {
         len += len;       /* double the input length if ASCII output */
@@ -587,10 +587,10 @@ int outbstr(char *from, int len )
         if ((limit &= ~1) == 0) limit = 1;
         if (outx_debug > 2)
         {
-            fprintf(stderr,"Loading %d bytes at addr %08lx in rcd %08lX\n",
+            fprintf(stderr,"Loading %d bytes at addr %08x in rcd %08X\n",
                     limit,addr,vlda_oline->vlda_addr);
         }
-        rop = (unsigned char *)op;
+        rop = (uint8_t *)op;
         len -= limit;
         if (!options[QUAL_BINARY])
         {
@@ -626,7 +626,7 @@ int outbstr(char *from, int len )
 void outorg(EXP_stk *eps)
 {
     EXPR_struct *exp;
-    unsigned long taddr,laddr,address;       /* address of end of txt + 1 */
+    uint32_t taddr,laddr,address;       /* address of end of txt + 1 */
     char *s;
     eps->tag = 0;            /* make sure there's no tag */
     exp = eps->stack;            /* get ptr to stack */
@@ -699,7 +699,7 @@ void outorg(EXP_stk *eps)
             break;
         }
     }
-    if (outx_debug > 2) fprintf(stderr,"Changing ORG from %08lX to %08lX\n",addr,address);
+    if (outx_debug > 2) fprintf(stderr,"Changing ORG from %08X to %08X\n",addr,address);
     addr = address;          /* set the new address */
     return;
 }
@@ -726,12 +726,12 @@ int outbyt(unsigned int    num, char    *where)
 *	the current line. The variable varcs will contain the contribution
 *	of this string to the checksum.
 */
-static int formvar(unsigned long num, char *where )
+static int formvar(uint32_t num, char *where )
 {
     int count;
     register char *vp;
     register char c;
-    unsigned long msk;
+    uint32_t msk;
     vp = where;
 
 /*	First, predict where the string will end    */
@@ -754,7 +754,7 @@ static int formvar(unsigned long num, char *where )
     *--vp = hexdig[(int)c];
     if ( vp != where )
     {
-        fprintf(stderr, "OUTX:formvar- bad estimate, %lX != %lX\n", (unsigned long)vp, (unsigned long)where);
+        fprintf(stderr, "OUTX:formvar- bad estimate, %p != %p\n", vp, where);
     }
     return(count+1);
 }
@@ -765,7 +765,7 @@ static int formvar(unsigned long num, char *where )
 *	formvar(). This preliminary is required to check if the symbol will
 *	fit on the current line.
 */
-static int formsym(char *name, int type, unsigned long address, char *where)
+static int formsym(char *name, int type, uint32_t address, char *where)
 {
     int i;
     char *np,c;
@@ -820,7 +820,7 @@ int outsym(SS_struct *sym_ptr,int mode)
         symcs = 0x48;
         symp = sline_ptr+9;
     }                    /* --symp == 0 */
-    len = formsym(sym_ptr->ss_string,1,(unsigned long)sym_ptr->ss_value,symp);
+    len = formsym(sym_ptr->ss_string,1,(uint32_t)sym_ptr->ss_value,symp);
     if ( symp - sline + len >= outx_swidth)
     {
 
@@ -840,7 +840,7 @@ int outsym(SS_struct *sym_ptr,int mode)
             *ssp = '\n';
 #ifndef VMS
             rsize = ssp-kluge+1;
-            fwrite(&rsize,sizeof(short),1,outxsym_fp);
+            fwrite(&rsize,sizeof(int16_t),1,outxsym_fp);
             evenodd = (int)(ssp-sline+1)&1;
 #else
             evenodd = 0;
@@ -896,7 +896,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
             {
                 if (sym_ptr->flg_abs)
                 {
-                    sprintf(s," %ld\n",sym_ptr->ss_value);
+                    sprintf(s," %d\n",sym_ptr->ss_value);
                 }
                 else
                 {
@@ -909,7 +909,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
                     }
                     else
                     {
-                        sprintf(s," %%%d %ld +\n",sym_ptr->ss_seg->seg_ident,sym_ptr->ss_value);
+                        sprintf(s," %%%d %d +\n",sym_ptr->ss_seg->seg_ident,sym_ptr->ss_value);
                     }
                 }
             }
@@ -946,7 +946,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
                     if ((flg&VSYM_ABS) == 0)
                     {
                         union vexp ve;
-                        unsigned long cmp;
+                        uint32_t cmp;
                         vlda_sym->vsym_flags |= VSYM_EXP;
                         vlda_sym->vsym_eoff = s - kluge;
                         ve.vexp_chp = s;
@@ -990,7 +990,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
             while ((*s++ = *name++) != 0); /* copy in the symbol name string */
 #ifndef VMS
             rsize = s-kluge;
-            fwrite(&rsize,sizeof(short),1,outxsym_fp);
+            fwrite(&rsize,sizeof(int16_t),1,outxsym_fp);
             evenodd = rsize&1;
 #else
             evenodd = 0;
@@ -1044,11 +1044,11 @@ void outseg_def(SEG_struct *seg_ptr)
             *s++ = '\n';
             *s++ = 0;
             fputs(sline,outxsym_fp);
-            fprintf(outxsym_fp,".len %%%d %ld\n",
+            fprintf(outxsym_fp,".len %%%d %d\n",
                     seg_ptr->seg_ident,seg_ptr->seg_len);
             if (seg_ptr->flg_based)
             {
-                fprintf(outxsym_fp,".abs %%%d %ld\n",
+                fprintf(outxsym_fp,".abs %%%d %d\n",
                         seg_ptr->seg_ident,seg_ptr->seg_base);
             }              /* --based */
             return;            /* done */
@@ -1078,7 +1078,7 @@ void outseg_def(SEG_struct *seg_ptr)
             while ( (*s++ = *name++) );    /* copy in the segment name string */
 #ifndef VMS
             rsize = s-kluge;
-            fwrite(&rsize,sizeof(short),1,outxsym_fp);
+            fwrite(&rsize,sizeof(int16_t),1,outxsym_fp);
             evenodd = rsize&1;
 #else
             evenodd = 0;
@@ -1089,7 +1089,7 @@ void outseg_def(SEG_struct *seg_ptr)
             ((VLDA_slen *)vlda_seg)->vslen_len = seg_ptr->seg_len; /* copy the length */
 #ifndef VMS
             rsize = sizeof(VLDA_slen);
-            fwrite(&rsize,sizeof(short),1,outxsym_fp);
+            fwrite(&rsize,sizeof(int16_t),1,outxsym_fp);
             evenodd = rsize&1;
 #endif
             fwrite(sline,sizeof(VLDA_slen)+evenodd,1,outxsym_fp); /* write it */
@@ -1123,12 +1123,12 @@ int flushobj( void )
 #ifndef VMS
                 char *kluge = oline;
                 rsize = maxop-kluge;
-                fwrite(&rsize,sizeof(short),1,outxabs_fp);
+                fwrite(&rsize,sizeof(int16_t),1,outxabs_fp);
                 evenodd = rsize&1;
 #else
                 evenodd = 0;
 #endif
-                if (outx_debug > 2) printf("fwriting %d bytes to object file\n",maxop-oline);
+                if (outx_debug > 2) printf("fwriting " FMT_SZ " bytes to object file\n",maxop-oline);
                 fwrite(oline,(int)(maxop-oline)+evenodd,1,outxabs_fp);
                 break;
             }
@@ -1161,7 +1161,7 @@ int mode;
 #ifndef VMS
                 char *kluge = sline;
                 rsize = symp-kluge;
-                fwrite(&rsize,sizeof(short),1,outxsym_fp);
+                fwrite(&rsize,sizeof(int16_t),1,outxsym_fp);
                 evenodd = rsize&1;
 #else
                 evenodd = 0;
@@ -1185,14 +1185,14 @@ int mode;
 *	output.
 */
 
-void termobj(long traddr)
+void termobj(uint32_t traddr)
 {
     if ( op ) flushobj();
     if (output_mode == OUTPUT_HEX)
     {
         strcpy(oline,"%ll8kk");
         op = oline + 6;
-        op += formvar((unsigned long)traddr,op);
+        op += formvar((uint32_t)traddr,op);
         objcs = varcs + 8;
         if ( ( oline + outx_width - op ) < 2 )
         {
@@ -1242,8 +1242,8 @@ void outid(FILE *fp,int mode)
             default:
                 err_msgs[0] = 0;
             }
-            fprintf(fp,".id \"translator\" \"%s %s%s\"\n",
-                    macxx_name, macxx_version, err_msgs);
+            fprintf(fp,".id \"translator\" \"%s %s (%d bit)%s\"\n",
+                    macxx_name, macxx_version, sizeof(void *) > 4 ? 64:32, err_msgs);
             fprintf(fp,".id \"mod\" \"%s\"\n",
                     output_files[OUT_FN_OBJ].fn_name_only);
             vid->md_len = 30;
@@ -1273,7 +1273,7 @@ void outid(FILE *fp,int mode)
             vldaid->vid_maxtoken = max_token;
 #endif
             s = oline + sizeof(VLDA_id);
-            sprintf(s,"\"%s %s\"",macxx_name,macxx_version);
+            sprintf(s,"\"%s %s (%d bit)\"",macxx_name,macxx_version,sizeof(void *) > 4 ? 64:32);
             while (*s++);
             vldaid->vid_target = s - kluge;
             strcpy(s,macxx_target);
@@ -1283,7 +1283,7 @@ void outid(FILE *fp,int mode)
             while (*s++);
 #ifndef VMS
             rsize = s-kluge;
-            fwrite(&rsize,sizeof(short),1,fp);
+            fwrite(&rsize,sizeof(int16_t),1,fp);
             evenodd = rsize&1;
 #else
             evenodd = 0;
@@ -1320,7 +1320,7 @@ static int tstexpcommon(char *asc, int alen, EXP_stk *eps, char *olstr, int vlda
             *s++ = 0;
 #ifndef VMS
             rsize = s-(char *)vt;
-            fwrite(&rsize,sizeof(short),1,outxabs_fp);
+            fwrite(&rsize,sizeof(int16_t),1,outxabs_fp);
             evenodd = rsize&1;
 #else
             evenodd = 0;
@@ -1381,7 +1381,7 @@ int out_dbgfname(FILE *fp, FN_struct *odfp)
         s += strlen(s);
         rsize = s-(char *)vp+1;
 #ifndef VMS
-        fwrite(&rsize,sizeof(short),1,fp);
+        fwrite(&rsize,sizeof(int16_t),1,fp);
         evenodd = rsize&1;
 #else
         evenodd = 0;

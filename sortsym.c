@@ -259,7 +259,7 @@ int sort_symbols(void)
                                 {
 									if (seg_num > 0)
 									{
-										sprintf(d,"%-13.13s%c%06lo %03o  \n",
+										sprintf(d,"%-13.13s%c%06o %03o  \n",
 												st->ss_string,
 												symChr,
 												st->ss_value&0xFFFF,
@@ -267,7 +267,7 @@ int sort_symbols(void)
 									}
 									else
 									{
-										sprintf(d,"%-13.13s%c%06lo%c     \n",
+										sprintf(d,"%-13.13s%c%06o%c     \n",
 												st->ss_string,
 												symChr,
 												st->ss_value&0xFFFF,
@@ -278,12 +278,12 @@ int sort_symbols(void)
                                 {
 									if (seg_num > 0)
 									{
-										sprintf(d,"%-13.13s%c%08lX %02X \n",
+										sprintf(d,"%-13.13s%c%08X %02X \n",
 												st->ss_string,symChr,st->ss_value,seg_num);
 									}
 									else
 									{
-										sprintf(d,"%-13.13s%c%08lX%c   \n",
+										sprintf(d,"%-13.13s%c%08X%c   \n",
 												st->ss_string,symChr,st->ss_value,
 												st->flg_register ? '%' : ' ');
 									}
@@ -325,7 +325,7 @@ int sort_symbols(void)
 			for (;seg_num<seg_list_index;++seg_num)
 			{
 				seg_ptr = *spp++;
-				sprintf(emsg," %02o %08lo %08lo   %03o    %03o   %s  %c   %s\n",
+				sprintf(emsg," %02o %08o %08o   %03o    %03o   %s  %c   %s\n",
 						seg_num,seg_ptr->seg_len,seg_ptr->seg_maxlen,
 						seg_ptr->seg_salign,seg_ptr->seg_dalign,
 						seg_ptr->flg_ovr?"OVR":"CON",
@@ -343,7 +343,7 @@ int sort_symbols(void)
 			for (;seg_num<seg_list_index;++seg_num)
 			{
 				seg_ptr = *spp++;
-				sprintf(emsg," %02X %08lX %08lX  %04X   %04X  %s   %c  %s\n",
+				sprintf(emsg," %02X %08X %08X  %04X   %04X  %s   %c  %s\n",
 						seg_num,seg_ptr->seg_len,seg_ptr->seg_maxlen,
 						seg_ptr->seg_salign,seg_ptr->seg_dalign,
 						seg_ptr->flg_ovr?"OVR":"CON",

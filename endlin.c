@@ -31,14 +31,14 @@
 
 static char out_buf[72];    /* place to hold tmp data */
 SEG_struct *out_seg;    /* segment in which data is placed */
-long out_pc;            /* expected PC of data */
+int32_t out_pc;            /* expected PC of data */
 static char *out_indx = out_buf; /* pointer to next spot in out_buf */
 static int out_remaining;   /* # of bytes remaining in buffer */
 static short tmp_length;
 static TMP_struct rtmp;
 TMP_struct *tmp_next=NULL,*tmp_top=NULL,*tmp_pool=NULL,*tmp_ptr=NULL;
 static int tmp_pool_size;
-long tmp_pool_used;
+int32_t tmp_pool_used;
 EXPR_struct tmp_org;
 EXP_stk tmp_org_exp;
 
@@ -110,11 +110,13 @@ static char *sqz_it( char *src, int typ, int cnt, int siz)
     {
         char *b8;
         short *b16;
-        long *b32;
+        int32_t *b32;
+		EXP_stk **stkp;
+		SEG_struct **segp;
         FN_struct **fnp;
-        long l;
+        int32_t l;
     } sqz;
-    register long value;
+    register int32_t value;
     register int itz;
 
 #ifdef DEBUG
@@ -177,7 +179,7 @@ static char *sqz_it( char *src, int typ, int cnt, int siz)
             while (cnt--)
             {    /* do all the elements */
 #if defined(DEBUG)
-                fprintf(stderr,"\tsqzing item %s(0x%0X) at %08lX\n",sho_type(texp->expr_code),texp->expr_code,sqz.b8);
+                fprintf(stderr,"\tsqzing item %s(0x%0X) at %p\n",sho_type(texp->expr_code),texp->expr_code,sqz.b8);
 #endif
                 switch (texp->expr_code)
                 {
@@ -191,7 +193,7 @@ static char *sqz_it( char *src, int typ, int cnt, int siz)
                         break;
                     }
                 case EXPR_VALUE: {
-                        unsigned long val;
+                        uint32_t val;
                         if (texp->expr_value >= 0)
                         {
                             val = texp->expr_value;
@@ -200,18 +202,18 @@ static char *sqz_it( char *src, int typ, int cnt, int siz)
                         {
                             val = -texp->expr_value;
                         }
-                        if (val < 64l)
+                        if (val < 64)
                         {
                             *sqz.b8++ = (char)(texp->expr_value & TMP_NUM);
                             break;
                         }
-                        if (val < 128l)
+                        if (val < 128)
                         {
                             *sqz.b8++ = EXPR_VALUE|TMP_B8|TMP_NNUM;
                             *sqz.b8++ = (char)texp->expr_value;
                             break;
                         }
-                        if (val < 32768l)
+                        if (val < 32768)
                         {
                             *sqz.b8++ = EXPR_VALUE|TMP_B16|TMP_NNUM;
                             ADJ_ALIGN(sqz.b8)
@@ -232,7 +234,7 @@ static char *sqz_it( char *src, int typ, int cnt, int siz)
                 case EXPR_LINK: {
                         *sqz.b8++ = texp->expr_code|TMP_NNUM|TMP_B32;
                         ADJ_ALIGN(sqz.b8)
-                        *sqz.b32++ = (unsigned long)texp->expr_seg;
+                        *sqz.segp++ = texp->expr_seg;
                         break;
                     }
                 case EXPR_L:
@@ -279,14 +281,15 @@ static char *unsqz_it( char *src )
     {
         char *b8;
         short *b16;
-        long *b32;
+        int32_t *b32;
         unsigned char *u8;
-        unsigned short *u16;
-        unsigned long *u32;
+        uint16_t *u16;
+        uint32_t *u32;
         TMP_struct *tsp;
+		EXP_stk **expp;
         SS_struct **symp;
         FN_struct **fnp;
-        long l;
+        int32_t l;
     } sqz;
     int typ,i;
 
@@ -349,7 +352,7 @@ static char *unsqz_it( char *src )
             }
             tmp_pool = sqz.tsp;
 #ifdef DEBUG
-            fprintf(stderr,"\tUNSQUOZE %d byte string. type = %0X, from %08X to %08X\n",
+            fprintf(stderr,"\tUNSQUOZE %d byte string. type = %0X, from %p to %p\n",
                     rtmp.tf_length,rtmp.tf_type,src,sqz.b8+rtmp.tf_length);
 #endif
             sqz.b8 += rtmp.tf_length;
@@ -373,14 +376,14 @@ static char *unsqz_it( char *src )
             texp = EXP0.stack;     /* point to expression stack 0 */
             cnt = EXP0.ptr;
 #if defined(DEBUG)
-            fprintf(stderr,"\tunsqzing %d items into exprs stack from %08lX\n",cnt,sqz.b8);
+            fprintf(stderr,"\tunsqzing %d items into exprs stack from %p\n",cnt,sqz.b8);
 #endif
             for (;cnt;--cnt,++texp)
             {  /* do all the elements */
                 int relmod;
                 i = *sqz.b8++ & 0xFF;   /* pickup the type code */
 #if defined(DEBUG)
-                fprintf(stderr,"\t\tunsqzing item %d: %s(0x%0X) at %08lX\n",cnt,sho_type(i),i,sqz.b8);
+                fprintf(stderr,"\t\tunsqzing item %d: %s(0x%0X) at %p\n",cnt,sho_type(i),i,sqz.b8);
 #endif
                 if ((i & TMP_NNUM) == 0)
                 {
@@ -442,7 +445,7 @@ static char *unsqz_it( char *src )
                     }        /* -- case */
                 case EXPR_LINK: {
                         ADJ_ALIGN(sqz.b8)
-                        texp->expr_expr = (EXP_stk *)(*sqz.b32++);
+                        texp->expr_expr = *sqz.expp++;
                         texp->expr_value = 0;
                         continue;
                     }        /* -- case */
@@ -452,7 +455,7 @@ static char *unsqz_it( char *src )
         }             /* -- case TMP_EXPR */
     }                /* -- switch TMP_TYPE */
 #ifdef DEBUG
-    fprintf(stderr,"\tUNSQUOZE %d items into exprs_stack[0] from %08X to %08X\n",
+    fprintf(stderr,"\tUNSQUOZE %d items into exprs_stack[0] from %p to %p\n",
             exprs_stack[0].ptr,src,sqz.b8);
 #endif
     current_fnd->fn_line = rtmp.line_no;
@@ -482,10 +485,10 @@ void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz)
     {
         void *v;
         char *c;
-        long *l;
+        int32_t *l;
         TMP_struct *t;
         EXP_stk *txp;
-        long lng;
+        int32_t lng;
     } src,dst,tmp;       /* mem pointers */
     int itz;
     int class = 0;
@@ -571,7 +574,7 @@ void write_to_tmp(int typ, int itm_cnt, void *itm_ptr, int itm_siz)
         t = fwrite(&tmp_length,sizeof(tmp_length),1,tmp_fp);
         if (t != 1)
         {
-            sprintf(emsg,"%%%s-F-FATAL, Tried to fwrite %d bytes (1 elem) to tmp_file, wrote %d.\n\t",
+            sprintf(emsg,"%%%s-F-FATAL, Tried to fwrite " FMT_SZ " bytes (1 elem) to tmp_file, wrote " FMT_SZ ".\n\t",
                     macxx_name,sizeof(tmp_length),t*sizeof(tmp_length));
             perror(emsg);
             EXIT_FALSE;
@@ -607,7 +610,7 @@ int read_from_tmp( void )
         t = fread(&tmp_length,sizeof(tmp_length),1,tmp_fp);
         if (t != 1)
         {
-            sprintf(emsg,"%%%s-F-FATAL, Tried to fread %d bytes (1 elem) from tmp_file, actually read %d.\n\t",
+            sprintf(emsg,"%%%s-F-FATAL, Tried to fread " FMT_SZ " bytes (1 elem) from tmp_file, actually read " FMT_SZ ".\n\t",
                     macxx_name,sizeof(tmp_length),t*sizeof(tmp_length));
             perror(emsg);
             EXIT_FALSE;
@@ -628,13 +631,13 @@ int read_from_tmp( void )
         if (ts->tf_type == TMP_LINK)
         {
             int ferr;
-            ts = tmp_next = (TMP_struct *)ts->tf_length;
+            ts = tmp_next = ts->tf_link;
             ferr = MEM_free((char *)tmp_top);
 #if !defined(SUN)
             if (ferr)
             {    /* give back the memory */
-                sprintf(emsg,"Error (%08X) free'ing %d bytes at %08lX from tmp_pool",
-                        ferr, max_token*8, (long)tmp_top);
+                sprintf(emsg,"Error (%08X) free'ing %d bytes at %p from tmp_pool",
+                        ferr, max_token*8, (void *)tmp_top);
                 err_msg(MSG_WARN,emsg);
             }
 #endif
@@ -663,7 +666,7 @@ int read_from_tmp( void )
             case TMP_FILE: {
                     union
                     {
-                        unsigned long lng;
+                        uint32_t lng;
                         char *cp;
                         FN_struct **fnp;
                         TMP_struct *tp;
@@ -676,7 +679,7 @@ int read_from_tmp( void )
             case TMP_SCOPE: {
                     union
                     {
-                        unsigned short *scope;
+                        uint16_t *scope;
                         TMP_struct *tp;
                     } src;
                     src.tp = tmp_ptr+1;
@@ -697,7 +700,7 @@ int read_from_tmp( void )
                         EXP_stk *eps;
                         TMP_struct *tp;
                         unsigned char *cp;
-                        unsigned long lng;
+                        uint32_t lng;
                     } src;
                     int l;
                     src.tp = tmp_ptr+1;
@@ -757,10 +760,10 @@ void rewind_tmp()
     return;
 }
 
-static void ide_trunc_err( long mask, long tv)
+static void ide_trunc_err( int32_t mask, int32_t tv)
 {
 	int tsiz,sev=MSG_WARN;
-	long toofar=0;
+	int32_t toofar=0;
 	char lclTxt[256];
 	int lclTxtLen;
 	char *fm,*em="%s:%d: ";
@@ -769,14 +772,14 @@ static void ide_trunc_err( long mask, long tv)
 	{
 		if (mask > 255)
 		{
-			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt), "Truncation at {%s}+0%06lo. Wanted: 0%010lo, output: 0%06lo",
+			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt), "Truncation at {%s}+0%06o. Wanted: 0%010o, output: 0%06o",
 							 current_section->seg_string,current_offset,
 							 tv,
 							 tv&mask);
-		}
-		else
-		{
-			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0%06lo. Wanted: 0%010lo, output: 0%03lo",
+	}
+	else
+	{
+			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0%06o. Wanted: 0%010o, output: 0%03o",
 							current_section->seg_string,current_offset,
 							tv,
 							tv&mask);
@@ -786,7 +789,7 @@ static void ide_trunc_err( long mask, long tv)
 	{
 		if (mask > 255 && mask != 65534)
 		{
-			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0x%04lX. Wanted: 0x%08lX, output: 0x%04lX",
+			lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0x%04X. Wanted: 0x%08X, output: 0x%04X",
 							current_section->seg_string,current_offset,
 							tv,
 							tv&mask);
@@ -799,7 +802,7 @@ static void ide_trunc_err( long mask, long tv)
 				toofar = tv;
 				if (toofar == 0)
 				{
-					lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Branch offset of 0x%02lX is illegal at {%s}+0x%04lX",
+					lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Branch offset of 0x%02X is illegal at {%s}+0x%04X",
 									toofar,
 									current_section->seg_string,current_offset
 									);
@@ -816,7 +819,7 @@ static void ide_trunc_err( long mask, long tv)
 					{
 						toofar = -toofar-(range+1);
 					}
-					lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Branch offset 0x%02lX out of range at {%s}+0x%04lX",
+					lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Branch offset 0x%02X out of range at {%s}+0x%04X",
 										 toofar,
 										 current_section->seg_string,current_offset
 										 );
@@ -825,7 +828,7 @@ static void ide_trunc_err( long mask, long tv)
 			}
 			else
 			{
-				lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0x%04lX. Wanted: 0x%08lX, output: 0x%02lX",
+				lclTxtLen = snprintf(lclTxt,sizeof(lclTxt),"Truncation at {%s}+0x%04X. Wanted: 0x%08X, output: 0x%02X",
 									 current_section->seg_string,current_offset,
 									 tv,
 									 tv&mask
@@ -859,7 +862,7 @@ static void ide_trunc_err( long mask, long tv)
 /**********************************************************************
  * Display truncation error
  */
-void trunc_err( long mask, long tv)
+void trunc_err( int32_t mask, int32_t tv)
 /* 
  * At entry:
  *	mask - mask to compare against
@@ -867,9 +870,9 @@ void trunc_err( long mask, long tv)
  *	current_pc - current location counter
  */
 {
-    char *s,*terr;
+    char *fmt,*terr;
     int tsiz,sev;
-    long toofar=0;
+    int32_t toofar=0;
 
     if ( !pass )
 	{
@@ -884,18 +887,18 @@ void trunc_err( long mask, long tv)
     {
         if (mask > 255)
         {
-            s = "Truncation 0%06lo bytes offset from segment {%s}.\n\tDesired: 0%010lo, output a: 0%06lo";
+            fmt = "Truncation 0%06o bytes offset from segment {%s}.\n\tDesired: 0%010o, output a: 0%06o";
         }
         else
         {
-            s = "Truncation 0%06lo bytes offset from segment {%s}.\n\tDesired: 0%010lo, output a: 0%03lo";
+            fmt = "Truncation 0%06o bytes offset from segment {%s}.\n\tDesired: 0%010o, output a: 0%03o";
         }
     }
     else
     {
         if (mask > 255 && mask != 65534)
         {
-            s = "Truncation 0x%04lX bytes offset from segment {%s}.\n\tDesired: 0x%08lX, output a: 0x%04lX";
+            fmt = "Truncation 0x%04X bytes offset from segment {%s}.\n\tDesired: 0x%08X, output a: 0x%04X";
         }
         else
         {
@@ -905,7 +908,7 @@ void trunc_err( long mask, long tv)
                 toofar = tv;
                 if (toofar == 0)
                 {
-                    s = "Branch offset of 0x%02lX is illegal at 0x%04lX bytes from segment {%s}";
+                    fmt = "Branch offset of 0x%02X is illegal at 0x%04X bytes from segment {%s}";
                 }
                 else
                 {
@@ -918,24 +921,24 @@ void trunc_err( long mask, long tv)
                     {
                         toofar = -toofar-(range+1);
                     }
-                    s = "Branch offset 0x%02lX byte(s) out of range at 0x%04lX bytes from segment {%s}";
+                    fmt = "Branch offset 0x%02X byte(s) out of range at 0x%04X bytes from segment {%s}";
                 }
             }
             else
             {
-                s = "Truncation 0x%04lX bytes offset from segment {%s}\n\tDesired: 0x%08lX, written: 0x%02lX";
+                fmt = "Truncation 0x%04X bytes offset from segment {%s}\n\tDesired: 0x%08X, written: 0x%02X";
             }      
         }
     }
     if (pass > 1)
     {
         char *fm,*em="\n\tAt %s:%d";
-        fm = MEM_alloc(strlen(s)+strlen(em)+1);
-        strcpy(fm,s);
+        fm = MEM_alloc(strlen(fmt)+strlen(em)+1);
+        strcpy(fm,fmt);
         strcat(fm,em);
-        s = fm;
+        fmt = fm;
     }
-    tsiz = strlen(s)+strlen(current_section->seg_string)+40;
+    tsiz = strlen(fmt)+strlen(current_section->seg_string)+40;
     if (pass > 1)
     {
         tsiz += strlen(current_fnd->fn_name_only);
@@ -945,11 +948,11 @@ void trunc_err( long mask, long tv)
     {
         if (pass > 1)
         {
-			snprintf(terr, tsiz, s, toofar, current_offset, current_section->seg_string, current_fnd->fn_nam->relative_name, current_fnd->fn_line);
+			snprintf(terr, tsiz, fmt, toofar, current_offset, current_section->seg_string, current_fnd->fn_nam->relative_name, current_fnd->fn_line);
         }
         else
         {
-            snprintf(terr,tsiz,s,toofar,current_offset,current_section->seg_string);
+            snprintf(terr, tsiz, fmt, toofar, current_offset, current_section->seg_string);
         }
         sev = MSG_ERROR;      /* branch fail is ERROR */
     }
@@ -957,11 +960,11 @@ void trunc_err( long mask, long tv)
     {
         if (pass > 1)
         {
-			snprintf(terr, tsiz, s, current_offset, current_section->seg_string, tv, tv & mask, current_fnd->fn_nam->relative_name, current_fnd->fn_line);
+			snprintf(terr, tsiz, fmt, current_offset, current_section->seg_string, tv, tv & mask, current_fnd->fn_nam->relative_name, current_fnd->fn_line);
         }
         else 
         {
-            snprintf(terr,tsiz,s,current_offset,current_section->seg_string,tv,tv&mask);
+            snprintf(terr, tsiz, fmt, current_offset, current_section->seg_string, tv, tv&mask);
         }
         sev = MSG_WARN;       /* others are light weight errors */
     }
@@ -991,7 +994,7 @@ void move_pc( void )
 {
     FLUSH_OUTBUF;
 #if defined(PC_DEBUG)
-    fprintf(stderr,"ENDLIN: Moving PC from \"%s\"+%08lX to \"%s\"+%08lX\n",
+    fprintf(stderr,"ENDLIN: Moving PC from \"%s\"+%08X to \"%s\"+%08X\n",
             out_seg?out_seg->seg_string:"",out_pc,current_section->seg_string,current_pc);
 #endif
     tmp_org.expr_value = current_pc;
@@ -1115,7 +1118,7 @@ int p1o_any( EXP_stk *eps )
 
 int p1o_byte( EXP_stk *eps )
 {
-    register long tv;
+    register int32_t tv;
     EXPR_struct *exp_ptr;
     int j,pflg;
 
@@ -1130,7 +1133,7 @@ int p1o_byte( EXP_stk *eps )
     {
         tv = exp_ptr->expr_value;
         if ((edmask&ED_TRUNC) && ((tv > 255) || (tv < -128)))
-			trunc_err(255L,tv);
+			trunc_err(255,tv);
         if (out_remaining <= 0) FLUSH_OUTBUF;
         --out_remaining;
         *out_indx++ = (unsigned char)tv;
@@ -1162,7 +1165,7 @@ int p1o_byte( EXP_stk *eps )
     }
     out_pc = current_offset; /* what to expect next time */
 #if defined(PC_DEBUG)
-    fprintf(stderr,"ENDLIN: Just output %d bytes. Current offset = %08lX\n",
+    fprintf(stderr,"ENDLIN: Just output %d bytes. Current offset = %08X\n",
             eps->tag_len,current_offset);
 #endif
 #ifndef MAC_PP
@@ -1174,7 +1177,7 @@ int p1o_byte( EXP_stk *eps )
 
 int p1o_word( EXP_stk *eps )
 {
-    register long tv,lv;
+    register int32_t tv,lv;
     EXPR_struct *exp_ptr;
     int j,tag,swapem,pflg;
 
@@ -1191,7 +1194,7 @@ int p1o_word( EXP_stk *eps )
     {
         tv = exp_ptr->expr_value;
         if ( (edmask&ED_TRUNC) && ((tv > 65535) || (tv < -65536)))
-			trunc_err(65535L,tv);
+			trunc_err(65535,tv);
         if (swapem)
         {
             tv = ((tv&255)<<8) | ((tv>>8)&255);
@@ -1234,7 +1237,7 @@ int p1o_word( EXP_stk *eps )
     }
     out_pc = current_offset;
 #if defined(PC_DEBUG)
-    fprintf(stderr,"ENDLIN: Just output %d words. Current offset = %08lX\n",
+    fprintf(stderr,"ENDLIN: Just output %d words. Current offset = %08X\n",
             eps->tag_len,current_offset);
 #endif
 #ifndef MAC_PP
@@ -1246,7 +1249,7 @@ int p1o_word( EXP_stk *eps )
 
 int p1o_long( EXP_stk *eps )
 {
-    register long tv,lv;
+    register int32_t tv,lv;
     EXPR_struct *exp_ptr;
     int j,tag,pflg;
 
@@ -1347,7 +1350,7 @@ int p1o_long( EXP_stk *eps )
     }
     out_pc = current_offset;
 #if defined(PC_DEBUG)
-    fprintf(stderr,"ENDLIN: Just output %d longs. Current offset = %08lX\n",
+    fprintf(stderr,"ENDLIN: Just output %d longs. Current offset = %08X\n",
             eps->tag_len,current_offset);
 #endif
 #ifndef MAC_PP
@@ -1359,11 +1362,11 @@ int p1o_long( EXP_stk *eps )
 
 int p1o_var( EXP_stk *eps )
 {
-    register long tv,lv;
+    register int32_t tv,lv;
     EXPR_struct *exp_ptr;
     int j,tag,pflg,bytes;
-    unsigned long bits;
-    long uBits;
+    uint32_t bits;
+    int32_t uBits;
     
     if (out_seg != current_section || out_pc != current_offset)
     {
@@ -1390,7 +1393,7 @@ int p1o_var( EXP_stk *eps )
     if ( j == 1 && exp_ptr->expr_code == EXPR_VALUE)
     {
 #if 0
-        printf("Checking for truncation. tv=0x%08lX, bits=0x%08lX, bits/2=0x%08lX, -(bits/2+1)=0x%08lX, tv >= %d, tv <= %d\n",
+        printf("Checking for truncation. tv=0x%08X, bits=0x%08X, bits/2=0x%08X, -(bits/2+1)=0x%08X, tv >= %d, tv <= %d\n",
                tv, uBits, uBits/2, -(uBits/2+1),
                tv > uBits/2,
                tv < -(uBits/2+1));
@@ -1447,7 +1450,7 @@ int p1o_var( EXP_stk *eps )
     current_offset += macxx_mau_byte*bytes;  /* update current location */
     out_pc = current_offset;
 #if defined(PC_DEBUG)
-    fprintf(stderr,"ENDLIN: Just output %d bits. Current offset = %08lX\n",
+    fprintf(stderr,"ENDLIN: Just output %d bits. Current offset = %08X\n",
             eps->tag_len,current_offset);
 #endif
 #ifndef MAC_PP

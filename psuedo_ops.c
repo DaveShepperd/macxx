@@ -94,8 +94,8 @@ int op_title(void)
 		}
 		if ( !(c = lis_title[0]) )
 			c = '\f';
-		snprintf(lis_title, sizeof(lis_title), "%c%-40s %s %s   %s",
-				 c, " ", macxx_name, macxx_version, ascii_date);
+		snprintf(lis_title, sizeof(lis_title), "%c%-40s %s %s (%d bit)   %s",
+				 c, " ", macxx_name, macxx_version, sizeof(void *) > 4 ? 64:32, ascii_date);
 		if ( len > (int)sizeof(lis_title) - 3 )
 			len = sizeof(lis_title) - 3;
 		memcpy(lis_title + 1, inp_ptr, len);
@@ -130,7 +130,7 @@ int op_sbttl(void)
 	{  /* By TRG 20240503 to support TOC */
 		if (pass !=0)
 		{
-			fprintf(toc_fp,"%5ld-%4ld%c",list_toc_page_no,list_toc_line_no,(include_level > 0) ? '+' : ' ');
+			fprintf(toc_fp,"%5d-%4d%c",list_toc_page_no,list_toc_line_no,(include_level > 0) ? '+' : ' ');
 			fprintf(toc_fp, "%c%s",(include_level > 0) ? '\t' : ' ',inp_ptr);
 		}
 	}
@@ -141,7 +141,7 @@ int op_sbttl(void)
 int op_radix(void)
 {
 	int i, cr = current_radix;
-	long nrad;
+	int32_t nrad;
 	current_radix = 10;      /* set radix to 10 */
 	get_token();         /* pickup the next token */
 	i = exprs(1, &EXP0);      /* evaluate the expression */
@@ -334,7 +334,7 @@ static int handle_ascii_string(int options)
 	int cc;
 	while ( 1 )
 	{
-		unsigned char whatToPass;
+		uint8_t whatToPass;
 		cc = *inp_ptr;   /* pickup user data */
 		whatToPass = cc;	/* assume we're to just pass the char as is */
 		if ( (cttbl[cc] & CT_EOL) != 0 )
@@ -380,7 +380,7 @@ static int handle_ascii_string(int options)
 					break;
 				case 'x':	/* hex number */
 					{
-						unsigned long val=0;
+						uint32_t val=0;
 						char *iptr = inp_ptr+2;
 						while ( 1 )
 						{
@@ -521,7 +521,7 @@ static int handle_ascii_exprs(int options, int open_c, int close_c)
 			++nst;
 		}
 	}
-	s1 = s2 = 0;	/* keep compiler quiet */
+	s1 = s2 = 0;	/* Keep compiler quiet */
 	if ( !eol )
 	{
 		/* Stopped on a non-comma */
@@ -764,7 +764,7 @@ int op_dcbl(void)
 static int op_byte_with_mask(int inpMask)
 {
 	char *otp = 0;
-	long epv;
+	int32_t epv;
 	list_stats.pc = current_offset;
 	list_stats.pc_flag = 1;
 	EXP0.tag = 'b';
@@ -812,7 +812,7 @@ static int op_byte_with_mask(int inpMask)
 			{
 				if ( epv > 255 || epv < -256 )
 				{
-					snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08lX, stored: %02lX",
+					snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08X, stored: %02X",
 							 epv, epv & 255);
 					show_bad_token(otp, emsg, MSG_WARN);
 				}
@@ -851,7 +851,7 @@ int op_byte(void)
 static int op_word_with_mask(int inpMask)
 {
 	char *otp;
-	long epv;
+	int32_t epv;
 	op_chkalgn(1, 1);     /* check pc for alignment */
 	list_stats.pc = current_offset;
 	list_stats.pc_flag = 1;
@@ -897,9 +897,9 @@ static int op_word_with_mask(int inpMask)
 			{
 				if ( inpMask )
 				{
-					if ( epv > 65535l || epv < -65536l )
+					if ( epv > 65535 || epv < -65536 )
 					{
-						snprintf(emsg, ERRMSG_SIZE, "Word truncation error. Desired: %08lX, stored: %04lX",
+						snprintf(emsg, ERRMSG_SIZE, "Word truncation error. Desired: %08X, stored: %04X",
 								 epv, epv & 65535);
 						show_bad_token(otp, emsg, MSG_WARN);
 					}
@@ -992,10 +992,13 @@ int op_long(void)
 
 int condit_level;   /* current condition level */
 int condit_nest;    /* current condition nest level */
-long condit_polarity;   /* 32 conditional polarities */
-long condit_word;   /* 32 condition flags */
+int32_t condit_polarity;   /* 32 conditional polarities */
+int32_t condit_word;   /* 32 condition flags */
 
 #include "opcnds.h"
+
+#define IFCOND_MASK ((uint32_t)_INT32_MAX_)
+#define IFCOND_MSB _BIT_31_
 
 typedef enum
 {
@@ -1108,23 +1111,23 @@ static int if_dfndf_exprs(DFNDF_sense sense, int flag)
 	return retval;
 }
 
-static unsigned long if_dfndf(DFNDF_sense sense)
+static uint32_t if_dfndf(DFNDF_sense sense)
 {
 	int val;
 	val = if_dfndf_exprs(sense, (edmask&ED_SIMPLE)?0:1);
-	return (val ? 0l : 0x80000000L);
+	return (val ? 0 : IFCOND_MSB );
 }
 
-static unsigned long op_ifcondit(char *condition)
+static uint32_t op_ifcondit(char *condition)
 {
 	int i, l;
 	CCN_nums tcon;
-	unsigned long j;
-	long ans = 0;
+	uint32_t j;
+	int32_t ans = 0;
 	DFNDF_sense dfcond;
 	struct ccn_struct *ccs;
 
-	j = 0x80000000L;     /* assume false */
+	j = IFCOND_MSB; /* 0x80000000; */     /* assume false */
 	l = strlen(condition);
 	tcon = CCN_MAX;      /* assume nfg */
 	for ( ccs = ccns; ccs->name != 0; ++ccs )
@@ -1170,7 +1173,7 @@ static unsigned long op_ifcondit(char *condition)
 			j = (EXP0.ptr == 1 && EXP0SP->expr_code == EXPR_VALUE);
 			if ( tcon == CCN_REL )
 				j = !j;
-			return j ? 0 : 0x80000000L;
+			return j ? 0 : IFCOND_MSB; /* 0x80000000; */
 		}
 		exprs(0, &EXP0);       /* get an ABS expression */
 		ans = EXP0SP->expr_value;
@@ -1211,7 +1214,7 @@ static unsigned long op_ifcondit(char *condition)
 				}
 			}
 			if ( tcon == CCN_DIF )
-				j ^= 0x80000000L;
+				j ^= IFCOND_MSB; /* 0x80000000; */
 			break;
 		}
 	case CCN_B:
@@ -1265,7 +1268,7 @@ static unsigned long op_ifcondit(char *condition)
 			if ( l1 == 0 )
 				j = 0;
 			if ( tcon == CCN_NB )
-				j ^= 0x80000000L;
+				j ^= IFCOND_MSB; /* 0x80000000; */
 			if ( *inp_ptr == macro_arg_close )
 				++inp_ptr;    /* eat the character */
 			break;
@@ -1307,8 +1310,8 @@ static unsigned long op_ifcondit(char *condition)
 
 int op_if(void)
 {
-	unsigned long retv = 0;
-	unsigned long old_edmask;
+	uint32_t retv = 0;
+	uint32_t old_edmask;
 	int tt;
 
 	if ( condit_word < 0 )
@@ -1331,7 +1334,7 @@ int op_if(void)
 	{
 	    bad_token(tkn_ptr, "Invalid conditional argument");
 	    f1_eatit();		/* Ignore the rest of the line */
-	    retv = 0x80000000L;	/* make the condition not true no matter */
+	    retv = IFCOND_MSB; /* 0x80000000; */	/* make the condition not true no matter */
 	}
 	else 
 	{
@@ -1341,14 +1344,14 @@ int op_if(void)
 	}
 	++condit_nest;       /* bump the nest level */
 	++condit_level;      /* and the level */
-	condit_word = ((unsigned long)condit_word >> 1) | retv;
-	condit_polarity = ((unsigned long)condit_polarity >> 1) | retv;
+	condit_word = ((uint32_t)condit_word >> 1) | retv;
+	condit_polarity = ((uint32_t)condit_polarity >> 1) | retv;
 	return 0;
 }
 
 int op_ifall(Opcode *opc)
 {
-	unsigned long retv = 0;
+	uint32_t retv = 0;
 
 	if ( condit_word < 0 )
 	{   /* if currently an unsatisfied conditional */
@@ -1365,8 +1368,8 @@ int op_ifall(Opcode *opc)
 	retv = op_ifcondit(opc->op_name + 3);
 	++condit_nest;       /* bump the nest level */
 	++condit_level;      /* and the level */
-	condit_word = ((unsigned long)condit_word >> 1) | retv;
-	condit_polarity = ((unsigned long)condit_polarity >> 1) | retv;
+	condit_word = ((uint32_t)condit_word >> 1) | retv;
+	condit_polarity = ((uint32_t)condit_polarity >> 1) | retv;
 	return 0;
 }
 
@@ -1399,18 +1402,18 @@ int op_endc(void)
 
 int op_iif(void)
 {
-	unsigned long retv = 0;
+	uint32_t retv = 0;
 	char *tp;
 
 	tp = tkn_ptr;        /* remember where the .IIF starts */
 	if ( condit_word < 0 )
 	{   /* if currently an unsatisfied conditional */
-		retv = 0x80000000L;
+		retv = IFCOND_MSB; /* 0x80000000; */
 	}
 	else
 	{
 		int tt;
-		unsigned long old_edmask;
+		uint32_t old_edmask;
 		old_edmask = edmask;
 		edmask &= ~(ED_LC | ED_DOL);
 		tt = get_token();
@@ -1418,7 +1421,7 @@ int op_iif(void)
 		if ( tt != TOKEN_strng )
 		{
 			bad_token(tkn_ptr, "Invalid conditional argument");
-			retv = 0x80000000L;
+			retv = IFCOND_MSB; /* 0x80000000; */
 		}
 	}
 	if ( *inp_ptr == ',' )
@@ -1452,7 +1455,7 @@ int op_iif(void)
 
 int op_iff(void)
 {
-	unsigned long t;
+	uint32_t t;
 	if ( condit_nest == 0 )
 	{
 		bad_token(tkn_ptr, "Not inside a conditional block");
@@ -1462,15 +1465,15 @@ int op_iff(void)
 	{
 		return 0;
 	}
-	t = (condit_polarity & 0x80000000) ^ 0x80000000L;
-	condit_word &= 0x7FFFFFFFL;
+	t = (condit_polarity & IFCOND_MSB /* 0x80000000 */) ^ IFCOND_MSB; /* 0x80000000; */
+	condit_word &= IFCOND_MASK; /* 0x7FFFFFFFL; */
 	condit_word |= t;
 	return 0;
 }
 
 int op_ift(void)
 {
-	unsigned long t;
+	uint32_t t;
 	if ( condit_nest == 0 )
 	{
 		bad_token(tkn_ptr, "Not inside a conditional block");
@@ -1480,8 +1483,8 @@ int op_ift(void)
 	{
 		return 0;
 	}
-	t = condit_polarity & 0x80000000L;
-	condit_word &= 0x7FFFFFFFL;
+	t = condit_polarity & IFCOND_MSB; /* 0x80000000; */
+	condit_word &= IFCOND_MASK; /* 0x7FFFFFFF; */
 	condit_word |= t;
 	return 0;
 }
@@ -1497,7 +1500,7 @@ int op_iftf(void)
 	{
 		return 0;
 	}
-	condit_word &= 0x7FFFFFFFL;
+	condit_word &= IFCOND_MASK; /* 0x7FFFFFFFL; */
 	return 0;
 }
 
@@ -1545,7 +1548,7 @@ static int op_edcommon(int onoff)
 	while ( 1 )
 	{
 		int tt, flg;
-		unsigned long old_edmask;
+		uint32_t old_edmask;
 		old_edmask = edmask;
 		edmask &= ~(ED_LC | ED_DOL);
 		tt = get_token();
@@ -1815,7 +1818,7 @@ int op_length(void)
 	while ( 1 )
 	{
 		int slen;
-		unsigned long old_edmask;
+		uint32_t old_edmask;
 		old_edmask = edmask;
 		edmask &= ~(ED_LC | ED_DOL);
 		tt = get_token();
@@ -1988,7 +1991,7 @@ int op_include(void)
 	{  /* By TRG 20240503 to support TOC */
 		if (pass !=0)
 		{
-			fprintf(toc_fp,"%5ld-%4ld \t",list_toc_page_no,list_toc_line_no);	/* write page and line number */
+			fprintf(toc_fp,"%5d-%4d \t",list_toc_page_no,list_toc_line_no);	/* write page and line number */
 			fprintf(toc_fp, "%s",current_fnd->fn_name_only);			/* write include filename */
 			fprintf(toc_fp, "\t%s",inp_ptr);					/* write rest of .include line */
 		}
@@ -2037,7 +2040,7 @@ int op_include(void)
 static struct
 {
 	char *name;
-	unsigned short flags;
+	uint16_t flags;
 } psect_table[] = {
 	{ "ABS", PS_ABS },
 	{ "REL", PS_REL },
@@ -2070,7 +2073,7 @@ void change_section(SEG_struct *new_seg)
 }
 
 static int op_segcomm(int type, int new_one, SEG_struct *new_seg,
-					  int flags, int salign, int dalign, unsigned long maxlen)
+					  int flags, int salign, int dalign, uint32_t maxlen)
 {
 #if 0
 	if ( squeak )
@@ -2299,7 +2302,7 @@ static int get_userssegname(char *alt_name)
 	else
 	{
 		char *np;
-		unsigned long old_edmask;
+		uint32_t old_edmask;
 		old_edmask = edmask;
 		edmask &= ~ED_DOL;
 		get_token();          /* pickup the next token */
@@ -2345,7 +2348,7 @@ int op_psect(void)
 {
 	int new_one, flags = 0;
 	int salign = macxx_salign, dalign = macxx_dalign;
-	unsigned long maxlen = 0;
+	uint32_t maxlen = 0;
 	SEG_struct *new_seg;
 
 	if ( (new_seg = get_segname(".REL.", &new_one)) == 0 )
@@ -2361,7 +2364,7 @@ int op_psect(void)
 		while ( 1 )
 		{
 			int tt;
-			unsigned long old_edmask;
+			uint32_t old_edmask;
 			old_edmask = edmask;
 			edmask &= ~(ED_LC | ED_DOL);
 			comma_expected = 1;
@@ -2430,7 +2433,7 @@ static int make_absseg(int new_one, SEG_struct *new_seg)
 	int flags = 0;
 	if ( new_one != 0 )
 		flags = PS_OVR | PS_RW | PS_ABS;
-	op_segcomm(0, new_one, new_seg, flags, 0, 0, 0l);
+	op_segcomm(0, new_one, new_seg, flags, 0, 0, 0);
 	return 1;
 }
 
@@ -2488,7 +2491,7 @@ int op_csect(void)
 		bad_token((char *)0, "Section previously declared as a .BSECT or base paged .PSECT.");
 		return 1;
 	}
-	op_segcomm(0, new_one, new_seg, flags, 0, 0, 0l);
+	op_segcomm(0, new_one, new_seg, flags, 0, 0, 0);
 	return 1;
 }
 
@@ -2515,7 +2518,7 @@ int op_bsect(void)
 		bad_token((char *)0, "Section previously declared as a .CSECT or non-base paged .PSECT.");
 		return 1;
 	}
-	op_segcomm(0, new_one, new_seg, flags, 0, 0, 256l);
+	op_segcomm(0, new_one, new_seg, flags, 0, 0, 256);
 	return 1;
 }
 
@@ -2592,7 +2595,7 @@ int dump_subsects(void)
 int op_vctrs(void)
 {
 	SEG_struct *save_seg;
-	unsigned long save_pc, save_aspc;
+	uint32_t save_pc, save_aspc;
 	int tt;
 	save_pc = current_offset;
 	save_seg = current_section;
@@ -2618,7 +2621,7 @@ int op_vctrs(void)
 int op_cksum(void)
 {
 	SEG_struct *save_seg;
-	unsigned long save_pc, save_aspc;
+	uint32_t save_pc, save_aspc;
 	int tt;
 	save_pc = current_offset;
 	save_seg = current_section;
@@ -2706,7 +2709,7 @@ typedef struct
 {
 #ifndef MAC_PP
 	SEG_struct *segptr;
-	unsigned long pc;
+	uint32_t pc;
 	int lsb;
 #endif
 	int outfile;
@@ -3387,7 +3390,7 @@ static int handle_rad50_exprs(int open_c, int close_c)
 	if ( EXP1.stack[0].expr_value < 0 || EXP1.stack[0].expr_value >= 40)
 	{
 		char msg[128];
-		snprintf(msg,sizeof(msg),"Expression of 0x%lX must resolve to 0 <= x < 0x28",
+		snprintf(msg,sizeof(msg),"Expression of 0x%X must resolve to 0 <= x < 0x28",
 				 EXP1.stack[0].expr_value );
 		bad_token(ip,msg);
 		f1_eatit();
@@ -3553,7 +3556,7 @@ int op_print(void)
 {
 	LIST_stat_t *lstat;
 	char rad_num[18];
-	long sav_data = 0;
+	int32_t sav_data = 0;
 	int tt;
 
 /*
@@ -3647,7 +3650,7 @@ int op_print(void)
 			ltoaRadix = arg[ListArg_Radix];
 			break;
 		}
-		longToAscii(sav_data, rad_num, sizeof(rad_num), arg[ListArg_Len], arg[ListArg_LZ], ltoaRadix);
+		longToAscii(sav_data, 0, rad_num, sizeof(rad_num), arg[ListArg_Len], arg[ListArg_LZ], ltoaRadix);
 		if ( (arg[ListArg_Dst] != 0) && (arg[ListArg_Dst] < 256) )   /* valid line location */
 		{
 			int idx;

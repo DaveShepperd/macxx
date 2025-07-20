@@ -39,7 +39,7 @@ ALLOPP1 = gc_tblpp.o gc_pp.o exprs_pp.o macros_pp.o
 ALLOPP2 = psdo_ops_pp.o pstpp.o opcpp.o char_table.o
 ALLOPP3 = help_pp.o $(CORE0)
 
-ALLH = structs.h header.h ct.h token_defs.h token.h
+ALLH = token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h gc_struct.h
 
 HERE = ./
 EXE =
@@ -131,13 +131,11 @@ mac11$(EXE) : $(MAKEFILE) $(ALLO11)
 dmpod$(EXE) : dmpod.o
 	$(link_it)
 
-gc_pp.o : gc.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h gc_struct.h 
+gc_pp.o : gc.c $(ALLH)
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-gc_tblpp.o : gc_table.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-  ct.h qual_tbl.h gc_struct.h 
+gc_tblpp.o : gc_table.c $(ALLH) 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
@@ -145,68 +143,55 @@ help_pp.o : help.c add_defs.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-lstctlpp.o : listctrl.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h listctrl.h lstcnsts.h exproper.h
+lstctlpp.o : listctrl.c $(ALLH) listctrl.h lstcnsts.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-macxx_pp.o : macxx.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-  ct.h qual_tbl.h version.h strsub.h
+macxx_pp.o : macxx.c $(ALLH) version.h strsub.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-macros_pp.o : macros.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h listctrl.h lstcnsts.h 
+macros_pp.o : macros.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-memmgt.o : memmgt.c 
+memmgt.o : memmgt.c memmgt.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMACXX -o $@ $<
 
-opcode_pp.o : opcode.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h 
+opcode_pp.o : opcode.c $(ALLH) pst_tokens.h pst_structs.h 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-pass1_pp.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
+pass1_pp.o : pass1.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-psdo_ops_pp.o : psuedo_ops.c add_defs.h token.h token_defs.h structs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h \
-  opcnds.h 
+psdo_ops_pp.o : psuedo_ops.c $(ALLH) pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h 
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
-exprs65.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h operstuff.h
+exprs65.o : exprs.c $(ALLH) exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_65 -o $@ $<
 
-exprs11.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h operstuff.h
+exprs11.o : exprs.c $(ALLH) exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_11 -o $@ $<
 
-exprs68.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h operstuff.h
+exprs68.o : exprs.c $(ALLH) exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_68 -o $@ $<
 
-exprs68k.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h operstuff.h
+exprs68k.o : exprs.c $(ALLH) exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_68K -o $@ $<
 
-exprs69.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h operstuff.h
+exprs69.o : exprs.c $(ALLH) exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_69 -o $@ $<
 
-exprs_pp.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  exproper.h listctrl.h lstcnsts.h operstuff.h
+exprs_pp.o : exprs.c $(ALLH) exproper.h listctrl.h lstcnsts.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_PP -o $@ $<
 
@@ -221,17 +206,26 @@ operstuff.h : operstuff.dat mk_operstuff$(EXE) Makefile.common
 	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
 	$(HERE)mk_operstuff > $@
 
+mk_qualtbl.o : mk_qualtbl.c Makefile.common
+	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
+	$C -o $@ $<
+
+mk_qualtbl$(EXE) : mk_qualtbl.o Makefile.common
+	$(link_it)
+
+qualtbl.h : qualtbl.dat mk_qualtbl$(EXE) Makefile.common
+	$(ECHO) $(DELIM)    Making $@ ...$(DELIM)
+	$(HERE)mk_qualtbl > $@
+
 lib_exprs.o : lib_exprs.c lib_exprs.h operstuff.h
 	$(ECHO) $(DELIM)    Compiling $< ...$(DELIM)
-	$C -D_FMT_LD_='"%d"' -DNO_FLOATING_POINT -o $@ $<
+	$C -DNO_FLOATING_POINT -o $@ $<
 
-pass168k.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
+pass168k.o : pass1.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_68K -o $@ $<
 
-pass18080.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
-  pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
+pass18080.o : pass1.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_8080 -o $@ $<
 
@@ -239,7 +233,9 @@ pass18080.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.
 
 clean :
 	$(ECHO) $(DELIM)    Cleaning ...$(DELIM)
-	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE) mk_operstuff$(EXE) operstuff.h *.o *.b *.d *.E 
+	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE)
+	$(RM) *.o *.b *.d *.E
+	$(RM) mk_operstuff$(EXE) operstuff.h mk_qualtbl$(EXE) qualtbl.h
 
 show :
 	$(ECHO) $(DELIM) ALLO65   = $(ALLO65) $(DELIM)
@@ -255,7 +251,7 @@ show :
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 
 char_tbl65.o : char_tbl65.c ct.h 
-debug.o : debug.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+debug.o : debug.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   debug.h stab.h stab.def segdef.h 
 dmpgdb.o : dmpgdb.c symseg.h 
 dmpod.o : dmpod.c debug.h stab.h stab.def segdef.h 
@@ -263,59 +259,59 @@ dumdir.o : dumdir.c
 dummy.o : dummy.c
 dummy_pass0.o : dummy_pass0.c
 edits.o : edits.c 
-endlin.o : endlin.c header.h outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+endlin.o : endlin.c header.h outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   listctrl.h lstcnsts.h exproper.h vlda_structs.h pragma.h pragma1.h segdef.h
 err2str.o : err2str.c  
-exprs.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+exprs.o : exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   exproper.h listctrl.h lstcnsts.h operstuff.h
-gc.o : gc.c  token.h token_defs.h header.h memmgt.h ct.h qual_tbl.h gc_struct.h 
+gc.o : gc.c  token.h token_defs.h header.h memmgt.h ct.h qualtbl.h gc_struct.h 
 gc_table.o : gc_table.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h gc_struct.h 
+  qualtbl.h gc_struct.h 
 gdbtst.o : gdbtst.c 
 gototst.o : gototst.c 
 hashit.o : hashit.c 
 help.o : help.c add_defs.h 
 listctrl.o : listctrl.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h listctrl.h lstcnsts.h utils.h
+  qualtbl.h listctrl.h lstcnsts.h utils.h
 le_itfc.o : le_itfc.c lib_exprs.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-   ct.h qual_tbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h operstuff.h
+   ct.h qualtbl.h exproper.h listctrl.h lstcnsts.h lib_exprs.h le_itfc.h operstuff.h
 m11types.o : m11types.c token.h \
   token_defs.h structs.h add_defs.h header.h memmgt.h ct.h \
-  qual_tbl.h pdp11.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
+  qualtbl.h pdp11.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
 m68types.o : m68types.c token.h token_defs.h \
-  structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   m68k.h exproper.h listctrl.h lstcnsts.h pst_tokens.h pst_structs.h 
-macros.o : macros.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+macros.o : macros.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h utils.h
 macxx.o : macxx.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h \
-  ct.h qual_tbl.h version.h  strsub.h listctrl.h
+  ct.h qualtbl.h version.h  strsub.h listctrl.h
 opc11.o : opc11.c token.h token_defs.h pst_tokens.h pst_structs.h exproper.h \
-  structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h pdp11.h opcommon.h 
-opc65.o : opc65.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opc65.o : opc65.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn65.h opcommon.h 
-opc68.o : opc68.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opc68.o : opc68.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn68.h opcommon.h 
-opc68k.o : opc68k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opc68k.o : opc68k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h m68k.h opcommon.h 
-opc69.o : opc69.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opc69.o : opc69.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn69.h opcommon.h
-opcas.o : opcas.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opcas.o : opcas.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h op_class.h opcommon.h 
 opcnds.o : opcnds.c opcnds.h 
-opcode.o : opcode.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opcode.o : opcode.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h 
 opcpp.o : opcpp.c lstcnsts.h pst_tokens.h pst_structs.h opcommon.h memmgt.h 
-opctj.o : opctj.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+opctj.o : opctj.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h tjop_class.h opcommon.h 
-outx.o : outx.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+outx.o : outx.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   vlda_structs.h pragma1.h segdef.h \
   pragma.h exproper.h 
-pass0.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+pass0.o : pass0.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
-pass1.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+pass1.o : pass1.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
-pass2.o : pass2.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+pass2.o : pass2.c outx.h token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   vlda_structs.h pragma1.h segdef.h pragma.h vlda_structs.h 
 pst11.o : pst11.c pst_tokens.h pst_structs.h pdp11.h opcs11.h dirdefs.h 
 pst65.o : pst65.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
@@ -327,14 +323,14 @@ pstas.o : pstas.c pst_tokens.h pst_structs.h dirdefs.h asap_ops.h op_class.h
 pstpp.o : pstpp.c pst_tokens.h pst_structs.h dirdefs.h 
 psttj.o : psttj.c pst_tokens.h pst_structs.h dirdefs.h tjop_class.h tj_ops.h 
 psuedo_ops.o : psuedo_ops.c add_defs.h token.h token_defs.h structs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h utils.h
-qksort.o : qksort.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h 
-sortsym.o : sortsym.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  qualtbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h utils.h
+qksort.o : qksort.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h 
+sortsym.o : sortsym.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   listctrl.h lstcnsts.h 
 stack_ops.o : stack_ops.c add_defs.h token.h token_defs.h structs.h header.h memmgt.h ct.h \
-  qual_tbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h 
-symbol.o : symbol.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h 
-test.o : test.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qual_tbl.h \
+  qualtbl.h pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h strsub.h opcnds.h 
+symbol.o : symbol.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h 
+test.o : test.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h listctrl.h lstcnsts.h 
 tjtst.o : tjtst.c tjop_class.h tj_ops.h 
 types.o : types.c stab.def

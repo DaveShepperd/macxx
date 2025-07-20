@@ -41,6 +41,7 @@ extern int deTab(const char *input, int tabWidth, int numTabs, int column, char 
 /** longToAscii() - convert long to ascii string
  *  At entry:
  *  @param data - data to convert
+ *  @param usign - bool set true if unsigned
  *  @param dst - pointer to destination string buffer
  *  @param maxDstSize - size of destination string buffer
  *  @param numDigits - number of digits to output leadingZeros -
@@ -52,7 +53,53 @@ extern int deTab(const char *input, int tabWidth, int numTabs, int column, char 
  *  @return length of resulting string. dst buffer contains
  *  ASCII number, nul terminated.
  **/
-extern int longToAscii(long data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix);
+extern int longToAscii(long data, int usign, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix);
+
+#if 0
+/** int32ToAscii() - convert int32_t to ascii string
+ *  At entry:
+ *  @param data - data to convert
+ *  @param dst - pointer to destination string buffer
+ *  @param maxDstSize - size of destination string buffer
+ *  @param numDigits - number of digits to output leadingZeros -
+ *  @param non-zero if to include leading zeroes
+ *  			   in the converted string
+ *  @param radix - radix to use for conversion
+ *
+ *  At exit:
+ *  @return dst
+ *  ASCII number, nul terminated present in dst.
+ **/
+extern char *int32ToAscii(int32_t data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix);
+
+/** uint32ToAscii() - convert uint32_t to ascii string
+ *  At entry:
+ *  @param data - data to convert
+ *  @param dst - pointer to destination string buffer
+ *  @param maxDstSize - size of destination string buffer
+ *  @param numDigits - number of digits to output leadingZeros -
+ *  @param non-zero if to include leading zeroes
+ *  			   in the converted string
+ *  @param radix - radix to use for conversion
+ *
+ *  At exit:
+ *  @return dst
+ *  ASCII number, nul terminated present in dst.
+ **/
+extern char *uint32ToAscii(uint32_t data, char *dst, size_t maxDstSize, int numDigits, int leadingZeros, int radix);
+
+/** szToAscii() - convert size_t to ascii string
+ *  At entry:
+ *  @param data - data to convert
+ *  @param dst - pointer to destination string buffer
+ *  @param maxDstSize - size of destination string buffer
+ *
+ *  At exit:
+ *  @return dst
+ *  ASCII number, nul terminated present in dst.
+ **/
+extern char *szToAscii(size_t data, char *dst, size_t maxDstSize);
+#endif
 
 /** strnrchr() Look backwards through a string for character
  *  At entry:

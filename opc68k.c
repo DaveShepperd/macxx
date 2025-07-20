@@ -26,20 +26,20 @@
 /* The following are variables specific to the particular assembler */
 
 const int macxx_name_mask = MACXX_M_68K;
-const char macxx_name[] = "MAC_68K";
+const char macxx_name[] = "mac68k";
 const char *macxx_target = "68000";
-const char *macxx_descrip = "Cross assembler for the 68000.";
+const char *macxx_descrip = "Cross assembler for the 68000/68010.";
 
 #if 0
-unsigned short macxx_rel_salign = 1;    /* default alignment for .REL. segment */
-unsigned short macxx_rel_dalign = 1;    /* default alignment for data in .REL. segment */
-unsigned short macxx_abs_salign = 1;    /* default alignments for .ABS. segment */
-unsigned short macxx_abs_dalign = 1;
+uint16_t macxx_rel_salign = 1;    /* default alignment for .REL. segment */
+uint16_t macxx_rel_dalign = 1;    /* default alignment for data in .REL. segment */
+uint16_t macxx_abs_salign = 1;    /* default alignments for .ABS. segment */
+uint16_t macxx_abs_dalign = 1;
 #else
-unsigned short macxx_salign = 1;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+uint16_t macxx_salign = 1;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 1;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 1;
+uint16_t macxx_min_dalign = 1;
 char macxx_mau = 8;         /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
 char macxx_mau_byte = 1;        /* number of mau's in a byte */
@@ -49,8 +49,8 @@ char macxx_nibbles_byte = 2;        /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_AMA|ED_M68|ED_LC|ED_GBL|ED_DOL|ED_TRUNC;  /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD|LIST_OCT); /* default list mask */
+uint32_t macxx_edm_default = ED_AMA|ED_M68|ED_LC|ED_GBL|ED_DOL|ED_TRUNC;  /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD|LIST_OCT); /* default list mask */
 
 int current_radix = 10;     /* default the radix to decimal */
 char expr_open = '(';       /* char that opens an expression */
@@ -73,7 +73,7 @@ extern int no_white_space_allowed;
 struct rinit
 {
     char *name;
-    unsigned long value;
+    uint32_t value;
 };
 
 static struct rinit reginit[] = {

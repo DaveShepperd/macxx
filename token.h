@@ -22,6 +22,7 @@
 #ifdef lint
 #define void int
 #endif
+#include <stdint.h>
 #include "token_defs.h"		/* get standard #define's */
 #include <stdio.h>		/* get standard I/O definitions */
 #include <ctype.h>		/* get standard string type macros */
@@ -31,22 +32,9 @@
 #include "header.h"		/* get our extern declarations */
 #include "ct.h"			/* character types */
 
-#define QTBL(\
-	noval,			/* t/f if no value is allowed */\
-	optional,		/* t/f if value is optional */\
-	number,			/* t/f is value must be a number */\
-	output,			/* t/f if param is an output file */\
-        string,			/* t/f if param is string (incl ws) */\
-	negate,			/* t/f if param is negatible */\
-	qual,			/* parameter mask */\
-	name,			/* name of parameter */\
-	index			/* output file index */\
-) qual
+#define QUALTBL_GET_ENUM 1
+#include "qualtbl.h"
 
-enum quals {
-#include "qual_tbl.h"
-,QUAL_MAX};
-#undef QTBL
 extern char options[QUAL_MAX];
 
 #if !defined(ALIGNMENT)
@@ -82,7 +70,7 @@ extern void exit();
 
 extern char char_toupper[];
 
-#define _toupper(c)	(char_toupper[(unsigned char)c])
+#define _toupper(c)	(char_toupper[(uint8_t)c])
 #define _tolower(c)	((c) >= 'A' && (c) <= 'Z' ? (c) | 0x20:(c))
 
 #ifndef TRUE

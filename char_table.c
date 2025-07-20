@@ -33,7 +33,7 @@
 #define BOP	CT_BOP		/*  binary operator */
 #define UOP	CT_UOP		/*  unary operator */
 
-unsigned short cttbl[] = {
+uint16_t cttbl[] = {
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     EOL,  WS, EOL, EOL, EOL, EOL, EOL, EOL,  /* BS,HT,LF,VT,FF,CR,SO,SI */
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* DLE,DC1,DC2,DC3,DC4,NAK,SYN,ETB */

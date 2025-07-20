@@ -23,7 +23,7 @@
     #undef _tolower
 #endif
 
-#define _toupper(c)	(char_toupper[(unsigned char)c])
+#define _toupper(c)	(char_toupper[(uint8_t)c])
 #define _tolower(c)	((c) >= 'A' && (c) <= 'Z' ? (c) | 0x20:(c))
 
 typedef struct

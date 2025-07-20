@@ -33,15 +33,15 @@ const char *macxx_target = "pdp11";
 const char *macxx_descrip = "Cross assembler for the PDP11.";
 
 #if 0
-unsigned short macxx_rel_salign = 1;    /* default alignment for .REL. segment */
-unsigned short macxx_rel_dalign = 1;    /* default alignment for data in .REL. segment */
-unsigned short macxx_abs_salign = 1;    /* default alignments for .ABS. segment */
-unsigned short macxx_abs_dalign = 1;    /* default alignments for .ABS. segment */
+uint16_t macxx_rel_salign = 1;    /* default alignment for .REL. segment */
+uint16_t macxx_rel_dalign = 1;    /* default alignment for data in .REL. segment */
+uint16_t macxx_abs_salign = 1;    /* default alignments for .ABS. segment */
+uint16_t macxx_abs_dalign = 1;    /* default alignments for .ABS. segment */
 #else
-unsigned short macxx_salign = 1;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 1;    /* default alignment data within segment */
+uint16_t macxx_salign = 1;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 1;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 0;    /* alignment required by the hardware */
+uint16_t macxx_min_dalign = 0;    /* alignment required by the hardware */
 char macxx_mau = 8;             /* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
 char macxx_mau_byte = 1;        /* number of mau's in a byte */
@@ -51,8 +51,8 @@ char macxx_nibbles_byte = 3;        /* For the listing output routines */
 char macxx_nibbles_word = 6;
 char macxx_nibbles_long = 11;
 
-unsigned long macxx_edm_default = ED_TRUNC; /* |ED_LC|ED_GBL; */  /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD); /* default list mask */
+uint32_t macxx_edm_default = ED_TRUNC; /* |ED_LC|ED_GBL; */  /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD); /* default list mask */
 
 int current_radix = 8;      /* default the radix to octal */
 char expr_open = '<';       /* char that opens an expression */
@@ -73,7 +73,7 @@ int max_symbol_length = 16; /* significant length of symbol names */
 struct rinit
 {
     char *name;
-    unsigned long value;
+    uint32_t value;
 };
 
 static struct rinit reginit[] = {

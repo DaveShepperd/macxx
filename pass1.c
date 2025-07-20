@@ -42,9 +42,9 @@ SEG_struct *current_section;
 int include_level;      /* inclusion level */
 struct str_sub *string_macros;  /* ptr to array of structs for string subs */
 int strings_substituted;    /* flag indicating string substitution occured */
-unsigned long current_lsb=1;    /* current local symbol block number */
-unsigned long next_lsb=2;   /* next available local symbol block number */
-unsigned long autogen_lsb=65000; /* autolabel for macro processing */
+uint32_t current_lsb=1;    /* current local symbol block number */
+uint32_t next_lsb=2;   /* next available local symbol block number */
+uint32_t autogen_lsb=65000; /* autolabel for macro processing */
 char emsg[ERRMSG_SIZE];         /* space to build error messages */
 char *inp_str;          /* place to hold input text */
 int   inp_str_size;     /* size of inp_str */
@@ -52,11 +52,11 @@ char *presub_str;       /* place to hold input before string substitution */
 char *inp_ptr;          /* pointer to next place to get token */
 int inp_len;            /* length of input string */
 int token_type;         /* decoded token type */
-unsigned char token_minus;  /* minus sign prefixed */
+uint8_t token_minus;  /* minus sign prefixed */
 char cur_char;          /* first character of token */
 char *tkn_ptr;          /* pointer to first character of token */
 char *actualTknPtr;		/* actual token pointer (needed by mac8080) */
-long token_value;       /* value of token */
+int32_t token_value;       /* value of token */
 int next_type;          /* next token character type */
 char *token_pool;       /* pointer to free token memory */
 int token_pool_size;        /* size of remaining free token memory */
@@ -154,7 +154,7 @@ int getAMATag(const FN_struct *fnd)
 	return -1;
 }
 
-void setAMATag(FN_struct *fnd, unsigned short tag)
+void setAMATag(FN_struct *fnd, uint16_t tag)
 {
 	AMA_Tags_t *ptr, **last;
 	int idx;
@@ -296,7 +296,7 @@ SEG_struct *get_subseg_mem( void )
 /******************************************************************/
 #endif
 
-unsigned long record_count;
+uint32_t record_count;
 int get_text_assems;
 
 char *get_token_pool(int amt, int flag) 
@@ -455,7 +455,7 @@ gt_loop:
     }
     else
     {
-        unsigned char *src;
+        uint8_t *src;
         src = marg_head->marg_ptr;    /* point to macro text */
         MDEBUG(("Reading macro.\n"));
         while (1)
@@ -469,7 +469,7 @@ gt_loop:
                 if (cc == MAC_LINK)
                 {    /* end of text area? */
                     ADJ_ALIGN(src)
-                    src = *(unsigned char **)src; /* link to next area */
+                    src = *(uint8_t **)src; /* link to next area */
                     MDEBUG(("\tLinked to %p\n", src));
                     continue;        /* and continue */
                 }
@@ -698,7 +698,7 @@ void puts_titles(int plus_sign)
 			fprintf(toc_fp,"\nTABLE OF CONTENTS\n\n");
 			list_toc_hd = 1;
 		}
-		fprintf(lis_fp," PAGE %ld%c\n",list_toc_page_no,(plus_sign > 0) ? '+' : ' ');	/* Page number for listing file */
+		fprintf(lis_fp," PAGE %d%c\n",list_toc_page_no,(plus_sign > 0) ? '+' : ' ');	/* Page number for listing file */
 	}
 	else
 	{
@@ -732,9 +732,9 @@ void puts_lis(const char *string, int lines )
 		return;     /* easy out if no lis file */
 	if (!lis_title[0])
 	{
-		snprintf(lis_title,sizeof(lis_title),"\f%-40s %s %s   %s",
+		snprintf(lis_title,sizeof(lis_title),"\f%-40s %s %s (%d bit)   %s",
 			output_files[OUT_FN_OBJ].fn_name_only,
-			macxx_name,macxx_version,ascii_date);
+			macxx_name,macxx_version,sizeof(void *) > 4 ? 64:32,ascii_date);
 	}
 	if ((i=lines) == 0)
 	{
@@ -845,13 +845,24 @@ static void show_bad_token_ide( const char *ptr, const char *msg, int sev )
 		{
 			if ( strlen(fName)+msgLen+inp_len >= MAX_ERROR_LINE_LEN )
 				lineBreak = "\n";
-			snprintf(leadMsg, msgsiz + 1, "%s:%d:%d: %s:%s %s\n", current_fnd->fn_nam->relative_name, current_fnd->fn_line, ptr-inp_str, sev_s[sev], lineBreak, msg);
+			snprintf(leadMsg, msgsiz + 1, "%s:%d:%" FMT_PTRDIF_PRFX "d: %s:%s %s\n",
+					 current_fnd->fn_nam->relative_name,
+					 current_fnd->fn_line,
+					 ptr-inp_str,
+					 sev_s[sev],
+					 lineBreak,
+					 msg);
 		}
 		else
 		{
 			if ( strlen(fName)+msgLen >= MAX_ERROR_LINE_LEN )
 				lineBreak = "\n";
-			snprintf(leadMsg, msgsiz + 1, "%s:%d: %s:%s %s\n", current_fnd->fn_nam->relative_name, current_fnd->fn_line, sev_s[sev], lineBreak, msg);
+			snprintf(leadMsg, msgsiz + 1, "%s:%d: %s:%s %s\n",
+					 current_fnd->fn_nam->relative_name,
+					 current_fnd->fn_line,
+					 sev_s[sev],
+					 lineBreak,
+					 msg);
 		}
 	}
 	else
@@ -1035,7 +1046,8 @@ void show_bad_token( const char *ptr, const char *msg, int sev )
     }
     else
     {
-        sprintf(btmsg,":%d - %s\n", (ptr > inp_str) ? ptr-inp_str : 0, msg );
+        sprintf(btmsg,":%" FMT_PTRDIF_PRFX "d - %s\n",
+				(ptr > inp_str) ? ptr-inp_str : 0, msg );
         err_msg(sev, btmsg);
     }
     if (pass == 1) lis_fp = tfp;
@@ -1076,7 +1088,7 @@ void bad_token( char *ptr, const char *msg )
 int mklocal(const char *symName, int symLen)
 {
     register char *rs;
-    register unsigned long lsb;
+    register uint32_t lsb;
 
 	/* make a new name with the lsb area in hex first */
     lsb = current_lsb;
@@ -1120,7 +1132,7 @@ int get_token( void )
  */
 {
     char c;
-    unsigned short ct,cct;
+    int16_t ct,cct;
 
     token_value = token_minus = 0;
     while (1)
@@ -1215,7 +1227,7 @@ int get_token( void )
                 break;
             }
         case CC_NUM: {         /* number */
-                long tmp;
+                int32_t tmp;
                 int tmp_radix = current_radix; /* copy of local radix */
                 int min_radix = 0;      /* copy of minimum radix rqd */
                 int i;
@@ -1473,7 +1485,7 @@ void f1_eol( void )
  *	ptr placed at EOL
  */
 {
-    unsigned short ct;
+    int16_t ct;
     while (cttbl[(int)*inp_ptr] & CT_WS) ++inp_ptr;
     ct = cttbl[(int)*inp_ptr];
 #if defined(MAC_68K)
@@ -1593,7 +1605,7 @@ int f1_defg(int flag)
 				}
 				else if ( ptr->ss_fnd == current_fnd && ptr->ss_line  == current_fnd->fn_line )
 				{
-					snprintf(emsg,ERRMSG_SIZE,"Assembler failure. Attempting to define '%s' to %s:0x%04lX. Previously defined as %s:0x%04lX",
+					snprintf(emsg,ERRMSG_SIZE,"Assembler failure. Attempting to define '%s' to %s:0x%04X. Previously defined as %s:0x%04X",
 							 ptr->ss_string,
 							 current_section->seg_string, current_section->seg_pc,
 							 ptr->ss_seg->seg_string,
@@ -1602,7 +1614,7 @@ int f1_defg(int flag)
 				}
 				else
 				{
-					snprintf(emsg,sizeof(emsg),"Attempted to re-define label '%s' with value %s:%04lX. Previously defined at %s:%d to %s:%04lX",
+					snprintf(emsg,sizeof(emsg),"Attempted to re-define label '%s' with value %s:%04X. Previously defined at %s:%d to %s:%04X",
 							 ptr->ss_string,
 							 current_section->seg_string,
 							 current_pc,
@@ -1999,7 +2011,7 @@ SS_struct *do_symbol(SymInsertFlag_t flag)
 #if !defined(MAC_PP)
 	if ( squawk_syms )
 	{
-		snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, flg_defined=%d, flg_exprs=%d, flg_segment=%d, flg_more=%d, value=0x%lX, segPtr=%p, local=%d",
+		snprintf(emsg, sizeof(emsg), "do_symbol(): Found symbol '%s' at %p. next=%p, flg_defined=%d, flg_exprs=%d, flg_segment=%d, flg_more=%d, value=0x%X, segPtr=%p, local=%d",
 				 sym_ptr->ss_string,
 				 (void *)sym_ptr,
 				 (void *)sym_ptr->ss_next,
@@ -2440,7 +2452,7 @@ void pass1( int fileNumber)
             if ((opc = opcode_lookup(token_pool,0)) != 0)
             {
                 int old_nest = condit_nest;
-                long old_condit = condit_word;
+                int32_t old_condit = condit_word;
                 if ((opc->op_class&DFLPST) != 0)
                 {
                     Opcode *newopc = 0;

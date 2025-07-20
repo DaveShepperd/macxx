@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <inttypes.h>
+
+#include "formats.h"
 
 typedef struct
 {
@@ -151,8 +155,37 @@ int main(int argc, char *argv[])
 	}
 	fclose(inF);
 	inF = NULL;
-	fputs("#if OPERSTUFF_GET_ENUM\n"
-		  "typedef enum\n{\n",stdout);
+	fprintf(stdout,"/* numLines=%d, __SIZEOF_SIZE_T__=%d, __SIZEOF_INT__=%d, __SIZEOF_LONG__=%d */\n",
+			numLines,
+			__SIZEOF_SIZE_T__,
+			__SIZEOF_INT__,
+			__SIZEOF_LONG__);
+	fprintf(stdout,	"/* sizeof(char)=" FMT_SZ
+					", sizeof(int)=" FMT_SZ
+					", sizeof(long)=" FMT_SZ
+					", sizeof(void *)=" FMT_SZ
+					" */\n/* "
+					"sizeof(int8_t)=" FMT_SZ 
+					", sizeof(int16_t)=" FMT_SZ 
+					", sizeof(int32_t)=" FMT_SZ
+					" */\n/* "
+					"sizeof(sizeof)=" FMT_SZ
+					", sizeof(size_t)=" FMT_SZ
+					", sizeof(time_t)=" FMT_SZ 
+					" */\n\n"
+				,sizeof(char)
+				,sizeof(int)
+				,sizeof(long)
+				,sizeof(void *)
+				,sizeof(int8_t)
+				,sizeof(int16_t)
+				,sizeof(int32_t)
+				,sizeof(sizeof(char))
+				,sizeof(size_t)
+				,sizeof(time_t)
+			);
+	fputs("#if OPERSTUFF_GET_ENUM\n", stdout);
+	fputs("typedef enum\n{\n", stdout);
 	lp = lines;
 	for (ii=0; ii < numLines; ++ii, ++lp)
 	{

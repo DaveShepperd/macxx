@@ -48,16 +48,16 @@ typedef enum {
 } AModes;
 
 
-#define   I	(1L << I_NUM)
-#define   D	(1L << D_NUM)
-#define   Z	(1L << Z_NUM)
-#define   X	(1L << X_NUM)
-#define   E	(1L << E_NUM)
-#define   A	(1L << A_NUM)
-#define   S	(1L << S_NUM)
-#define   SPC	(1L << SPC_NUM)
-#define   ACC	(1L << ACC_NUM)
-#define   IMP	(1L << IMP_NUM)
+#define   I	(1 << I_NUM)
+#define   D	(1 << D_NUM)
+#define   Z	(1 << Z_NUM)
+#define   X	(1 << X_NUM)
+#define   E	(1 << E_NUM)
+#define   A	(1 << A_NUM)
+#define   S	(1 << S_NUM)
+#define   SPC	(1 << SPC_NUM)
+#define   ACC	(1 << ACC_NUM)
+#define   IMP	(1 << IMP_NUM)
 
 #define   DES	(0x8000)
 

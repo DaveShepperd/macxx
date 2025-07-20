@@ -32,10 +32,10 @@
 #include "listctrl.h"
 #include "pst_tokens.h"
 
-/* extern unsigned short eafield[]; */
+/* extern uint16_t eafield[]; */
 
 static char ea_to_tag[] = {'b','I','L'};
-int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea);
+int typeF( uint16_t opcode, EA *tsea, int bwl, EA *tdea);
 
 #define AMFLG_MINUS     (1) /* Have a leading minus: -(x) */
 #define AMFLG_DISPLAC   (2) /* Have a displacement: n(x) */
@@ -127,7 +127,7 @@ static int get_indxea(int amflg, int treg, EA *amp )
 				exp += tmps->ptr;
 				exp->expr_code = EXPR_SEG;
 				exp->expr_value = current_offset+2;
-	/*			printf("In get_indexea(). current_offset=0x%08lX\n", current_offset ); */
+	/*			printf("In get_indexea(). current_offset=0x%08X\n", current_offset ); */
 				(exp++)->expr_seg = current_section;
 				exp->expr_code = EXPR_OPER;
 				exp->expr_value = '-';
@@ -229,7 +229,7 @@ static int get_mitsyntax( int areg, EA *amp )
 			exp += eps->ptr;
 			exp->expr_code = EXPR_SEG;
 			exp->expr_value = current_offset+2;
-/*			printf("In get_mitsyntax(). current_offset=0x%08lX\n", current_offset ); */
+/*			printf("In get_mitsyntax(). current_offset=0x%08X\n", current_offset ); */
 			(exp++)->expr_seg = current_section;
 			exp->expr_code = EXPR_OPER;
 			exp->expr_value = '-';
@@ -314,7 +314,7 @@ static int get_regea(int amflg, EA *amp )
 				/* This one is for num(pc) or pc relative */
 				exp->expr_code = EXPR_SEG;
 				exp->expr_value = current_offset+2;
-/*				printf("In get_regea(). current_offset=0x%08lX\n", current_offset ); */
+/*				printf("In get_regea(). current_offset=0x%08X\n", current_offset ); */
 				(exp++)->expr_seg = current_section;
 				exp->expr_code = EXPR_OPER;
 				exp->expr_value = '-';
@@ -618,7 +618,7 @@ int get_oneea( EA *amp, int bwl )
         exp = eps->stack + eps->ptr;
         exp->expr_code = EXPR_SEG;
         exp->expr_value = current_offset+2;
-/*		printf("In get_oneea(). current_offset=0x%08lX\n", current_offset ); */
+/*		printf("In get_oneea(). current_offset=0x%08X\n", current_offset ); */
         (exp++)->expr_seg = current_section;
         exp->expr_code = EXPR_OPER;
         exp->expr_value = '-';
@@ -709,7 +709,7 @@ static void bad_destam( void )
     return;
 }
 
-static int immediate_mode(unsigned short opcode,int bwl)
+static int immediate_mode(uint16_t opcode,int bwl)
 {
     if ((source.mode&E_IMM) == 0) bad_sourceam();
     EXP0SP->expr_value = opcode | (bwl<<6) | dest.eamode | dest.reg1;
@@ -728,7 +728,7 @@ static int immediate_mode(unsigned short opcode,int bwl)
 int type0(int inst, int bwl)
 {
     int rm;
-    static unsigned short optabl0[] = {
+    static uint16_t optabl0[] = {
         0xc100,     /* ABCD */
         0xb108,     /* CMPM */
         0x8100,     /* SBCD */
@@ -784,7 +784,7 @@ int type1(int inst, int bwl)
 {
     EXP_stk *eps;
     EXPR_struct *eptr;
-    static unsigned short optabl1[] = {
+    static uint16_t optabl1[] = {
         0xD000,     /* add */
         0xD000,     /* adda */
         0x0600,     /* addi */
@@ -908,7 +908,7 @@ int type1(int inst, int bwl)
 ******************************************************************************/
 int type2( int inst, int bwl)
 {
-    static unsigned short optabl2[] = {
+    static uint16_t optabl2[] = {
         0xc000,         /* and  */
         0x0200,         /* andi */
         0xB100,         /* eor  */
@@ -981,7 +981,7 @@ int type2( int inst, int bwl)
     }
     if ((dest.mode&(E_CCR|E_SR)) != 0)
     {    /* special case output? */
-        static unsigned short optabl2s[] = {
+        static uint16_t optabl2s[] = {
             0x023c,     /* and #n,CCR */
             0x027c,     /* and #n,SR  */
             0x0a3c,     /* eor #n,CCR */
@@ -1018,7 +1018,7 @@ int type2( int inst, int bwl)
 ******************************************************************************/
 int type3( int inst, int bwl )
 {
-    static unsigned short optabl3m[] = {
+    static uint16_t optabl3m[] = {
         0xe1c0,     /* asl m */
         0xe0c0,     /* asr m */
         0xe3c0,     /* lsl m */
@@ -1028,7 +1028,7 @@ int type3( int inst, int bwl )
         0xe5c0,     /* roxl m */
         0xe4c0};    /* roxr m */
 
-    static unsigned short optabl3r[] = {
+    static uint16_t optabl3r[] = {
         0xe100,     /* asl */
         0xe000,     /* asr */
         0xe108,     /* lsl */
@@ -1108,7 +1108,7 @@ int type4(int inst, int bwl)
     int t,edmaskSave;
     EXP_stk *eps;
     EXPR_struct *expr;
-    static unsigned short optabl4[] = { 0,
+    static uint16_t optabl4[] = { 0,
         0x6400,0x6500,0x6700,0x6c00,
         0x6e00,0x6200,0x6f00,0x6300,
         0x6d00,0x6b00,0x6600,0x6a00,
@@ -1153,7 +1153,7 @@ int type4(int inst, int bwl)
             {
                 if (bwl == 3 || expr->expr_value < -32768 || expr->expr_value > 32767)
                 {
-                    long toofar;
+                    int32_t toofar;
                     toofar = expr->expr_value;
                     if (toofar > 0)
                     {
@@ -1163,7 +1163,7 @@ int type4(int inst, int bwl)
                     {
                         toofar = -toofar- ((bwl==3) ? 128 : 32768);
                     }
-                    sprintf(emsg,"Branch offset 0x%lX byte(s) out of range",toofar);
+                    sprintf(emsg,"Branch offset 0x%X byte(s) out of range",toofar);
                     bad_token((char *)0,emsg);
                     expr->expr_value = -2;
                 }
@@ -1257,13 +1257,13 @@ abs_br_byte_mode:
 /*ARGSUSED*/
 int type5(int inst, int bwl) 
 {
-    static unsigned short optabl5r[] = {
+    static uint16_t optabl5r[] = {
         0x0140,
         0x0180,
         0x01c0,
         0x0100};
 
-    static unsigned short optabl5m[] = {
+    static uint16_t optabl5m[] = {
         0x0840,
         0x0880,
         0x08c0,
@@ -1308,7 +1308,7 @@ int type5(int inst, int bwl)
 /*ARGSUSED*/
 int type6(int inst, int bwl, EA *tsea, EA *tdea) 
 {
-    static unsigned short optabl6[] = { 0,
+    static uint16_t optabl6[] = { 0,
         0x4e71,
         0x4e70,
         0x4e73,
@@ -1336,7 +1336,7 @@ int type6(int inst, int bwl, EA *tsea, EA *tdea)
 /*ARGSUSED*/
 int type7(int inst, int bwl) 
 {
-    static unsigned short optabl7[] = { 0,
+    static uint16_t optabl7[] = { 0,
         0x4840,JMP_OPCODE,JSR_OPCODE,0x4800,
         0x4400,0x4000,0x4600,0x4200,
         0x54c0,0x55c0,0x57c0,0x51c0,
@@ -1476,7 +1476,7 @@ int type8(int inst, int bwl)
 /*ARGSUSED*/
 int type9(int inst, int bwl)
 {
-    static unsigned short optabl9[] = { 0,
+    static uint16_t optabl9[] = { 0,
         0x54c8,0x55c8,0x57c8,0x51c8,0x5cc8,
         0x5ec8,0x52c8,0x5fc8,0x53c8,
         0x5dc8,0x5bc8,0x56c8,0x5ac8,0x50c8,
@@ -1517,7 +1517,7 @@ int type9(int inst, int bwl)
     {
         if (expr->expr_value < -32768 || expr->expr_value > 32767)
         {
-            long toofar;
+            int32_t toofar;
             toofar = expr->expr_value;
             if (toofar > 0)
             {
@@ -1527,7 +1527,7 @@ int type9(int inst, int bwl)
             {
                 toofar -= 32768;
             }
-            sprintf(emsg,"Branch offset 0x%lX byte(s) out of range",toofar);
+            sprintf(emsg,"Branch offset 0x%X byte(s) out of range",toofar);
             bad_token((char *)0,emsg);
             expr->expr_value = -2;
         }
@@ -1544,7 +1544,7 @@ int type9(int inst, int bwl)
 /*ARGSUSED*/
 int type10(int inst, int bwl) 
 {
-    static unsigned short optabl10[] = { 0,
+    static uint16_t optabl10[] = { 0,
         0x81c0,
         0x80c0,
         0xc1c0,
@@ -1569,7 +1569,7 @@ int type10(int inst, int bwl)
 int type11(int inst, int bwl) 
 {
     int omode,temp;
-    unsigned short opcode;
+    uint16_t opcode;
     EXP0SP->expr_value = 0xC100;
     if (get_twoea(bwl) == 0) return 0;
     if ((source.mode&(E_Dn|E_An)) == 0) bad_sourceam();
@@ -1616,11 +1616,11 @@ int type11(int inst, int bwl)
 /*ARGSUSED*/
 int type12(int inst, int bwl) 
 {
-    static unsigned short optabl12[] = { 0,
+    static uint16_t optabl12[] = { 0,
         0x4800,
         0x4840,
         0x4e58};
-    unsigned short opcode,sam;
+    uint16_t opcode,sam;
 
     opcode = optabl12[(int)inst];
     get_oneea(&source,bwl);
@@ -1703,7 +1703,7 @@ int type14(int inst, int bwl)
 /*ARGSUSED*/
 int type15(int inst, int bwl) 
 {
-    unsigned short opcode;
+    uint16_t opcode;
     static short stran[] = {1,3,2};
 
     if (get_twoea(bwl) == 0)
@@ -1844,7 +1844,7 @@ static char flip[] =    {0, 8, 4,0xC,2,0xA,6,0xE,1, 9, 5,0xD,3,0xB,7,0xF};
 int type16(int inst, int bwl) 
 {
     int dr;
-    unsigned short reg_mask;
+    uint16_t reg_mask;
     EXP_stk *temp;
     EA *mask,*eadd;
 
@@ -1957,7 +1957,7 @@ int type16(int inst, int bwl)
 /*ARGSUSED*/
 int type17(int inst,int bwl) 
 {
-    unsigned short opcode;
+    uint16_t opcode;
 
     if (get_twoea(bwl) == 0)
     {
@@ -2046,7 +2046,7 @@ int type19(int inst, int bwl)
     exp = eps->stack;
     if (eps->ptr == 1 && exp->expr_code == EXPR_VALUE)
     {
-        if ((unsigned long)exp->expr_value > 15)
+        if ((uint32_t)exp->expr_value > 15)
         {
             show_bad_token((char *)0,"Trap vector out of range",MSG_ERROR);
             exp->expr_value = 0;
@@ -2113,7 +2113,7 @@ int type19(int inst, int bwl)
     |    | cnt|  |i|  |rx|
      --------------------
 ******************************************************************************/
-int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea)
+int typeF( uint16_t opcode, EA *tsea, int bwl, EA *tdea)
 {
     EXP_stk *eps;
     EXPR_struct *exp,*texp;
@@ -2198,7 +2198,7 @@ int typeF( unsigned short opcode, EA *tsea, int bwl, EA *tdea)
 static int type20_jmp( int inst )
 {
     /* Opposite sense branches */
-    static const unsigned short optab20_inv[] =
+    static const uint16_t optab20_inv[] =
     {   0,              /*  0 Not defined */
         0x6500,         /*  1 BCS BLO (BCC BHS) */
         0x6400,         /*  2 BCC BHS (BCS BLO)*/
@@ -2246,7 +2246,7 @@ int type20(int inst, int bwl)
     EXP_stk *eps, tps;
     EXPR_struct *expr;
 
-    static const unsigned short optab20[] = 
+    static const uint16_t optab20[] = 
     {   0,              /*  0 Not defined */
         0x6400,         /*  1 BCC BHS */
         0x6500,         /*  2 BCS BLO */

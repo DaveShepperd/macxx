@@ -10,7 +10,8 @@
 		DebugCallbackName="gdb"
 		Version="1"
 		OutputFile="%bdmacxx"
-		CompilerConfigName="Latest Version">
+		CompilerConfigName="Latest Version"
+		Defines='"/DNO_XREF"'>
 		<Menu>
 			<Target
 				Name="Compile"
@@ -21,7 +22,9 @@
 				OutputExts="*.o"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi -c %xup  %defd -g -o "%bd%n%oe" %i "%f"'/>
+				<Exec
+					CmdLine='gcc -c %xup -ansi %defd -g -Wall -Werror %~other -o "%bd%n%oe" %i %f'
+					OtherOptions="-std=c99"/>
 			</Target>
 			<Target
 				Name="Link"
@@ -32,7 +35,7 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi %xup -g -o "%o" %f %libs'/>
+				<Exec CmdLine='gcc %xup -g -Wall -Werror -o "%o" %objs'/>
 			</Target>
 			<Target
 				Name="Build"
@@ -128,6 +131,8 @@
 				Name="LinkerOutputType"
 				Value="Executable"/>
 		</List>
+		<Includes/>
+		<Libs PreObjects="0"/>
 	</Config>
 	<Config
 		Name="Release"
@@ -135,7 +140,8 @@
 		DebugCallbackName="gdb"
 		Version="1"
 		OutputFile="%bdmacxx"
-		CompilerConfigName="Latest Version">
+		CompilerConfigName="Latest Version"
+		Defines="">
 		<Menu>
 			<Target
 				Name="Compile"
@@ -146,7 +152,7 @@
 				OutputExts="*.o"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi -c %xup %defd -o "%bd%n%oe" %i "%f"'/>
+				<Exec CmdLine='gcc -c %xup -ansi %defd -o "%bd%n%oe" %i %f'/>
 			</Target>
 			<Target
 				Name="Link"
@@ -157,7 +163,7 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc -ansi %xup -o "%o" %f %libs'/>
+				<Exec CmdLine='gcc %xup -o "%o" %objs'/>
 			</Target>
 			<Target
 				Name="Build"
@@ -253,6 +259,8 @@
 				Name="LinkerOutputType"
 				Value="Executable"/>
 		</List>
+		<Includes/>
+		<Libs PreObjects="0"/>
 	</Config>
 	<Files>
 		<Folder
@@ -285,6 +293,7 @@
 			<F N="macxx.html"/>
 			<F N="memmgt.c"/>
 			<F N="mk_operstuff.c"/>
+			<F N="mk_qualtbl.c"/>
 			<F N="obsolete.c"/>
 			<F N="opc11.c"/>
 			<F N="opc65.c"/>
@@ -328,6 +337,7 @@
 			<F N="debug.h"/>
 			<F N="dirdefs.h"/>
 			<F N="exproper.h"/>
+			<F N="formats.h"/>
 			<F N="gc_struct.h"/>
 			<F N="header.h"/>
 			<F N="le_itfc.h"/>
@@ -354,7 +364,7 @@
 			<F N="psttkn68.h"/>
 			<F N="psttkn69.h"/>
 			<F N="psttkn8080.h"/>
-			<F N="qual_tbl.h"/>
+			<F N="qualtbl.h"/>
 			<F N="segdef.h"/>
 			<F N="stab.h"/>
 			<F N="strsub.h"/>
@@ -391,6 +401,9 @@
 				N="Makefile.linux"
 				Type="Makefile"/>
 			<F
+				N="Makefile.linux32"
+				Type="Makefile"/>
+			<F
 				N="Makefile.mingw32"
 				Type="Makefile"/>
 			<F
@@ -400,6 +413,7 @@
 				N="Makefile.pi32"
 				Type="Makefile"/>
 			<F N="operstuff.dat"/>
+			<F N="qualtbl.dat"/>
 			<F N="stab.def"/>
 		</Folder>
 	</Files>

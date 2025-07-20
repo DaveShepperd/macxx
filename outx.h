@@ -28,11 +28,11 @@ extern FILE *outxabs_fp;
 extern char *eline;
 extern TMP_struct *tmp_top,*tmp_ptr,*tmp_pool;
 
-extern void trunc_err( long mask, long tv);
+extern void trunc_err( int32_t mask, int32_t tv);
 extern SEG_struct *get_absseg(void);
 extern void rewind_tmp(void);
 extern int dbg_output( void );
-extern void termobj(long traddr);
+extern void termobj(uint32_t traddr);
 extern int outbstr(char *from, int len );
 extern char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp );
 extern void outorg(EXP_stk *eps);

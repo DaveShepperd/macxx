@@ -83,15 +83,15 @@ const char *macxx_target = "6809";
 const char *macxx_descrip = "Cross assembler for the 6809.";
 
 #if 0
-unsigned short macxx_rel_salign = 0;    /* default alignment for .REL. segment */
-unsigned short macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
-unsigned short macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
-unsigned short macxx_abs_dalign = 0;
+uint16_t macxx_rel_salign = 0;    /* default alignment for .REL. segment */
+uint16_t macxx_rel_dalign = 0;    /* default alignment for data in .REL. segment */
+uint16_t macxx_abs_salign = 0;    /* default alignments for .ABS. segment */
+uint16_t macxx_abs_dalign = 0;
 #else
-unsigned short macxx_salign = 0;    /* default alignment segments by LLF */
-unsigned short macxx_dalign = 0;    /* default alignment data within segment */
+uint16_t macxx_salign = 0;    /* default alignment segments by LLF */
+uint16_t macxx_dalign = 0;    /* default alignment data within segment */
 #endif
-unsigned short macxx_min_dalign = 0;
+uint16_t macxx_min_dalign = 0;
 
 char macxx_mau = 8;         	/* number of bits/minimum addressable unit */
 char macxx_bytes_mau = 1;       /* number of bytes/mau */
@@ -102,8 +102,8 @@ char macxx_nibbles_byte = 2;    /* For the listing output routines */
 char macxx_nibbles_word = 4;
 char macxx_nibbles_long = 8;
 
-unsigned long macxx_edm_default = ED_AMA | ED_M68 | ED_TRUNC; /* default edmask */
-unsigned long macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD | LIST_OCT); /* default list mask */
+uint32_t macxx_edm_default = ED_AMA | ED_M68 | ED_TRUNC; /* default edmask */
+uint32_t macxx_lm_default = ~(LIST_ME | LIST_MEB | LIST_MES | LIST_LD | LIST_COD | LIST_OCT); /* default list mask */
 
 int current_radix = 16;     /* default the radix to hexdecimal */
 char expr_open = '<';       /* char that opens an expression */
@@ -149,7 +149,7 @@ enum amflag
 typedef struct
 {
 	int flag;            /* .ne. if value is expression */
-	unsigned long value;     /* value if not expression */
+	uint32_t value;     /* value if not expression */
 	EXP_stk *exptr;      /* ptr to expression stack */
 } DPage;
 
@@ -316,7 +316,7 @@ int op_dpage(void)
 
 static void do_branch(Opcode *opc)
 {
-	long offset;
+	int32_t offset;
 	EXPR_struct *exp_ptr;
 	offset = (opc->op_amode & SPL) ? 4 : 2;
 	if ( (opc->op_amode & SPL) && (!(opc->op_amode & SP10)) )
@@ -347,11 +347,11 @@ static void do_branch(Opcode *opc)
 	exp_ptr = EXP1.stack;
 	if ( EXP1.ptr == 1 && exp_ptr->expr_code == EXPR_VALUE )
 	{
-		long max_dist;
+		int32_t max_dist;
 		max_dist = (opc->op_amode & SPL) ? 32767 : 127;
 		if ( exp_ptr->expr_value < -(max_dist + 1) || exp_ptr->expr_value > max_dist )
 		{
-			long toofar;
+			int32_t toofar;
 			toofar = exp_ptr->expr_value;
 			if ( toofar > 0 )
 			{
@@ -361,7 +361,7 @@ static void do_branch(Opcode *opc)
 			{
 				toofar = -toofar - (max_dist + 1);
 			}
-			sprintf(emsg, "Branch offset 0x%lX byte(s) out of range", toofar);
+			sprintf(emsg, "Branch offset 0x%X byte(s) out of range", toofar);
 			bad_token((char *)0, emsg);
 			exp_ptr->expr_value = -offset;
 		}
@@ -383,9 +383,9 @@ static int do_operand(Opcode *opc)
 	int ct;
 	int j		= 0;
 	int temp	= 0;
-	long amflag	= 0;
+	int32_t amflag	= 0;
 	int z_page	= 0;	/* zero page */
-	long con_offset	= 0;	/* constant offset */
+	int32_t con_offset	= 0;	/* constant offset */
 
 	int indexed_mode	= 0x00;  /* holds current mode flags */
 
@@ -773,7 +773,7 @@ static int do_operand(Opcode *opc)
 					return I_NUM;
 
 				}
-				sprintf(emsg, "using amflag = FIN error - amflag value = %lX Hex", amflag);
+				sprintf(emsg, "using amflag = FIN error - amflag value = %X Hex", amflag);
 				bad_token((char *)0, emsg);
 				f1_eatit();	/* eat rest of line */
 				return -1;
@@ -940,7 +940,7 @@ static int do_operand(Opcode *opc)
 							}
 							else
 							{
-								sprintf(emsg, "Only signed 16 bit values allowed - constant offset = %lX Hex", con_offset);
+								sprintf(emsg, "Only signed 16 bit values allowed - constant offset = %X Hex", con_offset);
 								bad_token((char *)0, emsg);
 								f1_eatit();	/* eat rest of line */
 								return -1;
