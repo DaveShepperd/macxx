@@ -209,11 +209,22 @@ void pass0( int fileNumber)
                 found_symbol(gbl_flg, tokt);
                 continue;
             }
+			if ( (macxx_name_mask&MACXX_M_Z80) && options[QUAL_Z80ASM] )
+			{
+				if (    (!strncasecmp(inp_ptr,"EQU",3) && myIsspace(inp_ptr[3]))
+				     || (!strncasecmp(inp_ptr,"DEFL",4) && myIsspace(inp_ptr[4]))
+				   )
+				{
+					inp_ptr += (toupper(*inp_ptr) == 'E') ? 3-1 : 4-1;
+					found_symbol(gbl_flg, tokt);
+					continue;
+				}
+			}
 #if defined(MAC_68K)
             if ( !white_space_section )
             {
                 char *einp = tkn_ptr + strlen(token_pool);
-                if ( isspace(*einp) )
+                if ( myIsspace(*einp) )
                 {
                     ++white_space_section;
                     c = *inp_ptr;
@@ -223,7 +234,7 @@ void pass0( int fileNumber)
                              && (cttbl[(int)inp_ptr[3]]&(CT_WS|CT_SMC|CT_EOL))
                            )
                         {
-							if ( strncasecmp(tkn_ptr,".define",7) || !(cttbl[(int)tkn_ptr[7]]&(CT_WS)) )
+							if ( strncasecmp(tkn_ptr,".define",7) || !myIsspace(tkn_ptr[7]) )
 							{
 								inp_ptr += 2;           /*  found_symbol adds one too */
 								gbl_flg &= ~DEFG_LABEL;  /* it's not a label */
@@ -235,7 +246,7 @@ void pass0( int fileNumber)
                     if (    options[QUAL_GRNHILL]
 						 && tokt == TOKEN_strng
 						 && token_pool[0] != '.'
-						 && (strncasecmp(tkn_ptr,".define",7) || !(cttbl[(int)tkn_ptr[7]]&(CT_WS)))
+						 && (strncasecmp(tkn_ptr,".define",7) || !myIsspace(tkn_ptr[7]))
 					   )
                     {
                         if (condit_word < 0)

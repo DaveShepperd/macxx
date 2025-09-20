@@ -339,10 +339,12 @@ int get_text( void )
  */
 {
     char *strPtr;
-    if (token_pool_size <= MAX_TOKEN) get_token_pool(max_token, 1);
+    if (token_pool_size <= MAX_TOKEN)
+		get_token_pool(max_token, 1);
     if (inp_str_size < MAX_LINE)
     {   /* make sure there's room */
-        if (inp_str) MEM_free(inp_str);
+        if (inp_str)
+			MEM_free(inp_str);
         inp_str_size += MAX_LINE;
         inp_str = MEM_alloc(inp_str_size);
         if (presub_str)
@@ -368,7 +370,8 @@ int get_text( void )
 				*strPtr++ = '\n';
 				*strPtr = 0;
 	#if !defined(MAC_PP)
-				if (options[QUAL_DEBUG]) dbg_line(0);
+				if (options[QUAL_DEBUG])
+					dbg_line(0);
 	#endif
 				++get_text_assems;
 				return 1;
@@ -1108,6 +1111,13 @@ int mklocal(const char *symName, int symLen)
     return rs-token_pool;
 }
 
+int myIsspace(int ch)
+{
+	if ( cttbl[ch] == CT_WS )
+		return 1;
+	return 0;
+}
+
 /******************************************************************
  * get_token - gets the next term from the input file.
  */
@@ -1138,12 +1148,12 @@ int get_token( void )
     while (1)
     {          /* in order to allow continuations */
 #if defined(MAC_68K)
-        if ( isspace(*inp_ptr) && options[QUAL_GRNHILL] )
+        if ( myIsspace(*inp_ptr) && options[QUAL_GRNHILL] )
         {
             ++white_space_section;
         }
 #endif
-        while (isspace(*inp_ptr))
+        while (myIsspace(*inp_ptr))
             ++inp_ptr; /* skip over white space */
         c = *inp_ptr;
         tkn_ptr = inp_ptr++;  /* point to beginning of token */
@@ -1451,7 +1461,7 @@ int get_token( void )
 #if defined(MAC_68K)
         if ( !options[QUAL_GRNHILL] || !no_white_space_allowed )
 #endif
-            while (isspace(*inp_ptr))
+            while (myIsspace(*inp_ptr))
                 ++inp_ptr;  /* advance over spaces */
         return(token_type);
     }                /* -- while (1) token string */
@@ -1847,7 +1857,32 @@ int f1_defg(int flag)
 	ptr->flg_defined = 1;    /* signal symbol or label is defined now */
 	ptr->flg_fixed_addr = (flag & DEFG_FIXED) ? 1 : 0;
 	if ( squeak )
-		printf("Pass %d: f1_defg(): Defined '%s'. label=%d, fwd=%d, fixed=%d\n", pass, ptr->ss_string, ptr->flg_label, ptr->flg_fwdReference, ptr->flg_fixed_addr);
+	{
+		if ( ptr->flg_label )
+		{
+			printf("Pass %d: f1_defg(): Defined '%s' as label, fwd=%d, fixed=%d, seg=%s, offset=0x%X\n",
+				   pass,
+				   ptr->ss_string,
+				   ptr->flg_fwdReference,
+				   ptr->flg_fixed_addr,
+				   ptr->ssp_up.ssp_seg ? ptr->ssp_up.ssp_seg->seg_string : "<unknown>",
+				   ptr->ss_value
+				   );
+		}
+		else
+		{
+			printf("Pass %d: f1_defg(): Defined '%s' as symbol fwd=%d, fixed=%d, value=0x%X, exp=%s, currSeg=%s, currPC=0x%X\n",
+				   pass,
+				   ptr->ss_string,
+				   ptr->flg_fwdReference,
+				   ptr->flg_fixed_addr,
+				   ptr->ss_value,
+				   ptr->ssp_up.ssp_expr ? "Yes":"No",
+				   current_section->seg_string,
+				   current_pc
+				   );
+		}
+	}
     return 1;
 }
 
@@ -2399,6 +2434,19 @@ void pass1( int fileNumber)
                 found_symbol(gbl_flg, tokt);
                 continue;
             }
+#if !defined(MAC_PP)
+			if ( (macxx_name_mask&MACXX_M_Z80) && options[QUAL_Z80ASM] )
+			{
+				if (    (!strncasecmp(inp_ptr,"EQU",3) && myIsspace(inp_ptr[3]))
+				     || (!strncasecmp(inp_ptr,"DEFL",4) && myIsspace(inp_ptr[4]))
+				   )
+				{
+					inp_ptr += (toupper(*inp_ptr) == 'E') ? 3-1 : 4-1;
+					found_symbol(gbl_flg, tokt);
+					continue;
+				}
+			}
+#endif
 #if defined(MAC_68K)
             if ( !white_space_section )
             {
@@ -2406,7 +2454,7 @@ void pass1( int fileNumber)
 /*                printf("tkn_ptr = %p, inp_ptr = %p, einp=%p, token=%s\n",
                     tkn_ptr, inp_ptr, einp, token_pool);
 */                    
-                if ( isspace(*einp) )
+                if ( myIsspace(*einp) )
                 {
                     ++white_space_section;
                     c = *inp_ptr;
@@ -2417,7 +2465,7 @@ void pass1( int fileNumber)
                            )
                         {
 /*							printf("Found EQU. tkn_ptr='%s'\n", tkn_ptr); */
-							if ( strncasecmp(tkn_ptr,".define",7) || !(cttbl[(int)tkn_ptr[7]]&(CT_WS)) )
+							if ( strncasecmp(tkn_ptr,".define",7) || !myIsspace(tkn_ptr[7]) )
 							{
 								inp_ptr += 2;           /*  found_symbol adds one too */
 								gbl_flg &= ~DEFG_LABEL;  /* it's not a label */
@@ -2429,7 +2477,7 @@ void pass1( int fileNumber)
                     if (    options[QUAL_GRNHILL]
 						 && tokt == TOKEN_strng
 						 && token_pool[0] != '.'
-						 && (strncasecmp(tkn_ptr,".define",7) || !(cttbl[(int)tkn_ptr[7]]&(CT_WS)))
+						 && (strncasecmp(tkn_ptr,".define",7) || !myIsspace(tkn_ptr[7]))
 					   )
                     {
                         if (condit_word < 0)

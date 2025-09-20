@@ -149,6 +149,8 @@ enum misc {
 	ED_ALTEXP=0x00400000,	/* enable use of le_itfc */
 	ED_PRECED=0x00800000,	/* enable expression precedence */
 	ED_ALTVER=0x01000000,
+	ED_Q_MARG=0x02000000,	/* enable a single quote to delimit arguments on macro call */
+	
 	ED_END_OF_LIST			/* Just leave this as the last one (so the missing comma doesn't cause error) */
 };
 

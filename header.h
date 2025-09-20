@@ -334,6 +334,7 @@ extern int totalTagsUsed;
 extern int totalTagsChecked;
 extern void change_section(SEG_struct *new_seg);
 extern int mklocal(const char *symName, int symLen);
+extern int myIsspace(int ch);
 
 #ifndef n_elts
 #define n_elts(x) (int)(sizeof(x)/sizeof((x)[0]))

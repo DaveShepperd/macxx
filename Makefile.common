@@ -30,6 +30,7 @@ ALLO68   = exprs68.o char_tbl65.o opc68.o pst68.o             $(MOST) $(PASSx) $
 ALLO69   = exprs69.o char_tbl65.o opc69.o pst69.o             $(MOST) $(PASSx) $(EXPx)
 ALLO11   = exprs11.o char_tbl65.o opc11.o pst11.o m11types.o  $(MOST) $(PASSx) $(EXPx)
 ALLO8080 = exprs.o char_table.o opc8080.o pst8080.o           $(MOST) $(PASSx) $(EXPx)
+ALLOZ80  = exprs.o char_table.o opcz80.o pstz80.o             $(MOST) $(PASSx) $(EXPx)
 ALLOAS   = exprs.o char_table.o opcas.o pstas.o dummy_pass0.o pass1.o $(MOST) $(EXPx)
 ALLOTJ   = exprs.o char_table.o opctj.o psttj.o dummy_pass0.o pass1.o $(MOST) $(EXPx)
 ALLO68K  = exprs68k.o char_table.o opc68k.o pst68k.o m68types.o dummy_pass0.o pass168k.o $(MOST)
@@ -54,7 +55,7 @@ endif
 # For Generic Unix/x86
 DEFINES = -DEXTERNAL_PACKED_STRUCTS -DM_UNIX -DINCLUDE_FLOAT -DNO_XREF -DGCC -DHAS_STRERROR -D_ISOC99_SOURCE #-DPC_DEBUG #-DMAX_LINE_ERRORS=12 #-DDEBUG_TXT_INP
 DEFINES += $(EXTRA_DEFINES)
-CHKS = -Wall -ansi -pedantic -Wno-char-subscripts #-std=c99
+CHKS = -Wall -ansi -pedantic -Wno-char-subscripts -std=c99
 CHKS += $(EXTRA_CHKS)
 CFLAGS = $(OPT) $(DBG) $(DEFINES) $(HOST_CPU) -I. $(CHKS)
 L = $(CC) $(HOST_CPU)
@@ -93,7 +94,7 @@ endif
 	$(ECHO) $(DELIM)    Compiling $< to $@ ...$(DELIM)
 	$(CC) $(CFLAGS) -E $< > $@
 
-all : macas$(EXE) mac65$(EXE) mac68$(EXE) mac68k$(EXE) mac69$(EXE) macpp$(EXE) mactj$(EXE) mac11$(EXE) mac8080$(EXE)
+all : macas$(EXE) mac65$(EXE) mac68$(EXE) mac68k$(EXE) mac69$(EXE) macpp$(EXE) mactj$(EXE) mac11$(EXE) mac8080$(EXE) macz80$(EXE)
 	$(ECHO) $(DELIM)    Done$(DELIM)
 
 define link_it
@@ -126,6 +127,9 @@ macas$(EXE) : $(MAKEFILE) $(ALLOAS)
 	$(link_it)
 
 mac11$(EXE) : $(MAKEFILE) $(ALLO11)
+	$(link_it)
+
+macz80$(EXE) : $(MAKEFILE) $(ALLOZ80) 
 	$(link_it)
 
 dmpod$(EXE) : dmpod.o
@@ -225,15 +229,11 @@ pass168k.o : pass1.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h st
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_68K -o $@ $<
 
-pass18080.o : pass1.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h strsub.h exproper.h
-	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
-	$C -DMAC_8080 -o $@ $<
-
 .PHONY: clean show
 
 clean :
 	$(ECHO) $(DELIM)    Cleaning ...$(DELIM)
-	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE)
+	$(RM) mac65$(EXE) mac68$(EXE) mac69$(EXE) macas$(EXE) mac68k$(EXE) macpp$(EXE) mactj$(EXE) mac8080$(EXE) mac11$(EXE) macz80$(EXE)
 	$(RM) *.o *.b *.d *.E
 	$(RM) mk_operstuff$(EXE) operstuff.h mk_qualtbl$(EXE) qualtbl.h
 

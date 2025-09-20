@@ -597,11 +597,12 @@ int macro_call(Opcode *opc)
     args_area = argptr = (char **)MEM_alloc(argcnt*(int)sizeof(char *));
     for (argcnt = 0; argcnt < ma->mac_numargs; ++argcnt)
     {
-        int c,beg,end;
+        int c,beg, end, altBeg;
         beg = macro_arg_open;
         end = macro_arg_close;
+		altBeg = 0;
         *argptr = 0;      /* assume no argument */
-        while (isspace((int)*inp_ptr))
+        while (myIsspace((int)*inp_ptr))
 			++inp_ptr; /* skip over white space */
         c = *inp_ptr;     /* pick up character */
         if ((cttbl[c]&(CT_EOL|CT_COM|CT_SMC)) != 0)
@@ -676,8 +677,15 @@ int macro_call(Opcode *opc)
         {  /* argument escape? */
             ++inp_ptr;     /* yep, eat it */
             c = end = beg = *inp_ptr; /* and set the new delimiters */
+			altBeg = 0;
         }
-        if (c == beg)
+		if ( c == '\'' && (edmask & ED_Q_MARG) )
+		{
+			altBeg = '\'';
+			beg = altBeg;
+			end = beg;
+		}
+		if ( c == beg )
         {       /* special delimiter character */
             int nest = 0;
             ++inp_ptr;     /* eat it */
@@ -694,7 +702,7 @@ int macro_call(Opcode *opc)
                         goto term_arg;    /* and terminate the argument */
                     }
                 }
-                else if (c == beg)
+                else if ( c == beg)
                 {
                     ++nest;      /* bump the nest level */
                 }
@@ -835,7 +843,7 @@ int op_irp( void )            /* .IRP macro */
     mac_pool += token_value+1;       /* move pointer */
     marg->marg_args = key_pool;      /* pointer to array of ptrs to args */
 
-    while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+    while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
     if (*inp_ptr != ',')
     {       /* next thing must be a comma */
         show_bad_token(inp_ptr,"Expected a comma here. One is assumed", MSG_WARN);
@@ -843,7 +851,7 @@ int op_irp( void )            /* .IRP macro */
     else
     {
         ++inp_ptr;            /* eat the comma */
-        while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+        while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
     }
     if (*inp_ptr != macro_arg_open)
     {        /* next thing must be open brace */
@@ -867,7 +875,7 @@ int op_irp( void )            /* .IRP macro */
         }
         beg = macro_arg_open;
         end = macro_arg_close;
-        while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+        while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
         if (*inp_ptr == '^')
         {        /* arg delim escape? */
             c = *++inp_ptr;        /* yep, eat it and get the next*/
@@ -924,7 +932,7 @@ int op_irp( void )            /* .IRP macro */
             }
         }
         *dst++ = 0;           /* terminate the string */
-        while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+        while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
         if (*inp_ptr == macro_arg_close)
         {        /* terminate on closing brace? */
             ++inp_ptr;         /* yep, eat it */
@@ -1026,7 +1034,7 @@ int op_irpc( void )           /* .IRPC macro */
     mac_pool += token_value+1;       /* move pointer */
     marg->marg_args = key_pool;      /* pointer to array of ptrs to args */
 
-    while (isspace(*inp_ptr))
+    while (myIsspace(*inp_ptr))
 		++inp_ptr; /* skip over white space */
     if (*inp_ptr != ',')
     {       /* next thing must be a comma */
@@ -1035,9 +1043,9 @@ int op_irpc( void )           /* .IRPC macro */
     else
     {
         ++inp_ptr;            /* eat the comma */
-        while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+        while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
     }
-	while (isspace(*inp_ptr))
+	while (myIsspace(*inp_ptr))
 		++inp_ptr; /* skip over white space */
     if (*inp_ptr != macro_arg_open)
     {        /* next thing must be open brace */

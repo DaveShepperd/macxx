@@ -319,12 +319,21 @@ static void dumpStack(ExprsDef_t *exprs, ExprsTerm_t *opers, int numOpers)
 			if ( len < (int)sizeof(eBuf)-1 )
 			{
 				eBuf[len++] = ' ';
-				if ( (term->flags & EXPRS_TERM_FLAG_LOCAL_SYMBOL) )
-					len += snprintf(eBuf+len,sizeof(eBuf)-len,"(local)");
-				if ( (term->flags & EXPRS_TERM_FLAG_REGISTER) )
-					len += snprintf(eBuf+len,sizeof(eBuf)-len,"(register)");
-				if ( (term->flags & EXPRS_TERM_FLAG_COMPLEX) )
-					len += snprintf(eBuf+len,sizeof(eBuf)-len,"(complex)");
+				if ( (term->flags & (EXPRS_TERM_FLAG_LOCAL_SYMBOL|EXPRS_TERM_FLAG_REGISTER|EXPRS_TERM_FLAG_COMPLEX|EXPRS_TERM_FLAG_PRIME)) )
+				{
+					int sLen;
+					len += snprintf(eBuf+len,sizeof(eBuf)-len,"(");
+					sLen = len;
+					 if ( (term->flags & EXPRS_TERM_FLAG_LOCAL_SYMBOL) )
+						 len += snprintf(eBuf+len,sizeof(eBuf)-len,"local");
+					 if ( (term->flags & EXPRS_TERM_FLAG_REGISTER) )
+						 len += snprintf(eBuf+len,sizeof(eBuf)-len,"%sregister", len != sLen ? "+":"");
+					 if ( (term->flags & EXPRS_TERM_FLAG_COMPLEX) )
+						 len += snprintf(eBuf+len,sizeof(eBuf)-len,"%scomplex", len != sLen ? "+":"");
+					 if ( (term->flags & EXPRS_TERM_FLAG_PRIME) )
+						 len += snprintf(eBuf+len,sizeof(eBuf)-len,"%sprime", len != sLen ? "+":"");
+					 len += snprintf(eBuf+len,sizeof(eBuf)-len,")");
+				}
 				len += snprintf(eBuf + len, sizeof(eBuf) - len, "%s", libExprsStringPoolTop(exprs) + term->term.string);
 			}
 			break;
@@ -533,6 +542,11 @@ static ExprsErrs_t handleSymbol(ExprsDef_t *exprs, ExprsTerm_t *term, ExprsStack
 			*cp = 0;
 			endP = exprs->mCurrPtr + strlen(strPtr);
 		}
+	}
+	if ( (exprs->mFlags & EXPRS_FLG_QUOTE_MEANS_PRIME) && *endP == '\'' )
+	{
+		++endP;
+		term->flags |= EXPRS_TERM_FLAG_PRIME;
 	}
 	term->termType = ttype; /* EXPRS_TERM_SYMBOL; */
 	++sPtr->mTermsPool.mNumUsed;

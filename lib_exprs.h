@@ -85,6 +85,7 @@ typedef struct
 #define EXPRS_TERM_FLAG_BYTE			(0x008)	/* term qualified as byte (68k) */
 #define EXPRS_TERM_FLAG_WORD			(0x010)	/* term qualified as word (68k) */
 #define EXPRS_TERM_FLAG_LONG			(0x020)	/* term qualified as long (68k) */
+#define EXPRS_TERM_FLAG_PRIME			(0x040)	/* symbol value is prime register (z80) */
 
 /** ExprsTerm_t - definition of the primitive contents of any
  *  individual term.
@@ -179,12 +180,12 @@ typedef uint8_t ExprsPrecedence_t;
 #define EXPRS_FLG_SANITY			0x00010000	/*! Don't allow more than one bump in pool increments */
 #define EXPRS_FLG_LOCAL_SYMBOLS		0x00020000	/*! Local symbols are expressed via decimalNumber$ (cannot be combined with POST_DOLLAR_HEX) */
 #define EXPRS_FLG_DOT_SYMBOL		0x00040000	/*! Symbols can begin with leading period (.) (forces flag 0x2 = NO_FLOAT) */
-#define EXPRS_FLG_PCNT_IS_REGISTER	0x00080000	/*! A unary '%' means term is a register */
+#define EXPRS_FLG_PCNT_REGISTER		0x00080000	/*! A percent sign signals register type */
 #define EXPRS_FLG_OPEN_IS_END		0x00100000	/*! A lone open expression w/o leading operator is just the end */
 #define EXPRS_FLG_CLOSE_IS_END		0x00200000	/*! A lone close expression is just the end */
 #define EXPRS_FLG_NO_DOUBLE_PLAIN	0x00400000	/*! A second plain term terminates expression parse */
-#define EXPRS_FLG_PCNT_REGISTER		0x00800000	/*! A percent sign signals register type */
-#define EXPRS_FLG_LEN_QUALIFIERS	0x01000000	/*! Term can have length qualifiers (68k mode) */
+#define EXPRS_FLG_LEN_QUALIFIERS	0x00800000	/*! Term can have length qualifiers (68k mode) */
+#define EXPRS_FLG_QUOTE_MEANS_PRIME	0x01000000	/*! Symbol string delimited with a ' indicates prime (for z80) */
 
 /** ExprsDef_t - definition of expression stack internal
  *  variables. With the exception of userArg1 and userArg2

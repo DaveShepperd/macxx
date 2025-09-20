@@ -34,6 +34,7 @@ typedef enum {
 } OPClass;
 
 typedef enum {
+	  DFLZ80	=0x800,			/* include in macz80 */
       DFLGCC	=0x400,			/* parse escape codes in strings */
       DFLPST  	=0x200,			/* .PST directive */
       DFLPARAM	=0x100,			/* pass the opcode struct * as param */

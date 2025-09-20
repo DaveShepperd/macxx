@@ -260,7 +260,7 @@ static OD_sym *op_stabx(char *str, int len, int stabd )
     OD_sym *sym;
     for (i=0;i<(stabd?3:4);++i)
     {
-        while (c = *inp_ptr,isspace(c))
+        while (c = *inp_ptr,myIsspace(c))
             ++inp_ptr; /* skip over white space */
         if (*inp_ptr == ',')
             ++inp_ptr;    /* eat commas */

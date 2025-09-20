@@ -520,8 +520,13 @@ int getcommand(void)
     if (!miser_desc.present)
 		options[QUAL_MISER] = 1;    /* default to miser mode */
 #endif
-	if ( !predef_desc.present || (predef_desc.present && !predef_desc.negated) )
+	if ( !predef_desc.present || !predef_desc.negated )
 		options[QUAL_PREDEFINE] = 1;
+	if ( (macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) )
+	{
+		if ( !qual_tbl[QUAL_Z80ASM].present || !qual_tbl[QUAL_Z80ASM].negated )
+			options[QUAL_Z80ASM] = 1;
+	}
 #endif	/* !defined(MAC_PP) */
 #if 0
 	if ( !ide_desc.present )

@@ -318,7 +318,7 @@ static int op_list_common(int onoff)
 		if ( *inp_ptr == ',' )
 			++inp_ptr;
 		ip = inp_ptr;
-		while ( (isspace(*ip)) && ((cttbl[(int)*ip] & (CT_SMC | CT_EOL)) == 0) )
+		while ( (myIsspace(*ip)) && ((cttbl[(int)*ip] & (CT_SMC | CT_EOL)) == 0) )
 		{
 			++ip;
 		} /* eat ws */
@@ -426,7 +426,7 @@ static int op_list_common(int onoff)
 	}
 	/* eat ws */
 	ip = inp_ptr;
-	while ( ((cttbl[(int)*ip]&CT_EOL) == 0) && (isspace(*ip)) )
+	while ( ((cttbl[(int)*ip]&CT_EOL) == 0) && (myIsspace(*ip)) )
 		++ip;
 	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) != 0 )
 	{
@@ -500,7 +500,7 @@ static int op_list_common(int onoff)
 			if ( (list_stuff[ii].flag&(LIST_BIN|LIST_COM|LIST_LOC|LIST_SEQ|LIST_SRC)) )
 			{
 				/* eat ws */
-				while ( ((cttbl[(int)*inp_ptr]&CT_EOL) == 0) && (isspace(*inp_ptr)) )
+				while ( ((cttbl[(int)*inp_ptr]&CT_EOL) == 0) && (myIsspace(*inp_ptr)) )
 					++inp_ptr;
 				if ( *inp_ptr == '=' || *inp_ptr == '(')
 				{

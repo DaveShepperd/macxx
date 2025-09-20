@@ -19,6 +19,9 @@
 /******************************************************************************
 Change Log
 
+	09-05-2025	- Added ED_MAC_QUOTE to allow for single quote to delimit
+	              macro call arguments (for mac8080 and macz80).
+				  
 	06-12-2024	- Changed support for .string to include handling of 'C'
 				string escape sequences. DMS
 				
@@ -781,9 +784,9 @@ static int op_byte_with_mask(int inpMask)
 	{           /* for all items on line */
 		char cc;
 		cc = *inp_ptr;
-		if ( no_white_space_allowed && isspace(cc) )
+		if ( no_white_space_allowed && myIsspace(cc) )
 			break;
-		while ( isspace(cc) )
+		while ( myIsspace(cc) )
 			cc = *++inp_ptr;
 		if ( (cttbl[(int)cc] & (CT_EOL | CT_SMC)) != 0 )
 			break;
@@ -869,9 +872,9 @@ static int op_word_with_mask(int inpMask)
 	{           /* for all items on line */
 		char cc;
 		cc = *inp_ptr;
-		if ( no_white_space_allowed && isspace(cc) )
+		if ( no_white_space_allowed && myIsspace(cc) )
 			break;
-		while ( isspace(cc) )
+		while ( myIsspace(cc) )
 			cc = *++inp_ptr;
 		if ( (cttbl[(int)cc] & (CT_EOL | CT_SMC)) != 0 )
 			break;
@@ -955,9 +958,9 @@ int op_long(void)
 	{           /* for all items on line */
 		char cc;
 		cc = *inp_ptr;
-		if ( no_white_space_allowed && isspace(cc) )
+		if ( no_white_space_allowed && myIsspace(cc) )
 			break;
-		while ( isspace(cc) )
+		while ( myIsspace(cc) )
 			cc = *++inp_ptr;
 		if ( (cttbl[(int)cc] & (CT_EOL | CT_SMC)) != 0 )
 			break;
@@ -978,7 +981,7 @@ int op_long(void)
 				cc = *++inp_ptr;
 				if ( !no_white_space_allowed )
 				{
-					while ( isspace(cc) )
+					while ( myIsspace(cc) )
 						cc = *++inp_ptr;
 				}
 			}
@@ -1118,12 +1121,12 @@ static uint32_t if_dfndf(DFNDF_sense sense)
 	return (val ? 0 : IFCOND_MSB );
 }
 
-static uint32_t op_ifcondit(char *condition)
+static uint32_t op_ifcondit(const char *condition)
 {
 	int i, l;
 	CCN_nums tcon;
 	uint32_t j;
-	int32_t ans = 0;
+	int32_t ans1 = 0, ans2 = 0;
 	DFNDF_sense dfcond;
 	struct ccn_struct *ccs;
 
@@ -1176,7 +1179,14 @@ static uint32_t op_ifcondit(char *condition)
 			return j ? 0 : IFCOND_MSB; /* 0x80000000; */
 		}
 		exprs(0, &EXP0);       /* get an ABS expression */
-		ans = EXP0SP->expr_value;
+		ans1 = EXP0SP->expr_value;
+		if ( tcon == CCN_EQ2 || tcon == CCN_NE2 )
+		{
+			comma_expected = 1;
+			get_token();
+			exprs(0, &EXP0);       /* get an ABS expression */
+			ans2 = EXP0SP->expr_value;
+		}
 	}
 	switch (tcon)
 	{
@@ -1274,27 +1284,35 @@ static uint32_t op_ifcondit(char *condition)
 			break;
 		}
 	case CCN_EQ:
-		if ( ans == 0 )
+		if ( ans1 == 0 )
 			j = 0;
 		break;
 	case CCN_NE:
-		if ( ans != 0 )
+		if ( ans1 != 0 )
+			j = 0;
+		break;
+	case CCN_EQ2:
+		if ( ans1 == ans2 )
+			j = 0;
+		break;
+	case CCN_NE2:
+		if ( ans1 != ans2 )
 			j = 0;
 		break;
 	case CCN_GT:
-		if ( ans > 0 )
+		if ( ans1 > 0 )
 			j = 0;
 		break;
 	case CCN_GE:
-		if ( ans >= 0 )
+		if ( ans1 >= 0 )
 			j = 0;
 		break;
 	case CCN_LT:
-		if ( ans < 0 )
+		if ( ans1 < 0 )
 			j = 0;
 		break;
 	case CCN_LE:
-		if ( ans <= 0 )
+		if ( ans1 <= 0 )
 			j = 0;
 		break;
 	default:
@@ -1349,7 +1367,7 @@ int op_if(void)
 	return 0;
 }
 
-int op_ifall(Opcode *opc)
+static int op_genifall(Opcode *opc, const char *condit)
 {
 	uint32_t retv = 0;
 
@@ -1365,12 +1383,34 @@ int op_ifall(Opcode *opc)
 		f1_eatit();
 		return 0;
 	}
-	retv = op_ifcondit(opc->op_name + 3);
+	retv = op_ifcondit(condit);
 	++condit_nest;       /* bump the nest level */
 	++condit_level;      /* and the level */
 	condit_word = ((uint32_t)condit_word >> 1) | retv;
 	condit_polarity = ((uint32_t)condit_polarity >> 1) | retv;
 	return 0;
+}
+
+int op_ifall(Opcode *opc)
+{
+	return op_genifall(opc,opc->op_name + 3);
+}
+
+int op_ifallz80(Opcode *opc)
+{
+	return op_genifall(opc,opc->op_name + 2);
+}
+
+int op_ifeqz(Opcode *opc)
+{
+	comma_expected = 0;
+	return op_genifall(opc, "EQ2");
+}
+
+int op_ifneqz(Opcode *opc)
+{
+	comma_expected = 0;
+	return op_genifall(opc, "NE2");
 }
 
 int op_endc(void)
@@ -1539,6 +1579,7 @@ static struct
 	{ "WORD", ED_WRD },
 	{ ".BYTE", ED_BYT },
 	{ ".WORD", ED_WRD },
+	{ "QUOTE_MARG", ED_Q_MARG },
 	{ 0, 0 }
 };
 
@@ -2979,14 +3020,21 @@ void op_purgedefines(struct str_sub *sub)
 			break;
 		}
 		if ( sub->name != 0 )
+		{
 			MEM_free(sub->name);
+			sub->name = NULL;
+		}
 		if ( sub->value != 0 )
+		{
 			MEM_free(sub->value);
+			sub->value = NULL;
+		}
 	}
 	MEM_free((char *)sub_save);
 	return;
 }
 
+#define SHOW_TEXT 1
 #if SHOW_TEXT
 static void showText(const char *title, char *msg)
 {
@@ -2996,7 +3044,7 @@ static void showText(const char *title, char *msg)
 	len = snprintf(tBuf, sizeof(tBuf), "%s", msg);
 	if ( len > 1 && tBuf[len - 1] == '\n' )
 		tBuf[len - 1] = 0;
-	printf("%s'%s'\n", title, tBuf);
+	printf("pass%d - %s'%s'\n", pass, title, tBuf);
 }
 #else
 	#define showText(a,b) do { ; } while (0)
@@ -3011,7 +3059,7 @@ int op_define(void)
 	{
 		strcpy(inp_str, presub_str);
 		inp_ptr = inp_str;
-/*		showText("op_define: input string: ", inp_str); */
+		showText("op_define: input string: ", inp_str);
 		while ( 1 )
 		{
 			tt = get_token();

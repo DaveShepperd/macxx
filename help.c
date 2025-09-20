@@ -33,8 +33,10 @@ typedef struct
 } Help_Value;
 static Help_Value help_symbol_length = {"%d",&max_symbol_length};
 static Help_Value help_opcode_length = {"%d",&max_opcode_length};
-static char help_uppercase_mark[1],help_cmos_mark[1],help_2_pass_mark[1],help_cmos_default[1], help_jerry_mark[1], help_2_pass_default[1];
-static char help_grnhill_mark[1], help_predef_mark[1];
+static char help_uppercase_mark[1], help_jerry_mark[1], help_grnhill_mark[1], help_predef_mark[1];
+static char help_cmos_mark[1], help_cmos_default[1];
+static char help_2_pass_mark[1], help_2_pass_default[1];
+static char help_z80_mark[1], help_z80_default[1];
 
 #define UPC help_uppercase_mark
 
@@ -67,6 +69,10 @@ static const char *help_msg[] = {
 	help_predef_mark,
 	opt_delim,"[no]predefine", "          - Predefine register symbols R0-R7, PC and SP (default)\n",
     opt_delim,"[no]abbreviate","         - Abbreviate error messages\n",
+	help_z80_mark,
+	opt_delim,"[no]z80asm","             - Include z80asm directives\n",
+	help_z80_mark,
+	opt_delim,"[no]verbose","            - Enable more verbose diagnostics (macz80 only at present)\n",
 #else
     opt_delim,"[no]line",  "		- place # line info in output file\n",
 #endif
@@ -88,6 +94,8 @@ static const char *help_msg[] = {
 #else
     opt_delim,"binary ",
 #endif
+	help_z80_default, opt_delim, "noverbose ",
+	help_z80_default, opt_delim,"z80asm ",
 	help_cmos_default,opt_delim,"nocmos ",
     help_cmos_default,opt_delim,"no816 ",
 	help_2_pass_default,opt_delim,"no2_pass ",
@@ -127,7 +135,9 @@ int display_help(void)
         }
         if (help_msg[i] == help_uppercase_mark)
         {
+#if MINGW || MSYS2
             upc = 1;
+#endif
             continue;
         }
         if (help_msg[i] == (char *)&help_symbol_length ||
@@ -186,6 +196,18 @@ int display_help(void)
 		if ( help_msg[i] == help_2_pass_default )
 		{
 			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11)) /* (were_mac65 || were_mac68 || were_mac69) */ )
+				i += 2;		/* skip the delim and option name */
+			continue;
+		}
+		if ( help_msg[i] == help_z80_mark )
+		{
+			if ( !(macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) /* were_macz80 or mac8080 */ )
+				i += 3;		/* skip the delim and option name */
+			continue;
+		}
+		if ( help_msg[i] == help_z80_default )
+		{
+			if ( !(macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) /* were_macz80 or mac8080 */ )
 				i += 2;		/* skip the delim and option name */
 			continue;
 		}

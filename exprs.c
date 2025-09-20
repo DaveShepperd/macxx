@@ -449,6 +449,7 @@ int compress_expr( EXP_stk *exptr )
 					}
 					exptr->base_page_reference |= nxt_exp->base_page_reference;
 					exptr->register_reference |= nxt_exp->register_reference;
+					exptr->symIsPrime |= nxt_exp->symIsPrime;
 					exptr->forward_reference |= nxt_exp->forward_reference;
 					if (nxt_exp->ptr == 1)
 					{
@@ -1379,7 +1380,7 @@ static int do_exprs( int flag, EXP_stk *eps )
 						}
                         ++eps->ptr;
                         ++sexptr;
-                        while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+                        while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
                         break;        /* exit from switch */
                     }
                     if (c == '"')
@@ -1391,7 +1392,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                         expr_ptr->expr_value  = ct;
                         ++eps->ptr;
                         ++sexptr;
-                        while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+                        while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
                         break;        /* exit from switch */
                     }
                     if (c == expr_open)
@@ -1407,7 +1408,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                             bad_token(tkn_ptr,"Unbalanced expression nesting");
                             return(eps->ptr = -1);
                         }
-                        while (++inp_ptr,isspace(*inp_ptr)); /* skip over white space */
+                        while (++inp_ptr,myIsspace(*inp_ptr)); /* skip over white space */
 #if defined(MAC_68K)
                         --eps->paren_cnt; /* found a matching close paren */
                         if (inp_ptr[0] == '.')
@@ -1509,7 +1510,7 @@ static int do_exprs( int flag, EXP_stk *eps )
                 }
 #endif
                 binary_operators:
-                while (isspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
+                while (myIsspace(*inp_ptr)) ++inp_ptr; /* skip over white space */
                 c = *inp_ptr;       /* pickup next char */
                 if ((cttbl[c] & (CT_UOP|CT_ALP|CT_NUM)) == 0)
                 {

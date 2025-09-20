@@ -306,6 +306,7 @@
 			<F N="opcode.c"/>
 			<F N="opcpp.c"/>
 			<F N="opctj.c"/>
+			<F N="opcz80.c"/>
 			<F N="outx.c"/>
 			<F N="pass0.c"/>
 			<F N="pass1.c"/>
@@ -320,6 +321,7 @@
 			<F N="pstas.c"/>
 			<F N="pstpp.c"/>
 			<F N="psttj.c"/>
+			<F N="pstz80.c"/>
 			<F N="psuedo_ops.c"/>
 			<F N="qksort.c"/>
 			<F N="sortsym.c"/>
@@ -364,6 +366,7 @@
 			<F N="psttkn68.h"/>
 			<F N="psttkn69.h"/>
 			<F N="psttkn8080.h"/>
+			<F N="psttknz80.h"/>
 			<F N="qualtbl.h"/>
 			<F N="segdef.h"/>
 			<F N="stab.h"/>
@@ -401,7 +404,7 @@
 				N="Makefile.linux"
 				Type="Makefile"/>
 			<F
-				N="Makefile.linux32"
+				N="Makefile.linux-32"
 				Type="Makefile"/>
 			<F
 				N="Makefile.mingw32"
@@ -410,7 +413,10 @@
 				N="Makefile.msys2"
 				Type="Makefile"/>
 			<F
-				N="Makefile.pi32"
+				N="Makefile.msys2-32"
+				Type="Makefile"/>
+			<F
+				N="Makefile.pi"
 				Type="Makefile"/>
 			<F N="operstuff.dat"/>
 			<F N="qualtbl.dat"/>

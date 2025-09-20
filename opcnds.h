@@ -20,23 +20,25 @@
 #define _OPCNDS_H_ 1
 
 typedef enum {
-   CCN_EQ =0,
-   CCN_NE,
-   CCN_GT,
-   CCN_GE,
-   CCN_LT,
-   CCN_LE,
-   CCN_ABS,
-   CCN_REL,
-   CCN_DIF,
-   CCN_IDN,
-   CCN_DF,
-   CCN_NDF,
-   CCN_B,
-   CCN_NB,
-   CCN_EXIST,
-   CCN_NEXIST,
-   CCN_MAX
+	CCN_EQ =0,
+	CCN_NE,
+	CCN_GT,
+	CCN_GE,
+	CCN_LT,
+	CCN_LE,
+	CCN_ABS,
+	CCN_REL,
+	CCN_EQ2,
+	CCN_NE2,
+	CCN_DIF,
+	CCN_IDN,
+	CCN_DF,
+	CCN_NDF,
+	CCN_B,
+	CCN_NB,
+	CCN_EXIST,
+	CCN_NEXIST,
+	CCN_MAX
 } CCN_nums;
 
 struct ccn_struct {

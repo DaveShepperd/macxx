@@ -25,12 +25,8 @@
 
 struct opcpst {
    char *name;			/* ptr to name */
-   uint16_t value;	/* base value */
-#if !defined(MAC_TJ)
-   OPClass class;		/* opcode class */
-#else
-   unsigned int class;
-#endif
+   uint16_t value;		/* base value */
+   uint32_t class;
 #if defined(MAC_68K)
    int bwl;
 #else

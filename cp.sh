@@ -5,5 +5,5 @@ if [ ! -d /usr/local/m68k-elf/bin ]; then
 	exit 1
 fi
 
-rsync -t mac11 mac65 mac68 mac68k mac69 mac8080 macas macpp mactj /usr/local/m68k-elf/bin
+rsync -t mac11 mac65 mac68 mac68k mac69 mac8080 macas macpp mactj macz80 /usr/local/m68k-elf/bin
 

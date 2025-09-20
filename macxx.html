@@ -102,6 +102,7 @@
   <b>mac69</b>    - For the Motorola 6809 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
   <b>mac8080</b>  - For the Intel 8080 CPU
+  <b>macz80</b>   - For the Zilog Z80 CPU
   <b>mac11</b>    - For the PDP11 CPU (specifically the T11 used by Atari)
   <b>macas</b>    - For the custom Atari Simplified Architecure Processor (ASAP) CPU
   <b>mactj</b>    - For the Atari custom Tom and Jerry DSP's
@@ -122,8 +123,8 @@
 <!--    <tr><th>Valid symbols</th><th>Invalid symbols</th></tr> -->
     <tr><td><a href="#gen_syntax">Statement syntax</a></td><td></td>
     <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-    <tr><td><a href="#dir_dc">DB</a></td><td>Put constants in memory (mac8080 only)</td>
-    <tr><td><a href="#dir_ascix">DC</a></td><td>Put constants in memory (mac8080 only)</td>
+    <tr><td><a href="#dir_dc">DB</a></td><td>Put constants in memory (mac8080/macz80 only)</td>
+    <tr><td><a href="#dir_ascix">DC</a></td><td>Put constants in memory (mac8080/macz80 only)</td>
     <tr><td><a href="#dir_dc">DC.x</a></td><td>Put constants in memory</td>
     <tr><td><a href="#dir_dcb">DCB.x</a></td><td>Fill memory witn constants</td>
     <tr><td><a href="#dir_blkx">DS.x</a></td><td>Allocation storage</td>
@@ -139,7 +140,7 @@
     <tr><td><a href="#dir_defstack">.DEFSTACK</a></td><td>Define a user stack</td>
     <tr><td><a href="#dir_dpage">.DPAGE</a></td><td>65816 specific instruction</td>
     <tr><td><a href="#dir_enabl">.ENABL, .DSABL</a></td><td>Enable/Disable assembler functions</td>
-    <tr><td><a href="#dir_end">END</a></td><td>End of assembly (mac8080 only)</td>
+    <tr><td><a href="#dir_end">END</a></td><td>End of assembly (mac8080/macz80 only)</td>
     <tr><td><a href="#dir_end">.END</a></td><td>End of assembly</td>
     <tr><td><a href="#dir_endm">.ENDM</a></td><td>End of macro</td>
     <tr><td><a href="#dir_endm">.ENDR</a></td><td>End of indefinite repeat blocks</td>
@@ -365,6 +366,7 @@
   <a href="#mac11_specials">MAC11</a>,
     <a href="#mac68k_specials">MAC68K</a>,
     <a href="#mac8080_specials">MAC8080</a>
+    <a href="#macz80_specials">MACZ80</a>
     and <a href="#macas_specials">MACAS</a>
     have predefined user symbols representing the standard 
   register names found in those processors. See the links appendix for specifics.
@@ -544,7 +546,7 @@
   An expression is a collection of one or more terms separated by
   arithmetic operators. There are both unary operators (apply only to a
   single term) and binary operators (apply to two terms). Unlike most
-  other languages, and except for mac8080 (see below), all operators have equal precedence and are evaluated
+  other languages, and except for mac8080 and macz80 (see below), all operators have equal precedence and are evaluated
   from left to right. The order of evaluation can be changed by the use of
   the parenthesis. (In MAC65, MAC68, MAC69 and MAC11, the parenthesis must be substituted with the
   expression brackets "<" and ">"). All terms in an expression and the
@@ -606,7 +608,7 @@
     <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^~</td><td>^~ A</td><td>returns bits 15:8 swapped with bits 7:0 and bits 23-16 with bits 31-24 of A</td></tr>
   </table>  
       <p>
-      MAC8080 is different in that the expression operators do have precedence however, the precedence can be made
+      MAC8080 and MACZ80 is different in that the expression operators do have precedence. However, the precedence can be made
       the same as the others with a '.DSABL PRECEDENCE'. The operator precedences are listed below. Higher numbers
       indicate higher precedence. Terms with equal precedence are processed left to right.
       </p>
@@ -707,7 +709,7 @@
   
   <h4>Register symbols and expressions</h4>
   <p>
-  Some assemblers (such as MAC11, MACAS, MAC68K, MAC8080) may have opcodes that allow
+  Some assemblers (such as MAC11, MACAS, MAC68K, MAC8080 and MACZ80) may have opcodes that allow
   or require registers as operands. They may, in fact, sense the type of
   operand and output object data differently based on whether there is a
   register referenced in the operand. Any valid expression term with a
@@ -724,7 +726,7 @@
       GR11 == %11.  ;global general register 11
     </pre>
   <p>
-  Except in mac8080, register symbols can be global and can even be defined
+  Except in mac8080 and macz80, register symbols can be global and can even be defined
   in other modules. Global register symbols used but not defined in a given module must be
   declared with the .GLOBR pseudo-op. The register attribute of a symbol
   is only significant during the operand processing of an opcode. The
@@ -759,13 +761,13 @@
       .ALIGN 1    ;aligns to 2 byte boundary
       .ALIGN fred ;aligns to whatever FRED resolves to
     </pre>
-  <h3 id="dir_ascix">.ASCII, .ASCIIZ, .ASCIN, .STRING and DC (mac8080 only)</h3>
+  <h3 id="dir_ascix">.ASCII, .ASCIIZ, .ASCIN, .STRING and DC (mac8080/macz80 only)</h3>
     <pre>
       .ASCII [string]
       .ASCIN [string]
       .ASCIZ [string]
       .STRING [string]  ;Same as .ASCIZ
-      DC [string]       ;Same as .ASCIN (mac8080 only)
+      DC [string]       ;Same as .ASCIN (mac8080/macz80 only)
     </pre>
   <p>  
   Deposits a string of ASCII characters beginning at the current location.
@@ -784,7 +786,7 @@
       .ASCIN string ;The last byte of the string has bit 7 set
       .ASCIZ string ;An extra byte of 0 is inserted at the end
                     ;    of the string
-      DC 'text' [, expression [, "more text"]]  ;bit 7 set on last byte (mac8080 only)
+      DC 'text' [, expression [, "more text"]]  ;bit 7 set on last byte (mac8080/macz80 only)
     </pre>
   <p>
   Some examples:
@@ -827,7 +829,7 @@
       DS.B	expression	;(identical to .BLKB)
       DS.W	expression	;(identical to .BLKW)
       DS.L	expression	;(identical to .BLKL)
-      DS expression     ;(identical to .BLKB but mac8080 only)
+      DS expression     ;(identical to .BLKB but mac8080/macz80 only)
   </pre>
     <p>
   These directives allocate space in the current program section. They move the
@@ -896,7 +898,7 @@
   <h3 id="dir_dc">DB and DC.x</h3>
     <pre>
       DC.B  [expression[,expression[,...]]]
-      DB    (same as DC.B but only in mac8080)
+      DB    (same as DC.B but only in mac8080/macz80)
     </pre>
     <p>
   All of the above directives have the same syntax. There can be 0 or more
@@ -1096,7 +1098,7 @@ the stack pointer on a named stack. Examples:
     </p>
     <p>
     The defaults for all assemblers is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed on all of them,
-    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and O_OCTAL, Q_OCTAL, H_HEX, ALTEXP, PRECEDENCE and DOLLAR_PC which are ENABLed on mac8080.
+    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and O_OCTAL, Q_OCTAL, H_HEX, ALTEXP, PRECEDENCE and DOLLAR_PC which are ENABLed on mac8080 and macz80.
     </p>
   <p>
   Some examples:
@@ -1219,6 +1221,8 @@ the stack pointer on a named stack. Examples:
   <h3 id="dir_if">.IF, .IFF and .IFTF</h3>
     <pre>
       .IF keyword,expression  [;comments]
+      .IFEQ2 expression1,expression2 [;comments]
+      .IFNE2 expression1,expression2 [;comments]
       .IFF
       .IFT
       .IFTF
@@ -1242,6 +1246,8 @@ the stack pointer on a named stack. Examples:
     <tr><th>Keyword</th><th>Condition true if:</th></tr>
     <tr><td>EQ</td><td>Zero</td></tr>
     <tr><td>NE</td><td>Not zero</td></tr>
+    <tr><td>EQ2</td><td>expression1 is equal to expression2</td></tr>
+    <tr><td>NE2</td><td>expression1 is not equal to expression2</td></tr>
     <tr><td>G</td><td>Greater than zero</td></tr>
     <tr><td>GT</td><td>Greater than zero</td></tr>
     <tr><td>GE</td><td>Greater or equal to zero</td></tr>
@@ -1263,6 +1269,9 @@ the stack pointer on a named stack. Examples:
     <tr><td>TRUE</td><td>Not zero (same as T)</td></tr>
     <tr><td>FALSE</td><td>Zero (same as F)</td></tr>
   </table>  
+    <p>
+    NOTE: The .IFEQ2 and .IFNE2 are the only two directives that evaluate and compare two expressions.
+    </p>
     <p>
   There are three special case .IF's that use something other than an 
   expression to determine the test. These cases are:
@@ -1335,7 +1344,24 @@ the stack pointer on a named stack. Examples:
     compare. They must match exactly to be considered identical. If
     either or both of the strings are enclosed in macro argument
     delimiters (normally &lt;&gt;'s), then only the contents between the
-    delimters is compared. Some examples:
+    delimters is compared.
+  </p>
+  <p>
+    Here is a list of equivalent directives:
+  </p>
+  <table style="width: 25%">
+    <tr><th>Directive</th><th>Same as:</th></tr>
+    <tr><td>.IFEQ</td><td>.IF EQ</td></tr>
+    <tr><td>.IFNE</td><td>.IF NE</td></tr>
+    <tr><td>.IFGT</td><td>.IF GT</td></tr>
+    <tr><td>.IFGE</td><td>.IF GE</td></tr>
+    <tr><td>.IFLT</td><td>.IF LT</td></tr>
+    <tr><td>.IFLE</td><td>.IF LE</td></tr>
+    <tr><td>.IFNZ</td><td>.IF NE</td></tr>
+    <tr><td>.IFZ</td><td>.IF EQ</td></tr>
+  </table>  
+  <p>
+    Some examples:
   </p>
     <pre>
       .IF eq,FRED            ;true if FRED is 0
@@ -2536,6 +2562,15 @@ the stack pointer on a named stack. Examples:
     <pre>
       FRED ^\.WORD ONE,TWO\,THREE,FOUR
     </pre>
+  <p>  
+  Another option for changing the delimiter is to use <b>.ENABLE QUOTE_MARG</b> (default in mac8080 and macz80).
+  This makes the delimiter a single quote character "'". For example the following is equivalent to the
+  example above:
+  </p>
+    <pre>
+      .ENABLE QUOTE_MARG
+      FRED '.WORD ONE,TWO',THREE,FOUR
+    </pre>
     
   <h3 id="gen_macro_call_arguments">Macro call arguments</h3>
   <pre>  
@@ -2546,7 +2581,8 @@ the stack pointer on a named stack. Examples:
     <p>
   Arguments on a macro call are separated from other arguments by commas
   or white space. Arguments which contain commas or white space must be
-  enclosed in paired macro delimiters (normally &lt;&gt;'s). An up-arrow
+  enclosed in paired macro delimiters (normally &lt;&gt;'s or single quotes if
+      QUOTE_MARG is .ENABL'd). An up-arrow
   construct may be used to change the delimiter characters on an
   individual argument. This would be useful if the argument contains
   argument delimiter characters itself. For example, given the macro
@@ -3070,6 +3106,49 @@ the stack pointer on a named stack. Examples:
     </pre>
   <p>
   </p>
+    <h3 id="macz80_specials">MACZ80 special pseudo-ops and operations</h3>
+    <p>
+        The syntax accepted by macz80 is very nearly that of other z80 assemblers. It follows the opcode and operand
+        definitions as described by the Zilog user manual. The differences will be in pseudo-ops and macros. If macz80 is to be used
+        to assemble older z80 code the microprocessor sources will have to
+        be changed and recoded in macxx syntax. The most notable pseudo-ops will be with 'db' and 'ds' directives
+        which may need to be recoded to fit in macxx's <b>.byte, .ascii</b> and/or <b>.blkb/.blkw</b> directives. Also either shim the
+        Intel equ directive or use a <u><b>.define equ =</b></u> to shim it and the Intel org directive can be changed
+        to <u><b>.=</b></u> or <u><b>$=</b></u> whichever one prefers.
+    </p>
+    <p>
+    The mac8080 assembler starts with a radix preset to 10 (decimal) and the H_HEX and DOLLAR_PC settings enabled. It
+    uses macxx's 'variable is a register' flags and predefines the following registers:
+    </p>
+    <pre>
+    B - preset to 0
+    C - preset to 1
+    D - preset to 2
+    E - preset to 3
+    H - preset to 4
+    L - preset to 5
+    M - preset to 6
+    A - preset to 7
+    BC - preset to 8
+    BD - preset to 9
+    HL - preset to 10
+    SP - preset to 11
+    AF - preset to 12
+    R  - preset to 13
+    I  - preset to 14
+    IX - preset to 15
+    IY - preset to 16
+    </pre>
+    <p>
+    All that means is one is free to:
+    </p>
+    <pre>
+        foo = b     ;Give a meaningful name to what's in B
+        bar = c     ;Ditto for what's in C
+        tmp = a
+        mov tmp,bar ;Just an example
+        add a,foo
+    </pre>
   <h2 id="history">A Little History</h2>
     <!-- <div style="border: 2px solid black;margin:4px;padding: 4px"> -->
     <div>

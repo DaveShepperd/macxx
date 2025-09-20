@@ -1309,7 +1309,7 @@ int op_float(Opcode *opc) {
         char c;
         if (*inp_ptr == ',')
         {    /* if the next item is a comma */
-            while (c = *++inp_ptr,isspace(c)); /* skip over white space */
+            while (c = *++inp_ptr,myIsspace(c)); /* skip over white space */
             u.f = 0.0;     /* get a IEEE 0 */
         }
         else
@@ -1317,10 +1317,10 @@ int op_float(Opcode *opc) {
             get_token();
             if (token_type == EOL) break;
             d = strtod(tkn_ptr, &otp);
-            if (isspace(*otp)) ++otp;  /* eat trailing white space */
+            if (myIsspace(*otp)) ++otp;  /* eat trailing white space */
             if (*otp == ',')
             {     /* if we stopped on a comma */
-                while (c = *++otp,isspace(c)); /* eat comman and skip over white space */
+                while (c = *++otp,myIsspace(c)); /* eat comman and skip over white space */
             }
             else if ((cttbl[(int)*otp]&(CT_SMC|CT_EOL)) == 0)
             {

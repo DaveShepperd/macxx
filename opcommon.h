@@ -113,6 +113,13 @@ void opcinit( void )          /* preloads the opcode table */
     while (dir->name)
     {
         int len;
+#if defined(MAC_Z80)
+		if ( (dir->flags&DFLZ80) && !options[QUAL_Z80ASM] )
+		{
+			++dir;
+			continue;
+		}
+#endif
         if (token_pool_size <= max_opcode_length+1)
             get_token_pool(max_opcode_length+1, 1);
         len = strlen(dir->name);

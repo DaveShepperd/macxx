@@ -133,6 +133,8 @@ static ExprsErrs_t copyTerm(ExprsDef_t *exprs, const ExprsTerm_t *term)
 					{
 						expr_ptr->expr_flags = EXPR_FLG_REG;
 					}
+					if ( (term->flags&EXPRS_TERM_FLAG_PRIME) )
+						eps->symIsPrime = 1;
 				}
 #endif
 				if (sym_ptr->flg_exprs)
@@ -358,7 +360,6 @@ int le_itfc(int flag, EXP_stk *eps)
 		|EXPRS_FLG_NO_ASSIGNMENT
 		|EXPRS_FLG_LOCAL_SYMBOLS
 		|EXPRS_FLG_DOT_SYMBOL
-		|EXPRS_FLG_PCNT_IS_REGISTER
 		|EXPRS_FLG_OPEN_IS_END
 		|EXPRS_FLG_CLOSE_IS_END
 		|EXPRS_FLG_NO_DOUBLE_PLAIN
@@ -381,6 +382,8 @@ int le_itfc(int flag, EXP_stk *eps)
 		flags |= EXPRS_FLG_PCNT_REGISTER;
 	if ( (macxx_name_mask&(MACXX_M_68K)) )
 		flags |= EXPRS_FLG_LEN_QUALIFIERS;
+	if ( (macxx_name_mask&(MACXX_M_Z80)) )
+		flags |= EXPRS_FLG_QUOTE_MEANS_PRIME;
 	libExprsSetFlags(exprsDef, flags, NULL);
 	libExprsSetRadix(exprsDef, current_radix, NULL);
 	libExprsSetVerbose(exprsDef,(edmask&ED_ALTVER) ? 1 : 0,NULL);

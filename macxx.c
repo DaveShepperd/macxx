@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 		int ii;
 		int savedRadix = current_radix;
 		
-		if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080)) )
+		if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080|MACXX_M_Z80)) )
 		{
 			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
 			EXIT_FALSE;
@@ -452,6 +452,18 @@ int main(int argc, char *argv[])
 		string_macros = NULL;
 		current_radix = savedRadix;
 		deleteAllMacros();
+		if (inp_str)
+		{
+			MEM_free(inp_str);
+			inp_str_size = 0;
+			inp_str = NULL;
+			inp_ptr = NULL;
+		}
+		if (presub_str)
+		{
+			MEM_free(presub_str);
+			presub_str = NULL;
+		}
 	}
 #endif
     if (output_files[OUT_FN_LIS].fn_present)

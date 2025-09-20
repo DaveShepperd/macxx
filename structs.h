@@ -180,7 +180,9 @@ typedef struct exp_stk {
    unsigned int paren:1;	/* there's at least 1 paren in the expr */
    unsigned int autodec:1;	/* suggested autodecrement */
    unsigned int autoinc:1;	/* suggester autoincrement */
-   unsigned int :4;		/* round it up to next short */
+   unsigned int open_paren:1; /* expression started with open paren */
+   unsigned int symIsPrime:1; /* symbol in expression is prime (z80 mode) */
+   unsigned int spare:2;	/* round it up to next short */
    int16_t nest;			/* nest level */
 } EXP_stk;
 

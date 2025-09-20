@@ -378,7 +378,7 @@ static int do_operand(Opcode *opc)
 					tst = (amflag & OPENBKT) ? ']' : close_operand;
 					if ( *inp_ptr == tst )
 					{
-						while ( ++inp_ptr,isspace(*inp_ptr) ); /* eat ) and ws */
+						while ( ++inp_ptr,myIsspace(*inp_ptr) ); /* eat ) and ws */
 						if ( *inp_ptr == ',' )
 						{    /* followed with a comma */
 							++inp_ptr;         /* eat the comma */
@@ -439,7 +439,7 @@ static int do_operand(Opcode *opc)
 							bad_token(inp_ptr, "Expected (nn,S),Y syntax");
 							break;
 						}
-						while ( ++inp_ptr,isspace(*inp_ptr) );   /* eat comma and ws */
+						while ( ++inp_ptr,myIsspace(*inp_ptr) );   /* eat comma and ws */
 						get_token();      /* pickup the next item */
 						if ( token_type != TOKEN_strng || token_value != 1 ||
 							 _toupper(*token_pool) != 'Y' )
@@ -458,7 +458,7 @@ static int do_operand(Opcode *opc)
 					if ( *inp_ptr == ',' )
 					{   /* stop on a comma? */
 						char xy;
-						while ( ++inp_ptr,isspace(*inp_ptr) );   /* eat it and ws */
+						while ( ++inp_ptr,myIsspace(*inp_ptr) );   /* eat it and ws */
 						get_token();      /* pick up address mode */
 						xy = *token_pool;
 						xy = _toupper(xy);
@@ -1157,7 +1157,7 @@ void do_opcode(Opcode *opc)
 		{
 			int ct;
 			if ( (opc->op_amode & I) != 0 && *inp_ptr == '#' )
-				while ( ++inp_ptr,isspace(*inp_ptr) );
+				while ( ++inp_ptr,myIsspace(*inp_ptr) );
 			ct = get_token();
 			if ( ct == EOL )
 			{
@@ -1246,7 +1246,7 @@ static int get_cpuarg(void)
 	}
 	else
 	{
-		while ( ++inp_ptr,isspace(*inp_ptr) );
+		while ( ++inp_ptr,myIsspace(*inp_ptr) );
 		comma_expected = 0;
 		radix = current_radix;
 		current_radix = 10;   /* assume decimal mode */
@@ -1584,7 +1584,7 @@ int op_triplet(void)
 		char c;
 		if ( *inp_ptr == ',' )
 		{    /* if the next item is a comma */
-			while ( c = *++inp_ptr,isspace(c) ); /* skip over white space */
+			while ( c = *++inp_ptr,myIsspace(c) ); /* skip over white space */
 			EXP0SP->expr_code = EXPR_VALUE;
 			epv = EXP0SP->expr_value = EXP0.psuedo_value = 0;
 			EXP0.ptr = 1;
@@ -1598,7 +1598,7 @@ int op_triplet(void)
 			epv = EXP0SP->expr_value;
 			if ( *inp_ptr == ',' )
 			{ /* if the next item is a comma */
-				while ( c = *++inp_ptr,isspace(c) ); /* skip over white space */
+				while ( c = *++inp_ptr,myIsspace(c) ); /* skip over white space */
 			}
 			/*        0x00000000            0x00000000 */
 			if ( epv > 0x00FFFFFF || epv < -0x01000000 )
@@ -1638,7 +1638,7 @@ int op_address(void)
 		char c;
 		if ( *inp_ptr == ',' )
 		{    /* if the next item is a comma */
-			while ( c = *++inp_ptr,isspace(c) ); /* skip over white space */
+			while ( c = *++inp_ptr,myIsspace(c) ); /* skip over white space */
 			EXP0SP->expr_code = EXPR_VALUE;
 			epv = EXP0SP->expr_value = EXP0.psuedo_value = 0;
 			EXP0.ptr = 1;
@@ -1653,7 +1653,7 @@ int op_address(void)
 				make_bank_ref(&EXP0);
 			if ( *inp_ptr == ',' )
 			{ /* if the next item is a comma */
-				while ( c = *++inp_ptr,isspace(c) ); /* skip over white space */
+				while ( c = *++inp_ptr,myIsspace(c) ); /* skip over white space */
 			}
 			EXP0.ptr = compress_expr(&EXP0);
 			if ( EXP0.ptr == 1 && EXP0SP->expr_code == EXPR_VALUE )
