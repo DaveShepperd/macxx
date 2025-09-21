@@ -3031,6 +3031,11 @@ void op_purgedefines(struct str_sub *sub)
 		}
 	}
 	MEM_free((char *)sub_save);
+	if (presub_str)
+	{
+		MEM_free(presub_str);
+		presub_str = NULL;
+	}
 	return;
 }
 

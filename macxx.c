@@ -459,11 +459,6 @@ int main(int argc, char *argv[])
 			inp_str = NULL;
 			inp_ptr = NULL;
 		}
-		if (presub_str)
-		{
-			MEM_free(presub_str);
-			presub_str = NULL;
-		}
 	}
 #endif
     if (output_files[OUT_FN_LIS].fn_present)
