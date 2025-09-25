@@ -102,8 +102,9 @@ typedef enum {
 enum misc {
 	OUTPUT_HEX =0,	/* output mode tekhex */
 	OUTPUT_OL,		/* output mode relative ascii */
-	OUTPUT_VLDA,		/* output absolute binary */
+	OUTPUT_VLDA,	/* output absolute binary */
 	OUTPUT_OBJ,		/* output relative binary */
+	OUTPUT_MAX,
 	
 	OUT_FN_OBJ =0,	/* indicies into the output fn_struct table */
 	OUT_FN_LIS,

@@ -23,6 +23,15 @@
 #include "exproper.h"
 #include "vlda_structs.h"
 
+typedef enum
+{
+	OUTEXP_XFER,
+	OUTEXP_ORG,
+	OUTEXP_SYM,
+	OUTEXP_TST,
+	OUTEXP_TAG
+} OutExp_Func_t;
+
 extern FILE *outxsym_fp;    /* global pointer for outx routines */
 extern FILE *outxabs_fp;
 extern char *eline;
@@ -34,7 +43,7 @@ extern void rewind_tmp(void);
 extern int dbg_output( void );
 extern void termobj(uint32_t traddr);
 extern int outbstr(char *from, int len );
-extern char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp );
+extern char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp, OutExp_Func_t func );
 extern void outorg(EXP_stk *eps);
 extern char *outxfer(EXP_stk *eps, FILE *fp);
 extern int outtstexp(char *asc, int alen, EXP_stk *eps);

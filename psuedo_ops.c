@@ -2392,6 +2392,12 @@ int op_psect(void)
 	uint32_t maxlen = 0;
 	SEG_struct *new_seg;
 
+	if ( !options[QUAL_RELATIVE] )
+	{
+		show_bad_token(NULL,"Directive not allowed with command line option NORELATIVE selected", MSG_ERROR);
+		f1_eatit();
+		return 1;
+	}
 	if ( (new_seg = get_segname(".REL.", &new_one)) == 0 )
 	{
 		return 1;
@@ -2522,6 +2528,12 @@ int op_csect(void)
 {
 	int new_one, flags = 0;
 	SEG_struct *new_seg;
+	if ( !options[QUAL_RELATIVE] )
+	{
+		show_bad_token(NULL,"Directive not allowed with command line option NORELATIVE selected", MSG_ERROR);
+		f1_eatit();
+		return 1;
+	}
 	new_seg = get_segname(".REL.", &new_one);
 	if ( new_seg == 0 )
 		return 1;
@@ -2540,6 +2552,12 @@ int op_bsect(void)
 {
 	int new_one, flags = 0;
 	SEG_struct *new_seg;
+	if ( !options[QUAL_RELATIVE] )
+	{
+		show_bad_token(NULL,"Directive not allowed with command line option NORELATIVE selected", MSG_ERROR);
+		f1_eatit();
+		return 1;
+	}
 	new_seg = get_segname(".BASE.", &new_one);
 	if ( new_seg == 0 )
 		return 1;

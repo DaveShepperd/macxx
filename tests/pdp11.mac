@@ -1,0 +1,103 @@
+abs == 6666
+off == 1234
+imm == 7777
+
+.macro op1reg op
+	.irp reg,<r0,r1,r2,r3,r4,r5,sp,pc>
+	op reg
+	.endr
+.endm
+.macro op1dest op nor0=0
+   .irp reg,<r0,r1,r2,r3,r4,r5,sp,pc>
+	.if eq,nor0
+	op reg
+	.endc
+	op (reg)
+	op (reg)+
+	op @(reg)+
+	op -(reg)
+	op @-(reg)
+	op off(reg)
+	op @off(reg)
+	.endr
+.endm
+
+start:
+; 00000 - 00006
+	halt
+	wait
+	rti
+	bpt
+	iot
+	reset
+	rtt
+; 0001xx - 000177
+	op1dest jmp
+; 00020x - 000207
+	op1reg rts
+; 000210 - 000227
+; 00023x - 000237
+	spl 0
+	spl 1
+	spl 2
+	spl 3
+	spl 4
+	spl 5
+	spl 6
+	spl 7
+; 000240 - 000277
+	nop
+	clc
+	clv
+	clz
+	cln
+	ccc
+	sec
+	sev
+	sez
+	sen
+	scc
+; 000300 - 000377
+	op1dest swab
+; 003400 - 003777 Branches
+	br  fwd
+	bne fwd
+	beq fwd
+	bge fwd
+	blt fwd
+	bgt fwd
+	ble fwd
+fwd:
+; 004000 - 004777 jsr
+	op1dest jsr nor0=1
+; 005000 - 005077 clr
+	op1dest clr
+; 005100 - 005177 com
+	op1dest com
+; 005200 - 005277 inc
+	op1dest inc
+; 005300 - 005377 dec
+	op1dest dec
+; 005400 - 005477 neg
+	op1dest neg
+; 005500 - 005577 adc
+	op1dest adc
+; 005600 - 005677 sbc
+	op1dest sbc
+; 005700 - 005777 tst
+	op1dest tst
+; 006000 - 006077 ror
+	op1dest ror
+; 006100 - 006177 rol
+	op1dest rol
+; 006200 - 006277 asr
+	op1dest asr
+; 006300 - 006377 asl
+	op1dest asl
+; 006400 - 006477 mark
+; 006500 - 006577 mfpi
+; 006600 - 006677 mtpi
+	op1dest mtpi
+; 006700 - 006777 sxt
+	op1dest sxt
+

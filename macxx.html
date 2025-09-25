@@ -90,14 +90,14 @@
   assembler. The current C version is a 1.5 pass assembler meaning it makes one pass through the source code producing both a listing and
   an intermediate internally maintained binary object "file". Once all the souce has been parsed, it makes another pass through its internally
   maintained object "file" resolving all expressions it is able to and producing the actual binary or ASCII object file. As of version 11.??
-  a new command line -option of -2_PASS can be used to force the assembler to run in a full 2 pass mode. But that option is only available for mac65,
+  a new command line option of <a href="#CMD_2_PASS">2_PASS</a> can be used to force the assembler to run in a full 2 pass mode. But that option is only available for mac65,
   mac68 and mac69.
   </p>
   <p> The macxx sources produce a unique macro assembler for the following processors:
   </p>
   <pre>
   <b>macpp</b>    - A macro pre-processor; no CPU; it works similar to the C language's CPP.
-  <b>mac65</b>    - For the MOS Technology 6502, 65C02 and 65816 CPU's
+  <b>mac65</b>    - For the MOS Technology 6502 <!--and 65C02 CPU's-->CPU
   <b>mac68</b>    - For the Motorola 6800 CPU
   <b>mac69</b>    - For the Motorola 6809 CPU
   <b>mac68k</b>   - For the Motorola 68000 and 68010 CPU
@@ -119,15 +119,23 @@
   </em>
   </p>
   <h2>Table of contents</h2>
-  <table style="width: 35%">
-<!--    <tr><th>Valid symbols</th><th>Invalid symbols</th></tr> -->
-    <tr><td><a href="#gen_syntax">Statement syntax</a></td><td></td>
+  <table style="width: 50%">
+    <tr><th>Directive</th><th>Description</th></tr>
+    <tr><td><a href="#gen_syntax">Statement syntax</a></td><td>General statement syntax</td></tr>
+    <tr><td><a href="#gen_label">Labels</a></td><td>Labels versus symbols</td></tr>
+    <tr><td><a href="#Direct_assignments">Symbols</a></td><td>Symbols versus labels</td></tr>
     <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-    <tr><td><a href="#dir_dc">DB</a></td><td>Put constants in memory (mac8080/macz80 only)</td>
-    <tr><td><a href="#dir_ascix">DC</a></td><td>Put constants in memory (mac8080/macz80 only)</td>
+    <tr><td><a href="#dir_dc">DB</a></td><td>Put constants in memory (mac8080 and macz80 only)</td>
+    <tr><td><a href="#dir_ascix">DC</a></td><td>Put constants in memory (mac8080 and macz80 only)</td>
     <tr><td><a href="#dir_dc">DC.x</a></td><td>Put constants in memory</td>
     <tr><td><a href="#dir_dcb">DCB.x</a></td><td>Fill memory witn constants</td>
     <tr><td><a href="#dir_blkx">DS.x</a></td><td>Allocation storage</td>
+    <tr><td><a href="#Direct_assignments">EQU</a></td><td>Define symbol (mac8080 and macz80 only; same as = )</td>
+    <tr><td><a href="#Direct_assignments">DEFL</a></td><td>Define symbol (mac8080 and macz80 only; same as := )</td>
+    <tr><td><a href="#dir_blkx">DEFS</a></td><td>Define storage (mac8080 and macz80 only; see .blkb)</td>
+    <tr><td><a href="#dir_dcb">DEFB</a></td><td>Put constant bytes in memory (mac8080 and macz80 only)</td>
+    <tr><td><a href="#dir_byte">DEFW</a></td><td>Put constant words in memory (mac8080 and macz80 only)</td>
+    <tr><td><a href="#dir_if">IFEQ, IFNEQ, IFDEF, IDNDEF, ELSE, ENDIF</a></td><td>Conditional assembly (mac8080 and macz80 only)</td>
     <tr><td><a href="#dir_globl">XDEF, XREF</a></td><td>Assign symbol(s) as being global in scope</td>
     <tr><td><a href="#dir_byte">.ADDRESS</a></td><td>Put constants in memory</td>
     <tr><td><a href="#dir_align">.ALIGN</a></td><td>Align location counter</td>
@@ -135,23 +143,24 @@
     <tr><td><a href="#dir_psect">.ASECT, .BSECT, .CSECT</a></td><td>Set program section</td>
     <tr><td><a href="#dir_blkx">.BLKx</a></td><td>Allocation of storage</td>
     <tr><td><a href="#dir_byte">.BYTE, .WORD, .LONG</a></td><td>Put constants in memory</td>
-    <tr><td><a href="#dir_cpu">.CPU</a></td><td>65816 specific instruction</td>
+    <!-- <tr><td><a href="#dir_cpu">.CPU</a></td><td>65816 specific instruction</td> -->
     <tr><td><a href="#dir_define">.DEFINE, .UNDEFINE</a></td><td>Define/Undefine some replacement text</td>
     <tr><td><a href="#dir_defstack">.DEFSTACK</a></td><td>Define a user stack</td>
-    <tr><td><a href="#dir_dpage">.DPAGE</a></td><td>65816 specific instruction</td>
+    <!-- <tr><td><a href="#dir_dpage">.DPAGE</a></td><td>65816 specific instruction</td> -->
     <tr><td><a href="#dir_enabl">.ENABL, .DSABL</a></td><td>Enable/Disable assembler functions</td>
-    <tr><td><a href="#dir_end">END</a></td><td>End of assembly (mac8080/macz80 only)</td>
+    <tr><td><a href="#dir_end">END</a></td><td>End of assembly (mac8080 and macz80 only)</td>
     <tr><td><a href="#dir_end">.END</a></td><td>End of assembly</td>
     <tr><td><a href="#dir_endm">.ENDM</a></td><td>End of macro</td>
     <tr><td><a href="#dir_endm">.ENDR</a></td><td>End of indefinite repeat blocks</td>
-    <tr><td><a href="#dir_endc">.ENDC</a></td><td>End of conditional assembly block</td>
+    <tr><td><a href="#dir_if">.ENDC</a></td><td>End of conditional assembly block</td>
+    <tr><td><a href="#dir_if">ENDIF</a></td><td>End of conditional assembly block (mac8080 and macz80 only)</td>
     <tr><td><a href="#dir_error">.ERROR</a></td><td>Signal an assembly error</td>
     <tr><td><a href="#dir_escape">.ESCAPE</a></td><td>Set various escape characters</td>
     <tr><td><a href="#dir_even">.EVEN</a></td><td>Align location counter</td>
     <tr><td><a href="#dir_float">.FLOAT</a></td><td>Tom&Jerry specific instruction</td>
     <tr><td><a href="#dir_getpointer">.GETPOINTER</a></td><td>Get a user's stack pointer</td>
     <tr><td><a href="#dir_globl">.GLOBx</a></td><td>Assign symbol(s) as being global in scope</td>
-    <tr><td><a href="#dir_if">.IF, .IFx, .IIF</a></td><td>Conditional assembly</td>
+    <tr><td><a href="#dir_if">.IF, .IFx, .IFF, .IFT, .IFTF, .ENDC, .IIF</a></td><td>Conditional assembly</td>
     <tr><td><a href="#dir_include">.INCLUDE</a></td><td>Include another file during assembly starting with this line</td>
     <tr><td><a href="#dir_irp">.IRP, .IRPC</a></td><td>Indefinite repeat blocks</td>
     <tr><td><a href="#dir_ldlit">.LDLIT</a></td><td>ASAP specific instruction</td>
@@ -196,6 +205,18 @@
     <tr><td><a href="#gen_macros">Macros</a></td><td>How to use macros</td>
     <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
     <tr><td><a href="#gen_operating">Operating MACXX</a></td><td>How to run MACXX</td>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><a href="#Appendix">Appendix</a></td><td></td>
+    <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><a href="#macxx_specials">MACXX specials</a></td><td>Some specifics to several macxx assemblers</td>
+    <tr><td><a href="#mac65_specials">MAC65 specials</a></td><td>Unique features to mac65</td>
+    <tr><td><a href="#macpp_specials">MACPP specials</a></td><td>Unique features to macpp</td>
+    <tr><td><a href="#mac68k_specials">MAC68K specials</a></td><td>Unique features to mac68k</td>
+    <tr><td><a href="#macas_specials">MACAS specials</a></td><td>Unique features to macas</td>
+    <tr><td><a href="#mac11_specials">MAC11 specials</a></td><td>Unique features to mac11</td>
+    <tr><td><a href="#mactj_specials">MACTJ specials</a></td><td>Unique features to mactj</td>
+    <tr><td><a href="#mac8080_specials">MAC8080 specials</a></td><td>Unique features to mac8080</td>
+    <tr><td><a href="#macz80_specials">MACZ80 specials</a></td><td>Unique features to macz80</td>
     <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
     <tr><td><a href="#history">History</a></td><td>A bit of history</td>
   </table>
@@ -361,6 +382,10 @@
   <p>
   User defined symbols are either internal or external (global). All user 
   defined symbols are internal unless explicitly declared otherwise.
+  </p>
+  <p>
+  Look <a href="#Direct_assignments">HERE</a> for details and examples
+  on how to assign symbol values.
   </p>
   <p>
   <a href="#mac11_specials">MAC11</a>,
@@ -658,7 +683,7 @@
       and the whole result added to ABC+0x2233
     </pre>
   
-  <h4>Direct assignment</h4>
+  <h4 id="Direct_assignments">Direct assignment</h4>
   <p>
   A direct assignment statement associates a symbol with a value (or an
   expression). When a direct assignment statement is used for the first 
@@ -670,7 +695,10 @@
   The general format is:
   </p>
     <pre>
-      symbol = expression	;comments
+      symbol = expression	  ;comments
+      symbol == expression  ;make the symbol global too
+      symbol := expression  ;set the symbol as unchangeable in later assembly
+      symbol :== expression ;set unchangeable and also global
     </pre>
   <p>  
   Symbols take on the relocatable or absolute attributes of their defining
@@ -706,7 +734,6 @@
         B = C
         C = A
     </pre>
-  
   <h4>Register symbols and expressions</h4>
   <p>
   Some assemblers (such as MAC11, MACAS, MAC68K, MAC8080 and MACZ80) may have opcodes that allow
@@ -1043,33 +1070,33 @@ the stack pointer on a named stack. Examples:
     <table style="width: 50%">
     <tr><th>Keyword</th><th>Function</th></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;ABS</td><td>Obsolete. Has no effect.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;AMA</td><td>See <a href="#AMA_ED_opt">HERE</a>.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;ALTEXP</td><td>Use the alternate expression parser.</td></tr>
+    <tr id="EN_AMA"><td>&nbsp;&nbsp;&nbsp;AMA</td><td>See <a href="#AMA_ED_opt">HERE</a>.</td></tr>
+    <tr id="EN_ALTEXP"><td>&nbsp;&nbsp;&nbsp;ALTEXP</td><td>Use the alternate expression parser.</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;BYTE</td><td>Undefined opcodes are assumed to be arguments to a .BYTE directive.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;CPU_CHECK</td><td>Enables checks for behavior on different PDP11 CPU's. Specific to MAC11 only.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>Allows hex numbers to be expressed via trailing '$' (makes it compatible with Motorola assembler).</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;DOLLAR_PC</td><td>Allows single dollar sign '$' to represent current location counter (same as '.')</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;DOT_LOCAL</td><td>Enables all variables prefixed with double dot to be local. (I.e. <b>..foo</b> would be local) </td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared global. Use with care. </td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;HEX_LOCAL</td><td>Allows local symbols to be expressed in hexidecimal instead of decimal.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;H_HEX</td><td>Allows hex numbers to be expressed via trailing 'H' or 'h' (makes it compatible with various other assemblers).</td></tr>
+    <tr id="EN_BYTE"><td>&nbsp;&nbsp;&nbsp;.BYTE</td><td>Same as BYTE above.</td></tr>
+    <tr id="EN_CPU_CHECK"><td>&nbsp;&nbsp;&nbsp;CPU_CHECK</td><td>Enables checks for behavior on different PDP11 CPU's. Specific to MAC11 only.</td></tr>
+    <tr id="EN_CR"><td>&nbsp;&nbsp;&nbsp;CR</td><td>Enables carriage returns ('\r') in the source stream otherwise they terminate the line. <font color="red">WARNING:</font> Enabling this function will probably break the .IF BLANK and IDENTICAL conditionals.</td></tr>
+    <tr id="EN_DOLLAR_HEX"><td>&nbsp;&nbsp;&nbsp;DOLLAR_HEX</td><td>Allows hex numbers to be expressed via trailing '$' (makes it compatible with Motorola assembler).</td></tr>
+    <tr id="EN_DOLLAR_PC"><td>&nbsp;&nbsp;&nbsp;DOLLAR_PC</td><td>Allows single dollar sign '$' to represent current location counter (same as '.')</td></tr>
+    <tr id="EN_DOT_LOCAL"><td>&nbsp;&nbsp;&nbsp;DOT_LOCAL</td><td>Enables all variables prefixed with double dot to be local. (I.e. <b>..foo</b> would be local) </td></tr>
+    <tr id="EN_GBL"><td>&nbsp;&nbsp;&nbsp;GBL</td><td>Causes all undefined symbols to automatically be declared global. Use with care. </td></tr>
+    <tr id="EN_LOCAL"><td>&nbsp;&nbsp;&nbsp;HEX_LOCAL</td><td>Allows local symbols to be expressed in hexidecimal instead of decimal.</td></tr>
+    <tr id="EN_H_HEX"><td>&nbsp;&nbsp;&nbsp;H_HEX</td><td>Allows hex numbers to be expressed via trailing 'H' or 'h' (makes it compatible with various other assemblers).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;LC</td><td>Obsolete. Has no effect.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;M8085</td><td>Enable the 12 extra instructions in the 8085 CPU (mac8080 only).</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;MOS</td><td>See <a href="#MOS_ED_opt">HERE</a>.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;O_OCTAL</td><td>Allows octal numbers to be expressed via trailing 'O' or 'o' (makes it compatible with Intel assembler).</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;Q_OCTAL</td><td>Same as O_OCTAL above.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;PRECEDENCE</td><td>Enable expression operator precedence. Only works if ALTEXP is also enabled.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;SIMPLE</td><td>Enable this to neuter the complex expression handler in .ifdf/.ifndf directives (makes it compatible with RT11 macxx).</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;TRUNCATE_CHECK</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
+    <tr id="EN_LOWER_CASE"><td>&nbsp;&nbsp;&nbsp;LOWER_CASE</td><td>Makes all symbols and labels case sensitive.</td></tr>
+    <tr id="EN_LSB"><td>&nbsp;&nbsp;&nbsp;LSB</td><td>Control local symbol block. <a href="#gen_localSymbols">DETAILS</a></td></tr>
+    <tr id="EN_M68"><td>&nbsp;&nbsp;&nbsp;M68</td><td>Causes words and longs to be output big endian.</td></tr>
+    <tr id="EN_M8085"><td>&nbsp;&nbsp;&nbsp;M8085</td><td>Enable the 12 extra instructions in the 8085 CPU (mac8080 only).</td></tr>
+    <tr id="EN_MOS"><td>&nbsp;&nbsp;&nbsp;MOS</td><td>See <a href="#MOS_ED_opt">HERE</a>.</td></tr>
+    <tr id="EN_O_OCTAL"><td>&nbsp;&nbsp;&nbsp;O_OCTAL</td><td>Allows octal numbers to be expressed via trailing 'O' or 'o' (makes it compatible with Intel assembler).</td></tr>
+    <tr id="EN_Q_OCTAL"><td>&nbsp;&nbsp;&nbsp;Q_OCTAL</td><td>Same as O_OCTAL above.</td></tr>
+    <tr id="EN_PRECEDENCE"><td>&nbsp;&nbsp;&nbsp;PRECEDENCE</td><td>Enable expression operator precedence. Only works if ALTEXP is also enabled.</td></tr>
+    <tr id="EN_SIMPLE"><td>&nbsp;&nbsp;&nbsp;SIMPLE</td><td>Enable this to neuter the complex expression handler in .ifdf/.ifndf directives (makes it compatible with RT11 macxx).</td></tr>
+    <tr id="EN_TRUNCATE_CHECK"><td>&nbsp;&nbsp;&nbsp;TRUNCATE_CHECK</td><td>Enables/Disables byte/word truncation error <b>checking</b> and <b>reporting</b>.</td></tr>
+    <tr id="EN_USD"><td>&nbsp;&nbsp;&nbsp;USD</td><td>Causes all divides in both local and global expressions
       to be computed using unsigned arithmetic (UnSigned Divide).</td></tr>
     <tr><td>&nbsp;&nbsp;&nbsp;WORD</td><td>Undefined opcodes are assumed to be arguments to a .WORD directive.</td></tr>
-    <tr><td>&nbsp;&nbsp;&nbsp;.WORD</td><td>Same as WORD above.</td></tr>
+    <tr id="EN_WORD"><td>&nbsp;&nbsp;&nbsp;.WORD</td><td>Same as WORD above.</td></tr>
     </table>
     <p id="MOS_ED_opt">
   The following keyword is specific just to MAC65.
@@ -1098,7 +1125,14 @@ the stack pointer on a named stack. Examples:
     </p>
     <p>
     The defaults for all assemblers is DISABLed except for <b><u>TRUNCATE</u></b> which is ENABLed on all of them,
-    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and O_OCTAL, Q_OCTAL, H_HEX, ALTEXP, PRECEDENCE and DOLLAR_PC which are ENABLed on mac8080 and macz80.
+    <b><u>M68</u></b> which is ENABLed on MAC68, MAC69 and MAC68k and
+     <a href="#EN_O_OCTAL">O_OCTAL</a>,
+     <a href="#EN_Q_OCTAL">H_HEX</a>,
+     <a href="#EN_ALTEXP">ALTEXP</a>,
+     <a href="#PRECEDENCE">PRECEDENCE</a>
+     and
+     <a href="#DOLLAR_PC">DOLLAR_PC</a>
+     which are ENABLed on mac8080 and macz80.
     </p>
   <p>
   Some examples:
@@ -1121,18 +1155,6 @@ the stack pointer on a named stack. Examples:
   no transfer address will be delivered to LLF. Except for the
   transfer address argument, the directive is ignored by MACxx and
   assembly continues until end of file. The directive is not required. 
-    </p>
-  <h3 id="dir_endc">.ENDC</h3>
-    <pre>
-      .ENDC
-    </pre>
-  <p>
-  Declares the end of a conditional block. There must be exactly one 
-  matching .IF directive preceding this directive. An error will be
-  displayed if a .ENDC directive is encountered outside a conditional 
-  block or if a conditional block is opened and not closed with a .ENDC 
-  before an end of file is detected. No arguments are required or allowed 
-  on this directive.
     </p>
   <h3 id="dir_endm">.ENDM and .ENDR</h3>
     <pre>
@@ -1218,7 +1240,7 @@ the stack pointer on a named stack. Examples:
   .GLOBB). Any number of symbols may be listed separated with white space
   or commas. 
     </p>
-  <h3 id="dir_if">.IF, .IFF and .IFTF</h3>
+  <h3 id="dir_if">.IF, .IFF, .IFT, .IFTF and .ENDC</h3>
     <pre>
       .IF keyword,expression  [;comments]
       .IFEQ2 expression1,expression2 [;comments]
@@ -1226,6 +1248,7 @@ the stack pointer on a named stack. Examples:
       .IFF
       .IFT
       .IFTF
+      .ENDC
     </pre>
   <p>
   This is the general case conditional directive. It opens a conditional
@@ -1239,6 +1262,12 @@ the stack pointer on a named stack. Examples:
   levels within a single macro level. That is, each level of macro call
   (including the 0th level) has 32 levels of conditional nesting. 
   The keyword determines what type of condition is to be tested.
+    </p>
+    <p>
+    NOTE: The following one or two letter keywords can be appended to
+    the .IF (i.e. <b>.IFEQ expr</b> vs. <b>.IF EQ, expr</b>).
+    </p>
+    <p>
     For the following keywords, the expression must resolve to an absolute value:
     </p>
   
@@ -1360,6 +1389,29 @@ the stack pointer on a named stack. Examples:
     <tr><td>.IFNZ</td><td>.IF NE</td></tr>
     <tr><td>.IFZ</td><td>.IF EQ</td></tr>
   </table>  
+    <p>
+    The following directives are only available in mac8080 and macz80:
+    </p>
+  <table style="width: 25%">
+    <tr><th>Keyword</th><th>Equivalent to:</th></tr>
+    <tr><td>IFEQ</td><td>.IFEQ2</td></tr>
+    <tr><td>IFNEQ</td><td>.IFNE2</td></tr>
+    <tr><td>IDFDEF</td><td>.IFDF</td></tr>
+    <tr><td>IDFNDEF</td><td>.IFNDF</td></tr>
+    <tr><td>ELSE</td><td>.IFF</td></tr>
+    <tr><td>ENDIF</td><td>.ENDC</td></tr>
+  </table>  
+    <pre>
+      .ENDC
+    </pre>
+  <p>
+  Declares the end of a conditional block. There must be exactly one 
+  matching .IF directive preceding this directive. An error will be
+  displayed if a .ENDC directive is encountered outside a conditional 
+  block or if a conditional block is opened and not closed with a .ENDC 
+  before an end of file is detected. No arguments are required or allowed 
+  on this directive.
+    </p>
   <p>
     Some examples:
   </p>
@@ -1381,6 +1433,24 @@ the stack pointer on a named stack. Examples:
       .IFT
       ...still more          ;stuff to do if flag is 0
       .ENDC                  ;done with conditional
+      .IFEQ2 expr1, expr2    ;Is true if expr1 equals expr2
+      ...
+      .ENDC
+      ;
+      ; In the assemblers that allow 'C' type expressions, one could
+      ; use a simpler test:
+      .if true, expr1 &lt; expr2  ;if expr1 is less than expr2
+      .if true, expr1 &lt;= expr2 ;if expr1 is less than or equal to expr2
+      .if true, expr1 == expr2  ;if expr1 is equal to expr2
+      .if true, expr1 != expr2 ;if expr1 is not equal to expr2
+      ;...etc
+      ;
+      ; In mac8080 and macz80, these are also available
+      IFEQ  expr1,expr2
+      ...
+      ELSE
+      ...
+      ENDIF
     </pre>
   <h3 id="dir_iif">.IIF</h3>
         <pre>
@@ -1806,8 +1876,8 @@ the stack pointer on a named stack. Examples:
     </pre>
     <p>
     The expression must resolve to an absolute <b>n</b> where 0&lt;<b>n</b>&lt;max_outputs
-    and max_outputs is the number of <b>OUT</b> command line options supplied. This
-    directive only applies to MACPP. Any number of <b>OUT</b> command line options
+    and max_outputs is the number of <a href="#CMD_OUTPUT">OUT</a> command line options supplied. This
+    directive only applies to MACPP. Any number of <a href="#CMD_OUTPUT">OUT</a> command line options
     are accepted. They index according to their placement on the command line: 0 is
     the first, 1 is the second, etc. For example:
     </p>
@@ -2708,7 +2778,7 @@ the stack pointer on a named stack. Examples:
       MACxx [options...] file(s)... [options...]
     </pre>
   <p>  
-  where <u>MACxx</u> is the name of the program (MACPP, MAC65, MAC68, MAC68K, MAC682K, MAC69, MAC11, MACAS or MACTJ),
+  where <u>MACxx</u> is the name of the program (mac11, mac65, mac68, mac68k, mac69, mac8080, macas, macpp, mactj or macz80),
   <u>file(s)</u> represents one or more files separated with whitespace or 
   commas and options represents one of the options itemized below. The 
   options and filenames can appear on the command line in any order.
@@ -2718,31 +2788,41 @@ the stack pointer on a named stack. Examples:
   as whitespace. The text of the option can be abbreviated to the fewest
       number of characters that will make it unique. The valid options are:
   <p>
+A,    1,  0,  0,  0,  0,  1, QUAL_Z80ASM,      "Z80ASM",             0,          /* Include z80asm directives (macz80 only) */
   <table style="width: 50%">
     <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
-    <tr><td>2_PASS</td><td>No</td><td>All except MACPP; Assembler becomes a 2.5 pass instead of the normal 1.5 pass.</td></tr>
-    <tr><td>ABBREV</td><td>No</td><td>Abbreviate the error messages</td></tr>
-    <tr><td>ASSEM="string"</td><td>No</td><td><u>string</u> is a line to be assembled before anything else. Any number of these may be used</td></tr>
-    <tr><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
-    <tr><td>BOFF</td><td>Yes</td><td>MACAS only; Include a branch offset test in the output.</td></tr>
-    <tr><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
-    <tr><td>GREENHILLS</td><td>No</td><td>MAC68K and MAC682K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
-    <tr><td>IDE_SYNTAX</td><td>No</td><td>Sets output format of any error messages such that they may be interpreted by an Integrated Development Environment.</td></tr>
-    <tr><td>IGNORE</td><td>No</td><td>Ignore errors on lines having unsupported assembler directives.</td></tr>
-    <tr><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
-    <tr><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
-    <tr><td>LIST</td><td>No</td><td>Create a listing output file</td></tr>
+    <tr id="CMD_2_PASS"><td>2_PASS</td><td>No</td><td>Assembler becomes a 2.5 pass instead of the normal 1.5 pass (Not in MACPP, MAC68K, MACAS and MACTJ).</td></tr>
+    <!-- <tr id="CMD_816"><td>816</td><td>No</td><td>Enables opcodes for 65816 (mac65 only)</td></tr> -->
+    <tr id="CMD_ABBREV"><td>ABBREV</td><td>No</td><td>Abbreviate the error messages</td></tr>
+    <tr id="CMD_ASSEM"><td>ASSEM="string"</td><td>No</td><td><u>string</u> is a line to be assembled before anything else. Any number of these may be used</td></tr>
+    <tr id="CMD_BINARY"><td>BINARY</td><td>No</td><td>Create output object file in binary format (selects filetype of .ob)</td></tr>
+    <tr id="CMD_BOFF"><td>BOFF</td><td>Yes</td><td>MACAS only; Include a branch offset test in the output.</td></tr>
+    <tr id="CMD_CROSS"><td>CROSS_REFERENCE</td><td>No</td><td>Does nothing at present</td></tr>
+    <!--<tr id="CMD_CMOS"><td>CMOS</td><td>No</td><td>Enables opcodes for 65C02 (mac65 only)</td></tr>-->
+    <tr id="CMD_DEBUG"><td>DEBUG</td><td>No</td><td>Places source code debug information in the object file.</td></tr>
+    <tr id="CMD_GREENHILLS"><td>GREENHILLS</td><td>No</td><td>MAC68K only; selects the instruction syntax output by the Greenhills C compiler</td></tr>
+    <tr id="CMD_IDE_SYNTAX"><td>IDE_SYNTAX</td><td>No</td><td>Sets output format of any error messages such that they may be interpreted by an Integrated Development Environment.</td></tr>
+    <tr id="CMD_IGNORE"><td>IGNORE</td><td>No</td><td>Ignore errors on lines having unsupported assembler directives.</td></tr>
+    <tr id="CMD_INCLUDE"><td>INCLUDE=path</td><td>No</td><td>Set a <u>path</u> to look for .INCLUDE'd files (any number of these may be used)</td></tr>
+    <tr id="CMD_JERRY"><td>JERRY</td><td>No</td><td>MACTJ only; Includes opcodes for the Atari Jerry DSP. If not present, it includes opcodes for the Atari Tom DSP.</td></tr>
+    <tr id="CMD_LINE"><td>LINE</td><td>No</td><td>Include line # info in output (MACPP only)</td></tr>
+    <tr id="CMD_LIST"><td>LIST</td><td>No</td><td>Create a listing output file</td></tr>
     <tr><td>LIST=name</td><td>No</td><td>Create a listing output file with <u>name</u>[.lis]</td></tr>
-    <tr><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory.</td></tr>
-    <tr><td>OCTAL</td><td>varies</td><td>Display numbers in octal in the listing file.</td></tr>
-    <tr><td>OPCODE_LEN=n</td><td>varies</td><td>Sets the significant length of the opcodes and macros to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
-    <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
+    <tr id="CMD_MISER"><td>MISER</td><td>Yes</td><td>Assembler it miserly about using memory.</td></tr>
+    <tr id="CMD_OCTAL"><td>OCTAL</td><td>varies</td><td>Display numbers in octal in the listing file.</td></tr>
+    <tr id="CMD_OPCODE_LEN"><td>OPCODE_LEN=n</td><td>varies</td><td>Sets the significant length of the opcodes and macros to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
+    <tr id="CMD_OUTPUT"><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
     <tr><td>OUTPUT=name</td><td>No</td><td>Create an output object file with <u>name</u>[.ol] or <u>name</u>[.ob]</td></tr>
-    <tr><td>RELATIVE</td><td>Yes</td><td>Output object file is relative.</td></tr>
-    <tr><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
-    <tr><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
-    <tr><td>TEMPFILE</td><td>No</td><td>Use temporary file to hold intermediate object file</td></tr>
+    <tr id="CMD_PREDEFINE"><td>PREDEFINE</td><td>Yes</td><td>Predefine some symbols</td></tr>
+    <tr id="CMD_RELATIVE"><td>RELATIVE</td><td>Yes</td><td>Output object file is relative.</td></tr>
+    <tr id="CMD_SQUEAK"><td>SQUEAK</td><td>No</td><td>Output diagnostic messages.</td></tr>
+    <tr id="CMD_SYMBOL_LEN"><td>SYMBOL_LEN=n</td><td>varies</td><td>Sets the significant length of the symbols and labels to <u>n</u>. <u>n</u> may be a value between 6 and 32</td></tr>
+    <tr id="CMD_TEMPFILE"><td>TEMPFILE</td><td>No</td><td>Use temporary file to hold intermediate object file</td></tr>
     <tr><td>TEMPFILE=name</td><td>No</td><td>Use temporary file <u>name</u> to hold intermediate object file</td></tr>
+    <tr id="CMD_TOC"><td>TOC</td><td>No</td><td>Create and add a table of contents to listing file</td></tr>
+    <tr><td>TOC=name</td><td>No</td><td>Create a table of contents and store contents in file with <u>name</u>[.toc]</td></tr>
+    <tr id="CMD_VERBOSE"><td>VERBOSE</td><td>No</td><td>Output some additional diagnostic messages in macz80.</td></tr>
+    <tr id="CMD_Z80ASM"><td>Z80ASM</td><td>Yes</td><td>Include z80asm directives (macz80 only).</td></tr>
   </table>  
     <p>
   NOTE: On Xenix/Unix/Linux systems, the option delimiter is a dash (-).
@@ -2766,20 +2846,22 @@ the stack pointer on a named stack. Examples:
     Will produce a foo.ol and foo.lis file.
     </p>
     <p>
-    The SYMBOL_LEN and OPCODE_LEN options default to different numbers on different assemblers. Both lengths default to the same number
+    The <a href="#CMD_SYMBOL_LEN">SYMBOL_LEN</a> and <a href="#CMD_OPCODE_LEN">OPCODE_LEN</a>
+    options default to different numbers on different assemblers. Both lengths default to the same number
     according to this table:
     </p>
   <table style="width: 20%">
     <tr><th>Assembler</th><th>Default</th></tr>
+    <tr><td>MAC11</td><td>16</td></tr>
     <tr><td>MAC65</td><td>6</td></tr>
     <tr><td>MAC68</td><td>6</td></tr>
-    <tr><td>MAC69</td><td>6</td></tr>
     <tr><td>MAC68K</td><td>16</td></tr>
-    <tr><td>MAC682K</td><td>16</td></tr>
-    <tr><td>MAC11</td><td>16</td></tr>
+    <tr><td>MAC69</td><td>6</td></tr>
+    <tr><td>MAC8080</td><td>16</td></tr>
     <tr><td>MACAS</td><td>16</td></tr>
-    <tr><td>MACTJ</td><td>16</td></tr>
     <tr><td>MACPP</td><td>32</td></tr>
+    <tr><td>MACTJ</td><td>16</td></tr>
+    <tr><td>MACZ80</td><td>16</td></tr>
   </table>
     <p>
   Examples:
@@ -2800,15 +2882,15 @@ the stack pointer on a named stack. Examples:
       mac65 -assem="VAR1=100" -ass="VAR2=200" -inc=hdrs file1.mac file2
       macpp -out=new.mac -lis old.mac
   </pre>
-<h2>Appendex</h2>
+<h2 id="Appendix">Appendex</h2>
     <h3 id="macxx_specials">
     <p>
     <em>NOTE: If you find yourself wanting to use mac65, mac68 or mac69 to build old Atari coin-op games, at least those
     that included HLL6xF.MAC in their sources, you will find the source does not assemble without error in the default
-    1.5 pass mode. Instead you will need to either use the -2_PASS command line option (the simplest method but
+    1.5 pass mode. Instead you will need to either use the <a href="#CMD_2_PASS">2_PASS</a> command line option (the simplest method but
     only available with macxx version 11.xx or later) or replace the HLL6xF.mac in your source kit with the example hll65f.mac
     file included in the sources with the macxx kit AND, in the specific case of HLL65F.MAC, set the variable CMAC65=1 somewhere.
-    I.e. add the command line: <b>-assem=CMAC65=1</b> or just edit hll65f.mac and set it to 1 permanently.<br>
+    I.e. add the command line: <a href="#CMD_ASSEM">assem=CMAC65=1</a> or just edit hll65f.mac and set it to 1 permanently.<br>
     And pay attention to filename case. On *nix systems there will be trouble with the automatic add of
     lowercase .mac to files <b>.INCLUDE</b>d in game sources.<br>
     </p>
@@ -2879,8 +2961,9 @@ the stack pointer on a named stack. Examples:
     opc rel        ;relative branch (8 bit signed offset)
     </pre>
     <p>
-    When <u>.ENABL MOS</u> runtime option or the <u>65816</u> command line option is selected, the accepted syntax changes to that as described in the
-    MOS Technology 6502 or Western Design Center 65816 manuals respectively which is a hybrid of the two syntaxes shown above (except the address mode
+    When <a href="#EN_MOS">.ENABL MOS</a> runtime option <!--or the <a href="#CMD_816">816</a> command line option--> is selected,
+    the accepted syntax changes to that as described in the
+    MOS Technology 6502 <!--or Western Design Center 65C02 manuals respectively-->manual which is a hybrid of the two syntaxes shown above (except the address mode
     follows the operand). Being there are commas in many of them, passing them as arguments to macros can be a bit tricky and troublesome. I believe
     the MOS/WDC syntax is of the form:
     </p>
@@ -2898,26 +2981,40 @@ the stack pointer on a named stack. Examples:
     opc [addr],Y   ;65816 only: index by Y indirect (16 bit address)
     opc rel        ;relative branch (8 bit signed offset)
     </pre>
+    <!--
     <p>
     <em>
-    NOTE: Atari coin-op never did any development with the 65816 CPU. It was added to mac65 so it could be used should that change.
-    The upshot is it was never tested with mac65 so there might be bugs in there somewhere. And to add to that, I don't remember
-    what I had in mind on how to specify one wanted 24 bit address modes for the 816 CPU. Good luck with it.
-    </em></p>
+    -->
+    <!--NOTE: Atari coin-op never did any development with the 65C02--> <!-- or 65816--<!-- CPU. It was added to mac65 so
+    it could be used should that change.
+    The upshot is it was never tested with mac65 so there might be bugs in there somewhere.-->
+    <!--And to add to that, I don't remember what I had in mind on how to specify one wanted 24 bit address modes
+    for the 65816 CPU.-->
+    <!--Good luck with it.
+    </em>
+    </p>
+    -->
+    <!--
     <p>
     Mac65 has two command line options unique to it:
     </p>
   <table style="width: 30%">
     <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
-    <tr><td>CMOS</td><td>No</td><td>Selects the instruction set for the 65C02 CMOS processor</td></tr>
-    <tr><td>816</td><td>No</td><td>Selects the instruction set for the 65816 processor</td></tr>
+    <tr><td><a href="#CMD_CMOS">CMOS</a></td><td>No</td><td>Selects the instruction set for the 65C02 CMOS processor</td></tr>
+    -->
+    <!--<tr><td><a href="#CMD_816">816</a></td><td>No</td><td>Selects the instruction set for the 65816 processor</td></tr>-->
+    <!--
   </table>
     <p>
-    The <u>CMOS</u> option select the opcodes for the 65C02 processor and the <u>816</u> option selects the opcodes
-    for the 65816 processor.
+    The <u>CMOS</u> option selects the opcodes for the 65C02 processor.
+    -->
+    <!--The <u>816</u> option selects the opcodes
+    for the 65816 processor.-->.
+    <!--
     </p>
+    -->
     <p>
-    The SYMBOL_LENGTH and OPCODE_LENGTH command line options both default to 6 in mac65.
+    The <a href="#CMD_SYMBOL_LEN">SYMBOL_LEN</a> and <a href="#CMD_OPCODE_LEN">OPCODE_LEN</a> command line options both default to 6 in mac65.
     </p>
     <p></p>
     <h3 id="macpp_specials">MACPP special pseudo-ops and operations</h3>
@@ -2935,8 +3032,8 @@ the stack pointer on a named stack. Examples:
     </p>
   <table style="width: 50%">
     <tr><th>Option</th><th>Default</th><th>Meaning</th></tr>
-    <tr><td>OUTPUT</td><td>Yes</td><td>Create an output object file</td></tr>
-    <tr><td>LINE</td><td>No</td><td>Include input line number in output</td></tr>
+    <tr><td><a href="#CMD_OUTPUT">OUTPUT</a></td><td>Yes</td><td>Create an output object file</td></tr>
+    <tr><td><a href="#CMD_LINE">LINE</a></td><td>No</td><td>Include input line number in output</td></tr>
   </table>
     <p>
     The -LINE command line option directs Macpp to include source line numbers
@@ -2964,13 +3061,14 @@ the stack pointer on a named stack. Examples:
     ...
     </pre>
     <p></p>
-    <h3 id="mac68k_specials">MAC68K and MAC682K special pseudo-ops and operations</h3>
+    <h3 id="mac68k_specials">MAC68K special pseudo-ops and operations</h3>
     <p>
-    The mac68k and mac682k assemblers accept one of two syntaxes. The default syntax matches what the
+    The mac68k assemblers accept one of two syntaxes. The default syntax matches what the
     GNU 68k assembler uses and, in fact, is what we used at Atari to assemble the output
     of gcc when doing cross-compiles. The alternate syntax is that of what the Greenhills C
-    compiler output. That syntax is chosen using the GREENHILLS command line option. I leave
-    it as an exercise to the reader to determine what those are. The SYMBOL_LEN and OPCODE_LEN
+    compiler output. That syntax is chosen using the <a href="#CMD_GREENHILLS">GREENHILLS</a> command line option. I leave
+    it as an exercise to the reader to determine what those are.
+    The <a href="#CMD_SYMBOL_LEN">SYMBOL_LEN</a> and <a href="#CMD_OPCODE_LEN">OPCODE_LEN</a>
     command line options default to 16.
     </p>
     <p>
@@ -2990,9 +3088,10 @@ the stack pointer on a named stack. Examples:
     branch is taken or not. I believe this means it has a one stage pipeline.
     </p>
     <p>
-    The macas assembler has a single command line option unique to it: BOFF. That is turned on by default
+    The macas assembler has a single command line option unique to it: <a href="#CMD_BOFF">BOFF</a>. That is turned on by default
     and it includes instructions in the object file to LLF to test branch offsets for out of range and if
-    found, print the filename and line number of the branch instruction in error. The SYMBOL_LEN and OPCODE_LEN
+    found, print the filename and line number of the branch instruction in error.
+    The <a href="#CMD_SYMBOL_LEN">SYMBOL_LEN</a> and <a href="#CMD_OPCODE_LEN">OPCODE_LEN</a>
     command line options default to 16. The address modes follow
     this model syntax:
     </p>
@@ -3053,7 +3152,7 @@ the stack pointer on a named stack. Examples:
     </p>
     <p>
     The only unique thing about <b>mactj</b>, is it defaults to assembling code for the TOM chip instruction set. One must use
-    the command line option <b>JERRY</b> to include/revert to the JERRY chip instruction set. Otherwise they are the same.
+    the command line option <a href="#CMD_JERRY">JERRY</a> to include/revert to the JERRY chip instruction set. Otherwise they are the same.
     </p>
     <p>
     </p>
@@ -3076,7 +3175,8 @@ the stack pointer on a named stack. Examples:
         use the unary operators <b>^^XXX</b> for high byte and <b>^vXXX</b> for low byte.
     </p>
     <p>
-    The mac8080 assembler starts with a radix preset to 10 (decimal) and the H_HEX and DOLLAR_PC settings enabled. It
+    The mac8080 assembler starts with a radix preset to 10 (decimal) and the
+      <a href="#EN_H_HEX">H_HEX</a> and <a href="#EN_DOLLAR_PC">DOLLAR_PC</a> settings enabled. It
     uses macxx's 'variable is a register' flags and predefines the following registers:
     </p>
     <pre>
@@ -3104,20 +3204,31 @@ the stack pointer on a named stack. Examples:
         mov tmp,bar ;Just an example
         add foo
     </pre>
-  <p>
-  </p>
+      <p>
+      There are some additional directives provided in an attempt to make macxx more compatible
+      with other 8080 assemblers. These are:
+      </p>
+      <pre>
+      ORG expression         ; sets the location counter. (same as <b>.= exp</b>.
+      symbol EQU expression  ; defines the symbol to the expresion (same as <b>sym = exp</b>).
+      symbol DEFL expression ; defines the symbol as one that cannot be re-defined later (same as <b>sym := exp</b>).
+      DEFS expression        ; allocates expression bytes of memory (same as .blkb)
+      DEFB expr[,expr[,...]] ; creates constant bytes in memory (same as dc.b)
+      DEFW expr[,expr[,...]] ; creates constant words (16 bit) in memory (same as dc.w)
+      DEFM expr[,expr[,...]] ; creates constant bytes in memory (same as dc.b)
+      </pre>
     <h3 id="macz80_specials">MACZ80 special pseudo-ops and operations</h3>
     <p>
         The syntax accepted by macz80 is very nearly that of other z80 assemblers. It follows the opcode and operand
-        definitions as described by the Zilog user manual. The differences will be in pseudo-ops and macros. If macz80 is to be used
+        definitions as described by the Zilog user manual. The differences will be in some pseudo-ops and macros. If macz80 is to be used
         to assemble older z80 code the microprocessor sources will have to
-        be changed and recoded in macxx syntax. The most notable pseudo-ops will be with 'db' and 'ds' directives
-        which may need to be recoded to fit in macxx's <b>.byte, .ascii</b> and/or <b>.blkb/.blkw</b> directives. Also either shim the
-        Intel equ directive or use a <u><b>.define equ =</b></u> to shim it and the Intel org directive can be changed
-        to <u><b>.=</b></u> or <u><b>$=</b></u> whichever one prefers.
+        be changed and recoded in macxx syntax. Certainly all macros will have to be re-written or at least edited. The macro calls
+        might be okay unedited however beware of of whitespace in macro arguments likely where strings containing whitespace are passed
+        as macro arguments. In those cases, enclose the string(s) in <b> &lt;&gt;'s </b> in the macro call.
     </p>
     <p>
-    The mac8080 assembler starts with a radix preset to 10 (decimal) and the H_HEX and DOLLAR_PC settings enabled. It
+    The macz80 assembler starts with a radix preset to 10 (decimal) and the
+      <a href="#EN_H_HEX">H_HEX</a> and <a href="#EN_DOLLAR_PC">DOLLAR_PC</a> settings enabled. It
     uses macxx's 'variable is a register' flags and predefines the following registers:
     </p>
     <pre>
@@ -3147,8 +3258,44 @@ the stack pointer on a named stack. Examples:
         bar = c     ;Ditto for what's in C
         tmp = a
         mov tmp,bar ;Just an example
+        ld tmp,bar
         add a,foo
     </pre>
+      <p>
+      There are some additional directives provided in an attempt to make macxx more compatible
+      with other z80 assemblers. These are:
+      </p>
+      <pre>
+      ORG expression         ; sets the location counter. (same as <b>.= exp</b>.
+      symbol EQU expression  ; defines the symbol to the expresion (same as <b>sym = exp</b>).
+      symbol DEFL expression ; defines the symbol as one that cannot be re-defined later (same as <b>sym := exp</b>).
+      DEFS expression        ; allocates expression bytes of memory (same as .blkb)
+      DEFB expr[,expr[,...]] ; creates constant bytes in memory (same as dc.b)
+      DEFW expr[,expr[,...]] ; creates constant words (16 bit) in memory (same as dc.w)
+      DEFM expr[,expr[,...]] ; creates constant bytes in memory (same as dc.b)
+      </pre>
+      <p>
+      The opcodes match as those specified in the Zilog user manual with a few exceptions.
+      Macz80 parses the opcodes <b>LD r,(IX+d)</b> and <b>LD (IX+d),r</b> as specified but if the <b>+d</b> is
+      omitted, macz80 will infer a <b>+0</b>. I.e. <b>LD r,(IX)</b> is the same as <b>LD r,(IX+0)</b>. Although
+      it isn't stipulated specifically in the user manual, the <b>+d</b> could equally be a <b>-d</b>. I.e. a
+      <b>LD r,(IX-d)</b> is the same as <b>LD r,(IX+0-d)</b>. And the <b>+/-d</b> can be any expression.
+      </p>
+      <p>
+      The opcode <b>EX AF,AF'</b> can also be expressed as <b>EX AF',AF</b>.
+      </p>
+      <p>
+      The user manual specifies <b>IN r (C)</b> <i>(Note: no comma)</i> where macz80 requires a comma. I.e. 
+      the valid macz80 syntax for that opcode is <b>IN r,(C)</b>. Note the assember will properly distinguish between
+      <b>IN A,n</b> and <b>IN A,(C)</b>.
+      </p>
+      <p>
+      NOTE: indirect address mode is indicated by enclosing the operand in <b>()'s</b>. But <b>()'s</b> can also be used in any
+      expression. If one needs to avoid the indirect indication of an expression, just prefix the expression with a <b>0+</b>.
+      I.e. if one needs to load register <b>r</b> with a constant and that constant is expressed in the expression <b>(n)</b>, the
+      assembler might infer the <b>(n)</b> as being indirect memory reference when one actually wants a constant. In that case the
+      simple solution is to use <b>LD r,0+(n)</b>.
+      </p>
   <h2 id="history">A Little History</h2>
     <!-- <div style="border: 2px solid black;margin:4px;padding: 4px"> -->
     <div>
@@ -3193,7 +3340,7 @@ the stack pointer on a named stack. Examples:
      a 6502, I took upon myself to write a new assembler for it that could take hexidecimal as well
       as binary, octal and decimal as input and spit out listings with hexadecimal. When I mentioned my plans
     to my co-workers, it was suggested I should expand this new assembler to include all the other
-    microprocessors we were developing for at the time too: the 6502, 65C02, 6800, 6809, Z80, 8080,
+    microprocessors we were developing for at the time too: the 6502, 6800, 6809, Z80, 8080,
     and, why not, I threw in the PDP11 too. This project became MACXX. I wrote it in PDP11 assembly for
     the RT11 operating system which is all I had at the time. I probably started it around late 1977 or
     early 1978. It must have worked a treat and been just what the doctor ordered. I don't remember.

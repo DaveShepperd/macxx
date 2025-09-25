@@ -61,10 +61,10 @@ Change Log
 
 #if defined(M_XENIX) || defined(sun) || defined(M_UNIX) || defined(unix)
     #define OPT_DELIM '-'		/* UNIX(tm) uses dashes as option delimiters */
-char opt_delim[] = "-";
+const char opt_delim[] = "-";
 #else
     #define OPT_DELIM '/'		/* everybody else uses slash */
-char opt_delim[] = "/";
+const char opt_delim[] = "/";
 #endif
 
 #include "memmgt.h"
@@ -119,30 +119,16 @@ FN_struct *fn_struct_pool; /* pointer to fn_struct pool */
 int fn_struct_poolsize=0;   /* number of structs left in the pool */
 int output_mode;        /* output mode */
 
-#define DEFTYP(nam,string) char nam[] = {string};
-
-DEFTYP(def_lis,".lis")
-DEFTYP(def_toc,".toc")		/* By TRG 20240503 to support TOC */
-DEFTYP(def_mac,".mac")
-DEFTYP(def_MAC,".MAC")
+const char def_lis[] = {".lis"};
+const char def_toc[] = {".toc"};		/* By TRG 20240503 to support TOC */
+const char def_mac[] = {".mac"};
+const char def_MAC[] = {".MAC"};
 #if !defined(MAC_PP)
-DEFTYP(def_ol, ".ol")
-DEFTYP(def_ob,".ob")
-DEFTYP(def_tmp,".tmp")
-DEFTYP(def_od,".od")
+const char * const def_ob_names[] = {".hex",".ol",".ob",".obj"};
+const char def_tmp[] = {".tmp"};
+const char def_od[] = {".od"};
 #else
-DEFTYP(def_asm,".asm")
-#endif
-#undef DEFTYP
-
-#if defined(MAC_PP)
-    #define DEF_OUT def_asm
-#else
-    #if defined(VMS)
-        #define DEF_OUT def_ob
-    #else
-        #define DEF_OUT def_ol
-    #endif
+const char def_asm[] = {".asm"};
 #endif
 
 extern int max_qual;
@@ -151,7 +137,7 @@ extern struct qual qual_tbl[];
 static struct
 {
     struct qual *qdesc;
-    char *defext;
+    const char *defext;
 } fn_ptrs[] = {
 #ifndef lint
     {qual_tbl+QUAL_OUTPUT,DEF_OUT},  /* /OBJECT=filename */
@@ -168,8 +154,8 @@ static struct
 #endif
 };
 
-char *def_inp_ptr[] = {def_mac,def_MAC,NULL};
-static char *def_out_ptr[] = {NULL,NULL};
+const char *def_inp_ptr[] = {def_mac,def_MAC,NULL};
+static const char *def_out_ptr[] = {NULL,NULL};
 
 /* The filenames are stored in free memory called fn_pool. The pool is */
 /* managed by the fn_init routine by way of the following two variables */
@@ -287,7 +273,7 @@ static int process_outfile(FN_struct *fnd, struct qual *desc_ptr, char **defname
             char *tdefname;
 
             fnd->fn_buff = desc_ptr->strValue;
-            if (add_defs(desc_ptr->strValue,(char **)0,(char **)0,
+            if (add_defs(desc_ptr->strValue,NULL,NULL,
                          ADD_DEFS_SYNTAX,&fnamp) == 0)
             {
                 if (strlen(fnamp->name_only) == 0)
@@ -378,7 +364,7 @@ int getcommand(void)
 
     argv = gc_argv;
 	gc_pass = 1;
-    add_defs(*argv,(char **)0,(char **)0,ADD_DEFS_SYNTAX,&image_name);
+    add_defs(*argv,NULL,NULL,ADD_DEFS_SYNTAX,&image_name);
     s = *++argv;
     for (i=1; i < gc_argc;i++,s= *++argv)
     {
@@ -510,12 +496,14 @@ int getcommand(void)
 #endif
     if (!boff_desc.present)
 		options[QUAL_BOFF] = 1;  /* default to global branch offset testing */
-    if (!rel_desc.present)
-		options[QUAL_RELATIVE] = 1;
 #if defined(VMS)
     if (!bin_desc.present)
 		options[QUAL_BINARY] = 1; /* default to binary mode */
 #endif
+	if (!rel_desc.present)
+		options[QUAL_RELATIVE] = 1;
+	else
+		options[QUAL_BINARY] = 0;
 #if !defined(SUN)
     if (!miser_desc.present)
 		options[QUAL_MISER] = 1;    /* default to miser mode */
@@ -587,7 +575,12 @@ int getcommand(void)
         fnd = fnd->fn_next;
     }
 #if !defined(MAC_PP)
-    output_mode = options[QUAL_BINARY]*2 + 1;
+	if ( options[QUAL_BINARY] )
+		output_mode = OUTPUT_VLDA;
+	else if ( options[QUAL_RELATIVE] )
+		output_mode = OUTPUT_OL;
+	else
+		output_mode = OUTPUT_HEX;
 #endif
     if (!rms_errors)
     {
@@ -613,7 +606,7 @@ int getcommand(void)
                 desc_ptr->strValue = cmd_outputs[i];
                 if (i)
                 {
-                    def_out_ptr[0] = 0;
+                    def_out_ptr[0] = NULL;
                     if (desc_ptr->strValue == NULL)
                     {
                         char *th, numth[32];
@@ -638,7 +631,7 @@ int getcommand(void)
                 else
                 {
 #ifndef MAC_PP
-                    def_out_ptr[0] = (output_mode > 1) ? def_ob : def_ol;
+                    def_out_ptr[0] = def_ob_names[output_mode];
 #else
                     def_out_ptr[0] = def_asm;
 #endif

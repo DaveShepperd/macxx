@@ -39,7 +39,7 @@ typedef struct file_name {
 extern int add_defs(
 #if defined(GCC)
    		    char *name,		/* string having filename */
-   		    char **types,	/* ptr to array of strings having filetypes */
+   		    const char **types,	/* ptr to array of strings having filetypes */
    		    char **paths,	/* ptr to array of paths to search for file */
    		    int io,		/* command (one of the ADD_DEFS_xxx above) */
    		    FILE_name **retptr	/* ptr to results is placed here */

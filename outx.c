@@ -346,7 +346,7 @@ static char *do_outexp_vlda(EXP_stk *eps,char *s,int *len,const EXP_stk *topLeve
     return(ve.vexp_chp); /* exit */
 }
 
-static char *do_outexp_ol(EXP_stk *eps,char *s, const EXP_stk *topLevel)
+static char *do_outexp_ol(EXP_stk *eps, char *s, const EXP_stk *topLevel)
 {
     int k;
     SS_struct *sym_ptr;
@@ -448,7 +448,7 @@ static char *do_outexp_ol(EXP_stk *eps,char *s, const EXP_stk *topLevel)
 
 static int formvar(uint32_t num, char *where );
 
-char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp )
+char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp, OutExp_Func_t funcType )
 {
     int len, evenodd;
 
@@ -477,13 +477,21 @@ char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp )
     {         /* --vlda */
         *s = 0;           /* null terminate the dst string */
         len = eps->ptr;
-        s = do_outexp_ol(eps,s,eps);
-        if (wrt)
-        {
-            *s++ = '\n';
-            *s = 0;
-            fputs(wrt,fp);
-        }
+		if ( options[QUAL_RELATIVE] )
+		{
+			s = do_outexp_ol(eps, s, eps);
+			if (wrt)
+			{
+				*s++ = '\n';
+				*s = 0;
+				fputs(wrt,fp);
+			}
+		}
+		else
+		{
+			if ( funcType != OUTEXP_ORG && funcType != OUTEXP_XFER  )
+				err_msg(MSG_ERROR, "Cannot output expressions in hexout mode");
+		}
     }                /* --vlda */
     return(s);
 }
@@ -500,7 +508,7 @@ char *outxfer(EXP_stk *eps, FILE *fp)
         union vexp ve;
         ve.vexp_chp = kluge = eline;     /* point to output array */
         *ve.vexp_type++ = VLDA_XFER;  /* set the type */
-        s = outexp(eps,ve.vexp_chp,(char *)0,(FILE *)0);
+        s = outexp(eps,ve.vexp_chp,NULL,NULL, OUTEXP_XFER);
         rsize = s-kluge;
 #ifndef VMS
         fwrite(&rsize,sizeof(int16_t),1,fp);
@@ -513,12 +521,15 @@ char *outxfer(EXP_stk *eps, FILE *fp)
     }
     else
     {         /* --vlda */
-        strcpy(eline,".start");
-        s = eline+strlen(eline);
-        s = outexp(eps,s,(char *)0,(FILE *)0);
-        *s++ = '\n';
-        *s = 0;
-        fputs(eline,fp);
+		if ( options[QUAL_RELATIVE] )
+		{
+			strcpy(eline, ".start");
+			s = eline+strlen(eline);
+			s = outexp(eps,s,NULL,NULL,OUTEXP_XFER);
+			*s++ = '\n';
+			*s = 0;
+			fputs(eline,fp);
+		}
     }                /* --vlda */
     return(0);
 }
@@ -645,7 +656,8 @@ void outorg(EXP_stk *eps)
     switch (output_mode)
     {       /* how to encode it */
     case OUTPUT_HEX: {        /* absolute tekhex mode */
-            if ( address == addr) return;  /* nothing to do */
+            if ( address == addr)
+				return;  /* nothing to do */
             flushobj();            /* flush out tekhex files */
             break;
         }  
@@ -658,7 +670,7 @@ void outorg(EXP_stk *eps)
             }
             strcpy(oline,".org");
             s = oline + 4;
-            s = outexp(eps,s,(char *)0,(FILE *)0);
+            s = outexp(eps,s,NULL,NULL,OUTEXP_ORG);
             if (*(s-1) == '+')
             {
                 --s;
@@ -695,11 +707,12 @@ void outorg(EXP_stk *eps)
     case OUTPUT_OBJ: {        /* relative VLDA output */
             flushobj();            /* flush the buffer */
             vlda_oline->vlda_type = VLDA_ORG;
-            outexp(eps,(char *)&(vlda_oline->vlda_addr),oline,outxabs_fp);
+            outexp(eps,(char *)&(vlda_oline->vlda_addr),oline,outxabs_fp,OUTEXP_ORG);
             break;
         }
     }
-    if (outx_debug > 2) fprintf(stderr,"Changing ORG from %08X to %08X\n",addr,address);
+    if (outx_debug > 2)
+		fprintf(stderr,"Changing ORG from %08X to %08X\n",addr,address);
     addr = address;          /* set the new address */
     return;
 }
@@ -903,7 +916,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
                     if (sym_ptr->flg_exprs)
                     {
 /* printf("Doing %d term expression defining \"%s\"\n",sym_ptr->ss_exprs->ptr,sym_ptr->ss_string); */
-                        s = outexp(sym_ptr->ss_exprs,s,(char *)0,(FILE *)0);
+                        s = outexp(sym_ptr->ss_exprs,s,NULL,NULL,OUTEXP_SYM);
                         *s++ = '\n';
                         *s = 0;
                     }
@@ -939,7 +952,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
                 if (flg&VSYM_EXP)
                 {
                     vlda_sym->vsym_eoff = s - kluge;
-                    s = outexp(sym_ptr->ss_exprs,s,(char *)0,(FILE *)0);
+                    s = outexp(sym_ptr->ss_exprs,s,NULL,NULL,OUTEXP_SYM);
                 }
                 else
                 {
@@ -1313,7 +1326,7 @@ static int tstexpcommon(char *asc, int alen, EXP_stk *eps, char *olstr, int vlda
             vt->vtest_rectyp = vlda_cmd;
             vt->vtest_eoff = sizeof(VLDA_test);
             s = eline+vt->vtest_eoff;
-            s = outexp(eps,s,(char *)0,(FILE *)0);
+            s = outexp(eps,s,NULL,NULL,OUTEXP_TST);
             vt->vtest_soff = s-(char *)vt;
             strncpy(s,asc,alen);
             s += alen;
@@ -1332,7 +1345,7 @@ static int tstexpcommon(char *asc, int alen, EXP_stk *eps, char *olstr, int vlda
             strcpy(eline, olstr);
             strncat(eline, asc, alen);
             strcat(eline, "\"");
-            s = outexp(eps,eline+strlen(eline),(char *)0,(FILE *)0);
+            s = outexp(eps,eline+strlen(eline),NULL,NULL,OUTEXP_TST);
             *s++ = '\n';
             *s = 0;
             fputs(eline,outxabs_fp);

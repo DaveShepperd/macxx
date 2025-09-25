@@ -372,6 +372,7 @@
 			<F N="stab.h"/>
 			<F N="strsub.h"/>
 			<F N="structs.h"/>
+			<F N="../mixit/tekhex.h"/>
 			<F N="tj_ops.h"/>
 			<F N="tjop_class.h"/>
 			<F N="token.h"/>
@@ -392,6 +393,7 @@
 			Name="Other Files"
 			Filters=""
 			GUID="{0D4A941C-8098-42E8-B5A1-9AEC1513BD63}">
+			<F N="tests/6502.mac"/>
 			<F N="alltest.mac"/>
 			<F N="change_log.txt"/>
 			<F N="i.mac"/>
@@ -419,6 +421,7 @@
 				N="Makefile.pi"
 				Type="Makefile"/>
 			<F N="operstuff.dat"/>
+			<F N="tests/pdp11.mac"/>
 			<F N="qualtbl.dat"/>
 			<F N="stab.def"/>
 		</Folder>

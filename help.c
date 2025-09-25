@@ -50,6 +50,8 @@ static const char *help_msg[] = {
                             "   - Output error messages in a syntax suitable for use by an IDE.\n",
     opt_delim,"[no]ignore", "	        - Ignore the assembler directives not implemented in this version\n",
 #if !defined(MAC_PP)
+	opt_delim,"[no]hexout", "	        - Output tekhex directly (used for testing. Forces -norelative and -nobinary)\n",
+	opt_delim,"[no]relative", "	        - Enable relative assembly\n",
 	help_2_pass_mark,
     opt_delim,"[no]2_pass", "	        - select to assemble using two pass mode\n",
     opt_delim,"[no]debug",  "[=name]	- select and name temporary work file\n",
@@ -58,10 +60,14 @@ static const char *help_msg[] = {
 #endif
     opt_delim,"[no]binary", "		- select binary or ASCII format object file\n",
     opt_delim,"[no]boff",   "		- do global branch offset testing\n",
+#ifdef INCLUDE_CMOS
     help_cmos_mark,
     opt_delim,"[no]cmos",   "		- use 65C02 instruction set\n",
+#endif
+#ifdef INCLUDE_65816
     help_cmos_mark,
     opt_delim,"[no]816",    "		- use 65816 instruction set\n",
+#endif
     help_jerry_mark,
     opt_delim,"[no]jerry",  "		- use Jaguar's Jerry opcode set\n",
     help_grnhill_mark,
@@ -88,6 +94,7 @@ static const char *help_msg[] = {
     (char *)&help_symbol_length," ",opt_delim,"opc=",(char *)&help_opcode_length," ",
 	opt_delim,"noignore ",
 #if !defined(MAC_PP)
+	opt_delim,"relative ",
     opt_delim,"notemp ",
 #if !defined(VMS)
     opt_delim,"nobinary ",
@@ -96,8 +103,12 @@ static const char *help_msg[] = {
 #endif
 	help_z80_default, opt_delim, "noverbose ",
 	help_z80_default, opt_delim,"z80asm ",
+#ifdef INCLUDE_CMOS
 	help_cmos_default,opt_delim,"nocmos ",
+#endif
+#ifdef INCLUDE_65816
     help_cmos_default,opt_delim,"no816 ",
+#endif
 	help_2_pass_default,opt_delim,"no2_pass ",
 #if defined(MAC_65) || defined(MAC_68) || defined(MAC_69) 
 #endif

@@ -58,20 +58,24 @@ void opcinit( void )          /* preloads the opcode table */
         int len;
         uint32_t legal_am;
 #if defined(MAC_65)
-        if (options[QUAL_P816])
+#ifdef INCLUDE_CMOS
+		if (options[QUAL_CMOS])
+		{
+			legal_am = opc->aamodes;
+		}
+#ifdef INCLUDE_65815
+        else if (options[QUAL_P816])
         {
             legal_am = opc->aaamodes;
         }
-        else if (options[QUAL_CMOS])
-        {
-            legal_am = opc->aamodes;
-        }
+#endif	/* 65816 */
         else
+#endif	/* CMOS */
         {
             legal_am = opc->amodes;
         }
         if (legal_am == 0) continue;
-#else
+#else /* MAC_65 */
 #if defined(MAC_TJ)
         if (options[QUAL_JERRY])
         {
@@ -81,13 +85,13 @@ void opcinit( void )          /* preloads the opcode table */
         {
             if ((opc->class&OPCL_TOM) == 0) continue;
         }
-#endif
+#endif	/* MAC_TJ */
 #if defined(MAC_68K)
 		legal_am = opc->bwl;
 #else
 		legal_am = opc->amodes;
-#endif
-#endif
+#endif	/* MAC_68K */
+#endif	/* MAC_65 */
         if (token_pool_size <= max_opcode_length+1)
             get_token_pool(max_opcode_length+1, 1);
         len = strlen(opc->name);

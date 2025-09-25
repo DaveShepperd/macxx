@@ -2225,13 +2225,16 @@ void pass1( int fileNumber)
 			current_section->flg_based = 1;
 			current_section->seg_salign = macxx_salign;
 			current_section->seg_dalign = macxx_dalign;
-			current_section = get_seg_mem(&sym_ptr, ".REL.");
-			current_section->seg_salign = macxx_salign;
-			current_section->seg_dalign = macxx_dalign;
+			if ( options[QUAL_RELATIVE] )
+			{
+				current_section = get_seg_mem(&sym_ptr, ".REL.");
+				current_section->seg_salign = macxx_salign;
+				current_section->seg_dalign = macxx_dalign;
+			}
 		}
 		else
 		{
-			current_section = find_segment(".REL.",seg_list,seg_list_index);
+			current_section = find_segment( options[QUAL_RELATIVE] ? ".REL.":".ABS.",seg_list,seg_list_index);
 		}
 #endif
         opcinit();            /* seed the opcode table */
@@ -2441,7 +2444,14 @@ void pass1( int fileNumber)
 				     || (!strncasecmp(inp_ptr,"DEFL",4) && myIsspace(inp_ptr[4]))
 				   )
 				{
-					inp_ptr += (toupper(*inp_ptr) == 'E') ? 3-1 : 4-1;
+					if ( toupper(*inp_ptr) != 'E' )
+					{
+						gbl_flg |= DEFG_FIXED; /* is a := construct  */
+						gbl_flg &= ~DEFG_LABEL; /* it is not a label */
+						inp_ptr += 4-1;
+					}
+					else
+						inp_ptr += 3-1;
 					found_symbol(gbl_flg, tokt);
 					continue;
 				}

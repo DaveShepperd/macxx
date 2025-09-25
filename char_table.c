@@ -52,7 +52,27 @@ uint16_t cttbl[] = {
     PCX,LHEX,LHEX,LHEX,LHEX,LHEX,LHEX, LC ,  /* ` a b c d e f g */
     LC , LC , LC , LC , LC , LC , LC , LC ,  /* h i j k l m n o */
     LC , LC , LC , LC , LC , LC , LC , LC ,  /* p q r s t u v w */
-    LC , LC , LC , PCX, BOP, PCX, UOP, EOL   /* x y z { | } ~ DEL */
+    LC , LC , LC , PCX, BOP, PCX, UOP, EOL,  /* x y z { | } ~ DEL */
+	
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0x80-0x9F */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0xA0-0xBF */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0xC0-0xDF */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0xE0-0xFF */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL
 };
 
 #undef EOL
@@ -79,7 +99,7 @@ uint16_t cttbl[] = {
 #define HEX	CC_ALP		/*  hex digit */
 #define LHEX	CC_ALP		/*  lowercase hex digit */
 
-unsigned char cctbl[] = {
+uint8_t cctbl[] = {
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     EOL,  WS, EOL, EOL, EOL, EOL, EOL, EOL,  /* BS,HT,LF,VT,FF,CR,SO,SI */
     EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,  /* DLE,DC1,DC2,DC3,DC4,NAK,SYN,ETB */
@@ -98,10 +118,30 @@ unsigned char cctbl[] = {
     PCX,LHEX,LHEX,LHEX,LHEX,LHEX,LHEX, LC ,  /* ` a b c d e f g */
     LC , LC , LC , LC , LC , LC , LC , LC ,  /* h i j k l m n o */
     LC , LC , LC , LC , LC , LC , LC , LC ,  /* p q r s t u v w */
-    LC , LC , LC , PCX, EXP, PCX, EXP, EOL   /* x y z { | } ~ DEL */
+    LC , LC , LC , PCX, EXP, PCX, EXP, EOL,  /* x y z { | } ~ DEL */
+
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0x80-0x9F */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0xA0-0xBF */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0xC0-0xDF */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,	/* entries from 0xE0-0xFF */
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL,
+	EOL, EOL, EOL, EOL, EOL, EOL, EOL, EOL
 };
 
-unsigned char char_toupper[] = {
+uint8_t char_toupper[] = {
     000, 001, 002, 003, 004, 005, 006, 007,  /* NUL,SOH,STX,ETX,EOT,ENQ,ACK,BEL */
     010, 011, 012, 013, 014, 015, 016, 017,  /* BS,HT,LF,VT,FF,CR,SO,SI */
     020, 021, 022, 023, 024, 025, 026, 027,  /* DLE,DC1,DC2,DC3,DC4,NAK,SYN,ETB */

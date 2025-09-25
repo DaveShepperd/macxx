@@ -84,8 +84,10 @@ char close_operand = ')';   /* char that closes an operand indirection */
 int max_opcode_length = 6;  /* significant length of opcodes and */
 int max_symbol_length = 6;  /*  symbols */
 static char *am_ptr;
+#ifdef INCLUDE_65816
 static int32_t cpu_index,cpu_acc;
 static int cpu_hist_nest;
+#endif
 enum
 {
 	CPU_DEFABS,          /* default to absolute addressing */
@@ -129,6 +131,8 @@ static struct
 	{ "R",    R_NUM },
 	{ "RL",   RL_NUM },
 	{ "DN",   ND_NUM },
+	{ "NZ",   ND_NUM },
+	{ "ND",   ND_NUM },
 	{ "AN",   N_NUM },
 	{ "DLN",  NND_NUM },
 	{ "AXN",  NAX_NUM },
@@ -152,15 +156,18 @@ typedef struct
 	EXP_stk *exptr;      /* ptr to expression stack */
 } Bank;
 
+#ifdef INCLUDE_65816
 DPage **dpage;
 static int dpage_size,dpage_stack;
 Bank **bank;
 static int bank_size,bank_stack;
 static EXP_stk *tmp_expr;
 static int tmp_expr_size;
+#endif
 
 int ust_init(void)
 {
+#ifdef INCLUDE_65816
 	if ( image_name != 0 )
 	{
 		char *s;
@@ -175,6 +182,7 @@ int ust_init(void)
 		bank  = (Bank **)MEM_alloc(bank_size * sizeof(Bank *));
 		misc_pool_used += (sizeof(Bank *) + sizeof(DPage *)) * dpage_size;
 	}
+#endif /* #ifdef INCLUDE_65816 */
 	return 0;            /* would fill a user symbol table */
 }
 
@@ -255,6 +263,7 @@ static void do_branch(Opcode *opc)
 		{
 			EXP1.psuedo_value = 0;
 		}
+#ifdef INCLUDE_65816
 		if ( !badExpr && options[QUAL_P816] )
 		{
 			if ( EXP1.ptr + 6 > EXPR_MAXDEPTH )
@@ -301,6 +310,7 @@ static void do_branch(Opcode *opc)
 				EXP2.ptr = 0;          /* don't use this expression any more */
 			}
 		}
+#endif /* #ifdef INCLUDE_65816 */
 	}
 	if ( badExpr )
 	{
@@ -342,17 +352,19 @@ static int do_operand(Opcode *opc)
 			}
 			else
 			{
-				if ( options[QUAL_P816] )
+				if ( token_value == '@' )
+				{
+					amflag = OPENAT;
+				}
+#ifdef INCLUDE_65816
+				else if ( options[QUAL_P816] )
 				{
 					if ( token_value == '[' )
 					{
 						amflag = FIN | OPENBKT;
 					}
 				}
-				else if ( token_value == '@' )
-				{
-					amflag = OPENAT;
-				}
+#endif /* #ifdef INCLUDE_65816 */
 			}
 			if ( amflag == 0 )
 				break;    /* give 'em an illegal am */
@@ -368,7 +380,12 @@ static int do_operand(Opcode *opc)
 		/* else fall through to default */
 	default:
 		{
-			if ( options[QUAL_P816] || (edmask & ED_MOS) )
+			if ( 
+#ifdef INCLUDE_65816
+			     options[QUAL_P816] ||
+#endif	/* #ifdef INCLUDE_65816 */
+			     (edmask & ED_MOS)
+			    )
 			{ /* if mostech format */
 				if ( exprs(1, &EXP1) < 1 )
 					break;
@@ -474,9 +491,13 @@ static int do_operand(Opcode *opc)
 								return DS_NUM; /* syntax is nn,S */
 							}
 						}
+#ifdef INCLUDE_65816
 						bad_token(am_ptr, (options[QUAL_P816]) ?
 								  "Expected indexed form of nn,X or nn,Y or nn,S" :
 								  "Expected indexed form of nn,X or nn,Y");
+#else
+						bad_token(am_ptr, "Expected indexed form of nn,X or nn,Y");
+#endif
 						break;
 					}                /* -- end on comma */
 					return 0;            /* no am specified */
@@ -526,6 +547,10 @@ static int do_operand(Opcode *opc)
 									amdcdnum = ZX_NUM;
 								else if ( c1 == 'Y' )
 									amdcdnum = ZY_NUM;
+#ifdef INCLUDE_CMOS
+								else if ( c1 == 'N' )
+									amdcdnum = ND_NUM;
+#endif
 							}
 							else if ( c == 'A' )
 							{
@@ -542,6 +567,10 @@ static int do_operand(Opcode *opc)
 									amdcdnum = NX_NUM;
 								else if ( c1 == 'Y' )
 									amdcdnum = NY_NUM;
+#ifdef INCLUDE_CMOS
+								else if ( c1 == 'Z' || c1 == 'D')
+									amdcdnum = ND_NUM;
+#endif
 							}
 							if ( squeak )
 								printf("opc65:do_operand() entry 2: token_value==2, Found c='%c', c1='%c', amdcdnum=%d\n", c, c1, amdcdnum);
@@ -603,6 +632,7 @@ static int bad_amode(void)
 {
 	EXP0SP->expr_code = EXPR_VALUE;
 	EXP0.ptr = 1;
+#ifdef INCLUDE_65816
 	if ( options[QUAL_P816] )
 	{
 		EXP0.tag_len = 1;
@@ -610,6 +640,7 @@ static int bad_amode(void)
 		EXP0.psuedo_value = EXP0SP->expr_value = 0xEAEAEAEA;  /* give 'em a bunch of nop's */
 	}
 	else
+#endif
 	{
 		EXP0.tag = 'x';
 		EXP0.tag_len = 24;
@@ -621,6 +652,7 @@ static int bad_amode(void)
 	return 0;            /* no address mode */
 }
 
+#ifdef INCLUDE_65816
 static int make_dpage_ref(EXP_stk *estk)
 {
 	DPage *dp;
@@ -673,7 +705,9 @@ static int make_bank_ref(EXP_stk *estk)
 	estk->ptr = compress_expr(estk);
 	return 0;
 }
+#endif
 
+#ifdef INCLUDE_65816
 static int make_pbr_ref(EXP_stk *estk)
 {
 	EXPR_struct *dst;
@@ -695,7 +729,9 @@ static int make_pbr_ref(EXP_stk *estk)
 	estk->ptr += 4;
 	return 0;
 }
+#endif
 
+#ifdef INCLUDE_65816
 static int check_4_dpage(EXP_stk *estk)
 {
 	DPage *dp;
@@ -750,7 +786,9 @@ static int check_4_dpage(EXP_stk *estk)
 	}
 	return 0;
 }
+#endif
 
+#ifdef INCLUDE_65816
 static int check_4_abs(EXP_stk *estk)
 {
 	Bank *bp;
@@ -797,6 +835,7 @@ static int check_4_abs(EXP_stk *estk)
 	}
 	return 0;
 }
+#endif
 
 static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 {
@@ -886,6 +925,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 	}
 	amdcd = amdcdnum ? (1 << amdcdnum) : 0;
 	exp_ptr = EXP1.stack;
+#ifdef INCLUDE_65816
 	if ( options[QUAL_P816] )
 	{
 		static struct
@@ -939,6 +979,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 			} while ( 0 );
 	}
 	else
+#endif
 	{
 		if ( amdcd == 0 )
 		{     /* if no address mode specified */
@@ -1031,6 +1072,20 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 	return amdcdnum;
 }
 
+#ifdef INCLUDE_CMOS
+/* Function to get no of set bits in binary
+   representation of passed binary no. */
+static int countSetBits(int nn)
+{
+    unsigned int count = 0;
+    while (nn) {
+        nn &= (nn - 1);
+        count++;
+    }
+    return count;
+}
+#endif
+
 static int compute_opcode(Opcode *opc, int amdcdnum)
 {
 	int i;
@@ -1038,20 +1093,26 @@ static int compute_opcode(Opcode *opc, int amdcdnum)
 	if ( amdcdnum != 0 )
 	{
 		amdcd = 1 << amdcdnum;
-		i = opc->op_value;        /* pickup the value */
-		EXP0.psuedo_value = EXP0SP->expr_value = opc_to_hex[i][amdcdnum - 1];
-		if ( EXP0.psuedo_value == 0 )
+#ifdef INCLUDE_CMOS
+		if ( countSetBits(opc->op_amode) > 1 || ((amdcdnum<<1)&opc->op_amode) )
+#endif
 		{
-			sprintf(emsg, "Illegal address mode. opcindx=%d, amdcdnum=%d. Please submit an SPR",
-					i, amdcdnum);
-			bad_token(am_ptr, emsg);
-			return 0;
+			i = opc->op_value;        /* pickup the value */
+			EXP0.psuedo_value = EXP0SP->expr_value = opc_to_hex[i][amdcdnum - 1];
+			if ( EXP0.psuedo_value == 0 )
+			{
+				sprintf(emsg, "Illegal address mode. opcindx=%d, amdcdnum=%d. Please submit an SPR",
+						i, amdcdnum);
+				bad_token(am_ptr, emsg);
+				return 0;
+			}
 		}
 	}
 	else
 	{
 		amdcd = 0;
 	}
+#ifdef INCLUDE_65816
 	if ( options[QUAL_P816] )
 	{
 		if ( (opc->op_class & OPCLPBR) && (amdcd & (A + NAX + N + ND + NND)) )
@@ -1081,6 +1142,7 @@ static int compute_opcode(Opcode *opc, int amdcdnum)
 		}
 	}
 	else
+#endif
 	{
 		if ( amdcd & (A + AX + AY + N) )
 		{
@@ -1236,6 +1298,7 @@ int op_ntype(void)
 	return 1;
 }
 
+#ifdef INCLUDE_65816
 static int get_cpuarg(void)
 {
 	int tt, ans, radix;
@@ -1263,15 +1326,19 @@ static int get_cpuarg(void)
 	}
 	return ans;
 }
+#endif
 
 int op_cpu(void)
 {
+#ifdef INCLUDE_65816
 	int tt, indx, accum;
 	if ( !options[QUAL_P816] )
 	{
+#endif
 		bad_token((char *)0, "Directive not meaningful for other than 65816 processor");
 		f1_eatit();
 		return 1;
+#ifdef INCLUDE_65816
 	}
 	indx = cpu_index & 1;
 	accum = cpu_acc & 1;
@@ -1352,6 +1419,7 @@ int op_cpu(void)
 	cpu_acc   = (cpu_acc & ~1) | accum;
 	EXP0.psuedo_value = 0;
 	return 1;
+#endif
 }
 
 #if 0
@@ -1366,14 +1434,17 @@ DPage;
 
 int op_bank(void)
 {
+#ifdef INCLUDE_65816
 	int i, cnt, typ;
 	Bank *bp;
 	EXP0.psuedo_value = 0;
 	if ( !options[QUAL_P816] )
 	{
+#endif
 		bad_token((char *)0, "Directive not meaningful for other than 65816 processor");
 		f1_eatit();
 		return 1;
+#ifdef INCLUDE_65816
 	}
 	typ = get_token();           /* pickup the next token */
 	if ( typ == EOL )
@@ -1464,17 +1535,21 @@ int op_bank(void)
 	}
 	EXP0.psuedo_value = 0;
 	return 2;
+#endif
 }
 
 int op_dpage(void)
 {
+#ifdef INCLUDE_65816
 	int i, cnt, typ;
 	DPage *dp;
 	if ( !options[QUAL_P816] )
 	{
+#endif
 		bad_token((char *)0, "Directive not meaningful for other than 65816 processor");
 		f1_eatit();
 		return 1;
+#ifdef INCLUDE_65816
 	}
 	typ = get_token();           /* pickup the next token */
 	if ( typ == EOL )
@@ -1558,10 +1633,12 @@ int op_dpage(void)
 	}
 	EXP0.psuedo_value = 0;
 	return 2;
+#endif
 }
 
 int op_triplet(void)
 {
+#ifdef INCLUDE_65816
 	char *otp;
 	int32_t epv;
 #if 0
@@ -1611,6 +1688,7 @@ int op_triplet(void)
 		}
 		p1o_var(&EXP0);       /* dump element 0 */
 	}
+#endif
 	return 1;
 }
 
@@ -1649,8 +1727,10 @@ int op_address(void)
 				break;
 			otp = tkn_ptr;     /* remember beginning of expression */
 			exprs(1, &EXP0);    /* pickup the expression */
+#ifdef INCLUDE_65816
 			if (options[QUAL_P816] )
 				make_bank_ref(&EXP0);
+#endif
 			if ( *inp_ptr == ',' )
 			{ /* if the next item is a comma */
 				while ( c = *++inp_ptr,myIsspace(c) ); /* skip over white space */

@@ -50,6 +50,7 @@ typedef enum {
    X_NUM,
    Y_NUM,
    DES_NUM,
+   NZ_NUM,
    MAX_NUM
 } AModes;
 
@@ -80,8 +81,9 @@ typedef enum {
 #define   X	(1 << X_NUM)
 #define   Y	(1 << Y_NUM)
 #define   DES	(1 << DES_NUM)
+#define	  NZ (1<<NZ_NUM)
 
-#define   MOST816	(I|A|AL|Z|NY|NNY|NX|ZX|AX|ALX|AY|ND|NND|DS|NDSY)
+#define   MOST816	(I|A|AL|Z|NY|NNY|NX||NZ|ZX|AX|ALX|AY|ND|NND|DS|NDSY)
 #define   MOST65	(I|A|Z|NX|NY|ZX|AX|AY)
 
 #define   SHFTAM  	(A|Z|AC|ZX|AX|DES)

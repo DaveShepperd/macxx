@@ -74,32 +74,33 @@ S,} Qual_t;
 ; Comment - comment to include 
 ;
 ;OP  Val Opt Num Out Str Neg Enum,             Name,              OutIdx,        Comment
-N,    1,  0,  0,  0,  0,  1, QUAL_CROSS,       "CROSS_REFERENCE",    0,          /* cross reference */
 N,    1,  0,  0,  0,  0,  1, QUAL_2_PASS,      "2_PASS",             0,          /* make a full two pass assembler */
-N,    1,  0,  0,  0,  0,  1, QUAL_BINARY,      "BINARY",             0,          /* output binary files */
-N,    1,  0,  0,  0,  0,  1, QUAL_CMOS,        "CMOS",               0,          /* 65C02 */
-N,    1,  0,  0,  0,  0,  1, QUAL_P816,        "816",                0,          /* 65816 */
-N,    1,  0,  0,  0,  0,  1, QUAL_JERRY,       "JERRY",              0,          /* Jaguar DSP */
-N,    1,  0,  0,  0,  0,  1, QUAL_MISER,       "MISER",              0,          /* memory miser mode */
-N,    1,  0,  0,  0,  0,  1, QUAL_BOFF,        "BOFF",               0,          /* MACAS global branch offset test */
-N,    0,  1,  1,  0,  0,  1, QUAL_TEMP,        "TEMPFILE",           0,          /* use temp files */
-A,    1,  0,  0,  0,  0,  1, QUAL_IDE_SYNTAX,  "IDE_ERROR_SYNTAX",   0,          /* output error messages in IDE syntax */
-A,    0,  1,  0,  1,  0,  1, QUAL_OUTPUT,      "OUTPUT",             OUT_FN_OBJ, /* object file description */
-A,    0,  1,  0,  1,  0,  1, QUAL_LIST,        "LIST",               OUT_FN_LIS, /* list file description */
-A,    0,  1,  0,  1,  0,  1, QUAL_TOC,         "TOC",                OUT_FN_TOC, /* toc file description By TRG 20240503 to support TOC */
-A,    0,  1,  0,  1,  0,  1, QUAL_DEBUG,       "DEBUG",              OUT_FN_DEB, /* debug file description */
-A,    0,  0,  1,  0,  0,  0, QUAL_SYML,        "SYMBOL_LENGTH",      0,          /* significant length of symbols */
-A,    0,  0,  1,  0,  0,  0, QUAL_OPCL,        "OPCODE_LENGTH",      0,          /* significant length of opcodes */
-A,    1,  0,  0,  0,  0,  1, QUAL_SQUEAK,      "SQUEAK",             0,          /* announce states (debugging) */
-A,    1,  0,  0,  0,  0,  1, QUAL_OCTAL,       "OCTAL",              0,          /* list file in octal */
-A,    1,  0,  0,  0,  0,  1, QUAL_RELATIVE,    "RELATIVE",           0,          /* relative assembly */
-O,    1,  0,  0,  0,  0,  1, QUAL_LINE,        "LINE",               0,          /* place # line info in output */
-A,    0,  0,  0,  0,  1,  0, QUAL_ASSEM,       "ASSEM",              0,          /* insert text in assem stream */
-A,    0,  0,  0,  0,  0,  0, QUAL_INCLUDE,     "INCLUDE",            0,          /* include file path description */
-A,    1,  0,  0,  0,  0,  1, QUAL_GRNHILL,     "GREENHILLS",         0,          /* Greenhills assembler syntax */
 A,    1,  0,  0,  0,  0,  1, QUAL_ABBREV,      "ABBREVIATE",         0,          /* Abbreviate error messages */
+A,    0,  0,  0,  0,  1,  0, QUAL_ASSEM,       "ASSEM",              0,          /* insert text in assem stream */
+N,    1,  0,  0,  0,  0,  1, QUAL_BINARY,      "BINARY",             0,          /* output binary files */
+N,    1,  0,  0,  0,  0,  1, QUAL_BOFF,        "BOFF",               0,          /* MACAS global branch offset test */
+N,    1,  0,  0,  0,  0,  1, QUAL_CROSS,       "CROSS_REFERENCE",    0,          /* cross reference */
+/*N,    1,  0,  0,  0,  0,  1, QUAL_CMOS,        "CMOS",               0, */         /* 65C02 */
+A,    0,  1,  0,  1,  0,  1, QUAL_DEBUG,       "DEBUG",              OUT_FN_DEB, /* debug file description */
+A,    1,  0,  0,  0,  0,  1, QUAL_GRNHILL,     "GREENHILLS",         0,          /* Greenhills assembler syntax */
+A,    1,  0,  0,  0,  0,  1, QUAL_HEXOUT,      "HEXOUT",             0,          /* Output tekhex direct (sets -norel and -nobin) */
+A,    1,  0,  0,  0,  0,  1, QUAL_IDE_SYNTAX,  "IDE_ERROR_SYNTAX",   0,          /* output error messages in IDE syntax */
 A,    1,  0,  0,  0,  0,  1, QUAL_IGNORE,      "IGNORE",             0,          /* Ignore some old undefined psuedo-ops */
+A,    0,  0,  0,  0,  0,  0, QUAL_INCLUDE,     "INCLUDE",            0,          /* include file path description */
+N,    1,  0,  0,  0,  0,  1, QUAL_JERRY,       "JERRY",              0,          /* Jaguar DSP */
+O,    1,  0,  0,  0,  0,  1, QUAL_LINE,        "LINE",               0,          /* place # line info in output */
+A,    0,  1,  0,  1,  0,  1, QUAL_LIST,        "LIST",               OUT_FN_LIS, /* list file description */
+N,    1,  0,  0,  0,  0,  1, QUAL_MISER,       "MISER",              0,          /* memory miser mode */
+A,    1,  0,  0,  0,  0,  1, QUAL_OCTAL,       "OCTAL",              0,          /* list file in octal */
+A,    0,  0,  1,  0,  0,  0, QUAL_OPCL,        "OPCODE_LENGTH",      0,          /* significant length of opcodes */
+A,    0,  1,  0,  1,  0,  1, QUAL_OUTPUT,      "OUTPUT",             OUT_FN_OBJ, /* object file description */
+/*N,    1,  0,  0,  0,  0,  1, QUAL_P816,        "816",                0,        */  /* 65816 */
 A,    1,  0,  0,  0,  0,  1, QUAL_PREDEFINE,   "PREDEFINE",          0,          /* Predefine some symbols */
+A,    1,  0,  0,  0,  0,  1, QUAL_RELATIVE,    "RELATIVE",           0,          /* relative assembly (-norelative disallows sections) */
+A,    0,  0,  1,  0,  0,  0, QUAL_SYML,        "SYMBOL_LENGTH",      0,          /* significant length of symbols */
+A,    1,  0,  0,  0,  0,  1, QUAL_SQUEAK,      "SQUEAK",             0,          /* announce states (debugging) */
+N,    0,  1,  1,  0,  0,  1, QUAL_TEMP,        "TEMPFILE",           0,          /* use temp files */
+A,    0,  1,  0,  1,  0,  1, QUAL_TOC,         "TOC",                OUT_FN_TOC, /* toc file description By TRG 20240503 to support TOC */
 A,    1,  0,  0,  0,  0,  1, QUAL_VERBOSE,     "VERBOSE",            0,          /* More verbose diagnostics (macz80 only at present) */
 A,    1,  0,  0,  0,  0,  1, QUAL_Z80ASM,      "Z80ASM",             0,          /* Include z80asm directives (macz80 only) */
 L,    0,  0,  0,  0,  0,  0, QUAL_MAX,         NULL,                 0,          /* This must be last */

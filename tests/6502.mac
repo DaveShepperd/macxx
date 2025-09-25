@@ -1,0 +1,308 @@
+zpg == 55
+abs == 6666
+imm == 77
+
+start:
+; 00 - F0
+	brk
+	bpl start
+	bpl fwd
+	jsr start
+	bmi start
+	rti
+	bvc start
+	rts
+	bvs start
+fwd:
+	bcc start
+	ldy #imm
+	bcs fwd
+	cpy #imm
+	bne start
+	cpx #imm
+	beq start
+; 01 - F1
+	ora nx,zpg
+	ora @zpg(x)
+	ora ny,zpg
+	ora @zpg(y)
+	and nx,zpg
+	and @zpg(x)
+	and ny,zpg
+	and @zpg(y)
+	eor nx,zpg
+	eor @zpg(x)
+	eor ny,zpg
+	eor @zpg(y)
+	adc nx,zpg
+	adc @zpg(x)
+	adc ny,zpg
+	adc @zpg(y)
+	sta nx,zpg
+	sta @zpg(x)
+	sta ny,zpg
+	sta @zpg(y)
+	lda nx,zpg
+	lda @zpg(x)
+	lda ny,zpg
+	lda @zpg(y)
+	cmp nx,zpg
+	cmp @zpg(x)
+	cmp ny,zpg
+	cmp @zpg(y)
+	sbc nx,zpg
+	sbc @zpg(x)
+	sbc ny,zpg
+	sbc @zpg(y)
+; A2
+	ldx #imm
+; 04 - F4
+	bit z,zpg
+	bit zpg
+	sty z,zpg
+	sty zpg
+	sty zpg(x)
+	ldy zpg
+	ldy x,zpg
+	ldy zpg(x)
+	cpy z,zpg
+	cpy zpg
+	cpx z,zpg
+	cpx zpg
+; 05 - F5
+	ora z,zpg
+	ora zpg
+	ora zx,zpg
+	ora x,zpg
+	ora zpg(x)
+	and z,zpg
+	and zpg
+	and zx,zpg
+	and zpg(x)
+	eor z,zpg
+	eor zpg
+	eor zx,zpg
+	eor x,zpg
+	eor zpg(x)
+	adc z,zpg
+	adc zpg
+	adc zx,zpg
+	adc x,zpg
+	adc zpg(x)
+	sta z,zpg
+	sta zpg
+	sta zx,zpg
+	sta x,zpg
+	sta zpg(x)
+	lda z,zpg
+	lda zpg
+	lda zx,zpg
+	lda x,zpg
+	lda zpg(x)
+	cmp z,zpg
+	cmp zpg
+	cmp zx,zpg
+	cmp x,zpg
+	cmp zpg(x)
+	sbc z,zpg
+	sbc zpg
+	sbc zx,zpg
+	sbc x,zpg
+	sbc zpg(x)
+; 06 - F6
+	asl z,zpg
+	asl zpg
+	asl zx,zpg
+	asl x,zpg
+	asl zpg(x)
+	rol z,zpg
+	rol zpg
+	rol zx,zpg
+	rol x,zpg
+	rol zpg(x)
+	lsr z,zpg
+	lsr zpg
+	lsr zx,zpg
+	lsr x,zpg
+	lsr zpg(x)
+	ror z,zpg
+	ror zpg
+	ror zx,zpg
+	ror x,zpg
+	ror zpg(x)
+	stx z,zpg
+	stx zpg
+	stx zy,zpg
+	stx y,zpg
+	stx zpg(y)
+	ldx z,zpg
+	ldx zpg
+	ldx zy,zpg
+	ldx y,zpg
+	ldx zpg(y)
+	dec z,zpg
+	dec zpg
+	dec zx,zpg
+	dec zpg(x)
+	inc z,zpg
+	inc zpg
+	inc zx,zpg
+	inc zpg(x)
+; 07 - F7
+; 08 - F8
+	php
+	clc
+	plp
+	sec
+	pha
+	cli
+	pla
+	sei
+	dey
+	tya
+	tay
+	clv
+	iny
+	cld
+	inx
+	sed
+; 09 - F9
+	ora #imm
+	ora ay,abs
+	ora y,abs
+	ora abs(y)
+	and #imm
+	and ay,abs
+	and y,abs
+	and abs(y)
+	eor #imm
+	eor ay,abs
+	eor y,abs
+	eor abs(y)
+	adc #imm
+	adc ay,abs
+	adc y,abs
+	adc abs(y)
+	sta ay,abs
+	sta abs(y)
+	lda #imm
+	lda ay,abs
+	lda y,abs
+	lda abs(y)
+	cmp #imm
+	cmp ay,abs
+	cmp y,abs
+	cmp abs(y)
+	sbc #imm
+	sbc ay,abs
+	sbc y,abs
+	sbc abs(y)
+; 0A - FA
+	asl
+	rol
+	lsr
+	ror
+	txa
+	txs
+	tax
+	tsx
+	dex
+	nop
+; 0B - FB
+	bit a,abs
+	bit	abs
+	jmp a,abs
+	jmp abs
+	jmp n,abs
+	jmp @abs
+	sty a,abs
+	sty abs
+	ldy a,abs
+	ldy abs
+	ldy ax,abs
+	ldy x,abs
+	ldy abs(x)
+	cpy a,abs
+	cpy abs
+	cpx a,abs
+	cpx abs
+; 0D - FD	
+	ora a,abs
+	ora abs
+	ora ax,abs
+	ora x,abs
+	ora abs(x)
+	and a,abs
+	and abs
+	and ax,abs
+	and abs(x)
+	eor a,abs
+	eor abs
+	eor ax,abs
+	eor x,abs
+	eor abs(x)
+	adc a,abs
+	adc abs
+	adc ax,abs
+	adc x,abs
+	adc abs(x)
+	sta a,abs
+	sta abs
+	sta ax,abs
+	sta x,abs
+	sta abs(x)
+	lda a,abs
+	lda abs
+	lda ax,abs
+	lda x,abs
+	lda abs(x)
+	cmp a,abs
+	cmp abs
+	cmp ax,abs
+	cmp x,abs
+	cmp abs(x)
+	sbc a,abs
+	sbc abs
+	sbc ax,abs
+	sbc x,abs
+	sbc abs(x)
+; 0E - FE
+	asl a,abs
+	asl abs
+	asl ax,abs
+	asl x,abs
+	asl abs(x)
+	rol a,abs
+	rol abs
+	rol ax,abs
+	rol x,abs
+	rol abs(x)
+	lsr a,abs
+	lsr abs
+	lsr ax,abs
+	lsr x,abs
+	lsr abs(x)
+	ror a,abs
+	ror abs
+	ror ax,abs
+	ror x,abs
+	ror abs(x)
+	stx a,abs
+	stx abs
+	ldx a,abs
+	ldx abs
+	ldx ay,abs
+	ldx y,abs
+	ldx abs(y)
+	dec a,abs
+	dec abs
+	dec ax,abs
+	dec abs(x)
+	inc a,abs
+	inc abs
+	inc ax,abs
+	inc abs(x)
+; 0F - FF
+
+	
+	

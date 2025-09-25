@@ -79,23 +79,23 @@ extern uint16_t macxx_min_dalign;
 extern int max_symbol_length;
 extern int max_opcode_length;
 
+extern const char def_mac[];
+extern const char def_MAC[];
+extern const char def_lis[];
+extern const char opt_delim[];
+extern const char * const def_ob_names[OUTPUT_MAX];
+extern FILE_name *image_name;
+extern const char *def_inp_ptr[];
+
 #if defined(MAC_PP)
-    #define DEF_OUT def_asm
+    #define DEF_OUT ".asm"
 #else
     #if defined(VMS)
-        #define DEF_OUT def_ob
+        #define DEF_OUT ".ob"
     #else
-        #define DEF_OUT def_ol
+        #define DEF_OUT ".ol"
     #endif
 #endif
-
-extern char DEF_OUT[];
-extern char def_mac[];
-extern char def_MAC[];
-extern char def_lis[];
-extern char opt_delim[];
-extern FILE_name *image_name;
-extern char *def_inp_ptr[];
 
 extern int output_mode;		/* output mode */
 extern FN_struct *current_fnd; /* global current_fnd for error handlers */

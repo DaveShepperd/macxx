@@ -267,7 +267,7 @@ static char *our_cwd[2];
 /***********************************************************************
  * Glue on path and filetype if not already present in filename string
  */
-static char *add_ext( char *sptr, char **ext, char **path)
+static char *add_ext( char *sptr, const char **inExt, char **path)
 /*
  * At entry:
  *	sptr - ptr to filename string
@@ -293,7 +293,8 @@ static char *add_ext( char *sptr, char **ext, char **path)
     }
 #undef DOS_PATH
     namelen = strlen(sptr);
-    if (ext && *ext) extlen = strlen(*ext);
+    if (inExt && *inExt)
+        extlen = strlen(*inExt);
     tmp = lp = malloc(pathlen+2*namelen+extlen+3);
     if (lp == 0)
     {
@@ -341,9 +342,9 @@ static char *add_ext( char *sptr, char **ext, char **path)
     }
     else
     {
-        if (( ext == 0 ||
-              *ext == 0 ||
-              (extlen=strlen(*ext)) == 0) &&
+        if (( !inExt ||
+              *inExt == 0 ||
+              (extlen=strlen(*inExt)) == 0) &&
             pathlen == 0)
         {
             free(tmp);     /* done with tmp area */
@@ -354,7 +355,7 @@ static char *add_ext( char *sptr, char **ext, char **path)
     fprintf(stderr,"add_ext: malloc'd %d at %p\n",pathlen+namelen+extlen+1,rp);
 #endif
     lp = rp + strlen(rp);
-    if (typtr == 0 && extlen != 0) strcpy_upc(lp,*ext);
+    if (typtr == 0 && extlen != 0) strcpy_upc(lp,*inExt);
 #if MALLOCDEBUG
     fprintf(stderr,"\tCopied %d bytes into %p\n",strlen(rp)+1,rp);
 #endif
@@ -405,7 +406,7 @@ static void dump_txt(const char *title, const char *ptr)
 /*************************************************************************
  * Add default fields to filename
  */
-int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int io, FILE_name **retptr)
+int add_defs( char *src_nam, const char **inp_default_types, char **default_paths, int io, FILE_name **retptr)
 /*
  * At entry:
  *
@@ -420,7 +421,7 @@ int add_defs( char *src_nam, char **inp_default_types, char **default_paths, int
 {
     int err;
     char *s;
-    char **default_types;
+    const char **default_types;
     struct stat file_stat;
 	FILE_name *fnPtr;
 #if defined(VMS)

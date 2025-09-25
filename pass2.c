@@ -18,6 +18,8 @@
 #include "outx.h"
 #include "memmgt.h"
 
+/* #define PC_DEBUG 1 */
+
 int32_t xfer_addr;
 static int noout_flag;
 #if 0
@@ -287,17 +289,20 @@ int pass2( void )
 
     if ((outxabs_fp = obj_fp) == 0) return(1); /* no output required */
     endlin();            /* flush the opcode buffer */
-    if (options[QUAL_DEBUG]) dbg_flush(1);   /* flush the debug buffers */
+    if (options[QUAL_DEBUG])
+		dbg_flush(1);   /* flush the debug buffers */
     write_to_tmp(TMP_EOF,0,0,0); /* make sure that there's an EOF in tmp */
     rewind_tmp();        /* rewind to beginning */
     while (1)
     {
-        if (r_flg) read_from_tmp();  /* now read the whole thing in */
+        if (r_flg)
+			read_from_tmp();  /* now read the whole thing in */
         r_flg = 1;        /* gotta read next time */
         switch (tmp_ptr->tf_type)
         { /* see what we gotta do */
         case TMP_EOF: {
-                if (options[QUAL_DEBUG]) dbg_output(); /* add debug stuff to object file */
+                if (options[QUAL_DEBUG])
+					dbg_output(); /* add debug stuff to object file */
                 termobj(xfer_addr);     /* terminate and flush the output buffer */
                 if (!tmp_fp)
                 {
@@ -338,9 +343,11 @@ int pass2( void )
                         err_msg(MSG_ERROR|MSG_CTRL,emsg);
                     }
 #ifdef PC_DEBUG
-                    fprintf(stderr,"%s:%d: EXPR pc = %08X, sec = {%s}, tag=%c:%d\n",
+                    fprintf(stderr,"%s:%d: EXPR(%X) pc = %08X, sec = {%s}, tag=%c:%d\n",
 							current_fnd->fn_buff,
-                            current_fnd->fn_line,current_offset,
+                            current_fnd->fn_line,
+							tmp_ptr->tf_type,
+							current_offset,
                             current_section->seg_string,
                             EXP0.tag,EXP0.tag_len);
 #endif
@@ -377,11 +384,11 @@ int pass2( void )
 						}
                         if (options[QUAL_BINARY])
                         {
-                            outexp(&EXP0,ve.vexp_chp,eline,obj_fp);
+                            outexp(&EXP0,ve.vexp_chp,eline,obj_fp,OUTEXP_TAG);
                         }
                         else
                         {
-                            outexp(&EXP0,eline,eline+1,obj_fp);
+                            outexp(&EXP0,eline,eline+1,obj_fp,OUTEXP_TAG);
                         }
                         tag = _toupper(tag);
                         if (tag == 'B' || tag == 'C' || tag == 'S')
@@ -412,18 +419,20 @@ int pass2( void )
                     if (options[QUAL_RELATIVE])
                     {
                         flushobj();
-                        outexp(&EXP0,eline,eline,obj_fp);
+                        outexp(&EXP0,eline,eline,obj_fp,OUTEXP_TAG);
                     }
                 }
                 break;
             }
         case TMP_BSTNG: 
         case TMP_ASTNG: {
-                if (noout_flag == 0) outbstr((char *)tmp_pool,(int)tmp_ptr->tf_length);
+                if (noout_flag == 0)
+					outbstr((char *)tmp_pool,(int)tmp_ptr->tf_length);
 #ifdef PC_DEBUG
-                fprintf(stderr,"%s:%d: TXT, %ld bytes, pc = %08X, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: TXT(%X), %d bytes, pc = %08X, sec = {%s}\n",
 						current_fnd->fn_buff,
 						current_fnd->fn_line,
+						tmp_ptr->tf_type,
                         tmp_ptr->tf_length,    
                         current_offset,
                         current_section->seg_string);
@@ -456,11 +465,13 @@ int pass2( void )
                 current_section = seg_ptr;
                 current_offset = EXP0SP->expr_value+seg_ptr->rel_offset;
                 noout_flag = seg_ptr->flg_noout;
-                if (noout_flag == 0) outorg(&EXP0);
+                if (noout_flag == 0)
+					outorg(&EXP0);
 #ifdef PC_DEBUG
-                fprintf(stderr,"%s:%d: ORG at newpc = %08X, sec = {%s}\n",
+                fprintf(stderr,"%s:%d: ORG(%X) at newpc = %08X, sec = {%s}\n",
 						current_fnd->fn_buff,
                         current_fnd->fn_line,
+						tmp_ptr->tf_type,
 						current_offset,
                         current_section->seg_string);
 #endif
