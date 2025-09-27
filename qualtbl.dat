@@ -83,7 +83,7 @@ N,    1,  0,  0,  0,  0,  1, QUAL_CROSS,       "CROSS_REFERENCE",    0,         
 /*N,    1,  0,  0,  0,  0,  1, QUAL_CMOS,        "CMOS",               0, */         /* 65C02 */
 A,    0,  1,  0,  1,  0,  1, QUAL_DEBUG,       "DEBUG",              OUT_FN_DEB, /* debug file description */
 A,    1,  0,  0,  0,  0,  1, QUAL_GRNHILL,     "GREENHILLS",         0,          /* Greenhills assembler syntax */
-A,    1,  0,  0,  0,  0,  1, QUAL_HEXOUT,      "HEXOUT",             0,          /* Output tekhex direct (sets -norel and -nobin) */
+A,    1,  0,  0,  0,  0,  1, QUAL_HEXOUT,      "HEXOUT",             0,          /* Output tekhex direct (sets -nobin) */
 A,    1,  0,  0,  0,  0,  1, QUAL_IDE_SYNTAX,  "IDE_ERROR_SYNTAX",   0,          /* output error messages in IDE syntax */
 A,    1,  0,  0,  0,  0,  1, QUAL_IGNORE,      "IGNORE",             0,          /* Ignore some old undefined psuedo-ops */
 A,    0,  0,  0,  0,  0,  0, QUAL_INCLUDE,     "INCLUDE",            0,          /* include file path description */
@@ -96,7 +96,7 @@ A,    0,  0,  1,  0,  0,  0, QUAL_OPCL,        "OPCODE_LENGTH",      0,         
 A,    0,  1,  0,  1,  0,  1, QUAL_OUTPUT,      "OUTPUT",             OUT_FN_OBJ, /* object file description */
 /*N,    1,  0,  0,  0,  0,  1, QUAL_P816,        "816",                0,        */  /* 65816 */
 A,    1,  0,  0,  0,  0,  1, QUAL_PREDEFINE,   "PREDEFINE",          0,          /* Predefine some symbols */
-A,    1,  0,  0,  0,  0,  1, QUAL_RELATIVE,    "RELATIVE",           0,          /* relative assembly (-norelative disallows sections) */
+/*A,    1,  0,  0,  0,  0,  1, QUAL_RELATIVE,    "RELATIVE",           0,   */       /* relative assembly (-norelative disallows sections) */
 A,    0,  0,  1,  0,  0,  0, QUAL_SYML,        "SYMBOL_LENGTH",      0,          /* significant length of symbols */
 A,    1,  0,  0,  0,  0,  1, QUAL_SQUEAK,      "SQUEAK",             0,          /* announce states (debugging) */
 N,    0,  1,  1,  0,  0,  1, QUAL_TEMP,        "TEMPFILE",           0,          /* use temp files */

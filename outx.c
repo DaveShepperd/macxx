@@ -477,7 +477,7 @@ char *outexp(EXP_stk *eps, char *s, char *wrt, FILE *fp, OutExp_Func_t funcType 
     {         /* --vlda */
         *s = 0;           /* null terminate the dst string */
         len = eps->ptr;
-		if ( options[QUAL_RELATIVE] )
+		if ( options[QUAL_HEXOUT] )
 		{
 			s = do_outexp_ol(eps, s, eps);
 			if (wrt)
@@ -521,7 +521,7 @@ char *outxfer(EXP_stk *eps, FILE *fp)
     }
     else
     {         /* --vlda */
-		if ( options[QUAL_RELATIVE] )
+		if ( options[QUAL_HEXOUT] )
 		{
 			strcpy(eline, ".start");
 			s = eline+strlen(eline);

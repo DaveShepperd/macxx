@@ -2,23 +2,87 @@ abs == 6666
 off == 1234
 imm == 7777
 
+	.dsabl cpu
+	.list mes
 .macro op1reg op
 	.irp reg,<r0,r1,r2,r3,r4,r5,sp,pc>
 	op reg
 	.endr
 .endm
-.macro op1dest op nor0=0
+.macro op1dest op noreg=0 nopc=0 nosp=0
    .irp reg,<r0,r1,r2,r3,r4,r5,sp,pc>
-	.if eq,nor0
-	op reg
-	.endc
-	op (reg)
-	op (reg)+
-	op @(reg)+
-	op -(reg)
-	op @-(reg)
-	op off(reg)
-	op @off(reg)
+	  isnpc = 1
+	  .if eq,reg-pc
+	    isnpc = ^c nopc & 1
+	  .endc
+	  isnsp = 1
+	  .if eq,reg-sp
+	    isnsp = ^c nosp & 1
+	  .endc
+	  .if eq, 2 - <isnpc + isnsp>
+	    .if eq,<noreg>
+	      op reg
+	    .endc
+	    op (reg)
+	    op (reg)+
+	    op @(reg)+
+	    op -(reg)
+	    op @-(reg)
+	    op off(reg)
+	    op @off(reg)
+	  .endc
+	.endr
+.endm
+.macro opDst op src
+   .irp dstReg,<r0,r1,r2,r3,r4,r5,sp,pc>
+	  op src,dstReg
+	  op src,(dstReg)
+	  op src,(dstReg)+
+	  op src,@(dstReg)+
+	  op src,-(dstReg)
+	  op src,@-(dstReg)
+	  op src,off(dstReg)
+	  op src,@off(dstReg)
+	.endr
+.endm
+.macro opSrcDst op
+   .irp srcReg,<r0,r1,r2,r3,r4,r5,sp,pc>
+	  opDst op,srcReg
+	  opDst op,(srcReg)
+	  opDst op,(srcReg)+
+	  opDst op,@(srcReg)+
+	  opDst op,-(srcReg)
+	  opDst op,@-(srcReg)
+	  opDst op,off(srcReg)
+	  opDst op,@off(srcReg)
+	.endr
+.endm
+.macro opSrcDstReg op
+   .irp dstReg,<r0,r1,r2,r3,r4,r5,sp,pc>
+     .irp srcReg,<r0,r1,r2,r3,r4,r5,sp,pc>
+	    op srcReg,dstReg
+	    op (srcReg),dstReg
+	    op (srcReg)+,dstReg
+	    op @(srcReg)+,dstReg
+	    op -(srcReg),dstReg
+	    op @-(srcReg),dstReg
+	    op off(srcReg),dstReg
+	    op @off(srcReg),dstReg
+	  .endr
+	.endr
+.endm
+.macro opSrcRegDst op
+   .irp lftReg,<r0,r1,r2,r3,r4,r5,sp,pc>
+     .irp rhtReg,<r0,r1,r2,r3,r4,r5,sp,pc>
+	    op lftReg,rhtReg
+	    op lftReg,(rhtReg)
+	    op lftReg,(rhtReg)+
+	    op lftReg,@(rhtReg)+
+	    op lftReg,-(rhtReg)
+	    op lftReg,@-(rhtReg)
+	    op lftReg,off(rhtReg)
+	    op lftReg,@off(rhtReg)
+	  .endr
 	.endr
 .endm
 
@@ -32,7 +96,7 @@ start:
 	reset
 	rtt
 ; 0001xx - 000177
-	op1dest jmp
+	op1dest jmp 1 1
 ; 00020x - 000207
 	op1reg rts
 ; 000210 - 000227
@@ -60,44 +124,151 @@ start:
 ; 000300 - 000377
 	op1dest swab
 ; 003400 - 003777 Branches
-	br  fwd
-	bne fwd
-	beq fwd
-	bge fwd
-	blt fwd
-	bgt fwd
-	ble fwd
+back:
+	br  back
+	bne back
+	beq back
+	bge back
+	blt back
+	bgt back
+	ble back
 fwd:
 ; 004000 - 004777 jsr
-	op1dest jsr nor0=1
+	op1dest jsr 1 1 1
 ; 005000 - 005077 clr
 	op1dest clr
 ; 005100 - 005177 com
-	op1dest com
+	com r0
 ; 005200 - 005277 inc
-	op1dest inc
+	inc r0
 ; 005300 - 005377 dec
-	op1dest dec
+	dec r0
 ; 005400 - 005477 neg
-	op1dest neg
+	neg r0
 ; 005500 - 005577 adc
-	op1dest adc
+	adc r0
 ; 005600 - 005677 sbc
-	op1dest sbc
+	sbc r0
 ; 005700 - 005777 tst
-	op1dest tst
+	tst r0
 ; 006000 - 006077 ror
-	op1dest ror
+	ror r0
 ; 006100 - 006177 rol
-	op1dest rol
+	rol r0
 ; 006200 - 006277 asr
-	op1dest asr
+	asr r0
 ; 006300 - 006377 asl
-	op1dest asl
+	asl r0
 ; 006400 - 006477 mark
+	mark 0
+	mark 077
 ; 006500 - 006577 mfpi
+	mfpi r0
 ; 006600 - 006677 mtpi
-	op1dest mtpi
+	mtpi r0
 ; 006700 - 006777 sxt
-	op1dest sxt
+	sxt r0
+; 010000 - 017777 mov
+	opSrcDst mov
+; 020000 - 027777 cmp
+	cmp r0,r0
+; 030000 - 037777 bit
+	bit r0,r0
+; 040000 - 047777 bic
+	bic r0,r0
+; 050000 - 057777 bis
+	bis r0,r0
+; 060000 - 067777 add
+	add r0,r0
+; 070000 - 070777 mul
+	mul r0,r0
+; 071000 - 071777 div
+	div r0,r0
+; 072000 - 072777 ash
+	ash r0,r0
+; 073000 - 073777 ashc
+	ashc r0,r0
+; 074000 - 074777 xor
+	xor r0,r0
+; 075000 - 075007 fadd
+	fadd r0
+; 075000 - 075017 fsub
+	fsub r0
+; 075000 - 075027 fmul
+	fmul r0
+; 075000 - 075037 fdiv
+	fdiv r0
+; 075000 - 076777 n.u.
+; 077000 - 077777 sob
+sobst:
+	nop
+	sob r0,sobst
+	sob r1,sobst
+	sob r2,sobst
+	sob r3,sobst
+	sob r4,sobst
+	sob r5,sobst
+	sob sp,sobst
+	sob pc,sobst
+; 100000 - 103777 branches
+	bpl sobst
+	bpl .+2+<127.*2>
+	bmi sobst
+	bhi sobst
+	blos sobst
+	bvc sobst
+	bvs sobst
+	bcc sobst
+	bhis sobst
+	bcs sobst
+	blo sobst
+; 104000 - 104377 emt
+	emt 0
+	emt 0377
+; 104400 - 104777 trap
+	trap 0
+	trap 0377
+; 105000 - 105077 clrb
+	clrb r0
+; 105100 - 105177 comb
+	comb r0
+; 105200 - 105277 incb
+	incb r0
+; 105300 - 105377 decb
+	decb r0
+; 105400 - 105477 negb
+	negb r0
+; 105500 - 105577 adcb
+	adcb r0
+; 105600 - 105677 sbcb
+	sbcb r0
+; 105700 - 105777 tstb
+	tstb r0
+; 106000 - 106077 rorb
+	rorb r0
+; 106100 - 106177 rolb
+	rolb r0
+; 106200 - 106277 asrb
+	asrb r0
+; 106300 - 106377 aslb
+	aslb r0
+; 106400 - 106477 n.u.
+; 106500 - 106577 mfpd
+	mfpd r0
+; 106600 - 106677 mtpd
+	mtpd r0
+; 106700 - 107777 n.u.
+; 110000 - 117777 movb
+	movb r0,r0
+; 120000 - 127777 cmpb
+	cmpb r0,r0
+; 130000 - 137777 bitb
+	bitb r0,r0
+; 140000 - 147777 bicb
+	bicb r0,r0
+; 150000 - 157777 bisb
+	bisb r0,r0
+; 160000 - 167777 sub
+	sub r0,r0
+; 170000 - 177777 floating point
 

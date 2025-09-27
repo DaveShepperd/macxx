@@ -9,7 +9,6 @@
 *.lda
 *.ln
 *.vlda
-*.hex
 *.o
 *~
 *.exe

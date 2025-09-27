@@ -296,21 +296,11 @@ static int get_oneea( EA *amp, int pc_offset, int commaExpected )
     return 1;
 }
 
-#if 0
-static void bad_sourceam(void)
+static void bad_destam(int whichOperand)
 {
-    bad_token((char *)0,"Invalid address mode for first operand");
-    source.mode = E_REG;
-    source.eamode = Ea_REG;
-    source.exp->ptr = 0;
-    source.exp->stack->expr_code = EXPR_VALUE;
-    source.exp->stack->expr_value = 0;
-    return;
-}
-#endif
-static void bad_destam(void)
-{
-    bad_token((char *)0,"Invalid address mode for second operand");
+	static const char FirstOperand[] = "Invalid address mode for source operand";
+	static const char SecondOperand[] = "Invalid address mode for destination operand";
+    bad_token((char *)0, whichOperand ? SecondOperand:FirstOperand);
     dest.mode = E_REG;
     dest.eamode = Ea_REG;
     dest.exp->ptr = 0;
@@ -319,15 +309,15 @@ static void bad_destam(void)
     return;
 }
 
-static int validatePCR( int dstmode, int regok, int immok )
+static int validatePCR( int dstmode, int regok, int immok, int whichOperand )
 {
-	if ( (edmask&ED_CPU) )
+	if ( (edmask&ED_CPU) || !regok )
 	{
 		if ( (!immok && (dstmode == 017 || dstmode == 027)) ||
 			 dstmode == 047 || dstmode == 057 )
 			show_bad_token(NULL,"Instruction may behave differently on various processor types",MSG_WARN);
 		if ( !regok && !(dstmode&070) )
-			bad_destam();
+			bad_destam(whichOperand);
 	}
     return 0;
 }
@@ -346,7 +336,7 @@ int type1( int baseval, int amode )
 {
     if ( get_oneea(&dest, current_offset+4, 0 ) )
     {
-        validatePCR(dest.eamode, baseval != 0100, 0 );
+        validatePCR(dest.eamode, baseval != 0100, 0, 1 );
     }
     return 0;
 }
@@ -589,7 +579,7 @@ int type6( int baseval, int amode )
                 if ( source.eamode == 076 )
                     show_bad_token(NULL,"Instruction may behave differently on various processors",MSG_WARN);
 				if ( get_oneea(&dest, offs, 1) )
-					return validatePCR(dest.eamode, 0, 0 );
+					return validatePCR(dest.eamode, 0, 0, 1 );
             }
             else                            /* source is not register type */
             {
@@ -598,7 +588,7 @@ int type6( int baseval, int amode )
                 source.eamode = 07;         /* default source register to PC */
                 source.mode = E_REG;
                 /* The source expression, if any, will simply follow and there is no dest expression */
-                return validatePCR(dest.eamode, 0, 0);
+                return validatePCR(dest.eamode, 0, 0, 1);
             }
         }
     }
@@ -622,8 +612,8 @@ int type7( int baseval, int amode )
                 offs += 2;
 			if ( get_oneea(&dest, offs, 1) )
 			{
-				validatePCR(seam, 1, 1 );
-				return validatePCR(dest.eamode, 1, 0 );
+				validatePCR(seam, 1, 1, 0 );
+				return validatePCR(dest.eamode, 1, 0, 1 );
 			}
         }
     }
@@ -658,7 +648,7 @@ int type8( int baseval, int amode )
                 dest.mode = source.mode;
                 source.eamode = sav;
                 source.mode = E_REG;
-                return validatePCR(dest.eamode, 1, 1 );
+                return validatePCR(dest.eamode, 1, 1, 0 );
             }
         }
     }
@@ -852,7 +842,7 @@ int type11( int baseval, int amode )
             }
 			if ( get_oneea(&dest, offs, 1) )
 			{
-				return validatePCR(dest.eamode, 1, 0 );
+				return validatePCR(dest.eamode, 1, 0, 1 );
 			}
         }
     }
@@ -866,7 +856,7 @@ int type12( int baseval, int amode )
 {
     if ( get_oneea(&dest, current_offset+4, 0 ) )
     {
-        validatePCR(dest.eamode, 1, 1 );
+        validatePCR(dest.eamode, 1, 1, 1 );
     }
     return 0;
 }

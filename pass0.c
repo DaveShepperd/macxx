@@ -110,7 +110,7 @@ void pass0( int fileNumber)
         current_section->flg_based = 1;
         current_section->seg_salign = macxx_salign;
         current_section->seg_dalign = macxx_dalign;
-		if ( options[QUAL_RELATIVE] )
+		if ( options[QUAL_HEXOUT] )
 		{
 			current_section = get_seg_mem(&sym_ptr, ".REL.");
 			current_section->seg_salign = macxx_salign;

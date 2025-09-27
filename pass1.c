@@ -2225,7 +2225,7 @@ void pass1( int fileNumber)
 			current_section->flg_based = 1;
 			current_section->seg_salign = macxx_salign;
 			current_section->seg_dalign = macxx_dalign;
-			if ( options[QUAL_RELATIVE] )
+			if ( options[QUAL_HEXOUT] )
 			{
 				current_section = get_seg_mem(&sym_ptr, ".REL.");
 				current_section->seg_salign = macxx_salign;
@@ -2234,7 +2234,7 @@ void pass1( int fileNumber)
 		}
 		else
 		{
-			current_section = find_segment( options[QUAL_RELATIVE] ? ".REL.":".ABS.",seg_list,seg_list_index);
+			current_section = find_segment( options[QUAL_HEXOUT] ? ".REL.":".ABS.",seg_list,seg_list_index);
 		}
 #endif
         opcinit();            /* seed the opcode table */

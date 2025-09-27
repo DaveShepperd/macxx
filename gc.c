@@ -85,11 +85,14 @@ static int cmd_includes_index;
         #define xref_desc	qual_tbl[QUAL_CROSS]
     #endif
     #define bin_desc	qual_tbl[QUAL_BINARY]
+#ifdef INCLUDE_CMOS
     #define cmos_desc	qual_tbl[QUAL_CMOS]
+#endif
+#ifdef INCLUDE_65816
     #define p816_desc	qual_tbl[QUAL_P816]
+#endif
     #define miser_desc	qual_tbl[QUAL_MISER]
     #define tmp_desc	qual_tbl[QUAL_TEMP]
-    #define rel_desc	qual_tbl[QUAL_RELATIVE]
     #define boff_desc	qual_tbl[QUAL_BOFF]
     #define green_desc  qual_tbl[QUAL_GRNHILL]
 	#define predef_desc qual_tbl[QUAL_PREDEFINE]
@@ -498,11 +501,9 @@ int getcommand(void)
 		options[QUAL_BOFF] = 1;  /* default to global branch offset testing */
 #if defined(VMS)
     if (!bin_desc.present)
-		options[QUAL_BINARY] = 1; /* default to binary mode */
+		options[QUAL_BINARY] = 1; /* default to binary mode in VMS */
 #endif
-	if (!rel_desc.present)
-		options[QUAL_RELATIVE] = 1;
-	else
+	if ( qual_tbl[QUAL_HEXOUT].present && !qual_tbl[QUAL_HEXOUT].negated )
 		options[QUAL_BINARY] = 0;
 #if !defined(SUN)
     if (!miser_desc.present)
@@ -577,10 +578,10 @@ int getcommand(void)
 #if !defined(MAC_PP)
 	if ( options[QUAL_BINARY] )
 		output_mode = OUTPUT_VLDA;
-	else if ( options[QUAL_RELATIVE] )
-		output_mode = OUTPUT_OL;
-	else
+	else if ( options[QUAL_HEXOUT] )
 		output_mode = OUTPUT_HEX;
+	else
+		output_mode = OUTPUT_OL;
 #endif
     if (!rms_errors)
     {

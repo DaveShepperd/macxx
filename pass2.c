@@ -416,7 +416,7 @@ int pass2( void )
                 }
                 else
                 {
-                    if (options[QUAL_RELATIVE])
+                    if (options[QUAL_HEXOUT])
                     {
                         flushobj();
                         outexp(&EXP0,eline,eline,obj_fp,OUTEXP_TAG);
@@ -493,7 +493,7 @@ int pass2( void )
                     }
                     err_msg(MSG_CONT,emsg);
                 }
-                if (options[QUAL_RELATIVE])
+                if (options[QUAL_HEXOUT])
                 {
                     outxfer(&EXP0,obj_fp);
                 }

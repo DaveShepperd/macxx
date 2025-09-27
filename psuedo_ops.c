@@ -1605,7 +1605,11 @@ static int op_edcommon(int onoff)
 		{
 			for ( i = 0; edstuff[i].string != 0; ++i )
 			{
-				tt = strncmp(token_pool, edstuff[i].string, 5);
+				int edLen, tvLen = token_value;
+				edLen = strlen(edstuff[i].string);
+				if ( tvLen < edLen && tvLen >= 3)
+					edLen = tvLen;
+				tt = strncmp(token_pool, edstuff[i].string, edLen);
 				if ( tt == 0 )
 					break;
 			}
@@ -2392,7 +2396,7 @@ int op_psect(void)
 	uint32_t maxlen = 0;
 	SEG_struct *new_seg;
 
-	if ( !options[QUAL_RELATIVE] )
+	if ( !options[QUAL_HEXOUT] )
 	{
 		show_bad_token(NULL,"Directive not allowed with command line option NORELATIVE selected", MSG_ERROR);
 		f1_eatit();
@@ -2528,7 +2532,7 @@ int op_csect(void)
 {
 	int new_one, flags = 0;
 	SEG_struct *new_seg;
-	if ( !options[QUAL_RELATIVE] )
+	if ( !options[QUAL_HEXOUT] )
 	{
 		show_bad_token(NULL,"Directive not allowed with command line option NORELATIVE selected", MSG_ERROR);
 		f1_eatit();
@@ -2552,7 +2556,7 @@ int op_bsect(void)
 {
 	int new_one, flags = 0;
 	SEG_struct *new_seg;
-	if ( !options[QUAL_RELATIVE] )
+	if ( !options[QUAL_HEXOUT] )
 	{
 		show_bad_token(NULL,"Directive not allowed with command line option NORELATIVE selected", MSG_ERROR);
 		f1_eatit();

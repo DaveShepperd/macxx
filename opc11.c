@@ -51,7 +51,7 @@ char macxx_nibbles_byte = 3;        /* For the listing output routines */
 char macxx_nibbles_word = 6;
 char macxx_nibbles_long = 11;
 
-uint32_t macxx_edm_default = ED_TRUNC; /* |ED_LC|ED_GBL; */  /* default edmask */
+uint32_t macxx_edm_default = ED_TRUNC|ED_CPU; /* |ED_LC|ED_GBL; */  /* default edmask */
 uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD); /* default list mask */
 
 int current_radix = 8;      /* default the radix to octal */
