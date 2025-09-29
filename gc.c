@@ -513,7 +513,7 @@ int getcommand(void)
 		options[QUAL_PREDEFINE] = 1;
 	if ( (macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) )
 	{
-		if ( !qual_tbl[QUAL_Z80ASM].present || !qual_tbl[QUAL_Z80ASM].negated )
+		if ( !qual_tbl[QUAL_Z80ASM].negated )
 			options[QUAL_Z80ASM] = 1;
 	}
 #endif	/* !defined(MAC_PP) */

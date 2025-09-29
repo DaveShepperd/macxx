@@ -50,8 +50,7 @@ static const char *help_msg[] = {
                             "   - Output error messages in a syntax suitable for use by an IDE.\n",
     opt_delim,"[no]ignore", "	        - Ignore the assembler directives not implemented in this version\n",
 #if !defined(MAC_PP)
-	opt_delim,"[no]hexout", "	        - Output tekhex directly (used for testing. Forces -norelative and -nobinary)\n",
-	opt_delim,"[no]relative", "	        - Enable relative assembly\n",
+	opt_delim,"[no]hexout", "	        - Output tekhex directly (used for testing. Forces -nobinary)\n",
 	help_2_pass_mark,
     opt_delim,"[no]2_pass", "	        - select to assemble using two pass mode\n",
     opt_delim,"[no]debug",  "[=name]	- select and name temporary work file\n",
@@ -94,7 +93,7 @@ static const char *help_msg[] = {
     (char *)&help_symbol_length," ",opt_delim,"opc=",(char *)&help_opcode_length," ",
 	opt_delim,"noignore ",
 #if !defined(MAC_PP)
-	opt_delim,"relative ",
+	opt_delim,"nohexout ",
     opt_delim,"notemp ",
 #if !defined(VMS)
     opt_delim,"nobinary ",

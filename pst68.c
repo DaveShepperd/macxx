@@ -167,7 +167,7 @@ OPCDEF("TAB",	00,		0x16,	IMP	)		/* INHERENT */
 OPCDEF("TAP",	00,		0x06,	IMP	)		/* INHERENT */
 OPCDEF("TBA",	00,		0x17,	IMP	)		/* INHERENT */
 OPCDEF("TPA",	00,		0x07,	IMP	)		/* INHERENT */
-OPCDEF("TST",	00,		0x4D,	X|E	)		/* EXT, IND */
+OPCDEF("TST",	00,		0x4D,	X|E|DES	)		/* EXT, IND */
 OPCDEF("TSTA",	00,		0x4D,	ACC	)		/* A */
 OPCDEF("TSTB",	00,		0x5D,	ACC	)		/* B */
 OPCDEF("TSX",	00,		0x30,	IMP	)		/* INHERENT */

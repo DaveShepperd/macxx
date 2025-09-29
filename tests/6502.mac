@@ -209,8 +209,9 @@ fwd:
 	dex
 	nop
 ; 0B - FB
+; 0C - FC
 	bit a,abs
-	bit	abs
+	bit abs
 	jmp a,abs
 	jmp abs
 	jmp n,abs
@@ -304,5 +305,6 @@ fwd:
 	inc abs(x)
 ; 0F - FF
 
+	.end 0
 	
 	

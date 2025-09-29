@@ -21,6 +21,10 @@
 /******************************************************************************
 Change Log
 
+	09/29/2025  - Added check_4_abs() function. Emit an error if no operand
+			provided but one expected. Handle "op A" and "op B". Fixed bug
+			in "xxX #expr" not providing for 16 bit operand. DMS
+			
     08/09/2023	- Added support for BR S,+n and BR S,-n syntax  - Tim Giddens
 		  All Branch instructions now support this syntax used in
 		  very old source code.
@@ -232,8 +236,37 @@ static void do_branch(Opcode *opc)
     return;
 }
 
-
-
+/* This determines whether the am is type X (indexed) or type E (absolute) */
+/* Returns: 0 if zpage, 1 if not */
+static int check_4_abs(EXP_stk *estk)
+{
+	EXPR_struct *expr = estk->stack;
+	expr = estk->stack;
+	int valIsByte = 0;
+	
+	if ( estk->base_page_reference != 0 )
+	{
+		return 0;	/* forced z page */
+	}
+	compress_expr(estk);
+	valIsByte = (estk->ptr == 1 && expr->expr_code == EXPR_VALUE && expr->expr_value > -128 && expr->expr_value < 256 );
+	if ( valIsByte && !estk->forward_reference )
+	{
+		return 0;	/* is absolutely z page */
+	}
+	if ( options[QUAL_2_PASS] )
+	{
+		if ( !pass && (!valIsByte || estk->forward_reference) )
+		{
+			setAMATag(current_fnd, 1);   /* Say we chose a word for this instruction because of fwd reference */
+			return 1;
+		}
+		if ( pass && getAMATag(current_fnd) >= 0 )
+			return 1;
+	}
+	/* Default to z page */
+	return 0;
+}
 
 static int do_operand(Opcode *opc)
 {                   /* 1 or 2 operands required*/
@@ -251,8 +284,11 @@ static int do_operand(Opcode *opc)
             if (token_value == '#')
             {
                 get_token();        /* get the next token */
-                if (exprs(1,&EXP1) < 1) break; /* quit if expr nfg */
-                return I_NUM;       /* return with immediate mode address */
+                if (exprs(1,&EXP1) < 1)
+					break; /* quit if expr nfg */
+				if ( (opc->op_amode&SPC) )
+					EXP1.tag = (edmask & ED_M68) ? 'W':'w';
+				return I_NUM;       /* return with immediate mode address */
             }
             if (token_value == open_operand)
             {
@@ -265,8 +301,9 @@ static int do_operand(Opcode *opc)
                     amflag = OPENAT;
                 }
             }
-            if (amflag == 0) break;    /* give 'em an illegal am */
-            get_token();       /* pickup the next token */
+            if (amflag == 0)
+				break;    /* give 'em an illegal am */
+            ct = get_token();       /* pickup the next token */
         }             /* fall through to rest */
     default: {               /* -+ if MOS format */
                 if (token_type == TOKEN_strng && *inp_ptr == ',')
@@ -307,11 +344,12 @@ static int do_operand(Opcode *opc)
                         EXP1.tag = (edmask & ED_M68) ? 'W':'w';
 
                     }
+#if 0
                     else if (c == 'A')
                     {
                         amdcdnum = A;
                     }
-
+#endif
 
                     if (amdcdnum < UNDEF_NUM)
                     {
@@ -321,44 +359,102 @@ static int do_operand(Opcode *opc)
                     ++inp_ptr;       /* eat the comma */
                     get_token();     /* pickup the next token */
                     amflag = MNBI;       /* signal nothing else allowed */
+
+					if (exprs(1,&EXP1) < 1)
+						break;
                 }
                 else
                 {
                     /* if no address mode specified */
+					do
+					{
+						if ( (opc->op_amode&DES) && token_type == TOKEN_strng && token_value == 1 )
+						{
+							char reg = toupper(token_pool[0]);
+							if ( reg == 'A' )
+								amdcdnum = IMP;
+							else if ( reg == 'B' )
+							{
+								amdcdnum = IMP;
+								EXP0SP->expr_value += 0x10;
+							}
+							break;	/* from while(0) */
+						}
+						if ( exprs(1, &EXP1) < 1 )
+							break;
 
-                    if ( (opc->op_amode) == (X|E) )
-                    {        /* If no AM option - Default JSR and JMP to Extended (Absolute) */
-                        EXP0SP->expr_value = opc->op_value + 0x30;
-                        EXP1.tag = (edmask & ED_M68) ? 'W':'w';
-                    }
+						if ( (opc->op_amode) == (X|E) )
+						{        /* If no AM option - Default JSR and JMP to Extended (Absolute) */
+							EXP0SP->expr_value = opc->op_value + 0x30;
+							EXP1.tag = (edmask & ED_M68) ? 'W':'w';	/* jmp/jsr w/o am is always absolute */
+							amdcdnum = E;
+							break;	/* from while(0) */
+						}
 
-                    if ( (opc->op_amode) == (X|E|DES) )
+						if ( (opc->op_amode) == (X|E|DES) )
                     {        /* If no AM option - Default  Extended (Absolute) */
-                        EXP0SP->expr_value = opc->op_value + 0x30;
-                        EXP1.tag = (edmask & ED_M68) ? 'W':'w';
-                    }
+							EXP0SP->expr_value = opc->op_value + 0x30;
+							EXP1.tag = (edmask & ED_M68) ? 'W':'w';
+							amdcdnum = E;
+							break;	/* from while(0) */
+						}
 
-                    if ( (opc->op_amode) == (D|X|E|DES) )
-                    {        /* If no AM option - Default  Direct (Absolute Zero Page) */
-                        EXP0SP->expr_value = opc->op_value + 0x10;
+						if ( (opc->op_amode) == (D|X|E|DES) )
+						{        /* If no AM option - Could be D (+0x10) or E (+0x30) */
+							if ( !check_4_abs(&EXP1) )
+							{
+								/* zero page */
+								EXP0SP->expr_value = opc->op_value + 0x10;
+								amdcdnum = D;
+							}
+							else
+							{
+								EXP0SP->expr_value = opc->op_value + 0x30;
+								EXP1.tag = (edmask & ED_M68) ? 'W':'w';
+								amdcdnum = E;
+							}
+							break;	/* from while(0) */
 
-                    }
+						}
 
-                    if ( (opc->op_amode) == MOST68 )
-                    {        /* If no AM option - Default  Direct (Absolute Zero Page) */
-                        EXP0SP->expr_value = opc->op_value + 0x10;
+						if ( (opc->op_amode) == MOST68 )
+						{        /* If no AM option - Could be D (+0x10) or E (+0x30) */
+							if ( !check_4_abs(&EXP1) )
+							{
+								/* zero page */
+								EXP0SP->expr_value = opc->op_value + 0x10;
+								amdcdnum = D;
+							}
+							else
+							{
+								EXP0SP->expr_value = opc->op_value + 0x30;
+								EXP1.tag = (edmask & ED_M68) ? 'W':'w';
+								amdcdnum = E;
+							}
+							break;	/* from while(0) */
+						}
 
-                    }
+						if ( (opc->op_amode) == (MOST68|SPC) )
+						{        /* If no AM option - Could be # (+0), D (+0x10), X (+0x20), E (+0x30) */
+							if ( !check_4_abs(&EXP1) )
+							{
+								/* zero page */
+								EXP0SP->expr_value = opc->op_value + 0x10;
+								amdcdnum = D;
+							}
+							else
+							{
+								EXP0SP->expr_value = opc->op_value + 0x30;
+								EXP1.tag = (edmask & ED_M68) ? 'W':'w';
+								amdcdnum = E;
+							}
+							break;	/* from while(0) */
 
-                    if ( (opc->op_amode) == (MOST68|SPC) )
-                    {        /* If no AM option - Default  Direct (Absolute Zero Page) */
-                        EXP0SP->expr_value = opc->op_value + 0x10;
-
-                    }
-
+						}
+					} while (0);
+					if ( amdcdnum < 0 )
+						break;	/* from switch(ct) */
                 }
-
-                if (exprs(1,&EXP1) < 1) break;
 
                 return amdcdnum > UNDEF_NUM ? amdcdnum : UNDEF_NUM; /* give 'em an am */
 
@@ -400,7 +496,8 @@ void do_opcode(Opcode *opc)
         }
         else
         {
-            do_operand(opc);
+            if ( do_operand(opc) <= 0 )
+				bad_token(NULL,"Invalid or missing operand");
         }
 
     }

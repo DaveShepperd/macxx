@@ -394,6 +394,8 @@
 			Filters=""
 			GUID="{0D4A941C-8098-42E8-B5A1-9AEC1513BD63}">
 			<F N="tests/6502.mac"/>
+			<F N="tests/6800.mac"/>
+			<F N="tests/8080.mac"/>
 			<F N="alltest.mac"/>
 			<F N="change_log.txt"/>
 			<F N="i.mac"/>

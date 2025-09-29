@@ -1,0 +1,102 @@
+.nlist octal
+.list mes
+.radix 16
+
+zpg == 55
+abs == 6666
+add == 1234
+imm == 77
+data == 44
+port = 33
+ddd = b
+rp = bc
+sss = b
+n = 0
+
+.macro rpabs op
+  .irp xx,<bc,de,hl,sp>
+    op xx,abs
+  .endr
+.endm
+.macro justrp op
+  .irp xx,<bc,de,hl,sp>
+    op xx
+  .endr
+.endm
+.macro ddd op
+  .irp xx,<b,c,d,e,h,l,m,a>
+    op xx
+  .endr
+.endm
+.macro ddddata op
+  .irp xx,<b,c,d,e,h,l,m,a>
+    op xx,data
+  .endr
+.endm
+
+start:
+	nop
+	rpabs lxi 
+	stax bc
+	stax de
+	justrp inx
+	ddd inr
+	ddd dcr
+	ddddata mvi 
+	rlc
+	justrp dad
+	ldax bc
+	ldax de
+	justrp dcx
+	rrc
+	ral
+	rar
+	shld add
+	daa
+	lhld add
+	cma
+	sta add
+	stc
+	lda add
+	cmc
+	mov ddd,sss
+	hlt
+	ddd add
+	ddd adc
+	ddd sub
+	ddd sbb
+	ddd ana
+	ddd xra
+	ddd ora
+	ddd cmp
+;	rcc (ret)
+	pop bc
+	pop de
+	pop hl
+	pop psw
+;	jcc add (jmp conditional)
+	jmp add
+;	ccc add (call conditional)
+	push bc
+	push de
+	push hl
+	push psw
+	adi imm
+	rst n
+	ret
+	aci imm
+	sui imm
+	sbi imm
+	ani imm
+	xri imm
+	ori imm
+	cpi imm
+	call add
+	out port
+	in port
+	xthl
+	pchl
+	xchg
+	
+	
+	
