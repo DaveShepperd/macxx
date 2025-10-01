@@ -229,7 +229,7 @@ pass168k.o : pass1.c $(ALLH) pst_tokens.h pst_structs.h listctrl.h lstcnsts.h st
 	$(ECHO) $(DELIM)    Compiling $<...$(DELIM)
 	$C -DMAC_68K -o $@ $<
 
-.PHONY: clean show
+.PHONY: clean show test
 
 clean :
 	$(ECHO) $(DELIM)    Cleaning ...$(DELIM)
@@ -247,6 +247,9 @@ show :
 	$(ECHO) $(DELIM) ALLOTJ   = $(ALLOTJ) $(DELIM)
 	$(ECHO) $(DELIM) ALLO68K  = $(ALLO68K) $(DELIM)
 	$(ECHO) $(DELIM) ALLOPP   = $(ALLOPP) $(DELIM)
+
+test :
+	cd tests;$(MAKE) MINGW=$(MINGW) MSYS2=$(MSYS2)
 
 add_defs.o : add_defs.c add_defs.h
 char_table.o : char_table.c ct.h 

@@ -1,0 +1,246 @@
+oldmac69 = 1	;Set this to 0 to test mac68-12.05 or older
+
+.if eq,oldmac69
+.nlist octal
+.endc
+
+.list mes
+.radix 16
+.dsabl ama
+
+zpg == 55
+abs == 6666
+add == 1234
+imm == 77
+data == 44
+port = 33
+n = 0
+
+.macro abxe op
+.if eq,oldmac69
+	op A
+	op B
+.endc
+;	op x,zpg
+	op zpg(x)
+	op e,abs
+.if eq,oldmac69
+	op abs
+.endc
+.endm
+
+.macro idxe op
+.if eq,oldmac69
+	op #imm
+.endc
+	op i,zpg
+	op i,-128.
+	op i,0ff
+	op d,zpg
+;	op x,zpg
+	op zpg(x)
+	op e,abs
+.if eq,oldmac69
+	op zpg
+	op abs
+.endc
+.endm
+
+.macro idxes op
+	op #abs
+	op i,abs
+	op d,zpg
+;	op x,zpg
+	op zpg(x)
+	op e,abs
+.if eq,oldmac69
+	op zpg
+	op abs
+.endc
+.endm
+
+.macro dxe op
+	op zpg
+	op d,zpg
+;	op x,zpg
+	op zpg(x)
+	op e,abs
+.if eq,oldmac69
+	op abs
+.endc
+.endm
+
+.macro abxe op
+.if eq,oldmac69
+	op a
+	op b
+.endc
+;	op x,zpg
+	op zpg(x)
+	op e,abs
+.if eq,oldmac69
+	op zpg
+.endc
+.endm
+
+.macro xe op
+;	op x,zpg
+	op zpg(x)
+	op e,abs
+	op zpg
+.endm
+
+    abx			;",	00,		0x3A,	IMP	)		/* INHERENT */
+    idxe ADCA	;",	00,		0x89,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe ADCB	;",	00,		0xC9,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe ADDA	;",	00,		0x8B,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe ADDB	;",	00,		0xCB,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxes ADDD	;",	00,		0xC3,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    idxe ANDA	;",	00,		0x84,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe ANDB	;",	00,		0xC4,	idxe	)		/* IMM, DIR, EXT, IND */
+    ANDCC		;",	00,		0x1C,	I	)		/* IMM */
+    abxe ASL	;",	00,		0x48,	SHFTAM	)		/* DIR, EXT, IND */
+    ASLA		;",	00,		0x48,	ACC	)		/* A */
+    ASLB		;",	00,		0x58,	ACC	)		/* B */
+    abxe ASR	;",	00,		0x47,	SHFTAM	)		/* DIR, EXT, IND */
+    ASRA		;",	00,		0x47,	ACC	)		/* A */
+    ASRB		;",	00,		0x57,	ACC	)		/* B */
+bck:
+    BCC bck	;",	00,		0x24,	S	)		/* REL */
+    BCS bck	;",	00,		0x25,	S	)		/* REL */
+    BEQ bck	;",	00,		0x27,	S	)		/* REL */
+    BGE bck	;",	00,		0x2C,	S	)		/* REL */
+    BGT bck	;",	00,		0x2E,	S	)		/* REL */
+    BHI bck	;",	00,		0x22,	S	)		/* REL */
+    BHIS bck	;",	00,		0x24,	S	)		/* REL */
+    BHS bck	;",	00,		0x24,	S	)		/* REL */
+    idxe BITA	;",	00,		0x85,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe BITB	;",	00,		0xC5,	idxe	)		/* IMM, DIR, EXT, IND */
+    BLE fwd	;",	00,		0x2F,	S	)		/* REL */
+    BLO fwd	;",	00,		0x25,	S	)		/* REL */
+    BLOS fwd	;",	00,		0x23,	S	)		/* REL */
+    BLS fwd	;",	00,		0x23,	S	)		/* REL */
+    BLT fwd	;",	00,		0x2D,	S	)		/* REL */
+    BMI fwd	;",	00,		0x2B,	S	)		/* REL */
+    BNE fwd	;",	00,		0x26,	S	)		/* REL */
+    BPL fwd	;",	00,		0x2A,	S	)		/* REL */
+    BRA fwd	;",	00,		0x20,	S	)		/* REL */
+    BRN fwd	;",	00,		0x21,	S	)		/* REL */
+    BSR fwd	;",	00,		0x8D,	S	)		/* REL */
+    BVC fwd	;",	00,		0x28,	S	)		/* REL */
+    BVS fwd	;",	00,		0x29,	S	)		/* REL */
+fwd:
+    idxe CLR	;",	00,		0x4F,	SHFTAM	)		/* DIR, EXT, IND */
+    CLRA		;",	00,		0x4F,	ACC	)		/* A */
+    CLRB		;",	00,		0x5F,	ACC	)		/* B */
+    idxe CMPA	;",	00,		0x81,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe CMPB	;",	00,		0xC1,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxes CMPD	;",	00,		0x83,	idxe|SPC|SP10	)	/* IMM, DIR, EXT, IND */
+    idxes CMPS	;",	00,		0x8C,	idxe|SPC|SP11	)	/* IMM, DIR, EXT, IND */
+    idxes CMPU	;",	00,		0x83,	idxe|SPC|SP11	)	/* IMM, DIR, EXT, IND */
+    idxes CMPX	;",	00,		0x8C,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    idxes CMPY	;",	00,		0x8C,	idxe|SPC|SP10	)	/* IMM, DIR, EXT, IND */
+    idxe COM	;",	00,		0x43,	SHFTAM	)		/* DIR, EXT, IND */
+    COMA		;",	00,		0x43,	ACC	)		/* A */
+    COMB		;",	00,		0x53,	ACC	)		/* B */
+    idxe CPA	;",	00,		0x81,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe CPB	;",	00,		0xC1,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxes CPD	;",	00,		0x83,	idxe|SPC|SP10	)	/* IMM, DIR, EXT, IND */
+    idxes CPS	;",	00,		0x8C,	idxe|SPC|SP11	)	/* IMM, DIR, EXT, IND */
+    idxes CPU	;",	00,		0x83,	idxe|SPC|SP11	)	/* IMM, DIR, EXT, IND */
+    idxes CPX	;",	00,		0x8C,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    idxes CPY	;",	00,		0x8C,	idxe|SPC|SP10	)	/* IMM, DIR, EXT, IND */
+    CWAI		;",	00,		0x3C,	I	)		/* IMM */
+    DAA		;",	00,		0x19,	IMP	)		/* INHERENT */
+    abxe DEC	;",	00,		0x4A,	SHFTAM	)		/* DIR, EXT, IND */
+    DECA		;",	00,		0x4A,	ACC	)		/* A */
+    DECB		;",	00,		0x5A,	ACC	)		/* B */
+    idxe EORA	;",	00,		0x88,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe EORB	;",	00,		0xC8,	idxe	)		/* IMM, DIR, EXT, IND */
+    EXG		;",	00,		0x1E,	I	)		/* IMM */
+    abxe INC	;",	00,		0x4C,	SHFTAM	)		/* DIR, EXT, IND */
+    INCA		;",	00,		0x4C,	ACC	)		/* A */
+    INCB		;",	00,		0x5C,	ACC	)		/* B */
+    dxe JMP	;",	00,		0x4E,	X|E|D|SPDP	)	/* DIR, EXT, IND */
+    dxe JSR	;",	00,		0x8D,	X|E|D	)		/* DIR, EXT, IND */
+    LBCC bck	;",	00,		0x24,	LONGAM	)		/* REL */
+    LBCS bck	;	00,		0x25,	LONGAM	)		/* REL */
+    LBEQ bck	;	00,		0x27,	LONGAM	)		/* REL */
+    LBGE bck	;	00,		0x2C,	LONGAM	)		/* REL */
+    LBGT bck	;	00,		0x2E,	LONGAM	)		/* REL */
+    LBHI bck	;	00,		0x22,	LONGAM	)		/* REL */
+    LBHIS bck	;	00,		0x24,	LONGAM	)		/* REL */
+    LBHS bck	;	00,		0x24,	LONGAM	)		/* REL */
+    LBLE bck	;	00,		0x2F,	LONGAM	)		/* REL */
+    LBLO bck	;	00,		0x25,	LONGAM	)		/* REL */
+    LBLOS bck	;	00,		0x23,	LONGAM	)		/* REL */
+    LBLS bck	;	00,		0x23,	LONGAM	)		/* REL */
+    LBLT bck	;	00,		0x2D,	LONGAM	)		/* REL */
+    LBMI bck	;	00,		0x2B,	LONGAM	)		/* REL */
+    LBNE bck	;	00,		0x26,	LONGAM	)		/* REL */
+    LBPL bck	;	00,		0x2A,	LONGAM	)		/* REL */
+    LBRA bck	;	00,		0x16,	S|SPL	)		/* REL */
+    LBRN bck	;	00,		0x21,	LONGAM	)		/* REL */
+    LBSR bck	;	00,		0x17,	S|SPL	)		/* REL */
+    LBVC bck	;	00,		0x28,	LONGAM	)		/* REL */
+    LBVS bck	;	00,		0x29,	LONGAM	)		/* REL */
+    idxe LDA	;",	00,		0x86,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe LDB	;",	00,		0xC6,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxes LDD	;",	00,		0xCC,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    idxes LDS	;",	00,		0xCE,	idxe|SPC|SP10	)	/* IMM, DIR, EXT, IND */
+    idxes LDU	;",	00,		0xCE,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    idxes LDX	;",	00,		0x8E,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    idxes LDY	;",	00,		0x8E,	idxe|SPC|SP10	)	/* IMM, DIR, EXT, IND */
+    LEAS		;",	00,		0x12,	X	)		/* IND */
+    LEAU		;",	00,		0x13,	X	)		/* IND */
+    LEAX		;",	00,		0x10,	X	)		/* IND */
+    LEAY		;",	00,		0x11,	X	)		/* IND */
+    abxe LSL	;",	00,		0x48,	SHFTAM	)		/* DIR, EXT, IND */
+    LSLA		;",	00,		0x48,	ACC	)		/* A */
+    LSLB		;",	00,		0x58,	ACC	)		/* B */
+    abxe LSR	;",	00,		0x44,	SHFTAM	)		/* DIR, EXT, IND */
+    LSRA		;",	00,		0x44,	ACC	)		/* A */
+    LSRB		;",	00,		0x54,	ACC	)		/* B */
+    MUL		;",	00,		0x3D,	IMP	)		/* INHERENT */
+    abxe NEG	;",	00,		0x40,	SHFTAM	)		/* DIR, EXT, IND */
+    NEGA		;",	00,		0x40,	ACC	)		/* A */
+    NEGB		;",	00,		0x50,	ACC	)		/* B */
+    NOP		;",	00,		0x12,	IMP	)		/* INHERENT */
+    idxe ORA	;",	00,		0x8A,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe ORB	;",	00,		0xCA,	idxe	)		/* IMM, DIR, EXT, IND */
+    ORCC		;",	00,		0x1A,	I	)		/* IMM */
+    PSHS		;",	00,		0x34,	I	)		/* IMM */
+    PSHU		;",	00,		0x36,	I	)		/* IMM */
+    PULS		;",	00,		0x35,	I	)		/* IMM */
+    PULU		;",	00,		0x37,	I	)		/* IMM */
+    abxe ROL	;",	00,		0x49,	SHFTAM	)		/* DIR, EXT, IND */
+    ROLA		;",	00,		0x49,	ACC	)		/* A */
+    ROLB		;",	00,		0x59,	ACC	)		/* B */
+    abxe ROR	;",	00,		0x46,	SHFTAM	)		/* DIR, EXT, IND */
+    RORA		;",	00,		0x46,	ACC	)		/* A */
+    RORB		;",	00,		0x56,	ACC	)		/* B */
+    RTI		;",	00,		0x3B,	IMP	)		/* INHERENT */
+    RTS		;",	00,		0x39,	IMP	)		/* INHERENT */
+    idxe SBCA	;",	00,		0x82,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe SBCB	;",	00,		0xC2,	idxe	)		/* IMM, DIR, EXT, IND */
+    SEX		;",	00,		0x1D,	IMP	)		/* INHERENT */
+    dxe STA	;",	00,		0x87,	D|X|E|DES	)	/* DIR, EXT, IND */
+    dxe STB	;",	00,		0xC7,	D|X|E|DES	)	/* DIR, EXT, IND */
+    dxe STD	;",	00,		0xCD,	D|X|E|DES	)	/* DIR, EXT, IND */
+    dxe STS	;",	00,		0xCF,	D|X|E|DES|SPC10	)	/* DIR, EXT, IND */
+    dxe STU	;",	00,		0xCF,	D|X|E|DES	)	/* DIR, EXT, IND */
+    dxe STX	;",	00,		0x8F,	D|X|E|DES	)	/* DIR, EXT, IND */
+    dxe STY	;",	00,		0x8F,	D|X|E|DES|SPC10	)	/* DIR, EXT, IND */
+    idxe SUBA	;",	00,		0x80,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxe SUBB	;",	00,		0xC0,	idxe	)		/* IMM, DIR, EXT, IND */
+    idxes SUBD	;",	00,		0x83,	idxe|SPC	)	/* IMM, DIR, EXT, IND */
+    SWI		;",	00,		0x3F,	IMP	)		/* INHERENT */
+    SWI1		;",	00,		0x3F,	IMP	)		/* INHERENT */
+    SWI2		;",	00,		0x3F,	SPC10	)		/* INHERENT */
+    SWI3		;",	00,		0x3F,	SPC11	)		/* INHERENT */
+    SYNC		;",	00,		0x13,	IMP	)		/* INHERENT */
+    TFR		;",	00,		0x1F,	I	)		/* IMM */
+    abxe TST	;",	00,		0x4D,	X|E|D|SPDP	)	/* DIR, EXT, IND */
+    TSTA		;",	00,		0x4D,	ACC	)		/* A */
+    TSTB		;",	00,		0x5D,	ACC	)		/* B */
+

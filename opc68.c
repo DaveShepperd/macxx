@@ -254,7 +254,7 @@ static int check_4_abs(EXP_stk *estk)
 	{
 		return 0;	/* is absolutely z page */
 	}
-	if ( options[QUAL_2_PASS] )
+/*	if ( options[QUAL_2_PASS] ) */
 	{
 		if ( !pass && (!valIsByte || estk->forward_reference) )
 		{
@@ -265,7 +265,7 @@ static int check_4_abs(EXP_stk *estk)
 			return 1;
 	}
 	/* Default to z page */
-	return 0;
+	return (edmask&ED_AMA) ? 0:1;
 }
 
 static int do_operand(Opcode *opc)
