@@ -41,7 +41,7 @@ ifeq ($(MINGW),1)
 default:
 	echo "Sorry, this won't work on Windows under Mingw. Use MSYS2 instead"
 else
-default: chk65 chk11 chkz80 chk8080 chk68 chk69 chkas #chk68k 
+default: chk65 chk11 chkz80 chk8080 chk68 chk69 chkas chk68k 
 endif
 
 define chkIt
@@ -68,6 +68,9 @@ chk65: 6502.mac Makefile
 chk68: 6800.mac Makefile
 	$(call chkIt,$(MAC68),,6800)
 	$(call chkIt,$(MAC68),-2,6800)
+
+chk68k: 68k.mac Makefile
+	$(call chkIt,$(MAC68K),,68k)
 
 chk69: 6809.mac Makefile
 	$(call chkIt,$(MAC69),,6809)

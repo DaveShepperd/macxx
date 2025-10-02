@@ -396,6 +396,7 @@
 			<F N="tests/6502.mac"/>
 			<F N="tests/6800.mac"/>
 			<F N="tests/6809.mac"/>
+			<F N="tests/68k.mac"/>
 			<F N="tests/8080.mac"/>
 			<F N="alltest.mac"/>
 			<F N="tests/asap.mac"/>
