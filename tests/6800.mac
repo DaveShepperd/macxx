@@ -92,6 +92,13 @@ n = 0
 	op zpg
 .endm
 
+	.word 1+2*3+1	; s/b 0xA
+	.word 1+<2*3>+1	; s/b 0x8
+	.word 1{3	; s/b 0x8
+	.word 100}5	; s/b 0x8
+	.word 1?2	; s/b 3
+	.word 1?3	; s/b 2
+
     ABA    ;	00,		0x1B,	IMP	)		/* INHERENT */
     most68 ADCA    ;	00,		0x89,	MOST68	)		/* IMM, DIR, EXT, IND */
     most68 ADCB    ;	00,		0xC9,	MOST68	)		/* IMM, DIR, EXT, IND */

@@ -67,7 +67,7 @@ char macxx_nibbles_long = 8;
 uint32_t macxx_edm_default = ED_LC|ED_GBL|ED_TRUNC; /* default edmask */
 uint32_t macxx_lm_default = ~(LIST_ME|LIST_MEB|LIST_MES|LIST_LD|LIST_COD|LIST_OCT); /* default list mask */
 
-int current_radix = 16;     /* default the radix to hex */
+int current_radix = 10;     /* default the radix to decimal */
 char expr_open = '(';       /* char that opens an expression */
 char expr_close = ')';      /* char that closes an expression */
 /* char expr_escape = '^'; */     /* char that escapes a unary expression term */

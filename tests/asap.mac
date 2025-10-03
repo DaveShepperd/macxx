@@ -1,4 +1,5 @@
-	.list mes
+	.list meb
+	.nlist byt
 	
 OPCL_AU = 0
 OPCL_LD = 1
@@ -10,14 +11,15 @@ OPCL_PS = 6
 OPCL_IL = 7
 
 reg = 0
+.radix 10
 .macro mkrg rg
   r'rg = %reg
   reg = reg+1
 .endm
-
 .rept 32
   mkrg \reg
 .endr
+.radix 16
 
 .macro noc_def op1, op2, opc, num, dst
   .if eq,opc-OPCL_IL
@@ -55,6 +57,18 @@ reg = 0
 	op2 r0, r1, r2
 .endm
 
+	.word 1+2*3+1	; s/b 0xA
+	.word 1+(2*3)+1	; s/b 0x8
+	.word 1<<3		; s/b 0x8
+	.word 100>>5	; s/b 0x8
+	.word 1 == 2	; s/b 0
+	.word 1 == 1	; s/b 1
+	.word 1 != 2	; s/b 1
+	.word 1 < 2		; s/b 1
+	.word 1 > 2		; s/b 0
+	.word 1 <= 2	; s/b 1
+	.word 1 >= 2	; s/b 0
+
 bck:
 NOC_DEF   NOP ,  NOP.C , OPCL_IL,	0x08;	/* a NOP */
 BR_DEF   BSP , BSP.C ,	OPCL_BC,	0, bck ;	/* Strictly Positive  ~N & ~Z, bck ; */
@@ -84,36 +98,36 @@ BR_DEF   BRA , BRA.C ,	OPCL_BC,	0x02, fwd ;	/* BSR %0,target */
 
 fwd:
 
-LS_DEF   LEA , LEA.C ,	OPCL_LD,	0x03,	2; /* load effective  int; address */
-LS_DEF   LEAS , LEAS.C ,OPCL_LD,	0x04,	1;
-OPCDEF   SUBR , SUBR.C ,OPCL_AU,	0x05;
-OPCDEF   XOR , XOR.C ,	OPCL_AU,	0x06;
-OPCDEF   XORN , XORN.C ,OPCL_AU,	0x07;
+LS_DEF   LEA , LEA.C ,	OPCL_LD,	0x03,	2 ; /* load effective  int; address */
+LS_DEF   LEAS , LEAS.C ,OPCL_LD,	0x04,	1 ;
+OPCDEF   SUBR , SUBR.C ,OPCL_AU,	0x05 ;
+OPCDEF   XOR , XOR.C ,	OPCL_AU,	0x06 ;
+OPCDEF   XORN , XORN.C ,OPCL_AU,	0x07 ;
 
-OPCDEF   ADD , ADD.C ,	OPCL_AU,	0x08;
-OPCDEF   SUB , SUB.C ,	OPCL_AU,	0x09;
-OPCDEF   ADDC , ADDC.C ,OPCL_AU,	0x0A;
-OPCDEF   SUBC , SUBC.C ,OPCL_AU,	0x0B;
-OPCDEF   AND , AND.C ,	OPCL_AU,	0x0C;
-OPCDEF   ANDN , ANDN.C ,OPCL_AU,	0x0D;
-OPCDEF   OR , OR.C ,	OPCL_AU,	0x0E;
-OPCDEF   ORN , ORN.C ,	OPCL_AU,	0x0F;
+OPCDEF   ADD , ADD.C ,	OPCL_AU,	0x08 ;
+OPCDEF   SUB , SUB.C ,	OPCL_AU,	0x09 ;
+OPCDEF   ADDC , ADDC.C ,OPCL_AU,	0x0A ;
+OPCDEF   SUBC , SUBC.C ,OPCL_AU,	0x0B ;
+OPCDEF   AND , AND.C ,	OPCL_AU,	0x0C ;
+OPCDEF   ANDN , ANDN.C ,OPCL_AU,	0x0D ;
+OPCDEF   OR , OR.C ,	OPCL_AU,	0x0E ;
+OPCDEF   ORN , ORN.C ,	OPCL_AU,	0x0F ;
 
-LS_DEF   LD , LD.C ,	OPCL_LD,	0x10,	2;
-LS_DEF   LDS , LDS.C ,	OPCL_LD,	0x11,	1;
-LS_DEF   LDUS , LDUS.C ,OPCL_LD,	0x12,	1;
-LS_DEF   STS , STS.C ,	OPCL_ST,	0x13,	1;
-LS_DEF   ST , ST.C ,	OPCL_ST,	0x14,	2;
-LS_DEF   LDB , LDB.C ,	OPCL_LD,	0x15,	0;
-LS_DEF   LDUB , LDUB.C ,OPCL_LD,	0x16,	0;
-LS_DEF   STB , STB.C ,	OPCL_ST,	0x17,	0;
+LS_DEF   LD , LD.C ,	OPCL_LD,	0x10,	2 ;
+LS_DEF   LDS , LDS.C ,	OPCL_LD,	0x11,	1 ;
+LS_DEF   LDUS , LDUS.C ,OPCL_LD,	0x12,	1 ;
+LS_DEF   STS , STS.C ,	OPCL_ST,	0x13,	1 ;
+LS_DEF   ST , ST.C ,	OPCL_ST,	0x14,	2 ;
+LS_DEF   LDB , LDB.C ,	OPCL_LD,	0x15,	0 ;
+LS_DEF   LDUB , LDUB.C ,OPCL_LD,	0x16,	0 ;
+LS_DEF   STB , STB.C ,	OPCL_ST,	0x17,	0 ;
 
-OPCDEF   ASHL , ASHL.C ,OPCL_AU,	0x1A;
-OPCDEF   ASHR , ASHR.C ,OPCL_AU,	0x18;
-OPCDEF   LSHR , LSHR.C ,OPCL_AU,	0x19;
-OPCDEF   SHL , SHL.C ,	OPCL_AU,	0x1A;
-OPCDEF   ROTL , ROTL.C ,OPCL_AU,	0x1B;
-NOC_DEF   GETPS , GETPS.C ,OPCL_PS,	0x1C, r15;
-NOC_DEF   PUTPS , PUTPS.C ,OPCL_PS,	0x1D, r15;
-LS_DEF   JSR , JSR.C ,	OPCL_JS,	0x1E,	2;
+OPCDEF   ASHL , ASHL.C ,OPCL_AU,	0x1A ;
+OPCDEF   ASHR , ASHR.C ,OPCL_AU,	0x18 ;
+OPCDEF   LSHR , LSHR.C ,OPCL_AU,	0x19 ;
+OPCDEF   SHL , SHL.C ,	OPCL_AU,	0x1A ;
+OPCDEF   ROTL , ROTL.C ,OPCL_AU,	0x1B ;
+NOC_DEF   GETPS , GETPS.C ,OPCL_PS,	0x1C, r15 ;
+NOC_DEF   PUTPS , PUTPS.C ,OPCL_PS,	0x1D, r15 ;
+LS_DEF   JSR , JSR.C ,	OPCL_JS,	0x1E,	2 ;
 
