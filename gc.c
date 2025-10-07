@@ -127,7 +127,7 @@ const char def_toc[] = {".toc"};		/* By TRG 20240503 to support TOC */
 const char def_mac[] = {".mac"};
 const char def_MAC[] = {".MAC"};
 #if !defined(MAC_PP)
-const char * const def_ob_names[] = {".hex",".ol",".ob",".obj"};
+const char * const def_ob_names[] = {".hex",".ol",".vlda",".ob"};
 const char def_tmp[] = {".tmp"};
 const char def_od[] = {".od"};
 #else
@@ -505,6 +505,13 @@ int getcommand(void)
 #endif
 	if ( qual_tbl[QUAL_HEXOUT].present && !qual_tbl[QUAL_HEXOUT].negated )
 		options[QUAL_BINARY] = 0;
+	if ( options[QUAL_OBTEST] )
+	{
+		options[QUAL_BINARY] = 1;
+		options[QUAL_OLTEST] = 0;
+	}
+	if ( options[QUAL_OLTEST] )
+		options[QUAL_BINARY] = 0;
 #if !defined(SUN)
     if (!miser_desc.present)
 		options[QUAL_MISER] = 1;    /* default to miser mode */
@@ -543,6 +550,8 @@ int getcommand(void)
 		}
         max_opcode_length = opcl_desc.intValue;
 	}
+	if ( options[QUAL_DBGOUTX] )
+		options[QUAL_DBGOUTX] = qual_tbl[QUAL_DBGOUTX].intValue;
     while (fnd != 0)
     {
         int err;
@@ -576,10 +585,10 @@ int getcommand(void)
         fnd = fnd->fn_next;
     }
 #if !defined(MAC_PP)
-	if ( options[QUAL_BINARY] )
-		output_mode = OUTPUT_VLDA;
-	else if ( options[QUAL_HEXOUT] )
+	if ( options[QUAL_HEXOUT] )
 		output_mode = OUTPUT_HEX;
+	else if ( options[QUAL_BINARY] )
+		output_mode = OUTPUT_OBJ;
 	else
 		output_mode = OUTPUT_OL;
 #endif
