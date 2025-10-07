@@ -979,20 +979,24 @@ void trunc_err( int32_t mask, int32_t tv)
     MEM_free(terr);
     return;
 }
-
-#define FLUSH_OUTBUF if (out_indx - out_buf != 0) {\
-      int dbg;\
-      dbg = options[QUAL_DEBUG];\
-      options[QUAL_DEBUG] = 0;\
-      write_to_tmp(TMP_BSTNG,(int)(out_indx-out_buf),out_buf,1);\
-      options[QUAL_DEBUG] = dbg;\
-      out_indx = out_buf;\
-      out_remaining = sizeof(out_buf);\
-      }
+
+static void flush_outbuf(void)
+{
+	if (out_indx - out_buf != 0)
+	{
+		int dbg;
+		dbg = options[QUAL_DEBUG];
+		options[QUAL_DEBUG] = 0;
+		write_to_tmp(TMP_BSTNG,(int)(out_indx-out_buf),out_buf,1);
+		options[QUAL_DEBUG] = dbg;
+	}
+	out_indx = out_buf;
+	out_remaining = sizeof(out_buf);
+}
 
 void move_pc( void )
 {
-    FLUSH_OUTBUF;
+    flush_outbuf();
 #if defined(PC_DEBUG)
     fprintf(stderr,"ENDLIN: Moving PC from \"%s\"+%08X to \"%s\"+%08X\n",
             out_seg?out_seg->seg_string:"",out_pc,current_section->seg_string,current_pc);
@@ -1014,7 +1018,7 @@ int endlin( void )
  *	returns true;
  */
 {
-    FLUSH_OUTBUF;
+    flush_outbuf();
     out_pc = current_offset;
     return 1;
 }   
@@ -1134,7 +1138,8 @@ int p1o_byte( EXP_stk *eps )
         tv = exp_ptr->expr_value;
         if ((edmask&ED_TRUNC) && ((tv > 255) || (tv < -128)))
 			trunc_err(255,tv);
-        if (out_remaining <= 0) FLUSH_OUTBUF;
+        if (out_remaining <= 0)
+			flush_outbuf();
         --out_remaining;
         *out_indx++ = (unsigned char)tv;
         pflg = 0;
@@ -1149,7 +1154,7 @@ int p1o_byte( EXP_stk *eps )
         {
             pflg = 'x';
         }
-        FLUSH_OUTBUF;
+        flush_outbuf();
         write_to_tmp(TMP_EXPR,0,eps,0);
         tv = eps->psuedo_value;      
     }                /* --if 1 absolute term */
@@ -1199,7 +1204,8 @@ int p1o_word( EXP_stk *eps )
         {
             tv = ((tv&255)<<8) | ((tv>>8)&255);
         }
-        if (out_remaining < 2) FLUSH_OUTBUF;
+        if (out_remaining < 2)
+			flush_outbuf();
         out_remaining -= 2;
         *out_indx++ = (char)tv;
         *out_indx++ = (char)(tv>>8);
@@ -1207,7 +1213,7 @@ int p1o_word( EXP_stk *eps )
     }
     else
     {         /* -+if 1 absolute term */
-        FLUSH_OUTBUF;
+        flush_outbuf();
         write_to_tmp(TMP_EXPR,0,eps,0);
         if (j == 1 && exp_ptr->expr_code == EXPR_SEG)
         {
@@ -1293,7 +1299,8 @@ int p1o_long( EXP_stk *eps )
             l1 = (unsigned char)(tv>>24);
             break;
         }
-        if (out_remaining < 4) FLUSH_OUTBUF;
+        if (out_remaining < 4)
+			flush_outbuf();
         out_remaining -= 4;
         *out_indx++ = l0;
         *out_indx++ = l1;
@@ -1303,7 +1310,7 @@ int p1o_long( EXP_stk *eps )
     }
     else
     {         /* -+if 1 absolute term */
-        FLUSH_OUTBUF;
+        flush_outbuf();
         write_to_tmp(TMP_EXPR,0,eps,0);
         if (j == 1 && exp_ptr->expr_code == EXPR_SEG)
         {
@@ -1401,7 +1408,8 @@ int p1o_var( EXP_stk *eps )
         if ( (edmask&ED_TRUNC) && (tv > uBits/2 || tv < -(uBits/2+1)) )
 			trunc_err(uBits,tv);
         tv &= bits;
-        if (out_remaining < bytes) FLUSH_OUTBUF;
+        if (out_remaining < bytes)
+			flush_outbuf();
         out_remaining -= bytes;
         if (tag == 'X')
         {
@@ -1422,7 +1430,7 @@ int p1o_var( EXP_stk *eps )
     }
     else
     {         /* -+if 1 absolute term */
-        FLUSH_OUTBUF;
+        flush_outbuf();
         write_to_tmp(TMP_EXPR,0,eps,0);
         if (j == 1 && exp_ptr->expr_code == EXPR_SEG)
         {
