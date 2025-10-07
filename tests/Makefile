@@ -45,17 +45,27 @@ default: chk65 chk11 chkz80 chk8080 chk68 chk69 chkas chk68k
 endif
 
 define chkIt
-	$(1) $(2) -hexout -out $(3); \
+	$(1) $(2) -oltest -out $(3); \
 	if [ $$? -ne 0 ]; then\
 		exit 1;\
 	fi;\
-	cmp $(3).hex masters/$(3).hex;\
+	cmp $(3).ol masters/$(3).gol;\
 	if [ $$? -ne 0 ]; then \
-		echo "*** $(3) FAILED ***";\
+		echo "*** $(3).ol FAILED $(2) ***";\
 	else \
-		echo "$(3) Passed";\
+		echo "$(3).ol Passed $(2)";\
 	fi;\
-	rm -f $(3).hex
+	$(1) $(2) -obtest -out $(3); \
+	if [ $$? -ne 0 ]; then\
+		exit 1;\
+	fi;\
+	cmp $(3).ob masters/$(3).gob;\
+	if [ $$? -ne 0 ]; then \
+		echo "*** $(3).ob FAILED $(2) ***";\
+	else \
+		echo "$(3).ob Passed $(2)";\
+	fi;\
+	rm -f $(3).hex $(3).ol $(3).ob
 endef
 
 chkas: asap.mac Makefile

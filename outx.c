@@ -46,7 +46,6 @@ FILE   *outxsym_fp;
 int    outx_lineno;
 int    outx_width=78;   /* object width */
 int    outx_swidth=78;  /* symbol width */
-int    outx_debug;
 int new_identifier=1;        /* new identifiers */
 
 /* line buffers for Ext-Tek output */
@@ -550,8 +549,9 @@ int outbstr(char *from, int len )
     }
     else
     {
-        toeol = oline + outx_width - op;
-        if (len >= toeol-2) flushobj();
+        toeol = op ? (oline + outx_width - op) : outx_width;
+        if (len >= toeol-2)
+			flushobj();
     }
     while (len > 0)
     {
@@ -596,7 +596,7 @@ int outbstr(char *from, int len )
         }
         limit = (toeol < len) ? toeol : len ;
         if ((limit &= ~1) == 0) limit = 1;
-        if (outx_debug > 2)
+        if (options[QUAL_DBGOUTX] > 2)
         {
             fprintf(stderr,"Loading %d bytes at addr %08x in rcd %08X\n",
                     limit,addr,vlda_oline->vlda_addr);
@@ -711,7 +711,7 @@ void outorg(EXP_stk *eps)
             break;
         }
     }
-    if (outx_debug > 2)
+    if (options[QUAL_DBGOUTX] > 2)
 		fprintf(stderr,"Changing ORG from %08X to %08X\n",addr,address);
     addr = address;          /* set the new address */
     return;
@@ -1008,6 +1008,8 @@ void outsym_def(SS_struct *sym_ptr,int mode)
 #else
             evenodd = 0;
 #endif
+			if (options[QUAL_DBGOUTX] > 2)
+				printf("fwriting %d bytes to object file\n",rsize+evenodd);
             fwrite(sline,(int)(s-sline)+evenodd,1,outxsym_fp); /* write it */
             return;        /* done */
         }             /* --case 2,3 */
@@ -1105,6 +1107,8 @@ void outseg_def(SEG_struct *seg_ptr)
             fwrite(&rsize,sizeof(int16_t),1,outxsym_fp);
             evenodd = rsize&1;
 #endif
+			if (options[QUAL_DBGOUTX] > 2)
+				printf("fwriting %d bytes to object file\n",rsize+evenodd);
             fwrite(sline,sizeof(VLDA_slen)+evenodd,1,outxsym_fp); /* write it */
         }             /* --case 2,3 */
     }                /* --switch */
@@ -1141,7 +1145,8 @@ int flushobj( void )
 #else
                 evenodd = 0;
 #endif
-                if (outx_debug > 2) printf("fwriting " FMT_SZ " bytes to object file\n",maxop-oline);
+                if (options[QUAL_DBGOUTX] > 2)
+					printf("fwriting %d bytes to object file\n",rsize+evenodd);
                 fwrite(oline,(int)(maxop-oline)+evenodd,1,outxabs_fp);
                 break;
             }
@@ -1229,7 +1234,9 @@ void outid(FILE *fp,int mode)
     char *s,err_msgs[20];
     VLDA_id *vldaid = (VLDA_id *)oline;
 
-    major_version = VLDA_MAJOR;
+	if ( options[QUAL_OBTEST] || options[QUAL_OLTEST])
+		return;
+	major_version = VLDA_MAJOR;
     minor_version = VLDA_MINOR;
     switch (mode)
     {
@@ -1302,6 +1309,8 @@ void outid(FILE *fp,int mode)
             evenodd = 0;
 #endif
             fwrite(oline,(int)(s-oline)+evenodd,1,fp);
+			if (options[QUAL_DBGOUTX] > 2)
+				printf("fwriting %d bytes to object file\n",rsize+evenodd);
             return;
         }
     }
@@ -1339,6 +1348,8 @@ static int tstexpcommon(char *asc, int alen, EXP_stk *eps, char *olstr, int vlda
             evenodd = 0;
 #endif
             fwrite(eline,(int)(s-eline)+evenodd,1,outxabs_fp); /* write it */
+			if (options[QUAL_DBGOUTX] > 2)
+				printf("fwriting %d bytes to object file\n",rsize+evenodd);
             break;
         }
     case OUTPUT_OL: {

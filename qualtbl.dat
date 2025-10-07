@@ -84,6 +84,8 @@ N,    1,  0,  0,  0,  0,  1, QUAL_CROSS,       "CROSS_REFERENCE",    0,         
 A,    0,  1,  0,  1,  0,  1, QUAL_DEBUG,       "DEBUG",              OUT_FN_DEB, /* debug file description */
 A,    1,  0,  0,  0,  0,  1, QUAL_GRNHILL,     "GREENHILLS",         0,          /* Greenhills assembler syntax */
 A,    1,  0,  0,  0,  0,  1, QUAL_HEXOUT,      "HEXOUT",             0,          /* Output tekhex direct (sets -nobin) */
+A,    1,  0,  0,  0,  0,  1, QUAL_OBTEST,      "OBTEST",             0,          /* Output ob but in test mode (sets -bin) */
+A,    1,  0,  0,  0,  0,  1, QUAL_OLTEST,      "OLTEST",             0,          /* Output ol but in test mode (sets -nobin) */
 A,    1,  0,  0,  0,  0,  1, QUAL_IDE_SYNTAX,  "IDE_ERROR_SYNTAX",   0,          /* output error messages in IDE syntax */
 A,    1,  0,  0,  0,  0,  1, QUAL_IGNORE,      "IGNORE",             0,          /* Ignore some old undefined psuedo-ops */
 A,    0,  0,  0,  0,  0,  0, QUAL_INCLUDE,     "INCLUDE",            0,          /* include file path description */
@@ -102,4 +104,5 @@ N,    0,  1,  1,  0,  0,  1, QUAL_TEMP,        "TEMPFILE",           0,         
 A,    0,  1,  0,  1,  0,  1, QUAL_TOC,         "TOC",                OUT_FN_TOC, /* toc file description By TRG 20240503 to support TOC */
 A,    1,  0,  0,  0,  0,  1, QUAL_VERBOSE,     "VERBOSE",            0,          /* More verbose diagnostics (macz80 only at present) */
 A,    1,  0,  0,  0,  0,  1, QUAL_Z80ASM,      "Z80ASM",             0,          /* Include z80asm directives (macz80 only) */
+A,    0,  0,  1,  0,  0,  0, QUAL_DBGOUTX,     "DBGOUTX",            0,          /* Set outx_debug variable */
 L,    0,  0,  0,  0,  0,  0, QUAL_MAX,         NULL,                 0,          /* This must be last */
