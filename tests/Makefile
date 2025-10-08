@@ -65,6 +65,16 @@ define chkIt
 	else \
 		echo "$(3).ob Passed $(2)";\
 	fi;\
+	$(1) $(2) -hexout -out $(3); \
+	if [ $$? -ne 0 ]; then\
+		exit 1;\
+	fi;\
+	cmp $(3).hex masters/$(3).ghex;\
+	if [ $$? -ne 0 ]; then \
+		echo "*** $(3).hex FAILED $(2) ***";\
+	else \
+		echo "$(3).hex Passed $(2)";\
+	fi;\
 	rm -f $(3).hex $(3).ol $(3).ob
 endef
 
