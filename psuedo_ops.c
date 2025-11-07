@@ -3058,7 +3058,7 @@ void op_purgedefines(struct str_sub *sub)
 	return;
 }
 
-#define SHOW_TEXT 1
+#define SHOW_TEXT 0
 #if SHOW_TEXT
 static void showText(const char *title, char *msg)
 {
