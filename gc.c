@@ -532,9 +532,9 @@ int getcommand(void)
 #endif
 	if ( syml_desc.present )
 	{
-		if ( (int)syml_desc.intValue < 6 || (int)syml_desc.intValue > 16 )
+		if ( (int)syml_desc.intValue < 6 || (int)syml_desc.intValue > 32 )
 		{
-			sprintf(emsg, "Value on -symbol_length has to be 6 <= n <= 16. Value of %ld ignored.", syml_desc.intValue);
+			sprintf(emsg, "Value on -symbol_length has to be 6 <= n <= 32. Value of %ld ignored.", syml_desc.intValue);
 			err_msg(MSG_WARN, emsg);
 			++gc_err;
 		}
@@ -542,9 +542,9 @@ int getcommand(void)
 	}
     if (opcl_desc.present)
 	{
-		if ( (int)opcl_desc.intValue < 6 || (int)opcl_desc.intValue > 16 )
+		if ( (int)opcl_desc.intValue < 6 || (int)opcl_desc.intValue > 32 )
 		{
-			sprintf(emsg, "Value on -opcode_length has to be 6 <= n <= 16. Value of %ld ignored.", opcl_desc.intValue);
+			sprintf(emsg, "Value on -opcode_length has to be 6 <= n <= 32. Value of %ld ignored.", opcl_desc.intValue);
 			err_msg(MSG_WARN, emsg);
 			++gc_err;
 		}

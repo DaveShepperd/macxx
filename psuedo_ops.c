@@ -684,11 +684,11 @@ int op_ascin(void)
 
 int op_string(void)
 {
-	/* .string is emitted by gcc */
+	/* .string is emitted by gcc. It is not expected to align. */
 	ascii_common(ASC_COMMON_ESCAPES|ASC_COMMON_NULL|ASC_COMMON_QUOTE);
-	if ( current_section->seg_dalign ) 
+	if ( current_section->seg_dalign && !(macxx_name_mask & (MACXX_M_68K|MACXX_M_AS)) )
 	{
-		/* some assemblers expect data alignment (i.e. mac11 and mac68k) */
+		/* some assemblers expect data alignment (i.e. mac11) */
 		int tt;
 		tt = (1 << current_section->seg_dalign); /* assume default */
 		current_offset = (current_offset + (tt - 1)) & -tt;
