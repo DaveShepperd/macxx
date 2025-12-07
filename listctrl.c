@@ -649,6 +649,7 @@ void clear_list(LIST_stat_t *lstat)
 
 void display_line(LIST_stat_t *lstat)
 {
+	int extra=0;
 	char *chrPtr, *outLinePtr;
 	outLinePtr = lstat->listBuffer;
 	if ( (lm_bits&LIST_SEQ) )
@@ -673,7 +674,17 @@ void display_line(LIST_stat_t *lstat)
 		if ( lstat->pc_flag != 0 )
 		{
 			if ( list_radix == 16 )
-				dump_hex4((int32_t)lstat->pc, outLinePtr + LLIST_LOC);
+			{
+#if 0
+				if ( lstat->pc >= 0x10000 )
+				{
+					dump_hex8((int32_t)lstat->pc, outLinePtr + LLIST_LOC);
+					extra = 4;
+				}
+				else
+#endif
+					dump_hex4((int32_t)lstat->pc, outLinePtr + LLIST_LOC);
+			}
 			else
 				dump_oct6((int32_t)lstat->pc, outLinePtr + LLIST_LOC);
 		}
@@ -683,8 +694,8 @@ void display_line(LIST_stat_t *lstat)
 	{
 		if ( list_radix == 16 )
 		{
-			dump_hex8((int32_t)lstat->pf_value, outLinePtr + LLIST_PF1);
-			*(outLinePtr + LLIST_PF1 + 8) = lstat->f1_flag >> 8;
+			dump_hex8((int32_t)lstat->pf_value, outLinePtr + extra + LLIST_PF1);
+			*(outLinePtr + LLIST_PF1 + extra + 8) = lstat->f1_flag >> 8;
 		}
 		else
 		{
@@ -698,10 +709,10 @@ void display_line(LIST_stat_t *lstat)
 		{
 			if ( list_radix == 16 )
 			{
-				dump_hex8((int32_t)lstat->pf_value, outLinePtr + LLIST_PF2);
+				dump_hex8((int32_t)lstat->pf_value, outLinePtr + extra + LLIST_PF2);
 #ifndef MAC_PP
-				*(outLinePtr + LLIST_PF2 - 1) = '(';
-				*(outLinePtr + LLIST_PF2 + 8) = ')';
+				*(outLinePtr + extra + LLIST_PF2 - 1) = '(';
+				*(outLinePtr + extra + LLIST_PF2 + 8) = ')';
 #endif
 			}
 			else

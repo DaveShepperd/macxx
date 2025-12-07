@@ -34,21 +34,21 @@ BR_DEF( "BLE","BLE.C",	OPCL_BC,	3)
 BR_DEF( "BGE","BGE.C",	OPCL_BC,	4)
 BR_DEF( "BLT","BLT.C",	OPCL_BC,	5)
 BR_DEF( "BHI","BHI.C",	OPCL_BC,	6)	/* (unsigned > ) */
+BR_DEF( "BUGT","BUGT.C",OPCL_BC,	6)	/* aka HI */
 BR_DEF( "BLS","BLS.C",	OPCL_BC,	7)	/* Low | same (unsigned <= ) */
+BR_DEF( "BULE","BULE.C",OPCL_BC,	7)	/* aka LS */
 BR_DEF( "BCC","BCC.C",	OPCL_BC,	8)
 BR_DEF( "BLO","BLO.C",	OPCL_BC,	8)	/* (unsigned < ) aka BCC */
+BR_DEF( "BULT","BULT.C",OPCL_BC,	8)	/* aka LO, aka BCC */
 BR_DEF( "BCS","BCS.C",	OPCL_BC,	9)
 BR_DEF( "BHS","BHS.C",	OPCL_BC,	9)	/* High | same (unsigned >= ) aka BCS */
+BR_DEF( "BUGE","BUGE.C",OPCL_BC,	9)	/* aka HS, aka BCS */
 BR_DEF( "BPL","BPL.C",	OPCL_BC,	10)
 BR_DEF( "BMI","BMI.C",	OPCL_BC,	11)
 BR_DEF( "BNE","BNE.C",	OPCL_BC,	12)
 BR_DEF( "BEQ","BEQ.C",	OPCL_BC,	13)
 BR_DEF( "BVC","BVC.C",	OPCL_BC,	14)
 BR_DEF( "BVS","BVS.C",	OPCL_BC,	15)
-BR_DEF( "BUGE","BUGE.C",	OPCL_BC,	9) /* aka HS, aka BCS */
-BR_DEF( "BUGT","BUGT.C",	OPCL_BC,	6) /* aka HI */
-BR_DEF( "BULE","BULE.C",	OPCL_BC,	7) /* aka LS */
-BR_DEF( "BULT","BULT.C",	OPCL_BC,	8) /* aka LO, aka BCC */
 
 NOC_DEF( "BSR","BSR.C",	OPCL_BS,	0x02)	/* Also used for getpc */
 NOC_DEF( "BRA","BRA.C",	OPCL_BC,	0x02)	/* BSR %0,target */

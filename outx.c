@@ -907,7 +907,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
             }
             else
             {
-                if (sym_ptr->flg_abs)
+				if ( sym_ptr->flg_abs )
                 {
                     sprintf(s," %d\n",sym_ptr->ss_value);
                 }
@@ -922,7 +922,10 @@ void outsym_def(SS_struct *sym_ptr,int mode)
                     }
                     else
                     {
-                        sprintf(s," %%%d %d +\n",sym_ptr->ss_seg->seg_ident,sym_ptr->ss_value);
+						if ( !(macxx_name_mask&MACXX_M_69) || !sym_ptr->ss_seg->flg_abs )
+							sprintf(s, " %%%d %d +\n", sym_ptr->ss_seg->seg_ident, sym_ptr->ss_value);
+						else
+							sprintf(s, " %d\n", sym_ptr->ss_value);
                     }
                 }
             }
@@ -949,6 +952,8 @@ void outsym_def(SS_struct *sym_ptr,int mode)
             s = sline + sizeof(VLDA_sym);
             if (flg&VSYM_DEF)
             {
+				if ( !(flg&VSYM_ABS) && (macxx_name_mask&MACXX_M_69) && sym_ptr->ss_seg && sym_ptr->ss_seg->flg_abs )
+					flg |= VSYM_ABS;
                 if (flg&VSYM_EXP)
                 {
                     vlda_sym->vsym_eoff = s - kluge;
