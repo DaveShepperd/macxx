@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
 		int ii;
 		int savedRadix = current_radix;
 		
-		if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080|MACXX_M_Z80)) )
+		if ( !(macxx_name_mask&(MACXX_M_AS|MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_8080|MACXX_M_Z80)) )
 		{
 			fputs("Sorry, the -2_pass option is not available in this assembler\n",stderr);
 			EXIT_FALSE;

@@ -126,7 +126,7 @@ typedef union list_mask
 #define list_oct lm_bits.list_bits.lm_oct
 #else
 /* Just make use of a bit mask as normal people would do */
-typedef unsigned int LIST_mask;
+typedef uint32_t LIST_mask;
 #define list_bin (lm_bits&LIST_BIN)
 #define list_bex (lm_bits&LIST_BEX)
 #define list_cnd (lm_bits&LIST_CND)

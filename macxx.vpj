@@ -302,6 +302,7 @@
 			<F N="opc69.c"/>
 			<F N="opc8080.c"/>
 			<F N="opcas.c"/>
+			<F N="opcas_dmp.c"/>
 			<F N="opcnds.c"/>
 			<F N="opcode.c"/>
 			<F N="opcpp.c"/>
@@ -335,6 +336,7 @@
 			GUID="{2FD915C9-DECF-4662-930F-52E7D61AB81B}">
 			<F N="add_defs.h"/>
 			<F N="asap_ops.h"/>
+			<F N="asop_class.h"/>
 			<F N="ct.h"/>
 			<F N="debug.h"/>
 			<F N="dirdefs.h"/>
@@ -350,6 +352,7 @@
 			<F N="m68k.h"/>
 			<F N="memmgt.h"/>
 			<F N="op_class.h"/>
+			<F N="opcas_dmp.h"/>
 			<F N="opcnds.h"/>
 			<F N="opcommon.h"/>
 			<F N="opcs11.h"/>
@@ -374,7 +377,6 @@
 			<F N="structs.h"/>
 			<F N="../mixit/tekhex.h"/>
 			<F N="tj_ops.h"/>
-			<F N="tjop_class.h"/>
 			<F N="token.h"/>
 			<F N="token_defs.h"/>
 			<F N="utils.h"/>

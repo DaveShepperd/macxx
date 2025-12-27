@@ -21,7 +21,9 @@
 #include "listctrl.h"
 #include "tjop_class.h"
 
+#ifndef STACK_DEBUG
 #define STACK_DEBUG 0
+#endif
 #define OP_DEBUG 2
 #define DEBUG 1
 

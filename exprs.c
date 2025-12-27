@@ -54,6 +54,7 @@ Change Log
 #if !defined(MAC_PP)
 #include "le_itfc.h"
 #endif
+#include "formats.h"
 
 int exprs_nest;
 EXP_stk exprs_stack[EXPR_MAXSTACKS];
@@ -83,10 +84,107 @@ void init_exprs( void )
     return;
 }   
 
+const char *getOperType(int type)
+{
+	switch (type)
+	{
+	case EXPROPER_ADD:
+		return "(+ add)";	/* add */
+	case EXPROPER_SUB:
+		return "(- sub)";	/* subtract */
+	case EXPROPER_MUL:
+		return "(* mul)";	/* multiply */
+	case EXPROPER_DIV:
+		return "(/ div)";	/* divide */
+	case EXPROPER_AND:
+		return "(& and)";	/* and */
+	case EXPROPER_OR:
+		return "(| or)";	/* inclusive or */
+	case EXPROPER_XOR:
+		return "(^ xor)";	/* exclusive or */
+	case EXPROPER_NEG:
+		return "(_ neg)";	/* negate (2's compliment) */
+	case EXPROPER_COM:
+		return "(~ com)";	/* compliment (1's compliment) */ 
+	case EXPROPER_USD:
+		return "(? usd)";	/* unsigned divide */
+	case EXPROPER_SWAP:
+		return "(= swap)";	/* swap bytes */
+	case EXPROPER_MOD:
+		return "(\\ mod)";	/* modulo */
+	case EXPROPER_SHL:
+		return "(< shl)";	/* shift left */
+	case EXPROPER_SHR:
+		return "(> shr)";	/* shift right */
+	case EXPROPER_TST|(EXPROPER_TST_NOT<<8):
+		return "(!! tst not)";	/* ...not */
+	case EXPROPER_TST|(EXPROPER_TST_AND<<8):
+		return "(!& tst ans)";	/* ...logical and */
+	case EXPROPER_TST|(EXPROPER_TST_OR<<8):
+		return "(!| tst or)";	/* ...logical or */
+	case EXPROPER_TST|(EXPROPER_TST_LT<<8):
+		return "(!< tst lt)";	/* ...less than */
+	case EXPROPER_TST|(EXPROPER_TST_GT<<8):
+		return "(!> tst gt)";	/* ...greater than */
+	case EXPROPER_TST|(EXPROPER_TST_EQ<<8):
+		return "(!= tst eq)";	/* ...equal */
+	case EXPROPER_TST|(EXPROPER_TST_NE<<8):
+		return "(!# tst ne)";	/* ...not equal */
+	case EXPROPER_TST|(EXPROPER_TST_LE<<8):
+		return "(![ tst le)";	/* ...less than or equal */
+	case EXPROPER_TST|(EXPROPER_TST_GE<<8):
+		return "(!] tst ge)";	/* ...greater than or equal */
+//	case EXPROPER_TST|(EXPROPER_TSTNM<<8):
+//		return "(!@ tst quiet)";	/* test for condition without error message */
+	case EXPROPER_PICK:
+		return "($ pick)";	/* dup n'th item on stack */
+	case EXPROPER_PURGE:
+		return "(# purge)";	/* purge top of stack */
+	case EXPROPER_XCHG:
+		return "(` xchg)";	/* exchange top 2 items */
+	case EXPROPER_IF:
+		return "(( if true)";	/* if condit true, do until endif */
+	case EXPROPER_ELSE:
+		return "(\" else)";	/* if condit false, do until endif */
+	default:
+		break;
+	}
+	return NULL;
+}
+
+const char *getExprCode(int code)
+{
+	switch ((code&~EXPR_RELMD))
+	{
+	case EXPR_SYM:
+		return "EXPR_SYM";	/* expression component is a symbol */
+	case EXPR_VALUE:
+		return "EXPR_VALUE";/* expression component is an absolute value */
+	case EXPR_OPER:
+		return "EXPR_OPER";	/* expression component is an operator */
+	case EXPR_L:
+		return "EXPR_L";	/* expression component is an L */
+	case EXPR_B:
+		return "EXPR_B";	/* expression component is a  B */
+	case EXPR_TAG:
+		return "EXPR_TAG";	/* expression tag follows */
+	case EXPR_IDENT:
+		return "EXPR_IDENT";/* symbol identifier follows */
+	case EXPR_SEG:
+		return "EXPR_SEG";	/* segment pointer follows */
+	case EXPR_LINK:
+		return "EXPR_LINK";	/* link to another expression */
+	default:
+		break;
+	}
+	return NULL;
+}
+
 static void dump_stack(const EXP_stk *ep, char *eBuf, size_t bufLen)
 {
 	const EXPR_struct *src;
-	int oper, src_terms, newLen=0;
+	int oper, code, src_terms, newLen=0;
+	const char *operType;
 	
 	src_terms = ep->ptr;
 	src = ep->stack;
@@ -97,34 +195,49 @@ static void dump_stack(const EXP_stk *ep, char *eBuf, size_t bufLen)
 			newLen += snprintf(eBuf+newLen,bufLen-newLen," (plus %d more terms)", src_terms);
 			return;
 		}
-		switch (src->expr_code)
+		code = (src->expr_code&~EXPR_RELMD);
+		switch (code)
 		{
 		case EXPR_LINK:
-			newLen += snprintf(eBuf+newLen, bufLen-newLen," <link>");
+			newLen += snprintf(eBuf+newLen, bufLen-newLen," {link}");
 			continue;
 		case EXPR_SYM:
-			newLen += snprintf(eBuf + newLen, bufLen - newLen, " %s", src->expt.expt_sym->ss_string);
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " {sym}%s,v=0x%X", src->expt.expt_sym->ss_string, src->expr_value);
 			continue;
 		case EXPR_SEG:
-			newLen += snprintf(eBuf + newLen, bufLen - newLen, " (%s)", src->expt.expt_seg->seg_string);
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " {seg}%s,v=0x%X", src->expt.expt_seg->seg_string, src->expr_value);
 			continue;
 		case EXPR_VALUE:
-			newLen += snprintf(eBuf + newLen, bufLen - newLen, " %d", src->expr_value);
+			newLen += snprintf(eBuf + newLen, bufLen - newLen, " 0x%X", src->expr_value);
 			continue;
 		case EXPR_OPER:
 			oper = src->expr_value;
-			if ( (oper & 255) == EXPROPER_TST )
+			operType = getOperType(oper);
+			if ( !operType )
 			{
-				eBuf[newLen++] = ' ';
-				eBuf[newLen++] = EXPROPER_TST;
-				eBuf[newLen++] = oper>>8;
+				if ( (oper & 255) == EXPROPER_TST )
+				{
+					eBuf[newLen++] = ' ';
+					eBuf[newLen++] = EXPROPER_TST;
+					eBuf[newLen++] = oper>>8;
+				}
+				else
+				{
+					if ( isprint(oper) )
+						newLen += snprintf(eBuf + newLen, bufLen - newLen, " %c", oper);
+					else
+						newLen += snprintf(eBuf + newLen, bufLen - newLen, " .(0x%X)", oper);
+				}
 			}
 			else
-			{
-				newLen += snprintf(eBuf + newLen, bufLen - newLen, " %c", oper);
-			}
+				newLen += snprintf(eBuf + newLen, bufLen - newLen, " %s", operType);
 			continue;
 		default:
+			operType = getExprCode(code);
+			if ( operType )
+				newLen += snprintf(eBuf + newLen, bufLen - newLen, " %s", operType);
+			else
+				newLen += snprintf(eBuf + newLen, bufLen - newLen, " {undef 0x%X}", code);
 			continue; /* this keeps gcc from bitching */
 		}			/* switch(code) */
 		break;            /* if fall out of switch, fall out of for */
@@ -407,167 +520,188 @@ int compress_expr( EXP_stk *exptr )
  */
 {
     EXPR_struct *src, *dst, *op1, *op2=NULL;
-    int oldTerms,termCount,newTerms;
+    int sqSave,code,oldTerms,termCount,newTerms;
 
     oldTerms = exptr->ptr;
     if (oldTerms <= 0)
 		return oldTerms;       /* empty */
 	src = dst = exptr->stack;    /* start at bottom of stack */
     newTerms = 0;
-#if 0
+	sqSave = squeak;
+	squeak = 0;
 	if ( squeak )
 	{
-		printf("compress_expr(%p): Pass %d: Before:\n",(void *)exptr,pass);
+		printf("compress_expr(EXP%" FMT_PRFX "d): Pass %d: Before:\n",exptr-exprs_stack,pass);
 		dump_expr(exptr, 0);
 	}
-#endif
 	for ( termCount = 0; termCount < oldTerms; ++src, ++termCount )
     {
-        switch (src->expr_code)
+		code = (src->expr_code&~EXPR_RELMD);
+        switch (code)
         {
-        case EXPR_VALUE: {
-                dst->expr_code = EXPR_VALUE;
-                dst->expr_value = src->expr_value;
+        case EXPR_VALUE:
+		{
+			if (squeak)
+				printf("\ttermCount=%d, newTerms=%d. expr_code=%s 0x%X\n", termCount, newTerms, getExprCode(code), src->expr_value);
+			if ( dst != src )
+			{
+				dst->expr_code = EXPR_VALUE;
+				dst->expr_value = src->expr_value;
 #if EXPR_C
-                dst->expr_flags = src->expr_flags;
+				dst->expr_flags = src->expr_flags;
 #endif
-				++dst;
-                ++newTerms;
-                continue;
-            }
-        case EXPR_LINK: {
-                EXP_stk *nxt_exp;
-                nxt_exp = src->expr_expr;
-                op1 = nxt_exp->stack;
-				if ( nxt_exp != exptr )
+			}
+			++dst;
+			++newTerms;
+			continue;
+		}
+        case EXPR_LINK:
+		{
+			EXP_stk *nxt_exp;
+			if (squeak)
+				printf("\ttermCount=%d, newTerms=%d. expr_code=%s\n", termCount, newTerms, getExprCode(code));
+			nxt_exp = src->expr_expr;
+			op1 = nxt_exp->stack;
+			if ( nxt_exp != exptr )
+			{
+				nxt_exp->ptr = compress_expr(nxt_exp);
+				if (nxt_exp->ptr <= 0)
 				{
-					nxt_exp->ptr = compress_expr(nxt_exp);
-					if (nxt_exp->ptr <= 0)
+					show_bad_token(NULL,"compress_expr(): Returned 0 or negative. Internal assembly error\n",MSG_FATAL);
+					return 0;
+				}
+				exptr->base_page_reference |= nxt_exp->base_page_reference;
+				exptr->register_reference |= nxt_exp->register_reference;
+				exptr->symIsPrime |= nxt_exp->symIsPrime;
+				exptr->forward_reference |= nxt_exp->forward_reference;
+				if (nxt_exp->ptr == 1)
+				{
+					if ( op1->expr_code == EXPR_VALUE )
 					{
-						show_bad_token(NULL,"compress_expr(): Returned 0 or negative. Internal assembly error\n",MSG_FATAL);
-						return 0;
-					}
-					exptr->base_page_reference |= nxt_exp->base_page_reference;
-					exptr->register_reference |= nxt_exp->register_reference;
-					exptr->symIsPrime |= nxt_exp->symIsPrime;
-					exptr->forward_reference |= nxt_exp->forward_reference;
-					if (nxt_exp->ptr == 1)
-					{
-						if ( op1->expr_code == EXPR_VALUE )
-						{
-							dst->expr_code = EXPR_VALUE;
-							dst->expr_value = op1->expr_value;
+						dst->expr_code = EXPR_VALUE;
+						dst->expr_value = op1->expr_value;
 #if EXPR_C
-							dst->expr_flags = op1->expr_flags;
+						dst->expr_flags = op1->expr_flags;
 #endif
 #if 0
-							if ( squeak )
-								printf("compress_expr(%p) pass %d: Collapsed a link in %p to 1 EXPR_VALUE term. fwd_ref=%d\n",
-									   (void *)src, pass, (void *)nxt_exp, dst->expr_fwdReference);
-#endif
-							++dst;
-							++newTerms;
-							continue;
-						}
-						else if (op1->expr_code == EXPR_SYM || op1->expr_code == EXPR_SEG)
-						{
-							src->expr_code = op1->expr_code;
-							src->expr_sym = op1->expr_sym;
-							src->expr_value = op1->expr_value;
-#if EXPR_C
-							src->expr_flags = op1->expr_flags;
-#endif
-							--src;
-							--termCount;
-							continue;
-						}
-					}
-				}
-                dst->expr_code = EXPR_LINK;
-                dst->expr_expr = nxt_exp;
-                ++dst;
-                ++newTerms;
-                continue;
-            }
-        case EXPR_SYM: 
-			{
-                SS_struct *sym_ptr;
-                sym_ptr = src->expr_sym;
-				exptr->base_page_reference |= sym_ptr->flg_base;
-                exptr->register_reference |= sym_ptr->flg_register;
-#if defined(MAC_68K)
-                exptr->register_mask |= sym_ptr->flg_regmask;
-#endif
-                if ( sym_ptr->flg_defined )
-                {
-                    if (sym_ptr->flg_abs)
-                    {
-                        dst->expr_code = EXPR_VALUE;
-                        dst->expr_value = sym_ptr->ss_value;
-#if defined(MAC_68K)
-                        if (sym_ptr->flg_regmask) dst->expr_flags = EXPR_FLG_REGMASK;
-                        else if (sym_ptr->flg_register) dst->expr_flags = EXPR_FLG_REG;
+						if ( squeak )
+							printf("compress_expr(%p) pass %d: Collapsed a link in %p to 1 EXPR_VALUE term. fwd_ref=%d\n",
+								   (void *)src, pass, (void *)nxt_exp, dst->expr_fwdReference);
 #endif
 						++dst;
-                        ++newTerms;
-                        continue;
-                    }
-                    if (sym_ptr->flg_exprs)
-                    {
-						exptr->forward_reference |= sym_ptr->flg_fwdReference;	/* Persist this through if present */
-                        src->expr_code = EXPR_LINK;
-                        src->expr_expr = sym_ptr->ss_exprs;
-                        --termCount;
-                        --src;
-                    }
-                    else
-                    {
-                        SEG_struct *sp;
-                        if ( (sp = sym_ptr->ss_seg) )
+						++newTerms;
+						continue;
+					}
+					else if (op1->expr_code == EXPR_SYM || op1->expr_code == EXPR_SEG)
+					{
+						src->expr_code = op1->expr_code;
+						src->expr_sym = op1->expr_sym;
+						src->expr_value = op1->expr_value;
+#if EXPR_C
+						src->expr_flags = op1->expr_flags;
+#endif
+						--src;
+						--termCount;
+						continue;
+					}
+				}
+			}
+			dst->expr_code = EXPR_LINK;
+			dst->expr_expr = nxt_exp;
+			++dst;
+			++newTerms;
+			continue;
+		}
+        case EXPR_SYM: 
+		{
+			SS_struct *sym_ptr;
+			sym_ptr = src->expr_sym;
+			if (squeak)
+				printf("\ttermCount=%d, newTerms=%d. expr_code=%s '%s', v=0x%X\n", termCount, newTerms, getExprCode(code), sym_ptr->ss_string, src->expr_value);
+			exptr->base_page_reference |= sym_ptr->flg_base;
+			exptr->register_reference |= sym_ptr->flg_register;
+#if defined(MAC_68K)
+			exptr->register_mask |= sym_ptr->flg_regmask;
+#endif
+			if ( sym_ptr->flg_defined )
+			{
+				if (sym_ptr->flg_abs)
+				{
+					dst->expr_code = EXPR_VALUE;
+					dst->expr_value = sym_ptr->ss_value;
+#if defined(MAC_68K)
+					if (sym_ptr->flg_regmask) dst->expr_flags = EXPR_FLG_REGMASK;
+					else if (sym_ptr->flg_register) dst->expr_flags = EXPR_FLG_REG;
+#endif
+					++dst;
+					++newTerms;
+					continue;
+				}
+				if (sym_ptr->flg_exprs)
+				{
+					exptr->forward_reference |= sym_ptr->flg_fwdReference;	/* Persist this through if present */
+					src->expr_code = EXPR_LINK;
+					src->expr_expr = sym_ptr->ss_exprs;
+					--termCount;
+					--src;
+				}
+				else
+				{
+					SEG_struct *sp;
+					if ( (sp = sym_ptr->ss_seg) )
+					{
+						if (sp->flg_subsect && sp->rel_offset != 0)
 						{
-							if (sp->flg_subsect && sp->rel_offset != 0)
-							{
-								sym_ptr->ss_value += sp->rel_offset;
-								sp = sym_ptr->ss_seg = *(seg_list+sp->seg_index);
-							}
-							if (sp->flg_abs)
-							{
-								dst->expr_code = EXPR_VALUE;
-								dst->expr_value = sym_ptr->ss_value;
-							}
-							else
-							{
-								dst->expr_code = EXPR_SEG;
-								dst->expr_value = sym_ptr->ss_value;
-								dst->expr_seg = sp;
-								exptr->base_page_reference |= sp->flg_zero;
-							}
-							++dst;
-							++newTerms;
+							sym_ptr->ss_value += sp->rel_offset;
+							sp = sym_ptr->ss_seg = *(seg_list+sp->seg_index);
+						}
+						if (sp->flg_abs)
+						{
+							dst->expr_code = EXPR_VALUE;
+							dst->expr_value = sym_ptr->ss_value;
 						}
 						else
 						{
-							sym_ptr->flg_defined = 0;	/* undefine the symbol for future */
-							show_bad_token(NULL,"Fatal internal error. Possible circular symbol assignment.",MSG_FATAL);
-							dst->expr_code = EXPR_VALUE;
-							dst->expr_value = 0;
-							++dst;
-							++newTerms;
+							dst->expr_code = EXPR_SEG;
+							dst->expr_value = sym_ptr->ss_value;
+							dst->expr_seg = sp;
+							exptr->base_page_reference |= sp->flg_zero;
 						}
-                    }
-                    continue;
-                }
-				exptr->forward_reference = 1;	/* Reference to a non-defined symbol*/
-                dst->expr_code = EXPR_SYM;
-                dst->expr_value = 0;
-                dst->expr_sym = sym_ptr;
-                ++dst;
-                ++newTerms;
-                continue;
-            }
-        case EXPR_OPER: {
+						++dst;
+						++newTerms;
+					}
+					else
+					{
+						sym_ptr->flg_defined = 0;	/* undefine the symbol for future */
+						show_bad_token(NULL,"Fatal internal error. Possible circular symbol assignment.",MSG_FATAL);
+						dst->expr_code = EXPR_VALUE;
+						dst->expr_value = 0;
+						++dst;
+						++newTerms;
+					}
+				}
+				continue;
+			}
+			exptr->forward_reference = 1;	/* Reference to a non-defined symbol*/
+			dst->expr_code = EXPR_SYM;
+			dst->expr_value = 0;
+			dst->expr_sym = sym_ptr;
+			++dst;
+			++newTerms;
+			continue;
+		}
+        case EXPR_OPER:
+		{
                 int oper,k;
                 oper = src->expr_value;
+				if (squeak)
+				{
+					const char *operType = getOperType(oper);
+					if ( operType )
+						printf("\ttermCount=%d, newTerms=%d. expr_code=%s %s\n", termCount, newTerms, getExprCode(code), operType);
+					else
+						printf("\ttermCount=%d, newTerms=%d. expr_code=0x%X (unknown)\n", termCount, newTerms, oper);
+				}
                 op1 = dst -1;       /* point to first argument */
                 if (newTerms < 1)
                 {        /* always has to be 1 term */
@@ -598,11 +732,11 @@ int compress_expr( EXP_stk *exptr )
                 {
                     oper = EXPROPER_USD;
                 }
-                if (k != 5)
+                if (k != (4+1))
                 {       /* not simple values */
                     if (oper == EXPROPER_ADD)
                     {
-                        if (k == 6)
+                        if (k == (4+2))
                         {     /* op1 = seg, op2 = val */
                             op2->expr_value += op1->expr_value;
                             op2->expr_code = op1->expr_code;
@@ -614,7 +748,7 @@ int compress_expr( EXP_stk *exptr )
                             --newTerms;
                             continue;
                         }
-                        if (k == 9)
+                        if (k == (8+1))
                         {     /* op1 = val, op2 = seg */
                             op2->expr_value += op1->expr_value;
 #if EXPR_C
@@ -624,7 +758,7 @@ int compress_expr( EXP_stk *exptr )
                             --newTerms;
                             continue;
                         }
-                        if (k == 10)
+                        if (k == (8+2))
                         {    /* op1 = seg, op2 = seg */
                             op2->expr_value += op1->expr_value;
 #if EXPR_C
@@ -636,7 +770,7 @@ int compress_expr( EXP_stk *exptr )
                     }
                     if ( oper == EXPROPER_SUB)
                     {
-                        if (k == 6)
+                        if (k == (4+2))
                         {     /* op1 = seg, op2 = val */
                             op2->expr_value -= op1->expr_value;
                             op1->expr_value = 0;
@@ -644,7 +778,7 @@ int compress_expr( EXP_stk *exptr )
                             op2->expr_flags |= op1->expr_flags;
 #endif
                         }         /* fall through to setup '-' */
-                        if (k == 9)
+                        if (k == (8+1))
                         {     /* op1 = val, op2 = seg */
                             op2->expr_value -= op1->expr_value;
 #if EXPR_C
@@ -654,7 +788,7 @@ int compress_expr( EXP_stk *exptr )
                             --newTerms;
                             continue;
                         }
-                        if (k == 10)
+                        if (k == (8+2))
                         {    /* op1 = seg, op2 = seg */
                             op2->expr_value -= op1->expr_value;
 #if EXPR_C
@@ -971,26 +1105,29 @@ int compress_expr( EXP_stk *exptr )
                 --newTerms;
                 continue;
             }
-        case EXPR_SEG: {
-                if (src->expr_seg->flg_abs)
-                {   /* if ABS section */
-                    dst->expr_code = EXPR_VALUE;
-                    dst->expr_seg = 0;
-                }
-                else
-                {
-                    dst->expr_code = EXPR_SEG;
-                    dst->expr_seg = src->expr_seg;
-                    exptr->base_page_reference |= src->expr_seg->flg_zero;
-                }
-                dst->expr_value = src->expr_value;
-                ++dst;
-                ++newTerms;
-                continue;
-            }
+        case EXPR_SEG:
+		{
+			if (squeak)
+				printf("\ttermCount=%d, newTerms=%d. expr_code=%s '%s', v=0x%X\n", termCount, newTerms, getExprCode(code), src->expr_seg->seg_string, src->expr_value);
+			if (src->expr_seg->flg_abs)
+			{   /* if ABS section */
+				dst->expr_code = EXPR_VALUE;
+				dst->expr_seg = 0;
+			}
+			else
+			{
+				dst->expr_code = EXPR_SEG;
+				dst->expr_seg = src->expr_seg;
+				exptr->base_page_reference |= src->expr_seg->flg_zero;
+			}
+			dst->expr_value = src->expr_value;
+			++dst;
+			++newTerms;
+			continue;
+		}
         default: {
-                sprintf(emsg,"Internal error decoding expression. Code = %02X",
-                        src->expr_code);
+                sprintf(emsg,"Internal error decoding expression. Code = %02X, termCount=%d, newTerms=%d",
+                        src->expr_code, termCount, newTerms);
                 err_msg(MSG_FATAL,emsg);
                 break;
             }
@@ -1010,13 +1147,12 @@ int compress_expr( EXP_stk *exptr )
         }
     }
 	exptr->ptr = newTerms;
-#if 0
 	if ( squeak )
 	{
-		printf("compress_expr(%p): pass %d: After (%d elements):\n",(void *)exptr, pass, newTerms);
+		printf("compress_expr(EXP%" FMT_PRFX "d): pass %d: After (%d elements):\n",exptr-exprs_stack, pass, newTerms);
 		dump_expr(exptr, 0);
 	}
-#endif
+	squeak = sqSave;
     return newTerms;
 }
 
@@ -1678,8 +1814,10 @@ int exprs( int relative, EXP_stk *eps )
 
 void dump_expr(EXP_stk *eps, int noTag)
 {
-    int i,j;
+    int code,i,j;
     EXPR_struct *eptr;
+	const char *codeType;
+	
     eptr = eps->stack;
     j = eps->ptr;
     printf("\tExpression stack ptr %d:\n",j);
@@ -1693,29 +1831,43 @@ void dump_expr(EXP_stk *eps, int noTag)
     printf("\t\tpsuedo_value = %08X\n\t\tExpression: ",eps->psuedo_value);
     for (i=0;i<j;++i,++eptr)
     {
-        switch (eptr->expr_code)
+		code = (eptr->expr_code&~EXPR_RELMD);
+        switch (code)
         {
         case EXPR_SYM:
-            printf("{%s} ",eptr->expr_sym->ss_string);
+            printf("{sym}'%s',v=0x%X ",eptr->expr_sym->ss_string, eptr->expr_value);
             break;
+		case EXPR_SEG:
+			printf("{seg}'%s',v=0x%X ",eptr->expr_seg->seg_string, eptr->expr_value);
+			break;
         case EXPR_VALUE:
             printf("0x%X ",eptr->expr_value);
             break;
-        case EXPR_OPER:
-            if ((eptr->expr_value&255) == EXPROPER_TST)
-            {
-                printf("%c%c ", (int)eptr->expr_value,(int)eptr->expr_value>>8);
-            }
-            else
-            {
-                printf("%c ",(int)eptr->expr_value);
-            }
+		case EXPR_OPER:
+			codeType = getOperType(eptr->expr_value);
+			if ( !codeType )
+			{
+				if ( (eptr->expr_value & 255) == EXPROPER_TST )
+				{
+					printf("%c%c ", (int)eptr->expr_value,(int)eptr->expr_value>>8);
+				}
+				else
+				{
+					printf("%c ",(int)eptr->expr_value);
+				}
+			}
+			else
+				printf("%s ", codeType);
             break;
 		case EXPR_LINK:
-			printf("<link to expr %p> ", (void *)eptr->expr_expr);
+			printf("{link} ");
 			break;
-        default:
-            printf("\n\t\tUndefined expr code: 0x%02X\n\t\t",eptr->expr_code);
+		default:
+			codeType = getExprCode(code);
+			if ( !codeType )
+				printf("\n\t\tUndefined expr code: 0x%02X\n\t\t", eptr->expr_code);
+			else
+				printf("%s ", codeType);
 			break;
         }
         continue;

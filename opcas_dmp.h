@@ -1,5 +1,5 @@
 /*
-    op_class.h - Part of macxx, a cross assembler family for various micro-processors
+    opcas_dmp.h - Part of macxx, a cross assembler family for various micro-processors
     Copyright (C) 2008 David Shepperd
 
     This program is free software: you can redistribute it and/or modify
@@ -15,23 +15,20 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef _OPCAS_DMP_H_
+#define _OPCAS_DMP_H_
 
-#ifndef _OP_CLASS_H_
-#define _OP_CLASS_H_ 1
+#ifndef STACK_DEBUG
+#define STACK_DEBUG 0
+#endif
 
-#define OPCL_AU 0
-#define OPCL_LD 1
-#define OPCL_ST 2
-#define OPCL_BC 3
-#define OPCL_BS 4
-#define OPCL_JS 5
-#define OPCL_PS 6
-#define OPCL_IL 7
+extern void dump_stack(FILE *outf,EXP_stk *eps);
+#if STACK_DEBUG
+#define DUMP_STACK(outf,msg,stk) do { if (msg) fprintf(outf,"%s\n",msg); dump_stack(outf,stk); } while (0)
+#else
+#define DUMP_STACK(outf,msg,stk) do { ; } while (0)
+#endif
 
-#define BR_OFF 0
-#define MAX_DISP (8388604)
-#define MIN_DISP (-8388608)
+#endif	/* _OPCAS_DMP_H_ */
 
-#define OP_PUTPS 0x1d
 
-#endif /* _OP_CLASS_H_ */

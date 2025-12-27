@@ -19,16 +19,19 @@
 #include "pst_tokens.h"
 #include "exproper.h"
 #include "listctrl.h"
-#include "op_class.h"
+#include "asop_class.h"
+#include "opcas_dmp.h"
 
-#define STACK_DEBUG 1
-#define OP_DEBUG 2
-#define DEBUG 0
+#define OP_DEBUG 0
 
-#define SCC_BIT  0x00200000
 #define SRC1_POS 16
+#define SCC_POS  21
+#define SCC_BIT  (1<<SCC_POS)
 #define DST_POS  22
+#define OPC_POS  27
 #define MAXREG   31
+#define MAX_PS_BITS (0x3F)
+#define MAX_S2_VALUE (0xFFE0)
 #define REGMARK 0xFFE0
 #define DISP_MASK (-MIN_DISP | MAX_DISP)
 #define DEFNAM(name,numb) {"name",name,numb},
@@ -44,15 +47,8 @@ const char macxx_name[] = "macas";
 const char *macxx_target = "ASAP";
 const char *macxx_descrip = "Cross assembler for the ASAP.";
 
-#if 0
-uint16_t macxx_rel_salign = 2; /* default alignment for rel segments */
-uint16_t macxx_rel_dalign = 2; /* def algnmnt for data in rel segments */
-uint16_t macxx_abs_salign = 2; /* default alignment for abs segments */
-uint16_t macxx_abs_dalign = 2; /* def algnmnt for data in abs segments */
-#else
 uint16_t macxx_salign = 2;    /* default alignment segments by LLF */
 uint16_t macxx_dalign = 2;    /* default alignment data within segment */
-#endif
 uint16_t macxx_min_dalign = 2;
 
 char macxx_mau = 8;         /* # of bits/minimum addressable unit */
@@ -81,15 +77,33 @@ char close_operand = ']';   /* char that closes an operand indirection */
 int max_opcode_length = 16; /* significant length of opcodes and */
 int max_symbol_length = 16; /*  symbols */
 
+static char *am_ptr;
+static SS_struct *literal_pool_sym;
+static SEG_struct *literal_pool_ptr;
+static int32_t literal_pool_register = 26<<SRC1_POS;
+
 /* End of processor specific stuff */
 
 int ust_init(void )
 {
+	if ( !options[QUAL_2_PASS] || !pass )
+	{
+		SS_struct *sym_ptr;
+		SEG_struct *segp;
+		strcpy(token_pool, ".LITPOOL.");
+		token_value = sizeof(".LITPOOL.")-1;
+		literal_pool_sym = sym_ptr = sym_lookup(token_pool, SYM_INSERT_IF_NOT_FOUND);
+		sym_ptr->ss_fnd = current_fnd;
+		sym_ptr->ss_line = current_fnd->fn_line;
+		sym_ptr->flg_global = 1;
+		literal_pool_ptr = segp = (SEG_struct *)get_seg_mem(&sym_ptr, sym_ptr->ss_string);
+		segp->flg_literal = 1;
+		segp->seg_salign = macxx_salign;
+		segp->seg_dalign = macxx_dalign;
+		segp->seg_maxlen = 256*1024-(32*4);
+	}
     return 1;              /* no custom symbol table stuff for ASAP */
 }
-
-static char *am_ptr;
-static uint16_t which_stack;  /* from whence to finally output */
 
 #define MNBI 0x8000		/* operand must not be indexed */
 #define MBI  0x4000		/* operand must be indexed */
@@ -97,7 +111,108 @@ static uint16_t which_stack;  /* from whence to finally output */
 
 static void get_ea(uint16_t size);
 static void get_dst(void),get_s1(void),get_s2(void);
-static int merge_stacks(int a, int b);
+static void merge_stacks(int a, int b);
+
+static void addOutOfRangeTest( EXP_stk *dstStk, int32_t lowLimit, int32_t hiLimit, int align )
+{
+	EXPR_struct *dst;
+	
+	dst = dstStk->stack+dstStk->ptr;
+	if ( align )
+	{
+		dst->expr_code = EXPR_VALUE;
+		dst->expr_value = 0;        /* pick's argument; 0=top of stack */
+		++dst;
+		dst->expr_code = EXPR_OPER;
+		dst->expr_value = EXPROPER_PICK;    /* dup top of stack */
+		++dst;
+		dst->expr_code = EXPR_VALUE;
+		dst->expr_value = align;        /* check for unaligned target */
+		++dst;
+		dst->expr_code = EXPR_OPER;
+		dst->expr_value = EXPROPER_AND;
+		++dst;
+		dst->expr_code = EXPR_VALUE;
+		dst->expr_value = 0;		     /* Get something to compare result to */
+		++dst;
+		dst->expr_code = EXPR_OPER;
+		dst->expr_value = EXPROPER_TST | (EXPROPER_TST_NE<<8);
+		++dst;
+		dst->expr_code = EXPR_OPER;
+		dst->expr_value = EXPROPER_XCHG;    /* save answer, get tos */
+		++dst;
+	}
+	dst->expr_code = EXPR_VALUE;
+	dst->expr_value = 0;        /* pick's argument; 0=top of stack */
+	++dst;
+	dst->expr_code = EXPR_OPER;
+	dst->expr_value = EXPROPER_PICK;    /* dup top of stack */
+	++dst;
+	dst->expr_code = EXPR_VALUE;
+	dst->expr_value = hiLimit;  /* check for out of range + */
+	++dst;
+	dst->expr_code = EXPR_OPER;
+	dst->expr_value = EXPROPER_TST | (EXPROPER_TST_GT<<8);
+	++dst;
+	dst->expr_code = EXPR_OPER;
+	dst->expr_value = EXPROPER_XCHG;    /* save answer, get tos */
+	++dst;
+	dst->expr_code = EXPR_VALUE;
+	dst->expr_value = lowLimit; /* check for out of range - */
+	++dst;
+	dst->expr_code = EXPR_OPER;
+	dst->expr_value = EXPROPER_TST | (EXPROPER_TST_LT<<8);
+	++dst;
+	dst->expr_code = EXPR_OPER;
+	dst->expr_value = EXPROPER_OR;
+	++dst;
+	if ( align )
+	{
+		dst->expr_code = EXPR_OPER;
+		dst->expr_value = EXPROPER_OR;
+		++dst;
+	}
+	dstStk->ptr = dst - dstStk->stack;
+	DUMP_STACK(stdout,"addOutOfRangeTest() dst limit check before compress",dstStk);
+	dstStk->ptr = compress_expr(dstStk);
+	DUMP_STACK(stdout,"addOutOfRangeTest() dst limit check after compress",dstStk);
+	sprintf(emsg, "%s:%d", current_fnd->fn_name_only, current_fnd->fn_line);
+	dstStk->tag = 0;
+	write_to_tmp(TMP_OOR, 0, (char *)dstStk, 0);
+	write_to_tmp(TMP_ASTNG, strlen(emsg)+1, emsg, 1);
+}
+
+static void mergeSrc2(EXP_stk *exp0Stk, EXP_stk *src2Stk)
+{
+	EXPR_struct *exp0, *dst;
+	int ptrSave;
+	
+	ptrSave = src2Stk->ptr;
+	addOutOfRangeTest(src2Stk,0,MAX_S2_VALUE,0);
+	src2Stk->ptr = ptrSave;
+	dst = src2Stk->stack+src2Stk->ptr;
+	dst->expr_code = EXPR_VALUE;
+	(dst++)->expr_value = 0x0000FFFF;
+	dst->expr_code = EXPR_OPER;
+	(dst++)->expr_value = EXPROPER_AND;
+	src2Stk->ptr += 2;
+
+	exp0 = exp0Stk->stack+exp0Stk->ptr;
+	exp0->expr_code = EXPR_VALUE;
+	exp0->expr_value = 0xFFFF0000;
+	++exp0;
+	exp0->expr_code = EXPR_OPER;
+	exp0->expr_value = EXPROPER_AND;
+	++exp0;
+	memcpy((uint8_t *)exp0, (uint8_t *)src2Stk->stack, src2Stk->ptr*sizeof(EXPR_struct));
+	exp0 += src2Stk->ptr;
+	exp0->expr_code = EXPR_OPER;
+	exp0->expr_value = EXPROPER_OR;
+	++exp0;
+	exp0Stk->ptr = exp0 - exp0Stk->stack;
+	DUMP_STACK(stdout,"mergeSrc2() Stk0",exp0Stk);
+	src2Stk->ptr = 0;
+}
 
 void do_opcode(Opcode *opc)
 {
@@ -105,9 +220,8 @@ void do_opcode(Opcode *opc)
     int err_cnt = error_count[MSG_ERROR];
     EXPR_struct *exp0,*exp1;
 
-    which_stack = 0;
     EXP0.tag = 'l';         /* opcode is default U32 */
-    EXP0.tag_len = 1;           /* only 1 longword */
+    EXP0.tag_len = 1;       /* only 1 longword */
     EXP1.tag = 'u';         /* operand,if any, is U16 */
     EXP0.ptr = 1;           /* first stack has opcode (1 element) */
     EXP1.ptr = 0;           /* assume no other operands */
@@ -123,14 +237,14 @@ void do_opcode(Opcode *opc)
     hiword = opc->op_value;     /* stuff in opcode value */
     exp0->expr_value = (hiword & 0xFFE0) << 16;
     am_ptr = inp_ptr;           /* remember where am starts */
-    switch (opc->op_class & 7)
+    switch ( (opc->op_class & 7) )
     {
     case OPCL_AU :
         /* ALU ops: 
         *	OP	%i,%j,%k	reg.i <- reg.j OP reg.k
         *	OP	%i,%j,k		reg.i <- reg.j OP k (constant)
         */
-#if DEBUG & OP_DEBUG
+#if OP_DEBUG
         fprintf(stderr,"got class AU, value: %04X %s",
                 opc->op_value, am_ptr);
 #endif
@@ -140,6 +254,7 @@ void do_opcode(Opcode *opc)
         if ( *inp_ptr++ != ',' )
         {
             bad_token(inp_ptr - 1,"Comma expected");
+			break;
         }
 
         get_s1();
@@ -147,59 +262,91 @@ void do_opcode(Opcode *opc)
         if ( *inp_ptr++ != ',' )
         {
             bad_token(inp_ptr - 1,"Comma expected");
+			return;
         }
 
         get_s2();
         break;
 
-    case OPCL_LD :
-        /* load ops	(incl LEA): 
-        *	Lxx	%i,%j[%k]	reg.i <- @(reg.j + (reg.k << size))
-        *	Lxx	%i,%j[k]	reg.i <- @(reg.j + (k << size))
-        */
-#if DEBUG & OP_DEBUG
-        fprintf(stderr,"got class LD, value: %04X %s",
-                opc->op_value, am_ptr);
+	case OPCL_LD :
+#if OP_DEBUG
+		if ( (opc->op_class & 7) == OPCL_LD )
+		{
+			fprintf(stderr,"got class LD, value: %04X %s",
+					opc->op_value, am_ptr);
+		}
 #endif
+		// Fall through to OPCL_ST
+	case OPCL_ST:
+#if OP_DEBUG
+		if ( (opc->op_class & 7) == OPCL_ST )
+		{
+			fprintf(stderr,"got class ST, value: %04X %s",
+					opc->op_value, am_ptr);
+		}
+#endif
+		// Fall through to OPCL_JS
+	case OPCL_JS:
+#if OP_DEBUG
+		if ( (opc->op_class & 7) == OPCL_ST )
+		{
+			fprintf(stderr,"got class ST, value: %04X %s",
+					opc->op_value, am_ptr);
+		}
+#endif
+		/* load ops: 
+		*	LDxx	%k,%i[%j]	reg.k <- @(reg.i + (reg.j << size))
+		*	LDxx	%k,%i[j]	reg.k <- @(reg.i + (j << size))
+		*   LDxx    %k,where    reg.k <- @where
+		*	LEAxx	%k,%i[j]	reg.k <- (reg.i + (j << size))
+		*   LEAXx   %k,where    reg.k <- where
+		* store ops:
+		*	STxx	%k,%i[%j]	reg.k -> @(reg.i + (reg.j << size))
+		*	STxx	%k,%i[j]	reg.k -> @(reg.i + (j << size))
+		*   STxx    %k,where    reg.k -> @where
+		* Jump to subroutine
+		*   JSR     %k,%i[%j]   reg.k <- PC+4; LPC <- (reg.i + reg.j << size)
+		*   JSR     %k,%i[j]    reg.k <- PC+4; LPC <- (reg.i + j << size)
+		*   JSR     %k,where    reg.k <- PC+4; LPC <- where
+		*/
         get_dst();
         if ( *inp_ptr++ != ',' )
         {
             bad_token(inp_ptr - 1,"Comma expected");
+			break;
         }
 
         get_ea(hiword & 3);
         break;
 
-    case OPCL_ST :
-        /* store ops: 
-        *	STxx	%k,%i[%j]	reg.k -> @(reg.i + (reg.j << size))
-        *	STxx	%k,%i[j]	reg.k -> @(reg.i + (j << size))
-        *			( same as class LD, separate for debug )
-        */
-#if DEBUG & OP_DEBUG
-        fprintf(stderr,"got class ST, value: %04X %s",
-                opc->op_value, am_ptr);
+	case OPCL_BS:
+		/* branch to subroutine: 
+		*	Bsr	%link,where
+		*/
+		/* get link register, then merge with Bcc */
+#if OP_DEBUG
+		fprintf(stderr,"got class BS, value: %04X %s",
+				opc->op_value, am_ptr);
 #endif
-        js_st:
-        get_dst();
+		get_dst();
 
-        if ( *inp_ptr++ != ',' )
-        {
-            bad_token(inp_ptr - 1,"Comma expected");
-        }
-
-        get_ea(hiword & 3);
-        break;
-
-    case OPCL_BC :
-        /* conditional branches: 
-        *	Bcc	where
-        */
-#if DEBUG & OP_DEBUG
-        fprintf(stderr,"got class BC, value: %04X %s",
-                opc->op_value, am_ptr);
+		if ( *inp_ptr++ != ',' )
+		{
+			bad_token(inp_ptr - 1,"Comma expected");
+			break;
+		}
+		// Fall through to OPCL_BC
+    case OPCL_BC:
+#if OP_DEBUG
+		if ( (opc->op_class & 7) == OPCL_BC )
+		{
+			/* conditional branches: 
+			*	Bcc	where
+			*/
+			fprintf(stderr,"got class BC, value: %04X %s",
+					opc->op_value, am_ptr);
+		}
 #endif
-        get_offset:
         get_token();
         if (exprs(1,&EXP1) < 1)
         {       /* expression nfg or not present */
@@ -207,15 +354,18 @@ void do_opcode(Opcode *opc)
             exp1->expr_value = -4;      /* make it a br . */
             EXP1.ptr = 1;           /* 1 item on stack */
             bad_token(inp_ptr - 1,"Expression expected");
+			break;
         }
         else
         {
             exp1 = EXP1SP + EXP1.ptr;
             exp1->expr_code = EXPR_SEG;
             exp1->expr_value = current_offset + BR_OFF;
-            (exp1++)->expr_seg = current_section;
+            exp1->expr_seg = current_section;
+			++exp1;
             exp1->expr_code = EXPR_OPER;
-            (exp1++)->expr_value = '-';
+            exp1->expr_value = '-';
+			++exp1;
             EXP1.ptr += 2;
             EXP1.ptr = compress_expr(&EXP1);
         }
@@ -242,10 +392,12 @@ void do_opcode(Opcode *opc)
                 sprintf(emsg,"Branch offset 0x%X byte(s) out of range",toofar);
                 bad_token((char *)0,emsg);
                 exp1->expr_value = 0-(BR_OFF);
+				break;
             }
             if ((exp1->expr_value&3) != 0)
             {
                 bad_token((char *)0,"Branch to non-long-aligned address");
+				break;
             }
             /* absolute difference (possibly cooked), mask and shift */
             exp1->expr_value &= (-MIN_DISP|MAX_DISP);
@@ -256,49 +408,9 @@ void do_opcode(Opcode *opc)
         {
             if (options[QUAL_BOFF])
             {
-                EXP_stk *ep2;
-                EXPR_struct *exp2;
-                /* branch offset is expression, add to expression to mask
-                *  and shift down
-                */
-                ep2 = &EXP2;         /* clone the expression to stack 2 */
-                exp2 = EXP2SP;
-                memcpy(exp2, (char *)EXP1SP, EXP1.ptr*sizeof(EXPR_struct));
-                exp2 += EXP1.ptr;
-                exp2->expr_code = EXPR_VALUE;
-                (exp2++)->expr_value = 0;        /* pick's argument; 0=top of stack */
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_PICK;    /* dup top of stack */
-                exp2->expr_code = EXPR_VALUE;
-                (exp2++)->expr_value = 0x007FFFFFL;  /* check for out of range + */
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_GT<<8);
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_XCHG;    /* save answer, get tos */
-                exp2->expr_code = EXPR_VALUE;
-                (exp2++)->expr_value = 0;        /* pick's argument; 0=top of stack */
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_PICK;    /* dup top of stack */
-                exp2->expr_code = EXPR_VALUE;
-                (exp2++)->expr_value = -0x00800000; /* check for out of range - */
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_LT<<8);
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_XCHG;    /* save answer, get tos */
-                exp2->expr_code = EXPR_VALUE;
-                (exp2++)->expr_value = 3;        /* check for unaligned target */
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_AND;
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_OR<<8);
-                exp2->expr_code = EXPR_OPER;
-                (exp2++)->expr_value = EXPROPER_TST | (EXPROPER_TST_OR<<8);
-                ep2->ptr = exp2 - EXP2SP;
-                sprintf(emsg, "%s:%d", current_fnd->fn_name_only, current_fnd->fn_line);
-                ep2->tag = 0;
-                write_to_tmp(TMP_BOFF, 0, (char *)ep2, 0);
-                write_to_tmp(TMP_ASTNG, strlen(emsg)+1, emsg, 1);
-                ep2->ptr = 0;        /* done with stack 2 */
+				int savePtr = EXP1.ptr;
+				addOutOfRangeTest(&EXP1, MIN_DISP, MAX_DISP, 3);
+				EXP1.ptr = savePtr;
             }
 
             exp1 = EXP1SP + EXP1.ptr;
@@ -315,44 +427,12 @@ void do_opcode(Opcode *opc)
         }
 
         /* now merge with opcode from stack 0 */
-        if ( (which_stack = merge_stacks(1,0)) )
-            EXP0.ptr = 0;
-        else
-            EXP1.ptr = 0;
-
-        break;
-
-    case OPCL_BS :
-        /* branch to subroutine: 
-        *	Bsr	%link,where
-        */
-        /* get link register, then merge with Bcc */
-#if DEBUG & OP_DEBUG
-        fprintf(stderr,"got class BS, value: %04X %s",
-                opc->op_value, am_ptr);
-#endif
-        get_dst();
-
-        if ( *inp_ptr++ != ',' )
-        {
-            bad_token(inp_ptr - 1,"Comma expected");
-        }
-        goto get_offset;
-
-    case OPCL_JS :
-        /* Jump to subroutine
-        *	Jsr	%link,where
-        */
-#if DEBUG & OP_DEBUG
-        fprintf(stderr,"got class JS, value: %04X %s",
-                opc->op_value, am_ptr);
-#endif
-        goto js_st;
+        merge_stacks(0,1);
         break;
 
     case OPCL_PS :
         /* putps, getps */
-#if DEBUG & OP_DEBUG
+#if OP_DEBUG
         fprintf(stderr,"got class PS, value: %04X %s",
                 opc->op_value, am_ptr);
 #endif
@@ -366,104 +446,33 @@ void do_opcode(Opcode *opc)
             /* GETPS, get dst */
             get_dst();
         }
-        f1_eatit();
-        break;  
+        break;
+		
     case OPCL_IL :
         /* illegal and sysill */
-#if DEBUG & OP_DEBUG
+#if OP_DEBUG
         fprintf(stderr,"got class IL, value: %04X %s",
                 opc->op_value, am_ptr);
 #endif
-        f1_eatit();
         break;  
     }                    /* -- switch(class) */
     if (err_cnt != error_count[MSG_ERROR])
     { /* if any errors detected... */
         f1_eatit();               /* ...eat to EOL */
     }
-#if DEBUG & STACK_DEBUG
-    fprintf(stderr,"First shot, which_stack: %d\n",which_stack);
-    dump_stacks();
-    if ( which_stack = merge_stacks(1,0) )
-    {
-        /* merge ended up in stack 1 */
-        EXP0.ptr = 0;
-        fputs("stack 1 fiddle clearing stack 0\n",stderr);
-    }
-    else
-    {
-        /* merge ended up in stack 0 */
-        EXP1.ptr = 0;
-        fputs("stack 1 fiddle clearing stack 1\n",stderr);
-    } /* end of stack[1] fiddling */
-#else
-    which_stack = merge_stacks(1,0);
-#endif
-
-#if DEBUG & STACK_DEBUG
-    fprintf(stderr,"After stack[1] fiddling, which_stack: %d\n",which_stack);
-    dump_stacks();
-
-    if ( exprs_stack[3].ptr != 0 )
-    {
-        /* something on stack 3 */
-        if ( (uval = merge_stacks(3,which_stack)) == 3 )
-        {
-            /* merge ended up in stack 3 */
-            exprs_stack[which_stack].ptr = 0;
-            fprintf(stderr,"stack 3 fiddle clearing stack %d\n",which_stack);
-            which_stack = 3;
-        }
-        else
-        {
-            /* merge ended up in other stack */
-            exprs_stack[3].ptr = 0;
-            fputs("stack 3 fiddle clearing stack 3\n",stderr);
-        }
-    }  /* end of stack[3] fiddling */
-#else
-    which_stack = merge_stacks(3,which_stack);
-#endif
-
-#if DEBUG & STACK_DEBUG
-    fprintf(stderr,"After stack[3] fiddling, which_stack: %d\n",which_stack);
-    dump_stacks();
-    if ( exprs_stack[2].ptr )
-    {
-        /* something on stack 3 */
-        if ( (uval = merge_stacks(2,which_stack)) == 3 )
-        {
-            /* merge ended up in stack 2 */
-            exprs_stack[which_stack].ptr = 0;
-            fprintf(stderr,"stack 2 fiddle clearing stack %d\n",which_stack);
-            which_stack = 2;
-        }
-        else
-        {
-            /* merge ended up in other stack*/
-            exprs_stack[2].ptr = 0;
-            fputs("stack 2 fiddle clearing stack 2\n",stderr);
-        }
-    } /* end of stack 2 fiddling */
-    fprintf(stderr,"After stack[2] fiddling, which_stack: %d\n",which_stack);
-    dump_stacks();
-#else
-    which_stack = merge_stacks(2,which_stack);
-#endif
-    exprs_stack[which_stack].ptr = compress_expr(&exprs_stack[which_stack]);
-
-#if DEBUG & STACK_DEBUG
-    fprintf(stderr,"After compress(), which_stack: %d\n",which_stack);
-    dump_stacks();
-#endif
-    exprs_stack[which_stack].tag = ( edmask & ED_M68 ) ? 'L' : 'l';
-    if (list_bin) compress_expr_psuedo(&exprs_stack[which_stack]);
-    p1o_long(&exprs_stack[which_stack]);      /* output inst */
+    merge_stacks(0,1);
+    merge_stacks(0,3);
+    merge_stacks(0,2);
+    EXP0.ptr = compress_expr(&EXP0);
+    EXP0.tag = ( edmask & ED_M68 ) ? 'L' : 'l';
+    if (list_bin) compress_expr_psuedo(&EXP0);
+    p1o_long(&EXP0);      /* output inst */
 }                   /* -- opc_as() */
 
 static void get_ea(uint16_t size)
 {
     int32_t val;
+	int abs=0;
     EXPR_struct *exp1,*exp2;
 
     exp1 = EXP1SP;
@@ -476,43 +485,23 @@ static void get_ea(uint16_t size)
         bad_token(inp_ptr - 1,"Register expression expected");
         return;
     }
-    else if (EXP1.register_reference)
+	val = exp1->expr_value;
+	abs = (EXP1.ptr == 1 && exp1->expr_code == EXPR_VALUE);
+	/* constant 0 is accepted as %0 */
+    if ( EXP1.register_reference || (abs && !val) )
     {
-        if ((EXP1.ptr == 1)&&(exp1->expr_code == EXPR_VALUE))
+		if ( abs && val >= 0 && val <= MAXREG )
         {
-            /* absolute register # */
-            if ( (val = exp1->expr_value) < 0 || val > MAXREG )
-            {
-                bad_token(inp_ptr - 1,"Invalid Register expression"); 
-                exp1->expr_value = 0;
-            }
-            exp1->expr_value = val << SRC1_POS;
+			/* absolute register # */
+			exp1->expr_value = val << SRC1_POS;
         }
         else
-        {
-            /* non-absolute register expression */
-            exp1 = EXP1SP + EXP1.ptr;
-            exp1->expr_code = EXPR_VALUE;
-            (exp1++)->expr_value = MAXREG;
-            exp1->expr_code = EXPR_OPER;
-            (exp1++)->expr_value  = EXPROPER_AND;
-            exp1->expr_code = EXPR_VALUE;
-            (exp1++)->expr_value = SRC1_POS;
-            exp1->expr_code = EXPR_OPER;
-            (exp1++)->expr_value = EXPROPER_SHL;
-            EXP1.ptr += 4;
-            exp1 = EXP1SP;
-        } /* end register expression */
-        EXP1.tag = 'R';         /* let common code know */
+		{
+			bad_token(inp_ptr - 1,"Invalid Register expression"); 
+			exp1->expr_value = 0;
+			return;
+		}
     } /* end register reference */
-	else if (    (EXP1.ptr == 1)
-			  && (exp1->expr_code == EXPR_VALUE)
-		      && !exp1->expr_value
-		    )
-    {
-        /* constant 0 is accepted as %0 */
-        EXP1.tag = 'R';     /* let common code know */
-    }
     else if ( *inp_ptr == open_operand )
     {
         /* he got the syntax right but muffed the semantics */
@@ -523,7 +512,6 @@ static void get_ea(uint16_t size)
     else
     {
         /* special shorthand hack for xxx fred => xxx %0[fred] */
-        EXP1.tag = 'u';
         if ( size )
         {
             exp1 = EXP1SP + EXP1.ptr;
@@ -534,6 +522,13 @@ static void get_ea(uint16_t size)
             EXP1.ptr += 2;
         }
         EXP1.ptr = compress_expr(&EXP1);
+		if ( EXP1.ptr != 1 || EXP1SP->expr_code != EXPR_VALUE || (EXP1SP->expr_value < 0 || EXP1SP->expr_value > MAX_S2_VALUE ) )
+		{
+			int savePtr;
+			savePtr = EXP1.ptr;
+			addOutOfRangeTest(&EXP1, 0, MAX_S2_VALUE, 0);
+			EXP1.ptr = savePtr;
+		}
         return;
     }
 
@@ -579,11 +574,9 @@ static void get_ea(uint16_t size)
             (exp2++)->expr_value = EXPROPER_OR;
             EXP2.ptr += 4;
         }
-        EXP2.tag = 'R';     /* let common code know */
     }
     else
     {
-        EXP2.tag = 'u';
         if ( size )
         {
             exp2 = EXP2SP + EXP2.ptr;
@@ -594,6 +587,13 @@ static void get_ea(uint16_t size)
             EXP2.ptr += 2;
             EXP2.ptr = compress_expr(&EXP2);
         }
+		if ( EXP2.ptr != 1 || EXP2SP->expr_code != EXPR_VALUE || (EXP2SP->expr_value < 0 || EXP2SP->expr_value > MAX_S2_VALUE ) )
+		{
+			int savePtr;
+			savePtr = EXP2.ptr;
+			addOutOfRangeTest(&EXP2, 0, MAX_S2_VALUE, 0);
+			EXP2.ptr = savePtr;
+		}
     }
 
     if ( *inp_ptr++ != close_operand )
@@ -652,7 +652,6 @@ static void get_s1( void )
             (exp1++)->expr_value = EXPROPER_SHL;
             EXP1.ptr += 4;
         }
-        EXP1.tag = 'R';     /* let common code know */
     }
 	else if ((EXP1.ptr == 1)
 			 && exp1->expr_code == EXPR_VALUE
@@ -671,6 +670,7 @@ static void get_s1( void )
 
 static void get_s2( void )
 {
+	int abs;
     int32_t val;
     EXPR_struct *exp2;
 
@@ -683,39 +683,29 @@ static void get_s2( void )
         bad_token(inp_ptr - 1,"Register or expression expected");
         return;
     }
-    else if ( EXP2.register_reference )
+	val = exp2->expr_value;
+	abs = (EXP2.ptr == 1) && (exp2->expr_code == EXPR_VALUE);
+    if ( EXP2.register_reference || (abs && val >= 0 && val < REGMARK ) )
     {
-        if ((EXP2.ptr == 1)&&(exp2->expr_code == EXPR_VALUE))
+        if (EXP2.register_reference )
         {
-            /* absolute register # */
-            if ( (val = exp2->expr_value) < 0 || val > MAXREG )
-            {
-                bad_token(inp_ptr - 1,"Invalid Register expression"); 
-                exp2->expr_value = 0;
-            }
-            else exp2->expr_value |= REGMARK;
+			if ( val < 0 || val > MAXREG )
+			{
+				bad_token(inp_ptr - 1, "Invalid Register expression");
+				EXP2.ptr = 0;
+			}
+			else
+			{
+				EXP2.ptr = 0;
+				EXP0.stack[0].expr_value |= val | REGMARK;
+			}
+			return;
         }
-        else
-        {
-            /* a register valued expression, build expression
-            *  to clip and position it.
-            */
-            exp2->expr_code = EXPR_VALUE;
-            (exp2++)->expr_value = MAXREG;
-            exp2->expr_code = EXPR_OPER;
-            (exp2++)->expr_value  = EXPROPER_AND;
-            exp2->expr_code = EXPR_VALUE;
-            (exp2++)->expr_value = REGMARK;
-            exp2->expr_code = EXPR_OPER;
-            (exp2++)->expr_value = EXPROPER_OR;
-            EXP2.ptr += 4;
-        }
-        EXP2.tag = 'R';     /* let common code know */
-    }
-    else
-    {
-        EXP2.tag = 'u';
-    }
+		EXP2.ptr = 0;
+		EXP0.stack[0].expr_value |= val;
+		return;
+	}
+	mergeSrc2(&EXP0,&EXP2);
 }
 
 static void get_dst( void )
@@ -728,11 +718,10 @@ static void get_dst( void )
     if ( exprs(1,&EXP3) < 1 )
     {
         /* partially NOP the instruction by clearing Scc & leaving dst=R0*/
-        EXP0SP->expr_value &= ~SCC_BIT;
         bad_token(inp_ptr - 1,"Register expression expected");
-        EXP3.ptr = 0;
+		return;
     }
-    else if ( EXP3.register_reference )
+    if ( EXP3.register_reference )
     {
         if ((EXP3.ptr == 1)&&(exp3->expr_code == EXPR_VALUE))
         {
@@ -777,105 +766,31 @@ static void get_dst( void )
 }
 
 /* 		merge_stacks()
-*	merges two expression stacks, by copying the shorter to the longer
-*	and adding an 'or' operator. Returns the number of the resulting stack
-*	and sets its stack ptr correctly. There is a slight preference for
-*	returning first.
+*	merges two expression stacks by copying the source into the dest
+*	and adding an 'or' operator.
 */
-static int merge_stacks(int first, int second)
+static void merge_stacks(int dest, int source)
 {
-    int16_t flen,slen;
-    int final;
-    EXP_stk *ep1,*ep2;
-    EXPR_struct *esp1,*esp2;
-    ep1 = &exprs_stack[first];
-    ep2 = &exprs_stack[second];
-    esp1 = ep1->stack;
-    esp2 = ep2->stack;
+	EXP_stk *dstStk,*srcStk;
+	srcStk = exprs_stack + source;
 
-/* if either is empty, return the other... */
-    if ( (slen = ep2->ptr) == 0) return first;
-    if ( (flen = ep1->ptr) == 0) return second;
-
-    if ( flen < slen )
-    {
-        /* first is shorter, copy it to second */
-        memcpy((char *)(esp2+ep2->ptr),(char *)esp1,
-               flen * sizeof(EXPR_struct));
-        final = second;
-        ep1->ptr = 0;       /* first stack is now empty */
-        ep1 = ep2;          /* set final pointer to second stack */
-        esp1 = esp2;
-    }
-    else
-    {
-        /* second is shorter, copy it to first */
-        memcpy((char *)(esp1+ep1->ptr),(char *)esp2,
-               slen * sizeof(EXPR_struct));
-        final = first;
-        ep2->ptr = 0;       /* second stack is now empty */
-    }
-    flen += slen;           /* my own constant subexpression elimination */
-    esp1 = ep1->stack + flen;   /* compute new end of stack */
-    ep1->ptr = flen+1;      /* set new size of final stack */
-    esp1->expr_code = EXPR_OPER;    /* glue on an "or" to merge the items */
-    esp1->expr_value = EXPROPER_OR;
-    return final;
+/* if source has something in it */
+    if ( srcStk->ptr )
+	{
+		EXPR_struct *dst,*src;
+		dstStk = exprs_stack + dest;
+		dst = dstStk->stack + dstStk->ptr;
+		src = srcStk->stack;
+		memcpy((uint8_t *)dst, (uint8_t *)src, srcStk->ptr * sizeof(EXPR_struct));
+		dst += srcStk->ptr;
+		dst->expr_code = EXPR_OPER;    /* glue on an "or" to merge the items */
+		dst->expr_value = EXPROPER_OR;
+		dstStk->ptr += srcStk->ptr+1;
+		srcStk->ptr = 0;
+		return;
+	}
+    return;
 }
-
-#if STACK_DEBUG
-void dump_stack(int stacknum)
-{
-    int tag,last;
-    EXP_stk *eps;
-    EXPR_struct *curr,*top;
-
-    eps = &exprs_stack[stacknum];
-    tag = eps->tag;
-
-    fprintf(stderr,"\nStack %d Tag '%c' (0x%02X) depth %d\n",
-            stacknum,
-            (isgraph(tag) ? tag : '.'),
-            tag,
-            last = eps->ptr);
-
-    curr = eps->stack;
-    top = eps->stack+last;
-
-    for ( ; curr < top ; ++curr )
-    {
-        switch (tag = curr->expr_code)
-        {
-        case EXPR_VALUE :
-            fprintf(stderr," 0x%X\n",curr->expr_value);
-            break;
-        case EXPR_OPER :
-            tag = curr->expr_value;
-            fprintf(stderr," %c (0x%X)\n",(isgraph(tag) ? tag : '.'),tag);
-            break;
-        case EXPR_SEG :
-            fprintf(stderr," %s + 0x%X\n",
-                    (curr->expt.expt_seg)->seg_string,curr->expr_value);
-            break;
-        case EXPR_SYM :
-            fprintf(stderr,"`%s'\n",
-                    (curr->expt.expt_sym)->ss_string);
-            break;
-        default :
-            fprintf(stderr,"?? code: 0x%X value: 0x%X\n",tag,curr->expr_value);
-        }   /* end case */
-    }       /* end for */
-}       /* end routine dump_stack */
-
-void dump_stacks( void )
-{
-    int i;
-    for ( i = 0 ; i < EXPR_MAXSTACKS ; ++i )
-    {
-        if ( exprs_stack[i].ptr ) dump_stack(i);
-    }
-}
-#endif
 
 #define NTYPE_REG (1)	/* expression resolves to register */
 #define NTYPE_S2  (2)	/* expression can always be used in src2 slot */
@@ -923,10 +838,6 @@ int32_t op_ntype( Opcode *opc )
     f1_eatit();
     return type;
 }
-
-static SS_struct *literal_pool_sym;
-static SEG_struct *literal_pool_ptr;
-static int32_t literal_pool_register = 26<<SRC1_POS;
 
 int op_using( Opcode *opc )
 {
@@ -980,19 +891,12 @@ int op_using( Opcode *opc )
 
 int op_ldlit( Opcode *opc )
 {
-    int which_stack;
     EXPR_struct *exp0, *exp1, *exp;
-#if 0
-    EXPR_struct *exp2;
-#endif
     EXP0.tag = 'l';          /* opcode is default U32 */
     EXP0.tag_len = 1;            /* only 1 longword */
     EXP0.ptr = 1;            /* first stack has opcode (1 element) */
     exp0 = EXP0SP;           /* point to expression stack 0 */
     exp1 = EXP1SP;           /* point to expression stack 1 */
-#if 0
-    exp2 = EXP2SP;           /* point to expression stack 2 */
-#endif
     exp0->expr_code = EXPR_VALUE;    /* set the opcode expression */
     exp0->expr_value = _BIT_31_; /* 0x80000000; */  /* opcode for LD */
     EXP1.ptr = 0;            /* assume no other operands */
@@ -1002,37 +906,38 @@ int op_ldlit( Opcode *opc )
     EXP3.tag = 0;
     EXP2.tag_len = 1;            /* but if there is a tag, len = 1 */
     EXP3.tag_len = 1;
+	list_stats.pc_flag = 1;
     get_dst();               /* first arg is a register */
     if ( *inp_ptr++ != ',' )
     {
         bad_token(inp_ptr - 1,"Comma expected");
     }
     get_token();             /* pickup next value */
-    which_stack = merge_stacks(0,3); /* merge the stacks */
-    exp = exprs_stack[which_stack].stack + exprs_stack[which_stack].ptr;
+    merge_stacks(0,3);		/* merge the stacks */
+    exp = EXP0.stack + EXP0.ptr;
     if (exprs(1, &EXP1) >= 0)
     {      /* expression present */
         int32_t v, newop = 0;
         if (EXP1.ptr == 1 && exp1->expr_code == EXPR_VALUE)
         {
             v = exp1->expr_value;
-            if (v >= 0 && v < 0xFFE0)
+            if (v >= 0 && v < MAX_S2_VALUE)
             {
                 newop = 0x08<<27;       /* ADD opcode */
             }
-            else if (v < 0 && v > -0xFFE0)
+            else if (v < 0 && v > -MAX_S2_VALUE)
             {
                 newop = 0x09<<27;       /* SUB opcode */
                 v = 0-v;
             }
             else if (v > 0)
             {
-                if ((v&3) == 0 && v < 0x3FF80)
+                if ((v&3) == 0 && v < MAX_S2_VALUE*4)
                 {
                     newop = 0x03<<27;        /* LEA opcode */
                     v >>= 2;         /* scale it by longs */
                 }
-                else if ((v&1) == 0 && v < 0x1FFC0)
+                else if ((v&1) == 0 && v < MAX_S2_VALUE*2)
                 {
                     newop = 0x04<<27;        /* LEAS opcode */
                     v >>= 1;         /* scale it by shorts */
@@ -1040,8 +945,8 @@ int op_ldlit( Opcode *opc )
             }
         }
         if (newop != 0)
-        {         /* did we changed the opcode? */
-            exp = exprs_stack[which_stack].stack;  /* point to our opcode (stack element 0) */
+        {         /* did we change the opcode? */
+            exp = EXP0.stack;  /* point to our opcode (stack element 0) */
             exp->expr_value &= ~(0x1F<<27);    /* whack out the old one */
             exp->expr_value |= newop|v;        /* plop in the new one and the argument */
             EXP1.ptr = 0;          /* stack 1 is now empty */
@@ -1050,28 +955,37 @@ int op_ldlit( Opcode *opc )
         {              /* else, do the hard way */
             int olist;
             SEG_struct *oldseg;
-            EXPR_struct *oexp = exp;       /* remember where we started */
-            oldseg = current_section;      /* save current section ptr */
-            current_section = literal_pool_ptr;    /* set section to literal pool */
-            exp->expr_code = EXPR_VALUE;       /* or in the register */
+			EXP_stk *tmpStk = &EXP2;
+			EXPR_struct *tmpExp = tmpStk->stack;
+			
+            exp->expr_code = EXPR_VALUE;       /* add LP register to EXP0 */
             (exp++)->expr_value = literal_pool_register;
             exp->expr_code = EXPR_OPER;
             (exp++)->expr_value = EXPROPER_OR;
-            exp->expr_code = EXPR_SEG;     /* make expression: "(arg-.LITPOOL.)>>2[.LP]" */
-            exp->expr_seg = current_section;
-            (exp++)->expr_value = current_offset;
-            exp->expr_code = EXPR_SYM;
-            (exp++)->expr_sym = literal_pool_sym;
-            literal_pool_sym->flg_ref = 1; /* signal we've touched the lit pool name */
-            exp->expr_code = EXPR_OPER;
-            (exp++)->expr_value = EXPROPER_SUB;
-            exp->expr_code = EXPR_VALUE;
-            (exp++)->expr_value = 2;
-            exp->expr_code = EXPR_OPER;
-            (exp++)->expr_value = EXPROPER_SHR;
-            exp->expr_code = EXPR_OPER;
-            (exp++)->expr_value = EXPROPER_OR;
-            exprs_stack[which_stack].ptr += exp-oexp;
+			
+			oldseg = current_section;      /* save current section ptr */
+			current_section = literal_pool_ptr;    /* set section to literal pool */
+			current_offset = (current_offset + 3) & -4;	/* Make sure all litpool elements are longword aligned */
+			tmpExp->expr_code = EXPR_SEG;	/* prepare expression: ".LP[(arg-{sym}.LITPOOL.)>>2]" */
+			tmpExp->expr_seg = current_section;
+			tmpExp->expr_value = current_offset;
+			++tmpExp;
+			tmpExp->expr_code = EXPR_SYM;
+			tmpExp->expr_sym = literal_pool_sym;
+			literal_pool_sym->flg_ref = 1; /* signal we've touched the lit pool name */
+			++tmpExp;
+			tmpExp->expr_code = EXPR_OPER;
+			tmpExp->expr_value = EXPROPER_SUB;
+			++tmpExp;
+			tmpExp->expr_code = EXPR_VALUE;
+			tmpExp->expr_value = 2;
+			++tmpExp;
+			tmpExp->expr_code = EXPR_OPER;
+			tmpExp->expr_value = EXPROPER_SHR;
+			++tmpExp;
+			tmpStk->ptr = tmpExp-tmpStk->stack;
+			mergeSrc2(&EXP0,tmpStk);
+			
             EXP1.tag = ( edmask & ED_M68 ) ? 'L' : 'l';
             EXP1.tag_len = 1;
             olist = list_bin;
@@ -1087,11 +1001,11 @@ int op_ldlit( Opcode *opc )
             current_section = oldseg;
         }
     }
-    exprs_stack[which_stack].tag = ( edmask & ED_M68 ) ? 'L' : 'l';
-    exprs_stack[which_stack].tag_len = 1;    /* only 1 longword */
-    exprs_stack[which_stack].ptr = compress_expr(exprs_stack+which_stack);
-    if (list_bin) compress_expr_psuedo(exprs_stack+which_stack);
-    p1o_long(exprs_stack+which_stack);   /* store opcode */
+    EXP0.tag = ( edmask & ED_M68 ) ? 'L' : 'l';
+    EXP0.tag_len = 1;    /* only 1 longword */
+    EXP0.ptr = compress_expr(&EXP0);
+    if (list_bin) compress_expr_psuedo(&EXP0);
+    p1o_long(&EXP0);   /* store opcode */
     return 0;
 }
 

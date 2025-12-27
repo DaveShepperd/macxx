@@ -1,5 +1,5 @@
 /*
-    version.h - Part of macxx, a cross assembler family for various micro-processors
+    op_class.h - Part of macxx, a cross assembler family for various micro-processors
     Copyright (C) 2008 David Shepperd
 
     This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_ 1
+#ifndef _ASOP_CLASS_H_
+#define _ASOP_CLASS_H_ 1
 
-char *macxx_version = "v13.12";
+#define OPCL_AU 0
+#define OPCL_LD 1
+#define OPCL_ST 2
+#define OPCL_BC 3
+#define OPCL_BS 4
+#define OPCL_JS 5
+#define OPCL_PS 6
+#define OPCL_IL 7
 
-#endif /* _VERSION_H_ */
+#define BR_OFF 0
+#define MAX_DISP (8388604)	/* 0x007FFFFC */
+#define MIN_DISP (-8388608)	/* 0x00800000 */
+
+#define OP_PUTPS 0x1d
+
+#endif /* _ASOP_CLASS_H_ */

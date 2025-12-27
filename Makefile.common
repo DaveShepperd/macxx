@@ -31,7 +31,7 @@ ALLO69   = exprs69.o char_tbl65.o opc69.o pst69.o             $(MOST) $(PASSx) $
 ALLO11   = exprs11.o char_tbl65.o opc11.o pst11.o m11types.o  $(MOST) $(PASSx) $(EXPx)
 ALLO8080 = exprs.o char_table.o opc8080.o pst8080.o           $(MOST) $(PASSx) $(EXPx)
 ALLOZ80  = exprs.o char_table.o opcz80.o pstz80.o             $(MOST) $(PASSx) $(EXPx)
-ALLOAS   = exprs.o char_table.o opcas.o pstas.o dummy_pass0.o pass1.o $(MOST) $(EXPx)
+ALLOAS   = exprs.o char_table.o opcas.o pstas.o opcas_dmp.o   $(MOST) $(PASSx) $(EXPx)
 ALLOTJ   = exprs.o char_table.o opctj.o psttj.o dummy_pass0.o pass1.o $(MOST) $(EXPx)
 ALLO68K  = exprs68k.o char_table.o opc68k.o pst68k.o m68types.o dummy_pass0.o pass168k.o $(MOST)
 
@@ -305,7 +305,9 @@ opc68k.o : opc68k.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h 
 opc69.o : opc69.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h psttkn69.h opcommon.h
 opcas.o : opcas.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
-  pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h op_class.h opcommon.h 
+  pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h asop_class.h opcommon.h opcas_dmp.h
+opcas_dmp.o : opcas_dmp.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
+  pst_tokens.h pst_structs.h exproper.h listctrl.h lstcnsts.h asop_class.h opcommon.h opcas_dmp.h
 opcnds.o : opcnds.c opcnds.h 
 opcode.o : opcode.c token.h token_defs.h structs.h add_defs.h header.h memmgt.h ct.h qualtbl.h \
   pst_tokens.h pst_structs.h 
@@ -327,7 +329,7 @@ pst68.o : pst68.c pst_tokens.h pst_structs.h psttkn68.h dirdefs.h
 pst68k.o : pst68k.c pst_tokens.h pst_structs.h dirdefs.h opcs68k.h 
 pst69.o : pst69.c pst_tokens.h pst_structs.h psttkn69.h dirdefs.h
 #pst816.o : pst816.c pst_tokens.h pst_structs.h psttkn65.h dirdefs.h 
-pstas.o : pstas.c pst_tokens.h pst_structs.h dirdefs.h asap_ops.h op_class.h 
+pstas.o : pstas.c pst_tokens.h pst_structs.h dirdefs.h asap_ops.h asop_class.h 
 pstpp.o : pstpp.c pst_tokens.h pst_structs.h dirdefs.h 
 psttj.o : psttj.c pst_tokens.h pst_structs.h dirdefs.h tjop_class.h tj_ops.h 
 psuedo_ops.o : psuedo_ops.c add_defs.h token.h token_defs.h structs.h header.h memmgt.h ct.h \

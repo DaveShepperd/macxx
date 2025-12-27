@@ -390,7 +390,10 @@ static char *do_outexp_ol(EXP_stk *eps, char *s, const EXP_stk *topLevel)
                 exp->expr_value = sym_ptr->ss_value;
             }
         case EXPR_VALUE: {
-                sprintf(s," %d",exp->expr_value);
+				if ( !options[QUAL_DBGOUTX] )
+					sprintf(s, " %d", exp->expr_value);
+				else
+					sprintf(s, " 0x%08X", exp->expr_value);
                 while (*s++);
                 --s;
                 continue;
@@ -952,7 +955,7 @@ void outsym_def(SS_struct *sym_ptr,int mode)
             s = sline + sizeof(VLDA_sym);
             if (flg&VSYM_DEF)
             {
-				if ( !(flg&VSYM_ABS) && (macxx_name_mask&MACXX_M_69) && sym_ptr->ss_seg && sym_ptr->ss_seg->flg_abs )
+				if ( !(flg&VSYM_ABS) && (macxx_name_mask&(MACXX_M_69|MACXX_M_AS)) && sym_ptr->ss_seg && sym_ptr->ss_seg->flg_abs )
 					flg |= VSYM_ABS;
                 if (flg&VSYM_EXP)
                 {

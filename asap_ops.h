@@ -19,8 +19,7 @@
 #ifndef _ASAP_OPS_H_
 #define _ASAP_OPS_H_ 1
 
-#include "op_class.h"
-
+#include "asop_class.h"
 
 /*	mnem.,mnem.c	class		value		comments	*/
 /*branches:				v--cond code field*/

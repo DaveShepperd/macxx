@@ -35,21 +35,6 @@ void opcinit( void )          /* preloads the opcode table */
     Opcode *op;
 #if !defined(MAC_PP)
     Opcpst *opc = &perm_opcpst[0];
-#if defined(MAC_AS)
-    SS_struct *sym_ptr;
-    SEG_struct *segp;
-    strcpy(token_pool, ".LITPOOL.");
-    token_value = sizeof(".LITPOOL.")-1;
-    literal_pool_sym = sym_ptr = sym_lookup(token_pool, SYM_INSERT_IF_NOT_FOUND);
-    sym_ptr->ss_fnd = current_fnd;
-    sym_ptr->ss_line = current_fnd->fn_line;
-    sym_ptr->flg_global = 1;
-    literal_pool_ptr = segp = (SEG_struct *)get_seg_mem(&sym_ptr, sym_ptr->ss_string);
-    segp->flg_literal = 1;
-    segp->seg_salign = macxx_salign;
-    segp->seg_dalign = macxx_dalign;
-    segp->seg_maxlen = 256*1024-(32*4);
-#endif
 #if defined(MAC_TJ)
     if (options[QUAL_JERRY]) macxx_target = "JERRY"; /* "1357785-002"; */
 #endif
