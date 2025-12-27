@@ -191,7 +191,7 @@ int display_help(void)
         }
 		if (help_msg[i] == help_2_pass_mark)
 		{
-			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11)) /* (were_mac65 || were_mac68 || were_mac69 || were_mac11) */ )
+			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_AS)) )
 				i += 3;     /* skip the delim, option name and text */
 			continue;
 		}
@@ -205,19 +205,19 @@ int display_help(void)
         }
 		if ( help_msg[i] == help_2_pass_default )
 		{
-			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11)) /* (were_mac65 || were_mac68 || were_mac69) */ )
+			if ( !(macxx_name_mask&(MACXX_M_65|MACXX_M_68|MACXX_M_69|MACXX_M_11|MACXX_M_AS)) )
 				i += 2;		/* skip the delim and option name */
 			continue;
 		}
 		if ( help_msg[i] == help_z80_mark )
 		{
-			if ( !(macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) /* were_macz80 or mac8080 */ )
+			if ( !(macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) )
 				i += 3;		/* skip the delim and option name */
 			continue;
 		}
 		if ( help_msg[i] == help_z80_default )
 		{
-			if ( !(macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) /* were_macz80 or mac8080 */ )
+			if ( !(macxx_name_mask&(MACXX_M_Z80|MACXX_M_8080)) )
 				i += 2;		/* skip the delim and option name */
 			continue;
 		}

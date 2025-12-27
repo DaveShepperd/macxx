@@ -26,7 +26,7 @@
 #define MAX_STR_LEN 200
 void dump_stack(FILE *outf, EXP_stk *eps)
 {
-    int len,tag,last;
+    int len,maxLen,tag,last;
     EXPR_struct *curr,*top;
 	char str[MAX_STR_LEN];
     tag = eps->tag;
@@ -41,12 +41,16 @@ void dump_stack(FILE *outf, EXP_stk *eps)
     curr = eps->stack;
     top = eps->stack+last;
 	len = 0;
+	maxLen = MAX_STR_LEN-1;
     for ( ; curr < top && len < MAX_STR_LEN-1; ++curr )
     {
-        switch (tag = curr->expr_code)
+		maxLen -= len;
+		if ( maxLen < 0 )	/* Keep the analyizer happy */
+			maxLen = 0;
+		switch (tag = curr->expr_code)
         {
         case EXPR_VALUE :
-            len += snprintf(str+len,MAX_STR_LEN-1-len, " 0x%X",curr->expr_value);
+            len += snprintf(str+len,maxLen, " 0x%X",curr->expr_value);
             break;
 		case EXPR_OPER :
 			tag = curr->expr_value;
@@ -56,24 +60,24 @@ void dump_stack(FILE *outf, EXP_stk *eps)
 				if ( (tag&0xFF) == '!' )
 				{
 					tag >>= 8;
-					len += snprintf(str + len, MAX_STR_LEN - 1 - len, " !%c (0x%X)", (isgraph(tag) ? tag : '.'), tag);
+					len += snprintf(str + len, maxLen, " !%c (0x%X)", (isgraph(tag) ? tag : '.'), tag);
 				}
 				else
-					len += snprintf(str + len, MAX_STR_LEN - 1 - len, " %c (0x%X)", (isgraph(tag) ? tag : '.'), tag);
+					len += snprintf(str + len, maxLen, " %c (0x%X)", (isgraph(tag) ? tag : '.'), tag);
 			}
 			else
-				len += snprintf(str+len, MAX_STR_LEN - 1 - len, " %s", operType);
+				len += snprintf(str+len, maxLen, " %s", operType);
 			break;
         case EXPR_SEG :
-            len += snprintf(str+len, MAX_STR_LEN-1-len," {seg}'%s' 0x%X ",
+            len += snprintf(str+len, maxLen," {seg}'%s' 0x%X ",
                     (curr->expt.expt_seg)->seg_string,curr->expr_value);
             break;
         case EXPR_SYM :
-            len += snprintf(str+len, MAX_STR_LEN-1-len, " {sym}'%s' 0x%X ",
+            len += snprintf(str+len, maxLen, " {sym}'%s' 0x%X ",
                     (curr->expt.expt_sym)->ss_string,curr->expr_value);
             break;
         default :
-            len += snprintf(str+len, MAX_STR_LEN-1-len, " ?? (code: 0x%X value: 0x%X)", tag, curr->expr_value);
+            len += snprintf(str+len, maxLen, " ?? (code: 0x%X value: 0x%X)", tag, curr->expr_value);
         }   /* end case */
     }       /* end for */
 	str[MAX_STR_LEN-1] = 0;
