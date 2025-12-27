@@ -8,8 +8,8 @@ MSYS2 = 0
 MINGW = 0
 EXTRA_DEFINES = #-DSTACK_DEBUG #-DNEW_ASCII_COMMON=0
 EXTRA_CHKS = 
-DBG = -g
-OPT = #-O2
+DBG = #-g
+OPT = -O2
 CC = gcc
 ECHO = /bin/echo -e
 RM = rm -f 

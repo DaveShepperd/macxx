@@ -80,6 +80,7 @@ endef
 
 chkas: asap.mac Makefile
 	$(call chkIt,$(MACAS),,asap)
+	$(call chkIt,$(MACAS),-2,asap)
 
 chk65: 6502.mac Makefile
 	$(call chkIt,$(MAC65),,6502)
