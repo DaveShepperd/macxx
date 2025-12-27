@@ -134,8 +134,6 @@ const char *getOperType(int type)
 		return "(![ tst le)";	/* ...less than or equal */
 	case EXPROPER_TST|(EXPROPER_TST_GE<<8):
 		return "(!] tst ge)";	/* ...greater than or equal */
-//	case EXPROPER_TST|(EXPROPER_TSTNM<<8):
-//		return "(!@ tst quiet)";	/* test for condition without error message */
 	case EXPROPER_PICK:
 		return "($ pick)";	/* dup n'th item on stack */
 	case EXPROPER_PURGE:

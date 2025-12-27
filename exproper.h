@@ -43,7 +43,6 @@
 #define EXPROPER_TST_NE '#'	/* ...not equal */
 #define EXPROPER_TST_LE '['	/* ...less than or equal */
 #define EXPROPER_TST_GE ']'	/* ...greater than or equal */
-/*#define EXPROPER_TSTNM	'@' */	/* test for condition without error message */
 #define EXPROPER_PICK	'$'	/* dup n'th item on stack */
 #define EXPROPER_PURGE	'#'	/* purge top of stack */
 #define EXPROPER_XCHG	'`'	/* exchange top 2 items */
