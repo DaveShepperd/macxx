@@ -44,7 +44,7 @@ void dump_stack(FILE *outf, EXP_stk *eps)
     for ( ; curr < top && len < MAX_STR_LEN-1; ++curr )
     {
 		maxLen -= len;
-		if ( maxLen < 0 )	/* Keep the analyizer happy */
+		if ( maxLen < 0 )	/* Keep the analyzer happy */
 			maxLen = 0;
 		switch (tag = curr->expr_code)
         {
