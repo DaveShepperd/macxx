@@ -219,7 +219,7 @@ void do_opcode(Opcode *opc)
     int hiword,abs;
     int err_cnt = error_count[MSG_ERROR];
 	int32_t val;
-    EXPR_struct *exp0,*exp1;
+    EXPR_struct *exp0,*exp1,*exp2;
 
     EXP0.tag = 'l';         /* opcode is default U32 */
     EXP0.tag_len = 1;       /* only 1 longword */
@@ -236,9 +236,9 @@ void do_opcode(Opcode *opc)
     exp1 = EXP1SP;          /* point to expression stack 1 */
     exp0->expr_code = EXPR_VALUE;   /* set the opcode expression */
     hiword = opc->op_value;     /* stuff in opcode value */
-    exp0->expr_value = (hiword & 0xFFE0) << 16;
+    exp0->expr_value = (hiword & 0xFFE0) << 16;	/* Low order 5 bits has the class */
     am_ptr = inp_ptr;           /* remember where am starts */
-    switch ( (opc->op_class & 7) )
+    switch ( (opc->op_class & 0x1F) )
     {
     case OPCL_AU :
         /* ALU ops: 
@@ -488,7 +488,49 @@ void do_opcode(Opcode *opc)
         fprintf(stderr,"got class IL, value: %04X %s",
                 opc->op_value, am_ptr);
 #endif
-        break;  
+        break;
+	case OPCL_SY:
+		get_token();
+		if ( exprs(1,&EXP2) < 1 )
+		{
+			/* partially NOP the instruction by clearing Scc */
+			EXP0SP->expr_value &= ~SCC_BIT;
+			bad_token(inp_ptr - 1,"Register or expression expected");
+			break;
+		}
+		exp2 = EXP2SP;
+		val = exp2->expr_value;	/* pickup expression's value */
+		abs = (EXP2.ptr == 1 && exp2->expr_code == EXPR_VALUE); /* abs is true if expression absolute */
+		if ( abs )
+		{
+			if ( EXP2.register_reference ) /* any register reference */
+			{
+				if ( val < 1 || val > 5 )
+				{
+					bad_token(inp_ptr - 1,"Invalid Register expression. Can only be 1 through 5 inclusive"); 
+					break;
+				}
+				exp2->expr_value |= REGMARK;	/* convert to register indicator */
+			}
+			else if ( exp2->expr_value < 1 || exp2->expr_value > 255 )
+			{
+				bad_token(inp_ptr, "Value must lie between 1 and 255 inclusive");
+				break;
+			}
+		}
+		else
+		{
+			int savePtr;
+			if ( EXP2.register_reference ) /* any register reference */
+			{
+				bad_token(NULL,"Register expression has to be absolute");
+				break;
+			}
+			savePtr = EXP2.ptr;
+			addOutOfRangeTest(&EXP2, 1, 255, 0);
+			EXP2.ptr = savePtr;
+		}
+		break;			/* from switch(class) */
     }                    /* -- switch(class) */
     if (err_cnt != error_count[MSG_ERROR])
     { /* if any errors detected... */
@@ -528,9 +570,7 @@ static int get_ea(uint16_t size)
 	abs = (EXP1.ptr == 1 && exp1->expr_code == EXPR_VALUE); /* abs is true if expression absolute */
 	if ( abs )
 	{
-		if (	!val		/* a constant of 0 means register 0 */
-			 || EXP1.register_reference /* or any register reference */
-		   )
+		if ( EXP1.register_reference ) /* if any register reference */
 		{
 			if ( val >= 0 && val <= MAXREG )
 			{
@@ -543,6 +583,13 @@ static int get_ea(uint16_t size)
 				exp1->expr_value = 0;
 				return 0;
 			}
+		}
+		else if ( !val )        /* a constant of 0 might mean register 0 */
+		{
+			while ( *inp_ptr && *inp_ptr != '\n' && isspace(*inp_ptr) )
+				++inp_ptr;
+			if ( *inp_ptr == open_operand )
+				s2IsReg = 1;
 		}
 	}
 	else if ( EXP1.register_reference )

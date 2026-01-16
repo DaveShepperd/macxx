@@ -501,7 +501,7 @@ int main(int argc, char *argv[])
                 EXIT_FALSE;
             }
         }
-        output_files[0] = cmd_fnds[0];
+        output_files[OUT_FN_OBJ] = cmd_fnds[0];
 #else
         if (options[QUAL_BINARY])
         {

@@ -2798,11 +2798,14 @@ int op_save(void)
 	return 1;
 }
 
-static void swap_outfile(int new)
+static void swap_outfile(int newOut)
 {
-	cmd_fnds[current_outfile] = output_files[0];
-	output_files[0] = cmd_fnds[new];
-	current_outfile = new;
+	if ( newOut != current_outfile )
+	{
+		cmd_fnds[current_outfile] = output_files[OUT_FN_OBJ];
+		output_files[OUT_FN_OBJ] = cmd_fnds[newOut];
+		current_outfile = newOut;
+	}
 }
 
 int op_restore(void)
@@ -2855,10 +2858,7 @@ int op_outfile(void)
 	if ( i == 1 && EXP0SP->expr_code == EXPR_VALUE &&
 		 (outfile >= 0 && outfile < cmd_outputs_index) )
 	{
-		if ( current_outfile != outfile )
-		{
-			swap_outfile(outfile);
-		}
+		swap_outfile(outfile);
 	}
 	else
 	{

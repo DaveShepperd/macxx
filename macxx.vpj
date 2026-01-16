@@ -35,7 +35,9 @@
 				Deletable="0"
 				SaveOption="SaveCurrent"
 				RunFromDir="%rw">
-				<Exec CmdLine='gcc %xup -g -Wall -Werror -o "%o" %objs'/>
+				<Exec
+					CmdLine='gcc %xup -g -Wall -Werror %~other -o "%o" %objs'
+					OtherOptions="-g"/>
 			</Target>
 			<Target
 				Name="Build"

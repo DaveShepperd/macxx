@@ -19,14 +19,15 @@
 #ifndef _ASOP_CLASS_H_
 #define _ASOP_CLASS_H_ 1
 
-#define OPCL_AU 0
-#define OPCL_LD 1
-#define OPCL_ST 2
-#define OPCL_BC 3
-#define OPCL_BS 4
-#define OPCL_JS 5
-#define OPCL_PS 6
-#define OPCL_IL 7
+#define OPCL_AU 0	/* ALU function */
+#define OPCL_LD 1	/* LDx */
+#define OPCL_ST 2	/* STx */
+#define OPCL_BC 3	/* Branch on condition */
+#define OPCL_BS 4	/* BSR */
+#define OPCL_JS 5	/* JSR */
+#define OPCL_PS 6	/* GET/PUT PS*/
+#define OPCL_IL 7	/* SYSILL */
+#define OPCL_SY 8	/* SYSCALL */
 
 #define BR_OFF 0
 #define MAX_DISP (8388604)	/* 0x007FFFFC */

@@ -1122,7 +1122,7 @@ void outseg_def(SEG_struct *seg_ptr)
 				*s++ = 'o';
 			if ( seg_ptr->flg_ro )
 				*s++ = 'r';
-			if ( !seg_ptr->flg_reference )
+			if ( !seg_ptr->flg_reference && !seg_ptr->seg_len )
 				*s++ = 'u';
 			if ( seg_ptr->flg_zero )
 				*s++ = 'z';

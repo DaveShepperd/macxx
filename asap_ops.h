@@ -84,6 +84,7 @@ NOC_DEF( "GETPS","GETPS.C",OPCL_PS,	0x1C)
 NOC_DEF( "PUTPS","PUTPS.C",OPCL_PS,	0x1D)
 LS_DEF( "JSR","JSR.C",	OPCL_JS,	0x1E,	2)
 NOC_DEF( "SYSILL","SYSILL.C",OPCL_IL,	0x1F)	/* must be Illegal Op for bullet proofing!! */
+NOC_DEF( "SYSCALL","SYSCALL.C",OPCL_SY,	0x1F)	/* A kernel call */
 
 #define B_OFF 1
 	/* Word offset added to addr of BCC/BSR inst and offset in inst */

@@ -651,7 +651,7 @@ int getcommand(void)
                 if (i==0) defname = objdefname;
                 objdefname = 0;
             }
-            output_files[0] = cmd_fnds[0];
+            output_files[OUT_FN_OBJ] = cmd_fnds[0];
         }
         for (i=1;i<OUT_FN_MAX;i++)
         {
