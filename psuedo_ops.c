@@ -768,80 +768,83 @@ static int op_byte_with_mask(int inpMask)
 {
 	char *otp = 0;
 	int32_t epv;
+	int lastCharIsComma = 1;
+	
 	list_stats.pc = current_offset;
 	list_stats.pc_flag = 1;
 	EXP0.tag = 'b';
 	EXP0.tag_len = 1;
-	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) != 0 )
+	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) == 0 )
+	{
+		while ( 1 )
+		{           /* for all items on line */
+			char cc;
+			cc = *inp_ptr;
+			if ( no_white_space_allowed && myIsspace(cc) )
+				break;
+			while ( myIsspace(cc) )
+				cc = *++inp_ptr;
+			if ( *inp_ptr == ',' )
+			{
+				if ( lastCharIsComma )
+				{
+					EXP0SP->expr_code = EXPR_VALUE;
+					EXP0SP->expr_value = EXP0.psuedo_value = 0;
+					EXP0.ptr = 1;
+					p1o_byte(&EXP0);      /* null arg means insert a 0 */
+				}
+				lastCharIsComma = 1;
+				++inp_ptr;	/* eat the comma */
+				continue;
+			}
+			if ( get_token() == EOL )
+				break;
+			otp = tkn_ptr;     /* remember beginning of expression */
+			lastCharIsComma = 0;
+			exprs(1, &EXP0);    /* pickup the expression */
+			epv = EXP0SP->expr_value;
+			if ( EXP0.ptr <= 1 && EXP0SP->expr_code == EXPR_VALUE )
+			{
+				if ( inpMask )
+				{
+					if ( epv > 255 || epv < -256 )
+					{
+						snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08X, stored: %02X",
+								 epv, epv & 255);
+						show_bad_token(otp, emsg, MSG_WARN);
+					}
+				}
+				EXP0SP->expr_value = epv & 0xFF;
+			}
+			else if ( !inpMask )
+			{
+				EXP_stk *eps = &EXP0;
+				EXPR_struct *expr_ptr;
+
+				if ( eps->ptr >= EXPR_MAXDEPTH )
+				{
+					bad_token(NULL, "Too many terms in expression");
+					return (eps->ptr = -1);
+				}
+				expr_ptr = eps->stack + eps->ptr; /* compute start place for eval */
+				expr_ptr->expr_code = EXPR_VALUE;
+				expr_ptr->expr_value  = 0xFF;
+				++expr_ptr;
+				expr_ptr->expr_code = EXPR_OPER;
+				expr_ptr->expr_value = EXPROPER_AND;
+				eps->ptr += 2;
+				compress_expr(&EXP0);
+			}
+			p1o_byte(&EXP0);      /* output element 0 */
+		}
+	}
+	if ( lastCharIsComma )
 	{
 		EXP0SP->expr_code = EXPR_VALUE;
 		EXP0SP->expr_value = EXP0.psuedo_value = 0;
 		EXP0.ptr = 1;
 		p1o_byte(&EXP0);      /* null arg means insert a 0 */
 		return 1;
-	}
-	while ( 1 )
-	{           /* for all items on line */
-		char cc;
-		cc = *inp_ptr;
-		if ( no_white_space_allowed && myIsspace(cc) )
-			break;
-		while ( myIsspace(cc) )
-			cc = *++inp_ptr;
-		if ( (cttbl[(int)cc] & (CT_EOL | CT_SMC)) != 0 )
-			break;
-		if ( cc == ',' )
-		{    /* if the next item is a comma */
-			cc = *++inp_ptr;
-			EXP0SP->expr_code = EXPR_VALUE;
-			epv = EXP0SP->expr_value = 0;
-			EXP0.ptr = 1;
-		}
-		else
-		{
-			if ( get_token() == EOL )
-				break;
-			otp = tkn_ptr;     /* remember beginning of expression */
-			exprs(1, &EXP0);    /* pickup the expression */
-			epv = EXP0SP->expr_value;
-			if ( *inp_ptr == ',' )
-			{ /* if the next item is a comma */
-				cc = *++inp_ptr;
-			}
-		}
-		if ( EXP0.ptr <= 1 && EXP0SP->expr_code == EXPR_VALUE )
-		{
-			if ( inpMask )
-			{
-				if ( epv > 255 || epv < -256 )
-				{
-					snprintf(emsg, ERRMSG_SIZE, "Byte truncation error. Desired: %08X, stored: %02X",
-							 epv, epv & 255);
-					show_bad_token(otp, emsg, MSG_WARN);
-				}
-			}
-			EXP0SP->expr_value = epv & 0xFF;
-		}
-		else if ( !inpMask )
-		{
-			EXP_stk *eps = &EXP0;
-			EXPR_struct *expr_ptr;
-
-			if ( eps->ptr >= EXPR_MAXDEPTH )
-			{
-				bad_token(NULL, "Too many terms in expression");
-				return (eps->ptr = -1);
-			}
-			expr_ptr = eps->stack + eps->ptr; /* compute start place for eval */
-			expr_ptr->expr_code = EXPR_VALUE;
-			expr_ptr->expr_value  = 0xFF;
-			++expr_ptr;
-			expr_ptr->expr_code = EXPR_OPER;
-			expr_ptr->expr_value = EXPROPER_AND;
-			eps->ptr += 2;
-			compress_expr(&EXP0);
-		}
-		p1o_byte(&EXP0);      /* output element 0 */
 	}
 	return 1;
 }
@@ -855,47 +858,42 @@ static int op_word_with_mask(int inpMask)
 {
 	char *otp;
 	int32_t epv;
+	int lastCharIsComma = 1;
+	
 	op_chkalgn(1, 1);     /* check pc for alignment */
 	list_stats.pc = current_offset;
 	list_stats.pc_flag = 1;
 	EXP0.tag = (edmask & ED_M68) ? 'W' : 'w';
 	EXP0.tag_len = 1;
-	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) != 0 )
+	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) == 0 )
 	{
-		EXP0SP->expr_code = EXPR_VALUE;
-		EXP0SP->expr_value = EXP0.psuedo_value = 0;
-		EXP0.ptr = 1;
-		p1o_word(&EXP0);      /* null arg means insert a 0 */
-		return 1;
-	}
-	while ( 1 )
-	{           /* for all items on line */
-		char cc;
-		cc = *inp_ptr;
-		if ( no_white_space_allowed && myIsspace(cc) )
-			break;
-		while ( myIsspace(cc) )
-			cc = *++inp_ptr;
-		if ( (cttbl[(int)cc] & (CT_EOL | CT_SMC)) != 0 )
-			break;
-		if ( cc == ',' )
-		{    /* if the next item is a comma */
-			cc = *++inp_ptr;
-			EXP0SP->expr_code = EXPR_VALUE;
-			epv = EXP0SP->expr_value = EXP0.psuedo_value = 0;
-			EXP0.ptr = 1;
-		}
-		else
-		{
+		while ( 1 )
+		{           /* for all items on line */
+			char cc;
+			cc = *inp_ptr;
+			if ( no_white_space_allowed && myIsspace(cc) )
+				break;
+			while ( myIsspace(cc) )
+				cc = *++inp_ptr;
+			if ( *inp_ptr == ',' )
+			{
+				if ( lastCharIsComma )
+				{
+					EXP0SP->expr_code = EXPR_VALUE;
+					EXP0SP->expr_value = EXP0.psuedo_value = 0;
+					EXP0.ptr = 1;
+					p1o_word(&EXP0);      /* null arg means insert a 0 */
+				}
+				lastCharIsComma = 1;
+				++inp_ptr;	/* eat the comma */
+				continue;
+			}
 			if ( get_token() == EOL )
 				break;
 			otp = tkn_ptr;     /* remember beginning of expression */
+			lastCharIsComma = 0;
 			exprs(1, &EXP0);    /* pickup the expression */
 			epv = EXP0SP->expr_value;
-			if ( *inp_ptr == ',' )
-			{ /* if the next item is a comma */
-				cc = *++inp_ptr;
-			}
 			if ( EXP0.ptr <= 1 && EXP0SP->expr_code == EXPR_VALUE )
 			{
 				if ( inpMask )
@@ -928,8 +926,16 @@ static int op_word_with_mask(int inpMask)
 				eps->ptr += 2;
 				compress_expr(&EXP0);
 			}
+			p1o_word(&EXP0);      /* dump element 0 */
 		}
-		p1o_word(&EXP0);      /* dump element 0 */
+	}
+	if ( lastCharIsComma )
+	{
+		EXP0SP->expr_code = EXPR_VALUE;
+		EXP0SP->expr_value = EXP0.psuedo_value = 0;
+		EXP0.ptr = 1;
+		p1o_word(&EXP0);      /* null arg means insert a 0 */
+		return 1;
 	}
 	return 1;
 }
@@ -941,52 +947,50 @@ int op_word(void)
 
 int op_long(void)
 {
+	int lastCharIsComma = 1;
+	
 	op_chkalgn(2, 1);     /* check pc for alignment */
 	list_stats.pc = current_offset;
 	list_stats.pc_flag = 1;
 	EXP0.tag = (edmask & ED_M68) ? default_long_tag[0] : default_long_tag[1];
 	EXP0.tag_len = 1;
-	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) != 0 )
+	if ( (cttbl[(int)*inp_ptr] & (CT_SMC | CT_EOL)) == 0 )
+	{
+		while ( 1 )
+		{           /* for all items on line */
+			char cc;
+			cc = *inp_ptr;
+			if ( no_white_space_allowed && myIsspace(cc) )
+				break;
+			while ( myIsspace(cc) )
+				cc = *++inp_ptr;
+			if ( *inp_ptr == ',' )
+			{
+				if ( lastCharIsComma )
+				{
+					EXP0SP->expr_code = EXPR_VALUE;
+					EXP0SP->expr_value = EXP0.psuedo_value = 0;
+					EXP0.ptr = 1;
+					p1o_long(&EXP0);      /* null arg means insert a 0 */
+				}
+				lastCharIsComma = 1;
+				++inp_ptr;	/* eat the comma */
+				continue;
+			}
+			if ( get_token() == EOL )
+				break;
+			lastCharIsComma = 0;
+			exprs(1, &EXP0);    /* pickup the expression */
+			p1o_long(&EXP0);      /* dump element 0 */
+		}
+	}
+	if ( lastCharIsComma )
 	{
 		EXP0SP->expr_code = EXPR_VALUE;
 		EXP0SP->expr_value = EXP0.psuedo_value = 0;
 		EXP0.ptr = 1;
 		p1o_long(&EXP0);      /* null arg means insert a 0 */
 		return 1;
-	}
-	while ( 1 )
-	{           /* for all items on line */
-		char cc;
-		cc = *inp_ptr;
-		if ( no_white_space_allowed && myIsspace(cc) )
-			break;
-		while ( myIsspace(cc) )
-			cc = *++inp_ptr;
-		if ( (cttbl[(int)cc] & (CT_EOL | CT_SMC)) != 0 )
-			break;
-		if ( cc == ',' )
-		{    /* if the next item is a comma */
-			cc = *++inp_ptr;
-			EXP0SP->expr_code = EXPR_VALUE;
-			EXP0SP->expr_value = 0;
-			EXP0.ptr = 1;
-		}
-		else
-		{
-			if ( get_token() == EOL )
-				break;
-			exprs(1, &EXP0);    /* pickup the expression */
-			if ( *inp_ptr == ',' )
-			{ /* if the next item is a comma */
-				cc = *++inp_ptr;
-				if ( !no_white_space_allowed )
-				{
-					while ( myIsspace(cc) )
-						cc = *++inp_ptr;
-				}
-			}
-		}
-		p1o_long(&EXP0);      /* dump element 0 */
 	}
 	return 1;
 }

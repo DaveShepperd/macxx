@@ -993,11 +993,12 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 			}
 			if ( squeak )
 			{
-				printf("check_am(): pass=%d, Checking for Z vs. A mode. maybeZPage=%d, ama=%d, EXP1.ptr=%d, EXP1.fwd=%d, exp->code=%d, exp->value=%08X\n",
+				printf("check_am(): pass=%d, Checking for Z vs. A mode. maybeZPage=%d, ama=%d, EXP1.ptr=%d, EXP1.base=%d, EXP1.fwd=%d, exp->code=%d, exp->value=%08X\n",
 					   pass,
 					   maybeZPage,
 					   ama,
 					   EXP1.ptr,
+					   EXP1.base_page_reference,
 					   EXP1.forward_reference,
 					   exp_ptr->expr_code,
 					   exp_ptr->expr_value
@@ -1032,7 +1033,7 @@ static int check_am(Opcode *opc, AModes amdcdnum, AModes forced_am_num)
 					amdcd = A;       /* else force it absolute */
 					amdcdnum = A_NUM;
 				}
-				if ( options[QUAL_2_PASS] && !pass && EXP1.forward_reference)
+				if ( options[QUAL_2_PASS] && !pass && EXP1.forward_reference && !EXP1.base_page_reference )
 					setAMATag(current_fnd,1);	/* Say we chose a word for this instruction because of fwd reference */
 			}
 		}
@@ -1171,6 +1172,8 @@ void do_opcode(Opcode *opc)
 	exp_ptr = EXP1SP;
 	am_ptr = inp_ptr;            /* remember where am starts */
 	forced_am_num = UNDEF_NUM;
+	if ( squeak )
+		printf("do_opcode(): %s", inp_str);
 	if ( *inp_ptr == '`' )
 	{       /* next thing a grave accent? */
 		++inp_ptr;            /* yep, eat it */

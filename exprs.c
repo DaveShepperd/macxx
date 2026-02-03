@@ -1316,6 +1316,8 @@ static int do_exprs( int flag, EXP_stk *eps )
                     }
 					if ( sym_ptr->flg_fwdReference )
 						eps->forward_reference = 1;
+					if ( sym_ptr->flg_base )
+						eps->base_page_reference = 1;
                     if ( sym_ptr->flg_defined )
                     {
 #if EXPR_C

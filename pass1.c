@@ -1602,7 +1602,8 @@ int f1_defg(int flag)
 			int errCode = MSG_ERROR;
 			emsg[0] = 0;
 			if ( squeak )
-				printf("Pass %d: f1_defg(): re-defining label '%s'. flg_forward=%d\n", pass, ptr->ss_string, ptr->flg_fwdReference);
+				printf("Pass %d: f1_defg(): re-defining label '%s'. flg_base=%d, flg_forward=%d\n",
+					   pass, ptr->ss_string, ptr->flg_base, ptr->flg_fwdReference);
 			if ( ptr->flg_label )
 			{
 				/* Previously defined as a label */
@@ -1803,8 +1804,7 @@ int f1_defg(int flag)
 		}
         ptr->flg_register = EXP0.register_reference;
         ptr->flg_regmask = EXP0.register_mask;
-/*		ptr->flg_fwdReference |= EXP0.forward_reference;*/ /* Preserve forward references */
-		ptr->flg_fwdReference = EXP0.forward_reference;	/* Pass through any forward references */
+		ptr->flg_fwdReference = !EXP0.base_page_reference && EXP0.forward_reference;    /* Pass through any forward references */
         if (i == 1)
         {     /* if only 1 term... */
             if (EXP0SP->expr_code == EXPR_VALUE)
@@ -1860,9 +1860,10 @@ int f1_defg(int flag)
 	{
 		if ( ptr->flg_label )
 		{
-			printf("Pass %d: f1_defg(): Defined '%s' as label, fwd=%d, fixed=%d, seg=%s, offset=0x%X\n",
+			printf("Pass %d: f1_defg(): Defined '%s' as label, base=%d, fwd=%d, fixed=%d, seg=%s, offset=0x%X\n",
 				   pass,
 				   ptr->ss_string,
+				   ptr->flg_base,
 				   ptr->flg_fwdReference,
 				   ptr->flg_fixed_addr,
 				   ptr->ssp_up.ssp_seg ? ptr->ssp_up.ssp_seg->seg_string : "<unknown>",
@@ -1871,9 +1872,10 @@ int f1_defg(int flag)
 		}
 		else
 		{
-			printf("Pass %d: f1_defg(): Defined '%s' as symbol fwd=%d, fixed=%d, value=0x%X, exp=%s, currSeg=%s, currPC=0x%X\n",
+			printf("Pass %d: f1_defg(): Defined '%s' as symbol base=%d, fwd=%d, fixed=%d, value=0x%X, exp=%s, currSeg=%s, currPC=0x%X\n",
 				   pass,
 				   ptr->ss_string,
+				   ptr->flg_base,
 				   ptr->flg_fwdReference,
 				   ptr->flg_fixed_addr,
 				   ptr->ss_value,
