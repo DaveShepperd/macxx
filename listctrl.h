@@ -19,6 +19,8 @@
 /******************************************************************************
 Change Log
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 	01/24/2022	- Changed - Added support for HLLxxF  - Tim Giddens
@@ -60,6 +62,7 @@ typedef struct
 extern uint32_t list_toc_page_no;			/* page number of TOC listing - By TRG 20240503 */
 extern uint32_t list_toc_line_no;			/* line number of TOC listing - By TRG 20240503 */
 extern int list_toc_hd;					/* header flag for TOC listing - By TRG 20240503 */
+extern int list_toc_new_page;				/* new page flag for TOC listing - By TRG 20260329 */
 
 extern LIST_Source_t list_source;
 extern LIST_stat_t list_stats;

@@ -19,6 +19,8 @@
 /******************************************************************************
 Change Log
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 ******************************************************************************/
@@ -455,6 +457,7 @@ gt_loop:
 /* must be here incase end of file return - should not be incremented - By TRG 20240503 to support TOC */
         ++current_fnd->fn_line;		/* increment the source line # */
         ++list_toc_line_no;		/* increment the TOC source line number */
+	if(list_toc_line_no == 1) list_toc_new_page = 1;	/* set TOC new page flag */
     }
     else
     {
@@ -752,9 +755,10 @@ void puts_lis(const char *string, int lines )
 	}
 	if ( options[QUAL_TOC] )		/* By TRG 20240503 to support TOC */
 	{
-		if (list_toc_line_no == 1)		/* New page number ? */
+		if (list_toc_new_page)		/* New page number ? */
 		{
 			puts_titles(0);		/* print without plus sign */
+			list_toc_new_page = 0;	/* clear TOC new page flag */
 		}
 		else if (i == 0 || i > lis_line)
 		{    /* room on page? */

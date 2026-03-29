@@ -1,4 +1,7 @@
 
+Updated 03-29-2026 to fix TOC new page bug
+
+
 To support TOC (Table of contents)
 
 ========================================================================================================================
@@ -73,6 +76,8 @@ added
 /******************************************************************************
 Change Log
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 ******************************************************************************/
@@ -80,6 +85,7 @@ Change Log
 
 			list_toc_line_no = 0;		/* By TRG 20240503 to support TOC */
 			list_toc_page_no = 1;		/* By TRG 20240503 to support TOC */
+			list_toc_new_page = 0;		/* By TRG 20260329 to support TOC */
 
 
 Changed
@@ -268,12 +274,15 @@ File - listctrl.h
 
 added
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 
 extern unsigned long list_toc_page_no;			/* page number of TOC listing - By TRG 20240503 */
 extern unsigned long list_toc_line_no;			/* line number of TOC listing - By TRG 20240503 */
 extern int list_toc_hd;					/* header flag for TOC listing - By TRG 20240503 */
+extern int list_toc_new_page;				/* new page flag for TOC listing - By TRG 20260329 */
 
 
 
@@ -282,12 +291,14 @@ File - listctrl.c
 
 added
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 unsigned long list_toc_page_no = 1;		/* page number of TOC listing - By TRG 20240503 */
 unsigned long list_toc_line_no = 0;		/* line number of TOC listing - By TRG 20240503 */
 int list_toc_hd = 0;				/* header flag for TOC listing - By TRG 20240503 */
-
+int list_toc_new_page = 0;			/* new page flag for TOC listing - By TRG 20260329 */
 
 
 changed
@@ -323,6 +334,8 @@ added
 /******************************************************************************
 Change Log
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 ******************************************************************************/
@@ -340,6 +353,7 @@ added
 /* must be here incase end of file return - should not be incremented - By TRG 20240503 to support TOC */
         ++current_fnd->fn_line;		/* increment the source line # */
         ++list_toc_line_no;		/* increment the TOC source line number */
+	if(list_toc_line_no == 1) list_toc_new_page = 1;	/* set TOC new page flag */
 
 
 
@@ -413,9 +427,10 @@ void puts_lis(const char *string, int lines )
 	}
 	if ( options[QUAL_TOC] )		/* By TRG 20240503 to support TOC */
 	{
-		if (list_toc_line_no == 1)		/* New page number ? */
+		if (list_toc_new_page)		/* New page number ? */
 		{
 			puts_titles(0);		/* print without plus sign */
+			list_toc_new_page = 0;	/* clear TOC new page flag */
 		}
 		else if (i == 0 || i > lis_line)
 		{    /* room on page? */

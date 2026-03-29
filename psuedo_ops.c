@@ -131,10 +131,17 @@ int op_sbttl(void)
 	}
 	if ( (options[QUAL_TOC] && options[QUAL_LIST] && list_toc) || (options[QUAL_TOC] && !options[QUAL_LIST]) )
 	{  /* By TRG 20240503 to support TOC */
+	   /*    TRG 20260329 */
 		if (pass !=0)
 		{
+			int xx;
 			fprintf(toc_fp,"%5d-%4d%c",list_toc_page_no,list_toc_line_no,(include_level > 0) ? '+' : ' ');
-			fprintf(toc_fp, "%c%s",(include_level > 0) ? '\t' : ' ',inp_ptr);
+			fprintf(toc_fp,"\t");
+			for (xx=include_level; xx > 0; xx--)
+			{
+				fprintf(toc_fp, "\t");
+			}
+			fprintf(toc_fp, "%s", inp_ptr);
 		}
 	}
 	f1_eatit();

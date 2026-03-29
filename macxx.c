@@ -23,6 +23,8 @@
 /******************************************************************************
 Change Log
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 ******************************************************************************/
@@ -416,6 +418,7 @@ int main(int argc, char *argv[])
 			current_fnd->fn_virt_line = 0;
 			list_toc_line_no = 0;		/* By TRG 20240503 to support TOC */
 			list_toc_page_no = 1;		/* By TRG 20240503 to support TOC */
+			list_toc_new_page = 0;		/* By TRG 20260329 to support TOC */
 			if (include_level > 0)
 				--include_level;
 			if (!(current_fnd=current_fnd->fn_next))

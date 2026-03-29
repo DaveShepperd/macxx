@@ -19,6 +19,8 @@
 /******************************************************************************
 Change Log
 
+	03-29-2026	- Bug Fix for TOC new page - TRG 
+
 	05-03-2024	- Added support for TOC (Table of contents) file - TRG 
 
 	01/24/2022	- Changed - Added support for HLLxxF  - TG
@@ -33,7 +35,8 @@ Change Log
 
 uint32_t list_toc_page_no = 1;		/* page number of TOC listing - By TRG 20240503 */
 uint32_t list_toc_line_no = 0;		/* line number of TOC listing - By TRG 20240503 */
-int list_toc_hd = 0;				/* header flag for TOC listing - By TRG 20240503 */
+int list_toc_hd = 0;			/* header flag for TOC listing - By TRG 20240503 */
+int list_toc_new_page = 0;		/* new page flag for TOC listing - By TRG 20260329 */
 
 int show_line = 1;
 int list_level;
