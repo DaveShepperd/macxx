@@ -561,12 +561,16 @@ int op_push(void)
 	}
 	if ( *inp_ptr == ',' )        /* If no first token then it's an error */
 	{
+#if STACKS_DEBUG
 		int terms=0;
+#endif
 		while ( *inp_ptr == ',' )      /* any more tokens on this line of code */
 		{
 			int expRetV;
 
+#if STACKS_DEBUG
 			++terms;
+#endif
 			if ( usrstk->usr_stk_ptr <= 0 )
 			{
 				list_stats.pf_value = usrstk->usr_stk_ptr;
