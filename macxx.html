@@ -1757,7 +1757,7 @@ the stack pointer on a named stack. Examples:
     <tr><td>Repeat block</td><td style="text-align: center">&ge; 1</td><td>The repeat block is terminated</td></tr> 
   </table>
   <p>
-  An .REXIT directive inside a .REPT or .IRPx block is exactly equivalent to a <b>.MEXIT 1</b>. An .REXIT directive inside an ordinary macro is exactly the same as a <b>.MEXIT 0</b>.
+  An .REXIT directive is exactly equivalent to a <b>.MEXIT 0</b>. To exit a repeat block completely, use .MEXIT 1 instead of a .REXIT.
   </p>
   <p>
   The current condition levels (as created by .IF/.ENDC directives)

@@ -1319,16 +1319,19 @@ int op_rexit( void )
     }
     else
     {
+        /* An .REXIT in a repeat block, is a 'continue' */
+        /* An .REXIT inside a ordinary macro, just exit the macro*/
+        mexit_common(0);    /* either way, it's a mexit_common(0) */
+#if 0
         if (marg_head->marg_flag != 0)
         {
-			/* An .REXIT in a repeat block, always exit the block */
-            mexit_common(1);
+            mexit_common(0);
         }
         else
         {
-			/*  An .REXIT inside a ordinary macro, just exit the macro*/
             mexit_common(0);
         }
+#endif
     }
     return 0;
 }
